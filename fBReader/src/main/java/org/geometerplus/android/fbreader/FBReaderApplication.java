@@ -19,6 +19,8 @@
 
 package org.geometerplus.android.fbreader;
 
+import androidx.annotation.NonNull;
+
 import com.facebook.stetho.Stetho;
 import com.haowen.bugreport.CrashHandler;
 
@@ -29,6 +31,7 @@ import skin.support.app.SkinAppCompatViewInflater;
 import skin.support.app.SkinCardViewInflater;
 import skin.support.constraint.app.SkinConstraintViewInflater;
 import skin.support.design.app.SkinMaterialViewInflater;
+import timber.log.Timber;
 
 public class FBReaderApplication extends ZLAndroidApplication {
 
@@ -48,5 +51,13 @@ public class FBReaderApplication extends ZLAndroidApplication {
                 .setSkinStatusBarColorEnable(false)                     // 关闭状态栏换肤，默认打开[可选]
                 .setSkinWindowBackgroundEnable(false)                   // 关闭windowBackground换肤，默认打开[可选]
                 .loadSkin();
+
+        // Timber日志
+        Timber.plant(new Timber.DebugTree(){
+            @Override
+            protected String createStackElementTag(@NonNull StackTraceElement element) {
+                return "(" + element.getFileName() + ":" + element.getLineNumber() +")#" + element.getMethodName();
+            }
+        });
     }
 }

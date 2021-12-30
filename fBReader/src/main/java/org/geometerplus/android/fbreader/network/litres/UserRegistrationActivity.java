@@ -65,7 +65,7 @@ public class UserRegistrationActivity extends RegistrationActivity {
 
 		myResource = ZLResource.resource("dialog").getResource("litresUserRegistration");
 
-		//Thread.setDefaultUncaughtExceptionHandler(new org.geometerplus.zlibrary.ui.android.library.UncaughtExceptionHandler(this));
+		Thread.setDefaultUncaughtExceptionHandler(new org.geometerplus.zlibrary.ui.android.library.UncaughtExceptionHandler(this));
 
 		setContentView(R.layout.lr_user_registration);
 

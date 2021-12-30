@@ -2,7 +2,6 @@ package org.geometerplus.android.fbreader.ui.activity;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -17,11 +16,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import timber.log.Timber;
+
 /**
  * 图书内置打开页
  */
 public class BookEnterActivity extends AppCompatActivity {
 
+    // 这是一个bind service, 其实可以换成别的
     private final BookCollectionShadow myCollection = new BookCollectionShadow();
 
     @Override
@@ -29,18 +31,23 @@ public class BookEnterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_book_enter);
 
-        openBookClick(null);
+        startBook();
     }
 
-    public void openBookClick(View view) {
+    public void startBook() {
+        Timber.v("ceshi123, 开始获取图书数据");
         myCollection.bindToService(this, () -> {
+            // 通过AIDL接口调用数据库，获取之前阅读的图书信息
             Book book = myCollection.getRecentBook(0);
             if (book == null) {
+                Timber.v("ceshi123, 无数据, 获取asset demo图书");
                 String path = copy2Storage();
                 System.out.println(path);
                 book = myCollection.getBookByFile(path);
             }
             if (book != null) {
+                Timber.v("ceshi123, 数据获取成功, FBReader library -> 解析并打开");
+                // 调用FbReader开始解析图书， 并且打开阅读界面
                 FBReader.openBookActivity(BookEnterActivity.this, book, null);
                 finish();
             } else {

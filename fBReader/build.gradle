@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 // apply plugin: 'huge'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     useLibrary 'org.apache.http.legacy'
     defaultConfig {
         applicationId "org.geometerplus.zlibrary.ui.android"
-        minSdkVersion 16
-        targetSdkVersion 27
+        minSdkVersion 21
+        targetSdkVersion 30
 
         externalNativeBuild {
             cmake {
@@ -64,4 +64,6 @@ dependencies {
     implementation 'skin.support:skin-support-constraint-layout:4.0.4'
 
     implementation 'com.haowen.bugreport:bugreport:0.0.13'
+    implementation 'com.jakewharton.timber:timber:4.7.0'
+
 }

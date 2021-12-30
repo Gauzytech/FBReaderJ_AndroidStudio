@@ -289,7 +289,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // 程序的界面，这个界面是ZLAndroidWidget类
+        // 阅读界面，这个界面是ZLAndroidWidget类
         setContentView(R.layout.main);
         bindViews();
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
