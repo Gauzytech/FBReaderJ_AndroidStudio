@@ -214,11 +214,14 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	}
 
 	myModelReader.setMainTextModel();
+	// 向myKindStack属性加入FBTextKind.REGULAR (0)
 	myModelReader.pushKind(REGULAR);
 
 	//ZLLogger::Instance().registerClass("oeb");
 	XHTMLReader xhtmlReader(myModelReader, myEncryptionMap);
+	// 更新myHtmlFileNames属性
 	for (std::vector<std::string>::const_iterator it = myHtmlFileNames.begin(); it != myHtmlFileNames.end(); ++it) {
+		// 生成代表xhtml文件的ZLZipEntryFile类
 		const ZLFile xhtmlFile(myFilePrefix + *it);
 		if (it == myHtmlFileNames.begin()) {
 			if (myCoverFileName == xhtmlFile.path()) {
@@ -233,6 +236,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 		} else {
 			myModelReader.insertEndOfSectionParagraph();
 		}
+		// XHTMLReader类的readFile方法会开始对xhtml文件的解析
 		//ZLLogger::Instance().println("oeb", "start " + xhtmlFile.path());
 		if (!xhtmlReader.readFile(xhtmlFile, *it)) {
 			if (opfFile.exists() && !myEncryptionMap.isNull()) {

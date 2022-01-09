@@ -54,7 +54,9 @@ class XHTMLTagAction {
 public:
 	virtual ~XHTMLTagAction();
 
+	// 处理标签对的开始部分
 	virtual void doAtStart(XHTMLReader &reader, const char **xmlattributes) = 0;
+	// 处理标签对的结束部分
 	virtual void doAtEnd(XHTMLReader &reader) = 0;
 	virtual bool isEnabled(XHTMLReadingState state) = 0;
 

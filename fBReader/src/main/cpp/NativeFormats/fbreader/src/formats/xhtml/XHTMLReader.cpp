@@ -562,6 +562,8 @@ void XHTMLTagParagraphWithControlAction::doAtStart(XHTMLReader &reader, const ch
 	if (myControl == TITLE && bookReader(reader).model().bookTextModel()->paragraphsNumber() > 1) {
 		bookReader(reader).insertEndOfSectionParagraph();
 	}
+	// 在myKindStack属性中添加FBTextKind.H1 (31)
+	// 在myKindStack属性中已经有FBTextKind.REGULAR (0), 在OEBBookReader::readBook时加入
 	reader.pushTextKind(myControl);
 	beginParagraph(reader);
 }
@@ -615,6 +617,7 @@ XHTMLTagAction *XHTMLReader::getAction(const std::string &tag) {
 	return 0;
 }
 
+// 具体当前支持的标签
 void XHTMLReader::fillTagTable() {
 	if (ourTagActions.empty()) {
 		//addAction("html", new XHTMLTagAction());

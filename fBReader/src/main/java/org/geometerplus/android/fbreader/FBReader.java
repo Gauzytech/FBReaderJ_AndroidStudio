@@ -121,6 +121,7 @@ import java.util.List;
 import java.util.Map;
 
 import skin.support.SkinCompatManager;
+import timber.log.Timber;
 
 public final class FBReader extends FBReaderMainActivity implements ZLApplicationWindow {
 
@@ -291,6 +292,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
 
         // 阅读界面，这个界面是ZLAndroidWidget类
         setContentView(R.layout.main);
+        // findViewById
         bindViews();
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
 
@@ -304,6 +306,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         myBook = null;
 
         myFBReaderApp.setWindow(this);
+        // ZLApplication类的子类FBReaderApp类中的iniWindow方法将负责建立子线程并在主线程显示进度条
         myFBReaderApp.initWindow();
 
         myFBReaderApp.setExternalFileOpener(new ExternalFileOpener(this));
@@ -1175,6 +1178,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
     }
 
     private synchronized void openBook(Intent intent, final Runnable action, boolean force) {
+        Timber.i("ceshi123, 开始打开图书流程" + intent);
         if (!force && myBook != null) {
             return;
         }
@@ -1188,6 +1192,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             }
         }
         if (myBook != null) {
+            Timber.i("ceshi123, start fileByBook: " + myBook);
             ZLFile file = BookUtil.fileByBook(myBook);
             if (!file.exists()) {
                 if (file.getPhysicalFile() != null) {

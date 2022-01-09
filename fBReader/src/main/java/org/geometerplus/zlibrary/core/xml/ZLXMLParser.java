@@ -162,6 +162,7 @@ final class ZLXMLParser {
 			}
 		}
 
+		// stream参数为针对特定文件类的字节流类，最终会获得一个字符流类
 		myStreamReader = new InputStreamReader(stream, encoding);
 	}
 

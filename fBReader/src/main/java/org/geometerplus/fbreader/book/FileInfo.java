@@ -35,4 +35,13 @@ public final class FileInfo extends ZLTree<FileInfo> {
 		Name = name;
 		Id = id;
 	}
+
+	@Override
+	public String toString() {
+		return "FileInfo{" +
+				"Name='" + Name + '\'' +
+				", Id=" + Id +
+				", FileSize=" + FileSize +
+				'}';
+	}
 }

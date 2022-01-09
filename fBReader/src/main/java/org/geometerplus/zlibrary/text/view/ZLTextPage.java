@@ -73,6 +73,7 @@ final class ZLTextPage {
     }
 
     void moveStartCursor(ZLTextParagraphCursor cursor) {
+        // 对startCursor属性指向的ZLTextWordCursor类的属性进行赋值
         StartCursor.setCursor(cursor);
         EndCursor.reset();
         LineInfos.clear();

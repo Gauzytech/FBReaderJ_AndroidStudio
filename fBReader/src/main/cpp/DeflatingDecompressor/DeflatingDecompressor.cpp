@@ -69,6 +69,7 @@ jlong Java_org_amse_ys_zip_DeflatingDecompressor_inflate(JNIEnv *env, jobject th
 	stream->next_out = (Bytef*)outStart;
 	const int outLength = env->GetArrayLength(out);
 	stream->avail_out = outLength;
+	// 调用了zlib库的inflate方法，然后为zlib库里的inflate方法设置了参数
 	const int code = inflate(stream, Z_SYNC_FLUSH);
 	env->ReleaseByteArrayElements(in, inStart, 0);
 	env->ReleaseByteArrayElements(out, outStart, 0);

@@ -62,11 +62,17 @@ public final class ZLTextParagraphCursor {
 			ZLTextHyperlink hyperlink = null;
 
 			final ArrayList<ZLTextElement> elements = myElements;
+			// 这里会最终调用EntryIteratorImpl类的构造函数
 			for (ZLTextParagraph.EntryIterator it = myParagraph.iterator(); it.next(); ) {
 				switch (it.getType()) {
+					// 对于文本信息调用Processor类的processTextEntry方法
+					// 将ZLTextWord类加入ZLTextParagraphCursor类myElements属性指向的ArrayList
 					case ZLTextParagraph.Entry.TEXT:
 						processTextEntry(it.getTextData(), it.getTextOffset(), it.getTextLength(), hyperlink);
 						break;
+					// 对于标签信息
+					// 则直接将ZLTextControlElement类加入
+					// ZLTextParagraphCursor类myElements属性指向的ArrayList
 					case ZLTextParagraph.Entry.CONTROL:
 						if (hyperlink != null) {
 							hyperlinkDepth += it.getControlIsStart() ? 1 : -1;
@@ -74,7 +80,10 @@ public final class ZLTextParagraphCursor {
 								hyperlink = null;
 							}
 						}
-						elements.add(ZLTextControlElement.get(it.getControlKind(), it.getControlIsStart()));
+						elements.add(ZLTextControlElement.get(
+								it.getControlKind(), 		// 获取myControlKind属性, 代表标签种类
+								it.getControlIsStart())		// 获取myControlStart属性, 代表是标签对的开始还是结束标签
+						);
 						break;
 					case ZLTextParagraph.Entry.HYPERLINK_CONTROL:
 					{
@@ -149,6 +158,7 @@ public final class ZLTextParagraphCursor {
 				for (int index = 0; index < length; ++index) {
 					previousChar = ch;
 					ch = data[offset + index];
+					// 判断当前的char元素是否是空格
 					if (Character.isWhitespace(ch)) {
 						if (index > 0 && spaceState == NO_SPACE) {
 							addWord(data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
@@ -164,6 +174,7 @@ public final class ZLTextParagraphCursor {
 						}
 					} else {
 						switch (spaceState) {
+							// 空格
 							case SPACE:
 								//if (breaks[index - 1] == LineBreak.NOBREAK || previousChar == '-') {
 								//}
@@ -173,12 +184,19 @@ public final class ZLTextParagraphCursor {
 							case NON_BREAKABLE_SPACE:
 								wordStart = index;
 								break;
+								// 正常文本
 							case NO_SPACE:
 								if (index > 0 &&
 									breaks[index - 1] != LineBreaker.NOBREAK &&
 									previousChar != '-' &&
 									index != wordStart) {
-									addWord(data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
+									addWord(data,									 // char数组的引用
+											offset + wordStart,				 // 这个字在char数组中的偏移量
+											index - wordStart,					 // 此参数一直为1
+											myOffset + wordStart,	 // 这个字在该段落中的偏移量
+											hyperlink);								 // 代表超链接信息
+									// 将index赋值给wordStart
+									// 保证下次循环index - wordStart为1
 									wordStart = index;
 								}
 								break;
@@ -202,6 +220,7 @@ public final class ZLTextParagraphCursor {
 		}
 
 		private final void addWord(char[] data, int offset, int len, int paragraphOffset, ZLTextHyperlink hyperlink) {
+			// 初始化一个ZLTextWord类
 			ZLTextWord word = new ZLTextWord(data, offset, len, paragraphOffset);
 			for (int i = myFirstMark; i < myLastMark; ++i) {
 				final ZLTextMark mark = (ZLTextMark)myMarks.get(i);
@@ -212,6 +231,7 @@ public final class ZLTextParagraphCursor {
 			if (hyperlink != null) {
 				hyperlink.addElementIndex(myElements.size());
 			}
+			// 将新建的ZLTextWord类加入ZLTextParagraphCursor类myElement属性
 			myElements.add(word);
 		}
 	}

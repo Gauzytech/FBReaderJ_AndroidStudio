@@ -50,4 +50,11 @@ public final class Book extends AbstractBook {
 		}
 		return myPath.equals(((Book)o).myPath);
 	}
+
+	@Override
+	public String toString() {
+		return "Book{" +
+				"myPath='" + myPath + '\'' +
+				'}';
+	}
 }

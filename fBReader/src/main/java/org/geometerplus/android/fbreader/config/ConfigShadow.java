@@ -30,6 +30,8 @@ import org.geometerplus.zlibrary.core.options.Config;
 
 import org.geometerplus.android.fbreader.api.FBReaderIntents;
 
+import timber.log.Timber;
+
 public final class ConfigShadow extends Config implements ServiceConnection {
 	private final Context myContext;
 	private volatile ConfigInterface myInterface;
@@ -37,6 +39,7 @@ public final class ConfigShadow extends Config implements ServiceConnection {
 
 	private final BroadcastReceiver myReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
+			//Timber.i("ceshi123, config option changed " + intent);
 			try {
 				setToCache(
 					intent.getStringExtra("group"),

@@ -23,6 +23,8 @@ import android.content.Intent;
 
 import org.geometerplus.fbreader.book.*;
 
+import timber.log.Timber;
+
 public abstract class FBReaderIntents {
 	public static final String DEFAULT_PACKAGE = "org.geometerplus.zlibrary.ui.android";
 

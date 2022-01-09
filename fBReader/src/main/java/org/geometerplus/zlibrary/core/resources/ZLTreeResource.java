@@ -29,6 +29,9 @@ import org.geometerplus.zlibrary.core.filesystem.*;
 import org.geometerplus.zlibrary.core.language.Language;
 import org.geometerplus.zlibrary.core.util.XmlUtil;
 
+/**
+ * App自带资源解析类: assets/resources下的xml格式的资源文件集体
+ */
 final class ZLTreeResource extends ZLResource {
 	private static interface Condition {
 		abstract boolean accepts(int number);
@@ -125,6 +128,10 @@ final class ZLTreeResource extends ZLResource {
 	private HashMap<String,ZLTreeResource> myChildren;
 	private LinkedHashMap<Condition,String> myConditionalValues;
 
+	/**
+	 * 设置ourLanguag和our'Country两个属性
+	 * 设置assets/resourses/application这个资源文件夹中默认文件uk.xml
+	 */
 	static void buildTree() {
 		synchronized (ourLock) {
 			if (ourRoot == null) {
@@ -142,7 +149,9 @@ final class ZLTreeResource extends ZLResource {
 		final String country;
 		if (Language.SYSTEM_CODE.equals(custom)) {
 			final Locale locale = Locale.getDefault();
+			// 获取手机默认语言设置
 			language = locale.getLanguage();
+			// 获取手机默认区域设置
 			country = locale.getCountry();
 		} else {
 			final int index = custom.indexOf('_');
@@ -158,10 +167,14 @@ final class ZLTreeResource extends ZLResource {
 			(country != null && !country.equals(ourCountry))) {
 			ourLanguage = language;
 			ourCountry = country;
+			// 根据语言和区域设置设置去解析资源文件
 			loadData();
 		}
 	}
 
+	/**
+	 * 根据手机语言解析app资源文件
+	 */
 	private static void updateLanguage() {
 		final long timeStamp = System.currentTimeMillis();
 		if (timeStamp > ourTimeStamp + 1000) {
@@ -174,6 +187,9 @@ final class ZLTreeResource extends ZLResource {
 		}
 	}
 
+	/**
+	 * 读取assets/resources下的xml格式的资源文件集体
+	 */
 	private static void loadData(ResourceTreeReader reader, String fileName) {
 		reader.readDocument(ourRoot, ZLResourceFile.createResourceFile("resources/zlibrary/" + fileName));
 		reader.readDocument(ourRoot, ZLResourceFile.createResourceFile("resources/application/" + fileName));
@@ -221,6 +237,10 @@ final class ZLTreeResource extends ZLResource {
 		return myHasValue ? myValue : ZLMissingResource.Value;
 	}
 
+	/**
+	 * 这个方法其实就是一层一层找每个节点的子节点有没有想要的节点。
+	 * 其实，如果节点的名字都不重复的话，这里直接使用递归也是可以的
+	 */
 	@Override
 	public ZLResource getResource(String key) {
 		final HashMap<String,ZLTreeResource> children = myChildren;
@@ -243,13 +263,28 @@ final class ZLTreeResource extends ZLResource {
 			XmlUtil.parseQuietly(file, this);
 		}
 
+		/**
+		 eg: <node name="waitMessage">
+				 <node name="translating" value="Translation in progress…" toBeTranslated="true"/>
+				 <node name="tryConnect" value="Trying to connect. Please wait…" toBeTranslated="true"/>
+				 <node name="downloadingBook" value="正下載 %s"/>
+				 <node name="search" value="搜尋中，請稍候 …"/>
+				 <node name="loadInfo" value="Loading information. Please wait…" toBeTranslated="true"/>
+				 <node name="loadingBook" value="打開書藉中，請稍候…"/>
+				 <node name="loadingBookList" value="打開書庫中，請稍候…"/>
+		     </node>
+
+		 代码读取到waitMessage节点开始标签右边的“>”时候，会触发ResourceTreeReader类中的startElementHandler方法
+		 */
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 			final ArrayList<ZLTreeResource> stack = myStack;
 			if (!stack.isEmpty() && (NODE.equals(localName))) {
+				// name代表waitMessage节点的name属性
 				final String name = attributes.getValue("name");
 				final String condition = attributes.getValue("condition");
 				final String value = attributes.getValue("value");
+				// peek代表根节点
 				final ZLTreeResource peek = stack.get(stack.size() - 1);
 				if (name != null) {
 					ZLTreeResource node;
@@ -257,12 +292,15 @@ final class ZLTreeResource extends ZLResource {
 					if (children == null) {
 						node = null;
 						children = new HashMap<String,ZLTreeResource>();
+						// 给"根节点"加入一个空的子节点
 						peek.myChildren = children;
 					} else {
 						node = children.get(name);
 					}
 					if (node == null) {
+						// 代表waitMessage的节点
 						node = new ZLTreeResource(name, value);
+						// 相当于waitMessage节点代替了空的子节点，成为了根节点的子节点了
 						children.put(name, node);
 					} else {
 						if (value != null) {
@@ -270,6 +308,7 @@ final class ZLTreeResource extends ZLResource {
 							node.myConditionalValues = null;
 						}
 					}
+					// 将代表waitMessage节点的node加入了myStack变量所指向ArrayList里面
 					stack.add(node);
 				} else if (condition != null && value != null) {
 					final Condition compiled = parseCondition(condition);
@@ -284,6 +323,9 @@ final class ZLTreeResource extends ZLResource {
 			}
 		}
 
+		/**
+		 * 程序会读到代表translating节点结束标签里的“/”，于是ResourceTreeReader类中的endElementHandler方法被调用
+		 */
 		@Override
 		public void endElement(String uri, String localName, String qName) throws SAXException {
 			final ArrayList<ZLTreeResource> stack = myStack;

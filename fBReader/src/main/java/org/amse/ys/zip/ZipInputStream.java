@@ -11,6 +11,7 @@ class ZipInputStream extends InputStream {
 	public ZipInputStream(ZipFile parent, LocalFileHeader header) throws IOException {
 		myParent = parent;
 		myBaseStream = parent.getBaseStream();
+		// 通过LocalFileHeader类中的DataOffset将epub文件的字节流定位到内部xml文件开始的位置
 		myBaseStream.setPosition(header.DataOffset);
 		myDecompressor = Decompressor.init(myBaseStream, header);
 	}

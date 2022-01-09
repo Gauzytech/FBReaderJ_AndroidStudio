@@ -94,6 +94,7 @@ public class LibraryService extends Service {
                 MOVE_SELF | MOVED_TO | MOVED_FROM | DELETE_SELF | DELETE | CLOSE_WRITE | ATTRIB;
 
         private final String myPrefix;
+        // 数据库操作类
         private final BookCollection myCollection;
 
         public Observer(String path, BookCollection collection) {
@@ -236,6 +237,7 @@ public class LibraryService extends Service {
         }
 
         public String getRecentBook(int index) {
+            // 从数据库中获得recent book, 并将图书信息转化成xml string通过AIDL传递
             return SerializerUtil.serialize(myCollection.getRecentBook(index));
         }
 

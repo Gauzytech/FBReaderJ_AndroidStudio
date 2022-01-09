@@ -75,6 +75,9 @@ public class PluginCollection implements IFormatPluginCollection {
 
 	public FormatPlugin getPlugin(ZLFile file) {
 		final FileType fileType = FileTypeCollection.Instance.typeForFile(file);
+		// 比较了Book类中File属性指向的File类的myExtension属性，
+		// 如果myExtension属性代码内置的变量相同，getPlugin方法就会返回当前的FormatPlugin抽象类子类。
+		// 而在处理epub文件时，代码会返回OEBPlugin类
 		final FormatPlugin plugin = getPlugin(fileType);
 		if (plugin instanceof ExternalFormatPlugin) {
 			return file == file.getPhysicalFile() ? plugin : null;

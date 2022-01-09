@@ -22,6 +22,9 @@ package org.geometerplus.zlibrary.core.filesystem;
 import java.util.*;
 import java.io.*;
 
+/**
+ *  ZLPhysicalFile类专门用来处理普通文件，epub文件就可以用一个ZLPhysicalFile类来代表
+ */
 public final class ZLPhysicalFile extends ZLFile {
 	private final File myFile;
 

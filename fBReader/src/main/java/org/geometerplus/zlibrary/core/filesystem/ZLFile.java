@@ -27,6 +27,8 @@ import org.geometerplus.zlibrary.core.drm.FileEncryptionInfo;
 import org.geometerplus.zlibrary.core.drm.embedding.EmbeddingInputStream;
 import org.geometerplus.zlibrary.core.util.InputStreamHolder;
 
+import timber.log.Timber;
+
 public abstract class ZLFile implements InputStreamHolder {
 	private final static HashMap<String,ZLFile> ourCachedFiles = new HashMap<String,ZLFile>();
 
@@ -90,12 +92,17 @@ public abstract class ZLFile implements InputStreamHolder {
 			} else {
 				return new ZLPhysicalFile(name);
 			}
+			// epub文件会由一个ZLPhysicalFile文件类来代表
+			// 这个ZLPhysicalFile类的getParent不会返回null
 		} else if (parent instanceof ZLPhysicalFile && (parent.getParent() == null)) {
 			// parent is a directory
 			file = new ZLPhysicalFile(parent.getPath() + '/' + name);
 		} else if (parent instanceof ZLResourceFile) {
 			file = ZLResourceFile.createResourceFile((ZLResourceFile)parent, name);
 		} else {
+			// 返回一个ZLZipEntryFile类
+			// parent参数指向的ZLPhysicalFile类代表epub文件
+			// name参数指向的string代表epub内部xml文件的名字
 			file = ZLArchiveEntryFile.createArchiveEntryFile(parent, name);
 		}
 
@@ -119,6 +126,7 @@ public abstract class ZLFile implements InputStreamHolder {
 		if (path == null) {
 			return null;
 		}
+		Timber.i("ceshi123, path = " + path);
 		ZLFile cached = ourCachedFiles.get(path);
 		if (cached != null) {
 			return cached;

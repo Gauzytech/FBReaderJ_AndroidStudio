@@ -31,6 +31,7 @@ class ContainerFileReader extends ZLXMLReaderAdapter {
 	@Override
 	public boolean startElementHandler(String tag, ZLStringMap xmlattributes) {
 		if ("rootfile".equalsIgnoreCase(tag)) {
+			// 获取xml文件的full-path属性
 			myRootPath = xmlattributes.getValue("full-path");
 			if (myRootPath != null) {
 				return true;

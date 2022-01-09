@@ -23,12 +23,15 @@ import org.geometerplus.zlibrary.core.application.ZLApplication;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.util.ZLColor;
-import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
-
+import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.text.model.ZLTextMetrics;
+import org.geometerplus.zlibrary.text.view.style.ZLTextExplicitlyDecoratedStyle;
+import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyle;
+import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyleDescription;
+import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
 
-import org.geometerplus.zlibrary.text.view.style.*;
+import timber.log.Timber;
 
 abstract class ZLTextViewBase extends ZLView {
 
@@ -121,13 +124,16 @@ abstract class ZLTextViewBase extends ZLView {
 
     final void setTextStyle(ZLTextStyle style) {
         if (myTextStyle != style) {
+            // ZLTextViewBase类的myTextStyle属性将指向代表基本样式的ZLTextBaseStyle类
             myTextStyle = style;
             myWordHeight = -1;
         }
+        // 字体相关的样式被存储到ZLTextViewBase类的context属性中
         getContext().setFont(style.getFontEntries(), style.getFontSize(metrics()), style.isBold(), style.isItalic(), style.isUnderline(), style.isStrikeThrough());
     }
 
     final void resetTextStyle() {
+        // getBaseStyle方法将获取代表基本样式的ZLTextBaseStyle类
         setTextStyle(getTextStyleCollection().getBaseStyle());
     }
 
@@ -164,6 +170,7 @@ abstract class ZLTextViewBase extends ZLView {
         } else if (element instanceof ZLTextStyleElement) {
             applyStyle((ZLTextStyleElement) element);
         } else if (element instanceof ZLTextControlElement) {
+            // 如果读到代表标签信息的ZLTextControlElement类，就获取标签对应的样式
             applyControl((ZLTextControlElement) element);
         }
     }
@@ -175,15 +182,24 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     private void applyControl(ZLTextControlElement control) {
+        // 判断是否是标签对的起始部分
         if (control.IsStart) {
+            // 如果是超链接的style
             final ZLTextHyperlink hyperlink = control instanceof ZLTextHyperlinkControlElement
                     ? ((ZLTextHyperlinkControlElement) control).Hyperlink : null;
+            // 非base style, 取出标签样式
+            // kind属性在FBTextKind接口中定义
             final ZLTextNGStyleDescription description =
                     getTextStyleCollection().getDescription(control.Kind);
+            Timber.v("ceshi123, description: " + description);
+            // 设置标签样式，覆盖base样式
             if (description != null) {
+                // 应用标签style
                 setTextStyle(new ZLTextNGStyle(myTextStyle, description, hyperlink));
             }
         } else {
+            // 标签对结束部分, 就将样式还原
+            // 还原的样式就是层级结构的上一层: parent
             setTextStyle(myTextStyle.Parent);
         }
     }

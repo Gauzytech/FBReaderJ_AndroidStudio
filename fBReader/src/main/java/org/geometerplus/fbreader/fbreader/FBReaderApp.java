@@ -39,6 +39,8 @@ import org.geometerplus.fbreader.formats.*;
 import org.geometerplus.fbreader.network.sync.SyncData;
 import org.geometerplus.fbreader.util.*;
 
+import timber.log.Timber;
+
 public final class FBReaderApp extends ZLApplication {
 
     public final MiscOptions MiscOptions = new MiscOptions();
@@ -143,10 +145,11 @@ public final class FBReaderApp extends ZLApplication {
         if (info == null) {
             return null;
         }
-
+        Timber.i("ceshi123, 获得图书基本信息: " + info);
         for (String hash : info.Hashes) {
             final Book book = Collection.getBookByHash(hash);
             if (book != null) {
+                Timber.i("ceshi123, 获得图书解析信息: " + book);
                 return book;
             }
         }
@@ -156,7 +159,11 @@ public final class FBReaderApp extends ZLApplication {
         return null;
     }
 
+    /**
+     * 打开图书
+     */
     public void openBook(Book book, final Bookmark bookmark, Runnable postAction, Notifier notifier) {
+        Timber.i("ceshi123, 打开图书");
         if (Model != null) {
             if (book == null || bookmark == null && Collection.sameBook(book, Model.Book)) {
                 return;
@@ -448,7 +455,7 @@ public final class FBReaderApp extends ZLApplication {
     }
 
     /**
-     * 打开书
+     * 打开书, 解析epub文件
      *
      * @param book     图书对象
      * @param bookmark 书签
@@ -502,6 +509,8 @@ public final class FBReaderApp extends ZLApplication {
             Model = BookModel.createModel(book, plugin);
             Collection.saveBook(book);
             ZLTextHyphenator.Instance().load(book.getLanguage());
+            // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
+            // 并且moveStartCursor
             BookTextView.setModel(Model.getTextModel());
             gotoStoredPosition();
             setBookMarkHighlighting(BookTextView, null);
@@ -528,6 +537,7 @@ public final class FBReaderApp extends ZLApplication {
         }
 
         getViewWidget().reset();
+        // 触发ZLAndroidWidget类的onDraw方法
         getViewWidget().repaint();
 
         for (FileEncryptionInfo info : plugin.readEncryptionInfos(book)) {

@@ -39,6 +39,8 @@ import org.geometerplus.fbreader.book.*;
 
 import org.geometerplus.android.util.SQLiteUtil;
 
+import timber.log.Timber;
+
 final class SQLiteBooksDatabase extends BooksDatabase {
     private final SQLiteDatabase myDatabase;
     private final HashMap<String, SQLiteStatement> myStatements =
@@ -151,6 +153,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
     }
 
     private void createTables() {
+        // Books table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS Books(" +
                         "book_id INTEGER PRIMARY KEY," +
@@ -158,12 +161,14 @@ final class SQLiteBooksDatabase extends BooksDatabase {
                         "language TEXT," +
                         "title TEXT NOT NULL," +
                         "file_name TEXT UNIQUE NOT NULL)");
+        // Authors table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS Authors(" +
                         "author_id INTEGER PRIMARY KEY," +
                         "name TEXT NOT NULL," +
                         "sort_key TEXT NOT NULL," +
                         "CONSTRAINT Authors_Unique UNIQUE (name, sort_key))");
+        // BookAuthor table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS BookAuthor(" +
                         "author_id INTEGER NOT NULL REFERENCES Authors(author_id)," +
@@ -171,21 +176,25 @@ final class SQLiteBooksDatabase extends BooksDatabase {
                         "author_index INTEGER NOT NULL," +
                         "CONSTRAINT BookAuthor_Unique0 UNIQUE (author_id, book_id)," +
                         "CONSTRAINT BookAuthor_Unique1 UNIQUE (book_id, author_index))");
+        // Series table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS Series(" +
                         "series_id INTEGER PRIMARY KEY," +
                         "name TEXT UNIQUE NOT NULL)");
+        // BookSeries table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS BookSeries(" +
                         "series_id INTEGER NOT NULL REFERENCES Series(series_id)," +
                         "book_id INTEGER NOT NULL UNIQUE REFERENCES Books(book_id)," +
                         "book_index INTEGER)");
+        // Tags table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS Tags(" +
                         "tag_id INTEGER PRIMARY KEY," +
                         "name TEXT NOT NULL," +
                         "parent INTEGER REFERENCES Tags(tag_id)," +
                         "CONSTRAINT Tags_Unique UNIQUE (name, parent))");
+        // BookTag table
         myDatabase.execSQL(
                 "CREATE TABLE IF NOT EXISTS BookTag(" +
                         "tag_id INTEGER REFERENCES Tags(tag_id)," +
@@ -1420,6 +1429,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 
     @Override
     protected List<Long> loadRecentBookIds(int event, int limit) {
+        Timber.i("ceshi123, 数据库操作 event = " + event);
         final Cursor cursor = myDatabase.rawQuery(
                 "SELECT book_id FROM BookHistory WHERE event=? GROUP BY book_id ORDER BY timestamp DESC LIMIT ?",
                 new String[]{String.valueOf(event), String.valueOf(limit)}

@@ -29,14 +29,18 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	private final String myId;
 	private final String myLanguage;
 
+	// 记录了每个段落具体在CachedCharStorage类内部的哪一个char数组里面
 	private int[] myStartEntryIndices;
+	// 记录了每个段落从CachedCharStorage类内部char数组的哪个位置开始
 	private int[] myStartEntryOffsets;
+	// 记录每个段落在CachedCharStorage类内部char数组中占据多少长度；
 	private int[] myParagraphLengths;
 	private int[] myTextSizes;
 	private byte[] myParagraphKinds;
 
 	private int myParagraphsNumber;
 
+	// 实际存储文本信息与标签信息的地方
 	private final CachedCharStorage myStorage;
 	private final Map<String,ZLImage> myImageMap;
 
@@ -143,10 +147,12 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 			}
 
 			int dataOffset = myDataOffset;
+			// 获取对应需要显示的段落的char数组
 			char[] data = myStorage.block(myDataIndex);
 			if (data == null) {
 				return false;
 			}
+			// 如果char数组d 内容读完了，自动获取下一个char数组内容
 			if (dataOffset >= data.length) {
 				data = myStorage.block(++myDataIndex);
 				if (data == null) {
@@ -168,21 +174,27 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 			myType = type;
 			++dataOffset;
 			switch (type) {
+				// 处理文本信息
 				case ZLTextParagraph.Entry.TEXT:
 				{
+					// 记录文本信息的长度
 					int textLength = (int)data[dataOffset++];
 					textLength += (((int)data[dataOffset++]) << 16);
 					textLength = Math.min(textLength, data.length - dataOffset);
 					myTextLength = textLength;
+					// 存数当前char数组的引用
 					myTextData = data;
 					myTextOffset = dataOffset;
+					// 向前跳过char数组中涉及这段文本信息的部分
 					dataOffset += textLength;
 					break;
 				}
+				// 处理标签信息
 				case ZLTextParagraph.Entry.CONTROL:
 				{
 					short kind = (short)data[dataOffset++];
 					myControlKind = (byte)kind;
+					// 标记: 开始标签还是结束标签
 					myControlIsStart = (kind & 0x0100) == 0x0100;
 					myHyperlinkType = 0;
 					break;

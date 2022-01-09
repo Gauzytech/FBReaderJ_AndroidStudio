@@ -74,6 +74,7 @@ abstract public class ZLResource {
 			return ZLMissingResource.Instance;
 		}
 		try {
+			// 对根节点调用getResource方法，开始寻找匹配节点
 			return ZLTreeResource.ourRoot.getResource(key);
 		} finally {
 		}

@@ -21,6 +21,9 @@ package org.geometerplus.fbreader.book;
 
 import java.util.*;
 
+/**
+ * 将返回数据转换成xml string, 因为AIDL不支持直接object传递
+ */
 public abstract class SerializerUtil {
 	private SerializerUtil() {
 	}

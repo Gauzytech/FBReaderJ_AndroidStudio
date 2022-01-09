@@ -84,11 +84,16 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 			return oebFile;
 		}
 
+		// 第一步
+		// 这个方法的参数oebFile参数是Book类的File属性, 最终这个方法会返回一个代表container.xml文件的ZLZipEntryFile类。
+		// 这个文件的作用就是“标明了.opf文件的位置”
 		final ZLFile containerInfoFile = ZLFile.createFile(oebFile, "META-INF/container.xml");
 		if (containerInfoFile.exists()) {
+			// 第二步
 			final ContainerFileReader reader = new ContainerFileReader();
 			reader.readQuietly(containerInfoFile);
 			final String opfPath = reader.getRootPath();
+			// 通过rootPath获得opf文件
 			if (opfPath != null) {
 				return ZLFile.createFile(oebFile, opfPath);
 			}

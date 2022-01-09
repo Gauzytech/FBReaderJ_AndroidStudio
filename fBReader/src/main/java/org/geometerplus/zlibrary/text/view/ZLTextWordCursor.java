@@ -47,8 +47,11 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	}
 
 	public void setCursor(ZLTextParagraphCursor paragraphCursor) {
+		// 代表当前需要显示的段落的ZLTextParagraphCursor类
 		myParagraphCursor = paragraphCursor;
+		// 从当前段落的第一个字开始
 		myElementIndex = 0;
+		// 针对英文单词中的字母, 从第一个字母开始
 		myCharIndex = 0;
 	}
 
@@ -81,6 +84,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 
 	@Override
 	public int getElementIndex() {
+		// 从myElementIndex属性中获取上一行最后一个字的位置
 		return myElementIndex;
 	}
 
@@ -185,6 +189,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 					myElementIndex = size;
 					myCharIndex = 0;
 				} else {
+					// 将代表上一行最后一个字位置的wordIndex赋值给myElementIndex
 					myElementIndex = wordIndex;
 					setCharIndex(charIndex);
 				}

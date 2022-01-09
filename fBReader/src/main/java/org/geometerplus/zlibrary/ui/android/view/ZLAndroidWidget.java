@@ -316,6 +316,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
         final ZLAndroidPaintContext context = new ZLAndroidPaintContext(
                 mySystemInfo,
+                // 以bitmap类为参数创建一个Canvas类
+                // 代码通过Canvas类对bitmap类进行操作
                 new Canvas(bitmap),
                 new ZLAndroidPaintContext.Geometry(
                         getWidth(),
@@ -391,7 +393,9 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             // 绘制边框
             canvas.drawRect(0, 0, getWidth(), getHeight(), borderPaint);
         }
+        // 获取内容的bitmap
         Bitmap bitmap = myBitmapManager.getBitmap(ZLView.PageIndex.current);
+        // 将bitmap类所代表的的画布会被显示在屏幕上
         canvas.drawBitmap(bitmap, 0, 0, myPaint);
         if (isPreview) {
             canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.next), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
@@ -498,6 +502,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         super.onDraw(canvas);
 
         myBitmapManager.setSize(getWidth(), getMainAreaHeight());
+        // 判断程序是否处在翻页动画中
         if (getAnimationProvider().inProgress()) {
             onDrawInScrolling(canvas);
         } else {

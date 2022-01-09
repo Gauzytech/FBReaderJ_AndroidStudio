@@ -31,6 +31,11 @@ import org.geometerplus.zlibrary.text.view.ZLTextPosition;
 
 import org.geometerplus.fbreader.formats.*;
 
+import timber.log.Timber;
+
+/**
+ * 本地数据库图书信息操作类
+ */
 public class BookCollection extends AbstractBookCollection<DbBook> {
     private static final String ZERO_HASH = String.format("%040d", 0);
     private final static String DEFAULT_STYLE_ID_KEY = "defaultStyle";
@@ -145,6 +150,9 @@ public class BookCollection extends AbstractBookCollection<DbBook> {
         return bookList;
     }
 
+    /**
+     * 从数据库中获得recent book
+     */
     public DbBook getRecentBook(int index) {
         final List<Long> recentIds = myDatabase.loadRecentBookIds(BooksDatabase.HistoryEvent.Opened, index + 1);
         return recentIds.size() > index ? getBookById(recentIds.get(index)) : null;
@@ -160,6 +168,9 @@ public class BookCollection extends AbstractBookCollection<DbBook> {
         fireBookEvent(BookEvent.Updated, book);
     }
 
+    /**
+     * 通过IO获得本地图书, 并存入数据库
+     */
     public DbBook getBookByFile(String path) {
         return getBookByFile(ZLFile.createFileByPath(path));
     }
@@ -176,7 +187,7 @@ public class BookCollection extends AbstractBookCollection<DbBook> {
         if (plugin == null || !isFormatActive(plugin)) {
             return null;
         }
-
+        Timber.v("ceshi123, " + bookFile.toString() + " plugin: " + plugin.getClass().getSimpleName() + " " + plugin.name());
         try {
             bookFile = plugin.realBookFile(bookFile);
         } catch (BookReadingException e) {

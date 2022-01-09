@@ -88,6 +88,7 @@ final class BitmapManagerImpl implements BitmapManager {
         // 如果该位置的Bitmap为null就创建一个
         if (myBitmaps[iIndex] == null) {
             try {
+                // 新建一个bitmap类，相当于新建一个新的画布
                 myBitmaps[iIndex] = Bitmap.createBitmap(myWidth, myHeight, Bitmap.Config.RGB_565);
             } catch (OutOfMemoryError e) {
                 // 内存溢出后，调用gc，再创建

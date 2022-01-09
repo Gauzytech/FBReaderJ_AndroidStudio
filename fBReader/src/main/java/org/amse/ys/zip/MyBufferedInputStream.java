@@ -14,6 +14,7 @@ final class MyBufferedInputStream extends InputStream {
 
 	public MyBufferedInputStream(InputStreamHolder streamHolder, int bufferSize) throws IOException {
 		myStreamHolder = streamHolder;
+		// 此处FileInputStream类付给了myFileInputStream属性
 		myFileInputStream = streamHolder.getInputStream();
 		myBuffer = new byte[bufferSize];
 		myBytesReady = 0;
@@ -60,6 +61,7 @@ final class MyBufferedInputStream extends InputStream {
 		myCurrentPosition++;
 		if (myBytesReady <= 0) {
 			myPositionInBuffer = 0;
+			// 将epub文件的字节流转换成字节数组, 存储在myBuffer变量中
 			myBytesReady = myFileInputStream.read(myBuffer);
 			if (myBytesReady <= 0) {
 				return -1;

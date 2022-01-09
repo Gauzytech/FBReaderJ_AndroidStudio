@@ -7,6 +7,10 @@ package org.amse.ys.zip;
 
 import java.io.IOException;
 
+/**
+ * 记录了epub文件内部的xml文件具体从epub文件字节流哪个位置开始
+ * 压缩状态下占据多少字节以及解压状态下占据多少字节
+ */
 public class LocalFileHeader {
 	static final int FILE_HEADER_SIGNATURE = 0x04034b50;
 	static final int FOLDER_HEADER_SIGNATURE = 0x02014b50;
@@ -21,12 +25,15 @@ public class LocalFileHeader {
 	int ModificationTime;
 	int ModificationDate;
 	int CRC32;
+	// 这个属性记录了这个xml文件在压缩状态下在字节流中占据了多少字节
 	int CompressedSize;
+	// 这个属性记录了xml文件在解压状态下会占据多少字节
 	int UncompressedSize;
 	int NameLength;
 	int ExtraLength;
 
 	public String FileName;
+	// 这个属性记录了epub内部xml文件代表了从字节流的哪个位置开始
 	int DataOffset;
 
 	LocalFileHeader() {

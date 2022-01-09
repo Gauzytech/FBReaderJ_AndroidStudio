@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public final class CachedCharStorage {
+	// char数组里面的元素就代表这.xhtml的文本信息与标签信息
+	// 每个char[]称为block
 	protected final ArrayList<WeakReference<char[]>> myArray =
 		new ArrayList<WeakReference<char[]>>();
 
@@ -73,6 +75,8 @@ public final class CachedCharStorage {
 			return null;
 		}
 		char[] block = myArray.get(index).get();
+		// 如果当前内存中的char数组不包含需要显示的段落
+		// 就从已经持久化的char数组中需找对应的那一个，读入内存
 		if (block == null) {
 			try {
 				File file = new File(fileName(index));
@@ -86,6 +90,7 @@ public final class CachedCharStorage {
 						new FileInputStream(file),
 						"UTF-16LE"
 					);
+				// 将指定的已经持久化的char数组读入内存
 				final int rd = reader.read(block);
 				if (rd != block.length) {
 					throw new CachedCharStorageException(exceptionMessage(index, "; " + rd + " != " + block.length));

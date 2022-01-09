@@ -24,6 +24,9 @@ import java.util.*;
 
 import org.amse.ys.zip.*;
 
+/**
+ * ZLZipEntryFile类用来处理epub文件内部的xml文件
+ */
 final class ZLZipEntryFile extends ZLArchiveEntryFile {
 	static List<ZLFile> archiveEntries(ZLFile archive) {
 		try {
@@ -43,6 +46,10 @@ final class ZLZipEntryFile extends ZLArchiveEntryFile {
 
 	private static HashMap<ZLFile,ZipFile> ourZipFileMap = new HashMap<ZLFile,ZipFile>();
 
+	/**
+	 * @param file 一个代表epub文件的ZLPhysicalFile类
+	 * @return 返回一个ZipFile类
+	 */
 	private static ZipFile getZipFile(final ZLFile file) throws IOException {
 		synchronized (ourZipFileMap) {
 			ZipFile zf = file.isCached() ? ourZipFileMap.get(file) : null;

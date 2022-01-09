@@ -27,6 +27,9 @@ import org.fbreader.util.Boolean3;
 import org.geometerplus.zlibrary.core.options.ZLStringOption;
 import org.geometerplus.zlibrary.text.model.*;
 
+/**
+ * 标签样式，会覆盖base节点样式
+ */
 public class ZLTextNGStyleDescription {
 	public final String Name;
 
@@ -46,12 +49,13 @@ public class ZLTextNGStyleDescription {
 	public final ZLStringOption LineHeightOption;
 
 	private static ZLStringOption createOption(String selector, String name, Map<String,String> valueMap) {
+		// Style代表标签样式
 		return new ZLStringOption("Style", selector + "::" + name, valueMap.get(name));
 	}
 
 	ZLTextNGStyleDescription(String selector, Map<String,String> valueMap) {
 		Name = valueMap.get("fbreader-name");
-
+		// 标签内属性都会被一一赋值给ZLTextNGStyleDescription类的各个属性
 		FontFamilyOption = createOption(selector, "font-family", valueMap);
 		FontSizeOption = createOption(selector, "font-size", valueMap);
 		FontWeightOption = createOption(selector, "font-weight", valueMap);

@@ -25,6 +25,8 @@ import org.fbreader.util.Pair;
 
 import org.geometerplus.zlibrary.core.filesystem.*;
 
+import timber.log.Timber;
+
 public final class FileInfoSet {
 	private final HashMap<ZLFile,FileInfo> myInfosByFile = new HashMap<ZLFile,FileInfo>();
 	private final HashMap<FileInfo,ZLFile> myFilesByInfo = new HashMap<FileInfo,ZLFile>();
@@ -149,6 +151,7 @@ public final class FileInfoSet {
 		if (info == null) {
 			return null;
 		}
+		Timber.v("ceshi123, " + info.toString());
 		ZLFile file = myFilesByInfo.get(info);
 		if (file == null) {
 			file = ZLFile.createFile(getFile(info.Parent), info.Name);

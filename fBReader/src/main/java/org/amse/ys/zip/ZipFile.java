@@ -5,6 +5,16 @@ import java.util.*;
 
 import org.geometerplus.zlibrary.core.util.InputStreamHolder;
 
+/**
+ * zip文件内部的文件和文件夹会有一个头信息（Header）。头信息（Header）由特定的标示符描述，文件的标示符是0x04034b50，文件夹的标示符是0x02014b50。
+ *
+ * 紧跟在头信息之后的是文件或文件夹的元信息。元信息中包括“压缩状态下大小”（Compressed size）、
+ * “解压缩状态下大小”（Uncompressed size）、和“文件名”（FileName）等信息。
+ * 而我们可以通过读取epub文件的字节流得到epub文件内部每个xml文件的元信息。
+ *
+ * 有了这些元信息之后，当我们需要解析zip文件内部中某一个xml文件时，然后我们可以利用jni调用c语言写的zlib库，
+ * 将epub文件内部xml文件对应的部分解压成可以正常解析的xml文件字节流。
+ */
 public final class ZipFile {
 	private final static Comparator<String> ourIgnoreCaseComparator = new Comparator<String>() {
 		@Override
@@ -55,6 +65,7 @@ public final class ZipFile {
 			return false;
 		}
 		if (header.FileName != null) {
+			// 创建出来的LocalFileHeader类会被加入到myFileHeaders属性TreeMap
 			myFileHeaders.put(header.FileName, header);
 			if (header.FileName.equalsIgnoreCase(fileToFind)) {
 				return true;

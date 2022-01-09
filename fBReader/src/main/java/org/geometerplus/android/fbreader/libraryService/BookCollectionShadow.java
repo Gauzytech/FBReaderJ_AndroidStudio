@@ -35,6 +35,11 @@ import org.geometerplus.fbreader.book.*;
 
 import org.geometerplus.android.fbreader.api.FBReaderIntents;
 
+import timber.log.Timber;
+
+/**
+ * LibraryService操作
+ */
 public class BookCollectionShadow extends AbstractBookCollection<Book> implements ServiceConnection {
 
     private volatile Context myContext;
@@ -176,6 +181,7 @@ public class BookCollectionShadow extends AbstractBookCollection<Book> implement
     }
 
     public synchronized Book getRecentBook(int index) {
+        Timber.i("ceshi123, getRecentBook");
         if (myInterface == null) {
             return null;
         }

@@ -41,6 +41,8 @@ public class ZLTextStyleCollection {
 			new ArrayList<ZLTextNGStyleDescription>(descriptions.values())
 		);
 		for (Map.Entry<Integer,ZLTextNGStyleDescription> entry : descriptions.entrySet()) {
+			// 将新建的ZLTextNGStyleDescription类以id属性为键名加入
+			// myDescriptionMap属性指向的数组
 			myDescriptionMap[entry.getKey() & 0xFF] = entry.getValue();
 		}
 		XmlUtil.parseQuietly(
@@ -75,6 +77,8 @@ public class ZLTextStyleCollection {
 
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+			// 读取到base标签
+			// 新建ZLTextBaseStyle类代表基本的字体样式
 			if ("base".equals(localName) && Screen.equals(attributes.getValue("screen"))) {
 				myBaseStyle = new ZLTextBaseStyle(
 					Screen,

@@ -120,6 +120,10 @@ class DeflatingDecompressor extends Decompressor {
 			if (myInBufferLength == 0) {
 				myInBufferOffset = 0;
 				final int toRead = (myCompressedAvailable < IN_BUFFER_SIZE) ? myCompressedAvailable : IN_BUFFER_SIZE;
+				// myStream属性所指向的epub文件字节流
+				// 已经在ZipInputStream类的构造函数中被定位到了内部xml文件开始的位置
+				// read方法会从内部xml文件开始的位置开始读取
+				// 把xml文件压缩状态下所占用的字节数全部读取出来
 				myInBufferLength = myStream.read(myInBuffer, 0, toRead);
 				if (myInBufferLength < toRead) {
 					myCompressedAvailable = 0;
@@ -130,6 +134,11 @@ class DeflatingDecompressor extends Decompressor {
 			if (myInBufferLength <= 0) {
 				break;
 			}
+			// 通过jni调用c++的inflate方法
+			// myInBuffer: 代表内部xml文件压缩状态下字节流转换成的byte数组
+			// myInBufferOffset: 0
+			// myInBufferLength: 代表内部xml文件压缩状态下字节流转换成的byte数组长度
+			// myOutBuffer: 存放内部xml文件解压状态下字节流的byte数组
 			final long result = inflate(myInflatorId, myInBuffer, myInBufferOffset, myInBufferLength, myOutBuffer);
 			if (result <= 0) {
 				final StringBuilder extraInfo = new StringBuilder()

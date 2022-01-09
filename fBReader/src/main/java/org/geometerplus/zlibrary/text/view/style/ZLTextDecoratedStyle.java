@@ -53,6 +53,7 @@ public abstract class ZLTextDecoratedStyle extends ZLTextStyle {
 
 	protected ZLTextDecoratedStyle(ZLTextStyle base, ZLTextHyperlink hyperlink) {
 		super(base, (hyperlink != null) ? hyperlink : base.Hyperlink);
+		// 缓存上一层级的base style
 		BaseStyle = base instanceof ZLTextBaseStyle
 			? (ZLTextBaseStyle)base
 			: ((ZLTextDecoratedStyle)base).BaseStyle;

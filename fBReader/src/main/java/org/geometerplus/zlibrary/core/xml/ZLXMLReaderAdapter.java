@@ -45,6 +45,10 @@ public abstract class ZLXMLReaderAdapter implements ZLXMLReader {
 		}
 	}
 
+	/**
+	 * 读取文件
+	 * @param file ZLFile
+	 */
  	public void read(ZLFile file) throws IOException {
 		ZLXMLProcessor.read(this, file);
 	}
