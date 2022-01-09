@@ -35,6 +35,8 @@ import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.formats.fb2.FB2NativePlugin;
 import org.geometerplus.fbreader.formats.oeb.OEBNativePlugin;
 
+import timber.log.Timber;
+
 public class NativeFormatPlugin extends BuiltinFormatPlugin {
 	private static final Object ourNativeLock = new Object();
 
@@ -108,6 +110,7 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 		final int code;
 		final String tempDirectory = SystemInfo.tempDirectory();
 		synchronized (ourNativeLock) {
+			Timber.v("ceshi123， 开始通过cpp进行解析操作");
 			code = readModelNative(model, tempDirectory);
 		}
 		switch (code) {

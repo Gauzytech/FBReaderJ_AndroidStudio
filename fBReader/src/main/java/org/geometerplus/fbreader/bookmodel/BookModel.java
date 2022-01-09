@@ -28,8 +28,11 @@ import org.geometerplus.zlibrary.text.model.*;
 import org.geometerplus.fbreader.book.Book;
 import org.geometerplus.fbreader.formats.*;
 
+import timber.log.Timber;
+
 public final class BookModel {
 	public static BookModel createModel(Book book, FormatPlugin plugin) throws BookReadingException {
+		Timber.v("ceshi123, 开始解析图书, 创建图书model, " + plugin.name());
 		if (plugin instanceof BuiltinFormatPlugin) {
 			final BookModel model = new BookModel(book);
 			((BuiltinFormatPlugin)plugin).readModel(model);

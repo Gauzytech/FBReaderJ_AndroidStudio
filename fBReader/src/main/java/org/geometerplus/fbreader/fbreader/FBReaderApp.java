@@ -477,6 +477,7 @@ public final class FBReaderApp extends ZLApplication {
         clearTextCaches();
         Model = null;
         ExternalBook = null;
+        // 清理内存 避免OOM
         System.gc();
         System.gc();
 
@@ -488,7 +489,7 @@ public final class FBReaderApp extends ZLApplication {
             processException(e);
             return;
         }
-
+        Timber.v("ceshi123, 获得图书plugin: " + plugin.name());
         if (plugin instanceof ExternalFormatPlugin) {
             ExternalBook = book;
             final Bookmark bm;
@@ -506,11 +507,12 @@ public final class FBReaderApp extends ZLApplication {
         }
 
         try {
+            // 在这里解析图书, 将所有图书内容读到char数组中
             Model = BookModel.createModel(book, plugin);
             Collection.saveBook(book);
             ZLTextHyphenator.Instance().load(book.getLanguage());
             // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
-            // 并且moveStartCursor
+            // 并且将图书定位到之前读过的位置: moveStartCursor
             BookTextView.setModel(Model.getTextModel());
             gotoStoredPosition();
             setBookMarkHighlighting(BookTextView, null);
@@ -537,7 +539,7 @@ public final class FBReaderApp extends ZLApplication {
         }
 
         getViewWidget().reset();
-        // 触发ZLAndroidWidget类的onDraw方法
+        // 触发ZLAndroidWidget类的onDraw方法, 显示图书
         getViewWidget().repaint();
 
         for (FileEncryptionInfo info : plugin.readEncryptionInfos(book)) {

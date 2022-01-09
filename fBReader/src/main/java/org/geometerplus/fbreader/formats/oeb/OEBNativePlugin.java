@@ -33,6 +33,8 @@ import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.formats.BookReadingException;
 import org.geometerplus.fbreader.formats.NativeFormatPlugin;
 
+import timber.log.Timber;
+
 public class OEBNativePlugin extends NativeFormatPlugin {
 	public OEBNativePlugin(SystemInfo systemInfo) {
 		super(systemInfo, "ePub");
@@ -40,6 +42,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
+		Timber.v("ceshi123, 读取图书并创建model");
 		final ZLFile file = BookUtil.fileByBook(model.Book);
 		file.setCached(true);
 		try {
@@ -80,6 +83,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 	}
 
 	private ZLFile getOpfFile(ZLFile oebFile) throws BookReadingException {
+		Timber.v("ceshi123, 读取opf文件");
 		if ("opf".equals(oebFile.getExtension())) {
 			return oebFile;
 		}

@@ -151,7 +151,7 @@ public final class FileInfoSet {
 		if (info == null) {
 			return null;
 		}
-		Timber.v("ceshi123, " + info.toString());
+		//Timber.v("ceshi123, " + info.toString());
 		ZLFile file = myFilesByInfo.get(info);
 		if (file == null) {
 			file = ZLFile.createFile(getFile(info.Parent), info.Name);

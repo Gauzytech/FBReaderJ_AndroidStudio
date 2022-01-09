@@ -33,6 +33,8 @@ import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.formats.BookReadingException;
 import org.geometerplus.fbreader.formats.NativeFormatPlugin;
 
+import timber.log.Timber;
+
 public class FB2NativePlugin extends NativeFormatPlugin {
 	public FB2NativePlugin(SystemInfo systemInfo) {
 		super(systemInfo, "fb2");
@@ -40,6 +42,7 @@ public class FB2NativePlugin extends NativeFormatPlugin {
 
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
+		Timber.v("ceshi123, 读取图书并创建model");
 		super.readModel(model);
 		model.setLabelResolver(new BookModel.LabelResolver() {
 			public List<String> getCandidates(String id) {

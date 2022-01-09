@@ -21,6 +21,7 @@
 #include <JniEnvelope.h>
 #include <ZLFileImage.h>
 #include <FileEncryptionInfo.h>
+#include <android/log.h>
 
 #include "fbreader/src/bookmodel/BookModel.h"
 #include "fbreader/src/formats/FormatPlugin.h"
@@ -285,7 +286,9 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
 	shared_ptr<BookModel> model = new BookModel(book, javaModel, cacheDir);
-	if (!plugin->readModel(*model)) {
+
+    __android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "ceshi123, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    if (!plugin->readModel(*model)) {
 		return 2;
 	}
 	if (!model->flush()) {

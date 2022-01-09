@@ -126,7 +126,7 @@ public abstract class ZLFile implements InputStreamHolder {
 		if (path == null) {
 			return null;
 		}
-		Timber.i("ceshi123, path = " + path);
+		//Timber.i("ceshi123, path = " + path);
 		ZLFile cached = ourCachedFiles.get(path);
 		if (cached != null) {
 			return cached;
