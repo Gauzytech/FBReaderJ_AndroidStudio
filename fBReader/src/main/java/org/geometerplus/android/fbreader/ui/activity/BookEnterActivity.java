@@ -22,6 +22,10 @@ import timber.log.Timber;
  * 图书内置打开页
  */
 public class BookEnterActivity extends AppCompatActivity {
+    String[] name = {"reader.epub",
+            "毛泽东选集-全五卷.epub",
+            "JavaScript高级程序设计（第3版） - [美] Nicholas C. Zakas.epub",
+            "魔法使之夜（汉化）.epub"};
 
     // 这是一个bind service, 其实可以换成别的
     private final BookCollectionShadow myCollection = new BookCollectionShadow();
@@ -38,10 +42,13 @@ public class BookEnterActivity extends AppCompatActivity {
         Timber.v("ceshi123, 开始获取图书数据");
         myCollection.bindToService(this, () -> {
             // 通过AIDL接口调用数据库，获取之前阅读的图书信息
-            Book book = myCollection.getRecentBook(0);
+            int idx = 2;
+            String targetPath = "/data/data/org.geometerplus.zlibrary.ui.android/files/" + name[idx];
+            Book book = myCollection.getBookByFile(targetPath);
+
             if (book == null) {
                 Timber.v("ceshi123, 无数据, 获取asset demo图书");
-                String path = copy2Storage();
+                String path = copy2Storage(idx);
                 System.out.println(path);
                 book = myCollection.getBookByFile(path);
             }
@@ -88,10 +95,9 @@ public class BookEnterActivity extends AppCompatActivity {
     /**
      * 复制
      */
-    public String copy2Storage() {
+    public String copy2Storage(int idx) {
         String path = getFilesDir().getAbsolutePath();
-        String name = "reader.epub";
-        copy(this, name, path, name);
-        return path + File.separator + name;
+        copy(this, name[idx], path, name[idx]);
+        return path + File.separator + name[idx];
     }
 }
