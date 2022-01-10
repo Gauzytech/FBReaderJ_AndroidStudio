@@ -28,6 +28,7 @@
 #include <ZLFile.h>
 #include <ZLFileImage.h>
 #include <ZLXMLNamespace.h>
+#include <android/log.h>
 
 #include "OEBBookReader.h"
 #include "OEBEncryptionReader.h"
@@ -186,9 +187,12 @@ void OEBBookReader::endElementHandler(const char *tag) {
 bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	const ZLFile epubFile = opfFile.getContainerArchive();
 	epubFile.forceArchiveType(ZLFile::ZIP);
+	// 解压缩epub文件，获得整个epub文件夹
 	shared_ptr<ZLDir> epubDir = epubFile.directory();
+	// 判断是否有DRM加密存在,
 	if (!epubDir.isNull()) {
 		myEncryptionMap = new EncryptionMap();
+		// 保存所有加密/解密的信息
 		const std::vector<shared_ptr<FileEncryptionInfo> > encodingInfos =
 			OEBEncryptionReader().readEncryptionInfos(epubFile, opfFile);
 
@@ -196,9 +200,11 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 			myEncryptionMap->addInfo(*epubDir, *it);
 		}
 	}
-
+	// htmlDirectoryPrefix是个啥
+	// eg: /data/data/org.geometerplus.zlibrary.ui.android/files/JavaScript高级程序设计（第3版） - [美] Nicholas C. Zakas.epub:
 	myFilePrefix = MiscUtil::htmlDirectoryPrefix(opfFile.path());
-
+	__android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "OEBBookReader.readBook, myFilePrefix = %s", myFilePrefix.c_str());
+	// 把所有之前的缓存清空
 	myIdToHref.clear();
 	myHtmlFileNames.clear();
 	myNCXTOCFileName.erase();
@@ -209,6 +215,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	myGuideTOC.clear();
 	myState = READ_NONE;
 
+	// 将opf文件内容读到一个char[]中
 	if (!readDocument(opfFile)) {
 		return false;
 	}

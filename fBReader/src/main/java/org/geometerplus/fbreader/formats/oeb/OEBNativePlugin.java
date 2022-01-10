@@ -42,10 +42,17 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
-		Timber.v("ceshi123, 读取图书并创建model");
+		Timber.v("ceshi123, 读取图书并创建model: \n" + model.toString());
+		// 创建file对象:
+		// AndroidAssetsFile,
+		// ZLTarEntryFile,
+		// ZLZipEntryFile,
+		// ZLPhysicalFile
 		final ZLFile file = BookUtil.fileByBook(model.Book);
+		Timber.v("ceshi123,  创建bookFile: " + file.getClass().getSimpleName());
 		file.setCached(true);
 		try {
+			// 调用cpp层进行解析
 			super.readModel(model);
 			model.setLabelResolver(new BookModel.LabelResolver() {
 				public List<String> getCandidates(String id) {

@@ -194,4 +194,19 @@ public final class BookModel {
 		}
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "BookModel{" +
+				"\nBook=" + Book +
+				", \nTOCTree=" + TOCTree +
+				", \nFontManager=" + FontManager +
+				", \nmyInternalHyperlinks=" + myInternalHyperlinks +
+				", \nmyImageMap=" + myImageMap +
+				", \nmyBookTextModel=" + myBookTextModel +
+				", \nmyFootnotes=" + myFootnotes +
+				", \nmyResolver=" + myResolver +
+				", \nmyCurrentTree=" + myCurrentTree +
+				'}';
+	}
 }

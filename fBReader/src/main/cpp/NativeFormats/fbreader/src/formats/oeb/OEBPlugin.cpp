@@ -84,6 +84,10 @@ ZLFile OEBPlugin::epubFile(const ZLFile &oebFile) {
 	return epub;
 }
 
+/**
+ * 读取opf文件内容
+ * @param oebFile epub图书文件
+ */
 ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
 	//ZLLogger::Instance().registerClass("epub");
 
@@ -94,28 +98,37 @@ ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
 	ZLLogger::Instance().println("epub", "Looking for opf file in " + oebFile.path());
 
 	oebFile.forceArchiveType(ZLFile::ZIP);
+	// 解压epub文件
 	shared_ptr<ZLDir> zipDir = oebFile.directory(false);
+	// epub文件是空的，返回
 	if (zipDir.isNull()) {
 		ZLLogger::Instance().println("epub", "Couldn't open zip archive");
 		return ZLFile::NO_FILE;
 	}
-
+	// 读取container文件
 	const ZLFile containerInfoFile(zipDir->itemPath("META-INF/container.xml"));
 	if (containerInfoFile.exists()) {
 		ZLLogger::Instance().println("epub", "Found container file " + containerInfoFile.path());
 		ContainerFileReader reader;
+		// 使用ContainerFileReader解析container文件
 		reader.readDocument(containerInfoFile);
+		// 从container中读取opf文件path
 		const std::string &opfPath = reader.rootPath();
 		ZLLogger::Instance().println("epub", "opf path = " + opfPath);
+		// 如果opf文件path不为空, 返回opf文件
 		if (!opfPath.empty()) {
 			return ZLFile(zipDir->itemPath(opfPath));
 		}
 	}
 
+	// 如果opf文件path为空, 搜索epub下的所有的文件，查看是否有opf存在
+	// 获得epub文件里所有文件名, 并存入fileNames vector中
 	std::vector<std::string> fileNames;
 	zipDir->collectFiles(fileNames, false);
+	// 遍历fileNames
 	for (std::vector<std::string>::const_iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
 		ZLLogger::Instance().println("epub", "Item: " + *it);
+		// 如果找到了后缀为.opf的文件, 返回opf文件
 		if (ZLStringUtil::stringEndsWith(*it, ".opf")) {
 			return ZLFile(zipDir->itemPath(*it));
 		}
@@ -139,6 +152,10 @@ bool OEBPlugin::readUids(Book &book) const {
 	return OEBUidReader(book).readUids(opfFile(file));
 }
 
+/**
+ * 使用OEBBookReader开始解析epub图书
+ * @param model cpp bookModel
+ */
 bool OEBPlugin::readModel(BookModel &model) const {
 	const ZLFile &file = model.book()->file();
 	return OEBBookReader(model).readBook(opfFile(file));

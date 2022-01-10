@@ -110,8 +110,9 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 		final int code;
 		final String tempDirectory = SystemInfo.tempDirectory();
 		synchronized (ourNativeLock) {
-			Timber.v("ceshi123， 开始通过cpp进行解析操作");
+			Timber.v("ceshi123， 通过cpp开始进行解析操作 tempDirectory = %s", tempDirectory);
 			code = readModelNative(model, tempDirectory);
+			Timber.v("ceshi123， 解析完成, code = %s", code);
 		}
 		switch (code) {
 			case 0:
@@ -129,6 +130,11 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 		}
 	}
 
+	/**
+	 * 核心方法, 调用cpp进行图书解析操作
+	 * @param model BookModel, 之后要提供给自定义TextView进行渲染操作
+	 * @param cacheDir 缓存文件夹
+	 */
 	private native int readModelNative(BookModel model, String cacheDir);
 
 	@Override

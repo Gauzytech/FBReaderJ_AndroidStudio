@@ -29,6 +29,13 @@ import org.geometerplus.zlibrary.core.util.InputStreamHolder;
 
 import timber.log.Timber;
 
+/**
+ * 解析文件base类:
+ * AndroidAssetsFile -> ZLResourceFile -> ZLFile
+ * ZLTarEntryFile -> ZLArchiveEntryFile -> ZLFile
+ * ZLZipEntryFile -> ZLArchiveEntryFile -> ZLFile
+ * ZLPhysicalFile -> ZLFile
+ */
 public abstract class ZLFile implements InputStreamHolder {
 	private final static HashMap<String,ZLFile> ourCachedFiles = new HashMap<String,ZLFile>();
 

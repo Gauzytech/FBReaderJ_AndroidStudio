@@ -171,8 +171,8 @@ static bool initInternalHyperlinks(JNIEnv *env, jobject javaModel, BookModel &mo
 	const std::map<std::string,BookModel::Label> &links = model.internalHyperlinks();
 	std::map<std::string,BookModel::Label>::const_iterator it = links.begin();
 	for (; it != links.end(); ++it) {
-		const std::string &id = it->first;
-		const BookModel::Label &label = it->second;
+		const std::string &id = it->first; // key
+		const BookModel::Label &label = it->second; // value
 		if (label.Model.isNull()) {
 			continue;
 		}
@@ -273,45 +273,61 @@ static jobject createJavaFileInfo(JNIEnv *env, shared_ptr<FileInfo> info) {
 	return fileInfo;
 }
 
+// 核心方法, 图书解析操作
 extern "C"
 JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin_readModelNative(JNIEnv* env, jobject thiz, jobject javaModel, jstring javaCacheDir) {
-	shared_ptr<FormatPlugin> plugin = findCppPlugin(thiz);
+	// 1. 获得解析plugin
+    shared_ptr<FormatPlugin> plugin = findCppPlugin(thiz);
 	if (plugin.isNull()) {
 		return 1;
 	}
 
+	// 2. 获得缓存文件夹目录
 	const std::string cacheDir = AndroidUtil::fromJavaString(env, javaCacheDir);
 
+	// 3.
+	// 因为jobject不能当做在java中一样直接调用其中method, 此时要先将其转化成cpp对象
+	// 传过来的javaModel(bookModel) -> 转换成cpp bookModel的步骤
+	// 3.1 从传过来的javaModel中获得javaBook
 	jobject javaBook = AndroidUtil::Field_BookModel_Book->value(javaModel);
-
+	// 3.2 通过javaBook创建cpp book
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
+	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
 	shared_ptr<BookModel> model = new BookModel(book, javaModel, cacheDir);
 
-    __android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "ceshi123, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    __android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    // 4. 使用plugin对cpp bookModel进行解析
     if (!plugin->readModel(*model)) {
+    	// 解析失败
 		return 2;
 	}
 	if (!model->flush()) {
+		// 内存不足
 		return 3;
 	}
 
 	if (!initInternalHyperlinks(env, javaModel, *model, cacheDir)) {
+		// 初始化超链接失败
 		return 4;
 	}
-
+	// 5. 创建目录toc
 	initTOC(env, javaModel, *model->contentsTree());
 
+	// 6. 获得渲染模型
 	shared_ptr<ZLTextModel> textModel = model->bookTextModel();
+	// 7. 通过cpp textModel创建java textModel
 	jobject javaTextModel = createTextModel(env, javaModel, *textModel);
 	if (javaTextModel == 0) {
 		return 5;
 	}
+	// 7.1 调用java方法, 将javaTextModel保存到java bookModel中
 	AndroidUtil::Method_BookModel_setBookTextModel->call(javaModel, javaTextModel);
 	if (env->ExceptionCheck()) {
 		return 6;
 	}
 	env->DeleteLocalRef(javaTextModel);
 
+	// 脚注, 是个底部弹窗， 见https://fbreader.org/tags/footnotes
 	const std::map<std::string,shared_ptr<ZLTextModel> > &footnotes = model->footnotes();
 	std::map<std::string,shared_ptr<ZLTextModel> >::const_iterator it = footnotes.begin();
 	for (; it != footnotes.end(); ++it) {
@@ -350,7 +366,7 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 		jobject boldItalic = createJavaFileInfo(env, it->second->BoldItalic);
 
 		AndroidUtil::Method_BookModel_registerFontEntry->call(
-			javaModel, family.j(), normal, bold, italic, boldItalic
+				javaModel, family.j(), normal, bold, italic, boldItalic
 		);
 
 		if (boldItalic != 0) env->DeleteLocalRef(boldItalic);

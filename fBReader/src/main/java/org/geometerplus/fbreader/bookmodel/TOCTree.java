@@ -98,5 +98,21 @@ public class TOCTree extends ZLTree<TOCTree> {
 			ParagraphIndex = paragraphIndex;
 			Model = model;
 		}
+
+		@Override
+		public String toString() {
+			return "Reference{" +
+					"ParagraphIndex=" + ParagraphIndex +
+					", Model=" + Model +
+					'}';
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "TOCTree{" +
+				"myText='" + myText + '\'' +
+				", myReference=" + myReference +
+				'}';
 	}
 }

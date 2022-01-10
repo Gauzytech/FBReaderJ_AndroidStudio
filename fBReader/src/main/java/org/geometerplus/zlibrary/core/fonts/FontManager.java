@@ -49,4 +49,12 @@ public class FontManager {
 			return Collections.emptyList();
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "FontManager{" +
+				"myFamilyLists=" + myFamilyLists +
+				", Entries=" + Entries +
+				'}';
+	}
 }
