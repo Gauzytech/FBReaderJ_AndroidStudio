@@ -19,29 +19,43 @@
 
 package org.geometerplus.fbreader.bookmodel;
 
-import java.util.*;
-
-import org.geometerplus.zlibrary.core.fonts.*;
-import org.geometerplus.zlibrary.core.image.ZLImage;
-import org.geometerplus.zlibrary.text.model.*;
-
 import org.geometerplus.fbreader.book.Book;
-import org.geometerplus.fbreader.formats.*;
+import org.geometerplus.fbreader.formats.BookReadingException;
+import org.geometerplus.fbreader.formats.BuiltinFormatPlugin;
+import org.geometerplus.fbreader.formats.FormatPlugin;
+import org.geometerplus.zlibrary.core.fonts.FileInfo;
+import org.geometerplus.zlibrary.core.fonts.FontEntry;
+import org.geometerplus.zlibrary.core.fonts.FontManager;
+import org.geometerplus.zlibrary.core.image.ZLImage;
+import org.geometerplus.zlibrary.text.model.CachedCharStorage;
+import org.geometerplus.zlibrary.text.model.ZLTextModel;
+import org.geometerplus.zlibrary.text.model.ZLTextPlainModel;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import timber.log.Timber;
 
 public final class BookModel {
+
+	/**
+	 * 1. 创建book渲染数据model第一步
+	 */
 	public static BookModel createModel(Book book, FormatPlugin plugin) throws BookReadingException {
 		Timber.v("ceshi123, 开始解析图书, 创建图书model, " + plugin.name());
-		if (plugin instanceof BuiltinFormatPlugin) {
-			final BookModel model = new BookModel(book);
-			((BuiltinFormatPlugin)plugin).readModel(model);
-			return model;
+		// 只有FB2NativePlugin和OEBNativePlugin才会执行cpp层解析
+		if (!(plugin instanceof BuiltinFormatPlugin)) {
+			throw new BookReadingException(
+					"unknownPluginType", null, new String[]{String.valueOf(plugin)}
+			);
 		}
 
-		throw new BookReadingException(
-			"unknownPluginType", null, new String[] { String.valueOf(plugin) }
-		);
+		// 保存图书基本信息: title, path, encoding,
+		final BookModel model = new BookModel(book);
+		// 调用cpp层开始图书解析
+		((BuiltinFormatPlugin) plugin).readModel(model);
+		return model;
 	}
 
 	public final Book Book;

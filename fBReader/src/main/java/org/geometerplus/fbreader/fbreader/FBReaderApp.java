@@ -481,6 +481,7 @@ public final class FBReaderApp extends ZLApplication {
         System.gc();
         System.gc();
 
+        // 通过cpp层获得所有native plugin
         final PluginCollection pluginCollection = PluginCollection.Instance(SystemInfo);
         final FormatPlugin plugin;
         try {
@@ -489,7 +490,8 @@ public final class FBReaderApp extends ZLApplication {
             processException(e);
             return;
         }
-        Timber.v("ceshi123, 获得图书plugin: " + plugin.name());
+        Timber.v("ceshi123, 成功获得图书解析plugin: " + plugin.name());
+        // ExternalFormatPlugin: pdf, djvu, comic plugin
         if (plugin instanceof ExternalFormatPlugin) {
             ExternalBook = book;
             final Bookmark bm;
@@ -506,6 +508,7 @@ public final class FBReaderApp extends ZLApplication {
             return;
         }
 
+        // BuiltinFormatPlugin: FB2NativePlugin, OEBNativePlugin
         try {
             // 在这里解析图书, 将所有图书内容读到char数组中
             Model = BookModel.createModel(book, plugin);
