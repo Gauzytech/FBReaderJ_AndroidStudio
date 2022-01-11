@@ -31,6 +31,7 @@
 #include "ZLXMLReader.h"
 
 #include "expat/ZLXMLReaderInternal.h"
+#include <LogUtil.h>
 
 class ZLXMLReaderHandler : public ZLAsynchronousInputStream::Handler {
 
@@ -93,7 +94,7 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 	if (stream.isNull() || !stream->open()) {
 		return false;
 	}
-
+	LogUtil::print("XMLReader.readDocument, stream size = %s", std::to_string(stream->sizeOfOpened()));
 	bool useWindows1252 = false;
 	stream->read(myParserBuffer, 256);
 	std::string stringBuffer(myParserBuffer, 256);
@@ -110,6 +111,7 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 			useWindows1252 = true;
 		}
 	}
+	// 在这里会读取所有spine信息
 	initialize(useWindows1252 ? "windows-1252" : 0);
 
 	std::size_t length;

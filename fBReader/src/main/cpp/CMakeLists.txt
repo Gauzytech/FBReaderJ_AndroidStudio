@@ -67,6 +67,7 @@ add_library( # Sets the name of the library.
         NativeFormats/JavaPluginCollection.cpp
         NativeFormats/util/AndroidUtil.cpp
         NativeFormats/util/JniEnvelope.cpp
+        NativeFormats/util/LogUtil.cpp
         NativeFormats/zlibrary/core/src/constants/ZLXMLNamespace.cpp
         NativeFormats/zlibrary/core/src/drm/FileEncryptionInfo.cpp
         NativeFormats/zlibrary/core/src/encoding/DummyEncodingConverter.cpp

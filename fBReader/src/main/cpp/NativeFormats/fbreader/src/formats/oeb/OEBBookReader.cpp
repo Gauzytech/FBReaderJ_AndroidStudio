@@ -28,7 +28,7 @@
 #include <ZLFile.h>
 #include <ZLFileImage.h>
 #include <ZLXMLNamespace.h>
-#include <android/log.h>
+#include <LogUtil.h>
 
 #include "OEBBookReader.h"
 #include "OEBEncryptionReader.h"
@@ -56,7 +56,7 @@ static const std::string COVER_IMAGE = "other.ms-coverimage-standard";
 
 void OEBBookReader::startElementHandler(const char *tag, const char **xmlattributes) {
 	std::string tagString = ZLUnicodeUtil::toLower(tag);
-
+	LogUtil::print("startElementHandler %s", tagString);
 	switch (myState) {
 		case READ_NONE:
 			if (testOPFTag(MANIFEST, tagString)) {
@@ -203,7 +203,8 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	// htmlDirectoryPrefix是个啥
 	// eg: /data/data/org.geometerplus.zlibrary.ui.android/files/JavaScript高级程序设计（第3版） - [美] Nicholas C. Zakas.epub:
 	myFilePrefix = MiscUtil::htmlDirectoryPrefix(opfFile.path());
-	__android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "OEBBookReader.readBook, myFilePrefix = %s", myFilePrefix.c_str());
+	LogUtil::print("OEBBookReader.readBook, myFilePrefix = %s", myFilePrefix);
+
 	// 把所有之前的缓存清空
 	myIdToHref.clear();
 	myHtmlFileNames.clear();
@@ -215,27 +216,36 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	myGuideTOC.clear();
 	myState = READ_NONE;
 
+
 	// 将opf文件内容读到一个char[]中
+	// 并读取spine数据, 保存在myHtmlFileNames中
 	if (!readDocument(opfFile)) {
 		return false;
 	}
 
+	// 将bookModel中的TextModel保存
+	// TextModel在bookModel constructor中创建
 	myModelReader.setMainTextModel();
+	LogUtil::print("OEBBookReader.readBook, setMainTextModel paragraphsNumber: %s",
+				std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()) + " language: " + myModelReader.model().bookTextModel()->language());
+
 	// 向myKindStack属性加入FBTextKind.REGULAR (0)
 	myModelReader.pushKind(REGULAR);
-
 	//ZLLogger::Instance().registerClass("oeb");
+	// 初始化xhtmlReader
 	XHTMLReader xhtmlReader(myModelReader, myEncryptionMap);
 	// 更新myHtmlFileNames属性
 	for (std::vector<std::string>::const_iterator it = myHtmlFileNames.begin(); it != myHtmlFileNames.end(); ++it) {
 		// 生成代表xhtml文件的ZLZipEntryFile类
 		const ZLFile xhtmlFile(myFilePrefix + *it);
 		if (it == myHtmlFileNames.begin()) {
+			// 处理保存封面文件
 			if (myCoverFileName == xhtmlFile.path()) {
 				if (coverIsSingleImage()) {
 					addCoverImage();
 					continue;
 				}
+				// 如果有好几张cover image只用第一张
 				xhtmlReader.setMarkFirstImageAsCover();
 			} else {
 				addCoverImage();

@@ -32,7 +32,10 @@
 
 #include "../library/Book.h"
 
+#include <LogUtil.h>
+
 BookReader::BookReader(BookModel &model) : myModel(model) {
+	LogUtil::print("BookReader初始化", "");
 	myCurrentTextModel = 0;
 
 	myInsideTitle = false;
@@ -42,6 +45,7 @@ BookReader::BookReader(BookModel &model) : myModel(model) {
 BookReader::~BookReader() {
 }
 
+// 将bookModel中的TextModel保存
 void BookReader::setMainTextModel() {
 	myCurrentTextModel = myModel.myBookTextModel;
 }

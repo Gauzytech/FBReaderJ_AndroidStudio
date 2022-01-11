@@ -21,7 +21,6 @@
 #include <JniEnvelope.h>
 #include <ZLFileImage.h>
 #include <FileEncryptionInfo.h>
-#include <android/log.h>
 
 #include "fbreader/src/bookmodel/BookModel.h"
 #include "fbreader/src/formats/FormatPlugin.h"
@@ -29,6 +28,8 @@
 #include "fbreader/src/library/Book.h"
 #include "fbreader/src/library/Tag.h"
 #include "fbreader/src/library/UID.h"
+
+#include <LogUtil.h>
 
 static shared_ptr<FormatPlugin> findCppPlugin(jobject base) {
 	const std::string fileType = AndroidUtil::Method_NativeFormatPlugin_supportedFileType->callForCppString(base);
@@ -295,7 +296,8 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
 	shared_ptr<BookModel> model = new BookModel(book, javaModel, cacheDir);
 
-    __android_log_print(ANDROID_LOG_INFO, "cpp解析打印", "readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+	LogUtil::print("readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+
     // 4. 使用plugin对cpp bookModel进行解析
     if (!plugin->readModel(*model)) {
     	// 解析失败
