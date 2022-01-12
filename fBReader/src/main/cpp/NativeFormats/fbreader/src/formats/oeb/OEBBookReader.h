@@ -69,6 +69,16 @@ private:
 	std::string myCoverMimeType;
 	std::vector<std::pair<std::string,std::string> > myTourTOC;
 	std::vector<std::pair<std::string,std::string> > myGuideTOC;
+
+	std::string getReadStateStr(const int idx) {
+		return (const char *[]) {
+				"READ_NONE",
+				"READ_MANIFEST",
+				"READ_SPINE",
+				"READ_GUIDE",
+				"READ_TOUR"
+		}[idx];
+	}
 };
 
 #endif /* __OEBBOOKREADER_H__ */

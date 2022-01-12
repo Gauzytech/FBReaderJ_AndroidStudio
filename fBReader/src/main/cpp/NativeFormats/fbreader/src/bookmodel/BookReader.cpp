@@ -35,7 +35,7 @@
 #include <LogUtil.h>
 
 BookReader::BookReader(BookModel &model) : myModel(model) {
-	LogUtil::print("BookReader初始化", "");
+	LogUtil::print("BookReader constructor %s", "初始化");
 	myCurrentTextModel = 0;
 
 	myInsideTitle = false;

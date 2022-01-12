@@ -39,6 +39,7 @@
 #include "../../bookmodel/BookModel.h"
 
 OEBBookReader::OEBBookReader(BookModel &model) : myModelReader(model) {
+	LogUtil::print("OEBBookReader constructor", "");
 }
 
 static const std::string MANIFEST = "manifest";
@@ -56,7 +57,8 @@ static const std::string COVER_IMAGE = "other.ms-coverimage-standard";
 
 void OEBBookReader::startElementHandler(const char *tag, const char **xmlattributes) {
 	std::string tagString = ZLUnicodeUtil::toLower(tag);
-	LogUtil::print("startElementHandler %s", tagString);
+
+	LogUtil::print("OEBBookReader.startElementHandler %s", tagString + ", " + getReadStateStr(myState));
 	switch (myState) {
 		case READ_NONE:
 			if (testOPFTag(MANIFEST, tagString)) {
@@ -185,6 +187,7 @@ void OEBBookReader::endElementHandler(const char *tag) {
 }
 
 bool OEBBookReader::readBook(const ZLFile &opfFile) {
+	LogUtil::print("OEBBookReader.readBook(opfFile) opf文件路径 = %s", opfFile.path());
 	const ZLFile epubFile = opfFile.getContainerArchive();
 	epubFile.forceArchiveType(ZLFile::ZIP);
 	// 解压缩epub文件，获得整个epub文件夹
@@ -200,10 +203,10 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 			myEncryptionMap->addInfo(*epubDir, *it);
 		}
 	}
-	// htmlDirectoryPrefix是个啥
+	// htmlDirectoryPrefix: epub里面文件的根路径
 	// eg: /data/data/org.geometerplus.zlibrary.ui.android/files/JavaScript高级程序设计（第3版） - [美] Nicholas C. Zakas.epub:
 	myFilePrefix = MiscUtil::htmlDirectoryPrefix(opfFile.path());
-	LogUtil::print("OEBBookReader.readBook, myFilePrefix = %s", myFilePrefix);
+	LogUtil::print("OEBBookReader.readBook(opfFile), 根路径myFilePrefix = %s", myFilePrefix);
 
 	// 把所有之前的缓存清空
 	myIdToHref.clear();
@@ -218,7 +221,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 
 
 	// 将opf文件内容读到一个char[]中
-	// 并读取spine数据, 保存在myHtmlFileNames中
+	// 并opf中的spine数据保存在myHtmlFileNames中
 	if (!readDocument(opfFile)) {
 		return false;
 	}
@@ -226,12 +229,11 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	// 将bookModel中的TextModel保存
 	// TextModel在bookModel constructor中创建
 	myModelReader.setMainTextModel();
-	LogUtil::print("OEBBookReader.readBook, setMainTextModel paragraphsNumber: %s",
+	LogUtil::print("OEBBookReader.readBook -> setMainTextModel paragraphsNumber: %s",
 				std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()) + " language: " + myModelReader.model().bookTextModel()->language());
 
 	// 向myKindStack属性加入FBTextKind.REGULAR (0)
 	myModelReader.pushKind(REGULAR);
-	//ZLLogger::Instance().registerClass("oeb");
 	// 初始化xhtmlReader
 	XHTMLReader xhtmlReader(myModelReader, myEncryptionMap);
 	// 更新myHtmlFileNames属性
@@ -254,18 +256,17 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 			myModelReader.insertEndOfSectionParagraph();
 		}
 		// XHTMLReader类的readFile方法会开始对xhtml文件的解析
-		//ZLLogger::Instance().println("oeb", "start " + xhtmlFile.path());
+		LogUtil::print("xhtmlReader.readFile, START----------->>> %s", xhtmlFile.path());
 		if (!xhtmlReader.readFile(xhtmlFile, *it)) {
 			if (opfFile.exists() && !myEncryptionMap.isNull()) {
 				myModelReader.insertEncryptedSectionParagraph();
 			}
 		}
-		//ZLLogger::Instance().println("oeb", "end " + xhtmlFile.path());
-		//std::string debug = "para count = ";
-		//ZLStringUtil::appendNumber(debug, myModelReader.model().bookTextModel()->paragraphsNumber());
-		//ZLLogger::Instance().println("oeb", debug);
+		LogUtil::print("readBook, para count = %S", std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()));
+        LogUtil::print("xhtmlReader.readFile, <<<------------END %s", xhtmlFile.path());
 	}
 
+	// 生成目录信息
 	generateTOC(xhtmlReader);
 
 	return true;

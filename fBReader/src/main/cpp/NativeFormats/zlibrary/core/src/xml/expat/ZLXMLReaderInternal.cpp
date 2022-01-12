@@ -25,6 +25,7 @@
 
 #include "ZLXMLReaderInternal.h"
 #include "../ZLXMLReader.h"
+#include <LogUtil.h>
 
 void ZLXMLReaderInternal::fCharacterDataHandler(void *userData, const char *text, int len) {
 	ZLXMLReader &reader = *(ZLXMLReader*)userData;
@@ -140,7 +141,12 @@ void ZLXMLReaderInternal::setupEntities() {
 	}
 }
 
+/**
+ * 初始化expat(c++XML解析库), 并注册相关handler
+ */
 void ZLXMLReaderInternal::init(const char *encoding) {
+    LogUtil::print("ZLXMLReaderInternal.init, %s", "初始化expat: myParser");
+    // 初始化expat(c++XML解析库)
 	if (myInitialized) {
 		XML_ParserReset(myParser, encoding);
 	}
@@ -154,8 +160,13 @@ void ZLXMLReaderInternal::init(const char *encoding) {
 	if (encoding != 0) {
 		XML_SetEncoding(myParser, encoding);
 	}
-	XML_SetStartElementHandler(myParser, fStartElementHandler);
-	XML_SetEndElementHandler(myParser, fEndElementHandler);
+
+	// 设置expat的xml自定义解析handler
+	// eg: 每当遇到一个起始标记<name>、<red>、<green>时都会执行一次fStartElementHandler，有几个起始标签就会执行几次这个函数
+	// 同理。fEndElementHandler也是一个回调函数，每当遇到结束标签</name>、</red>、</green>时都会执行一次这个函数，
+	// 有几个结束标签就会执行几次这个函数
+	XML_SetElementHandler(myParser, fStartElementHandler, fEndElementHandler);
+	// fCharacterDataHandler也是一个回调函数。每当遇到一对键值对中存在内容时，就会执行一次函数
 	XML_SetCharacterDataHandler(myParser, fCharacterDataHandler);
 	XML_SetUnknownEncodingHandler(myParser, fUnknownEncodingHandler, 0);
 }

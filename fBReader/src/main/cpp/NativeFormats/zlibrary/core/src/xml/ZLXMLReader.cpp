@@ -87,6 +87,8 @@ ZLXMLReader::~ZLXMLReader() {
 }
 
 bool ZLXMLReader::readDocument(const ZLFile &file) {
+	LogUtil::print("XMLReader.readDocument(file), filePath = %s", file.path());
+
 	return readDocument(file.inputStream());
 }
 
@@ -94,7 +96,7 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 	if (stream.isNull() || !stream->open()) {
 		return false;
 	}
-	LogUtil::print("XMLReader.readDocument, stream size = %s", std::to_string(stream->sizeOfOpened()));
+	LogUtil::print("XMLReader.readDocument(stream), stream size = %s", std::to_string(stream->sizeOfOpened()));
 	bool useWindows1252 = false;
 	stream->read(myParserBuffer, 256);
 	std::string stringBuffer(myParserBuffer, 256);
@@ -111,12 +113,14 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 			useWindows1252 = true;
 		}
 	}
-	// 在这里会读取所有spine信息
+	// 在这里会初始化expat(XML解析库)
 	initialize(useWindows1252 ? "windows-1252" : 0);
 
 	std::size_t length;
 	do {
+	    // 将文件内容读到一个char[] buffer中
 		length = stream->read(myParserBuffer, BUFFER_SIZE);
+		// 利用expat(XML解析库)解析文件内容, 此时会触发已经register的handler: startElementHandler/endElementHandler
 		if (!readFromBuffer(myParserBuffer, length)) {
 			break;
 		}
@@ -130,6 +134,7 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 }
 
 void ZLXMLReader::initialize(const char *encoding) {
+    // 初始化expat(c++XML解析库)
 	myInternalReader->init(encoding);
 	myInterrupted = false;
 	myNamespaces.push_back(new nsMap());

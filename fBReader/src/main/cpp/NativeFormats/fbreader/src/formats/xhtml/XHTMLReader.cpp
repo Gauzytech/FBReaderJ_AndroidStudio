@@ -715,8 +715,10 @@ void XHTMLReader::setMarkFirstImageAsCover() {
 }
 
 bool XHTMLReader::readFile(const ZLFile &file, const std::string &referenceName) {
+    // 初始化当前支持的所有标签map: ourTagActions
 	fillTagTable();
 
+	// 根路径
 	myPathPrefix = MiscUtil::htmlDirectoryPrefix(file.path());
 	myReferenceAlias = fileAlias(referenceName);
 	myModelReader.addHyperlinkLabel(myReferenceAlias);
@@ -737,6 +739,7 @@ bool XHTMLReader::readFile(const ZLFile &file, const std::string &referenceName)
 	myStyleParser = new StyleSheetSingleStyleParser(myPathPrefix);
 	myTableParser.reset();
 
+	// 有DRM就解密
 	return readDocument(file.inputStream(myEncryptionMap));
 }
 

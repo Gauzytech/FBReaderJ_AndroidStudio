@@ -18,6 +18,7 @@ public:
 
     static void print(const std::string &message, const std::string &value);
 
+    static void print(const std::string &tag, const std::string &message, const std::string &value);
 };
 
 

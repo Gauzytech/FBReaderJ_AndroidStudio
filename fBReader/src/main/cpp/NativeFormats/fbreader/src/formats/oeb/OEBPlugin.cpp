@@ -35,6 +35,7 @@
 #include "OEBTextStream.h"
 #include "../../bookmodel/BookModel.h"
 #include "../../library/Book.h"
+#include <LogUtil.h>
 
 static const std::string OPF = "opf";
 static const std::string OEBZIP = "oebzip";
@@ -89,32 +90,34 @@ ZLFile OEBPlugin::epubFile(const ZLFile &oebFile) {
  * @param oebFile epub图书文件
  */
 ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
-	//ZLLogger::Instance().registerClass("epub");
+	ZLLogger::Instance().registerClass("OEBPlugin");
 
 	if (oebFile.extension() == OPF) {
 		return oebFile;
 	}
 
-	ZLLogger::Instance().println("epub", "Looking for opf file in " + oebFile.path());
+	ZLLogger::Instance().println("OEBPlugin", "Looking for opf file in " + oebFile.path());
 
 	oebFile.forceArchiveType(ZLFile::ZIP);
 	// 解压epub文件
 	shared_ptr<ZLDir> zipDir = oebFile.directory(false);
 	// epub文件是空的，返回
 	if (zipDir.isNull()) {
-		ZLLogger::Instance().println("epub", "Couldn't open zip archive");
+		ZLLogger::Instance().println("OEBPlugin", "Couldn't open zip archive");
 		return ZLFile::NO_FILE;
 	}
 	// 读取container文件
+	// container文件一般都在META-INF文件夹里
 	const ZLFile containerInfoFile(zipDir->itemPath("META-INF/container.xml"));
 	if (containerInfoFile.exists()) {
-		ZLLogger::Instance().println("epub", "Found container file " + containerInfoFile.path());
+		ZLLogger::Instance().println("OEBPlugin", "Found container file " + containerInfoFile.path());
 		ContainerFileReader reader;
 		// 使用ContainerFileReader解析container文件
+		LogUtil::print("ContainerFileReader.readDocument 开始读取container文件", "");
 		reader.readDocument(containerInfoFile);
 		// 从container中读取opf文件path
 		const std::string &opfPath = reader.rootPath();
-		ZLLogger::Instance().println("epub", "opf path = " + opfPath);
+		ZLLogger::Instance().println("OEBPlugin", "opf path = " + opfPath);
 		// 如果opf文件path不为空, 返回opf文件
 		if (!opfPath.empty()) {
 			return ZLFile(zipDir->itemPath(opfPath));
@@ -127,13 +130,13 @@ ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
 	zipDir->collectFiles(fileNames, false);
 	// 遍历fileNames
 	for (std::vector<std::string>::const_iterator it = fileNames.begin(); it != fileNames.end(); ++it) {
-		ZLLogger::Instance().println("epub", "Item: " + *it);
+		ZLLogger::Instance().println("OEBPlugin", "Item: " + *it);
 		// 如果找到了后缀为.opf的文件, 返回opf文件
 		if (ZLStringUtil::stringEndsWith(*it, ".opf")) {
 			return ZLFile(zipDir->itemPath(*it));
 		}
 	}
-	ZLLogger::Instance().println("epub", "Opf file not found");
+	ZLLogger::Instance().println("OEBPlugin", "Opf file not found");
 	return ZLFile::NO_FILE;
 }
 
