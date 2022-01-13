@@ -36,6 +36,7 @@
 
 #include "../../bookmodel/BookReader.h"
 #include "../../bookmodel/BookModel.h"
+#include <LogUtil.h>
 
 static const std::string ANY = "*";
 static const std::string EMPTY = "";
@@ -860,6 +861,8 @@ void XHTMLReader::addTextStyleEntry(const ZLTextStyleEntry &entry, unsigned char
 }
 
 void XHTMLReader::startElementHandler(const char *tag, const char **attributes) {
+	//LogUtil::print("xhtmlReader.startElementHandler %s", tag);
+
 	const std::string sTag = ZLUnicodeUtil::toLower(tag);
 	if (sTag == "br") {
 		restartParagraph(true);
@@ -904,6 +907,7 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 	}
 
 	XHTMLTagAction *action = getAction(sTag);
+	// 创建一个paragraph
 	if (action != 0 && action->isEnabled(myReadState)) {
 		action->doAtStart(*this, attributes);
 	}

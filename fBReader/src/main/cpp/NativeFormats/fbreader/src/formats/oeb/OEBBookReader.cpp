@@ -236,7 +236,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	myModelReader.pushKind(REGULAR);
 	// 初始化xhtmlReader
 	XHTMLReader xhtmlReader(myModelReader, myEncryptionMap);
-	// 更新myHtmlFileNames属性
+	// 根据myHtmlFileNames, 遍历所有文件, 并使用xhtmlReader解析所有文件内容
 	for (std::vector<std::string>::const_iterator it = myHtmlFileNames.begin(); it != myHtmlFileNames.end(); ++it) {
 		// 生成代表xhtml文件的ZLZipEntryFile类
 		const ZLFile xhtmlFile(myFilePrefix + *it);
@@ -255,14 +255,15 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 		} else {
 			myModelReader.insertEndOfSectionParagraph();
 		}
-		// XHTMLReader类的readFile方法会开始对xhtml文件的解析
+		// xhtmlReader类的readFile方法会开始对xhtml文件的解析
+		// readFile会注册xhtmlReader的elementHandler
 		LogUtil::print("xhtmlReader.readFile, START----------->>> %s", xhtmlFile.path());
 		if (!xhtmlReader.readFile(xhtmlFile, *it)) {
 			if (opfFile.exists() && !myEncryptionMap.isNull()) {
 				myModelReader.insertEncryptedSectionParagraph();
 			}
 		}
-		LogUtil::print("readBook, para count = %S", std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()));
+		LogUtil::print("readBook, para count = %s", std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()));
         LogUtil::print("xhtmlReader.readFile, <<<------------END %s", xhtmlFile.path());
 	}
 
@@ -276,13 +277,18 @@ void OEBBookReader::generateTOC(const XHTMLReader &xhtmlReader) {
 	if (!myNCXTOCFileName.empty()) {
 		NCXReader ncxReader(myModelReader);
 		const ZLFile ncxFile(myFilePrefix + myNCXTOCFileName);
+		// toc信息在toc.ncx里
+		// 将toc.ncx文件读取到myNavigationMap, myPointStack中
 		if (ncxReader.readDocument(ncxFile.inputStream(myEncryptionMap))) {
+			// navMap代表整个toc结构
 			const std::map<int,NCXReader::NavPoint> navigationMap = ncxReader.navigationMap();
 			if (!navigationMap.empty()) {
 				std::size_t level = 0;
 				for (std::map<int,NCXReader::NavPoint>::const_iterator it = navigationMap.begin(); it != navigationMap.end(); ++it) {
+					// 获得navPoint
 					const NCXReader::NavPoint &point = it->second;
 					int index = myModelReader.model().label(xhtmlReader.normalizedReference(point.ContentHRef)).ParagraphNumber;
+					// 创建toc
 					while (level > point.Level) {
 						myModelReader.endContentsParagraph();
 						--level;
@@ -303,6 +309,7 @@ void OEBBookReader::generateTOC(const XHTMLReader &xhtmlReader) {
 		}
 	}
 
+	// 根据opf中的<guide>, <tour>标签添加toc数据
 	std::vector<std::pair<std::string,std::string> > &toc = myTourTOC.empty() ? myGuideTOC : myTourTOC;
 	for (std::vector<std::pair<std::string,std::string> >::const_iterator it = toc.begin(); it != toc.end(); ++it) {
 		int index = myModelReader.model().label(it->second).ParagraphNumber;

@@ -202,6 +202,9 @@ static bool initInternalHyperlinks(JNIEnv *env, jobject javaModel, BookModel &mo
 	return !env->ExceptionCheck();
 }
 
+/**
+ * 调用了java方法, 使用cpp textModel的数据创建了java textModel
+ */
 static jobject createTextModel(JNIEnv *env, jobject javaModel, ZLTextModel &model) {
 	env->PushLocalFrame(16);
 
@@ -225,6 +228,7 @@ static jobject createTextModel(JNIEnv *env, jobject javaModel, ZLTextModel &mode
 	jstring fileExtension = env->NewStringUTF(model.allocator().fileExtension().c_str());
 	jint blocksNumber = (jint) model.allocator().blocksNumber();
 
+	// 调用java方法创建ZLTextPlainModel对象
 	jobject textModel = AndroidUtil::Method_BookModel_createTextModel->call(
 		javaModel,
 		id, language,
@@ -276,7 +280,7 @@ static jobject createJavaFileInfo(JNIEnv *env, shared_ptr<FileInfo> info) {
 
 // 核心方法, 图书解析操作
 extern "C"
-JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin_readModelNative(JNIEnv* env, jobject thiz, jobject javaModel, jstring javaCacheDir) {
+JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin_readModelNative(JNIEnv* env, jobject thiz, jobject javaBookModel, jstring javaCacheDir) {
 	// 1. 获得解析plugin
     shared_ptr<FormatPlugin> plugin = findCppPlugin(thiz);
 	if (plugin.isNull()) {
@@ -290,15 +294,16 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 	// 因为jobject不能当做在java中一样直接调用其中method, 此时要先将其转化成cpp对象
 	// 传过来的javaModel(bookModel) -> 转换成cpp bookModel的步骤
 	// 3.1 从传过来的javaModel中获得javaBook
-	jobject javaBook = AndroidUtil::Field_BookModel_Book->value(javaModel);
+	jobject javaBook = AndroidUtil::Field_BookModel_Book->value(javaBookModel);
 	// 3.2 通过javaBook创建cpp book
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
 	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
-	shared_ptr<BookModel> model = new BookModel(book, javaModel, cacheDir);
+	shared_ptr<BookModel> model = new BookModel(book, javaBookModel, cacheDir);
 
 	LogUtil::print("readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
 
     // 4. 使用plugin对cpp bookModel进行解析
+    // 读取了opf, container, 所有xhtml文件, 和toc.ncx文件
     if (!plugin->readModel(*model)) {
     	// 解析失败
 		return 2;
@@ -308,42 +313,44 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 		return 3;
 	}
 
-	if (!initInternalHyperlinks(env, javaModel, *model, cacheDir)) {
+	if (!initInternalHyperlinks(env, javaBookModel, *model, cacheDir)) {
 		// 初始化超链接失败
 		return 4;
 	}
-	// 5. 创建目录toc
-	initTOC(env, javaModel, *model->contentsTree());
+	// 5. 调用java方法, 将toc数据保存到java
+	initTOC(env, javaBookModel, *model->contentsTree());
 
 	// 6. 获得渲染模型
 	shared_ptr<ZLTextModel> textModel = model->bookTextModel();
-	// 7. 通过cpp textModel创建java textModel
-	jobject javaTextModel = createTextModel(env, javaModel, *textModel);
+	// 7. 通过cpp textModel: ZLTextModel创建java textModel: ZLTextPlainModel
+	jobject javaTextModel = createTextModel(env, javaBookModel, *textModel);
 	if (javaTextModel == 0) {
 		return 5;
 	}
 	// 7.1 调用java方法, 将javaTextModel保存到java bookModel中
-	AndroidUtil::Method_BookModel_setBookTextModel->call(javaModel, javaTextModel);
+	AndroidUtil::Method_BookModel_setBookTextModel->call(javaBookModel, javaTextModel);
 	if (env->ExceptionCheck()) {
 		return 6;
 	}
 	env->DeleteLocalRef(javaTextModel);
 
-	// 脚注, 是个底部弹窗， 见https://fbreader.org/tags/footnotes
+	// 8. 脚注, 是个底部弹窗， 见https://fbreader.org/tags/footnotes
 	const std::map<std::string,shared_ptr<ZLTextModel> > &footnotes = model->footnotes();
 	std::map<std::string,shared_ptr<ZLTextModel> >::const_iterator it = footnotes.begin();
 	for (; it != footnotes.end(); ++it) {
-		jobject javaFootnoteModel = createTextModel(env, javaModel, *it->second);
+		jobject javaFootnoteModel = createTextModel(env, javaBookModel, *it->second);
 		if (javaFootnoteModel == 0) {
 			return 7;
 		}
-		AndroidUtil::Method_BookModel_setFootnoteModel->call(javaModel, javaFootnoteModel);
+		// 调用java方法, 保存footnotes数据
+		AndroidUtil::Method_BookModel_setFootnoteModel->call(javaBookModel, javaFootnoteModel);
 		if (env->ExceptionCheck()) {
 			return 8;
 		}
 		env->DeleteLocalRef(javaFootnoteModel);
 	}
 
+	// 9. familyLists数据，再创建paragraph时设置: beginParagraph.addTextStyleEntry
 	const std::vector<std::vector<std::string> > familyLists = model->fontManager().familyLists();
 	for (std::vector<std::vector<std::string> >::const_iterator it = familyLists.begin(); it != familyLists.end(); ++it) {
 		const std::vector<std::string> &lst = *it;
@@ -352,10 +359,12 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 			JString jString(env, lst[i]);
 			env->SetObjectArrayElement(jList, i, jString.j());
 		}
-		AndroidUtil::Method_BookModel_registerFontFamilyList->call(javaModel, jList);
+        // 调用java方法, 保存familyLists数据
+		AndroidUtil::Method_BookModel_registerFontFamilyList->call(javaBookModel, jList);
 		env->DeleteLocalRef(jList);
 	}
 
+	// entries数据, 和familyLists数据一起在xhtmlReader中被设置XHTMLReader::addTextStyleEntry
 	const std::map<std::string,shared_ptr<FontEntry> > entries = model->fontManager().entries();
 	for (std::map<std::string,shared_ptr<FontEntry> >::const_iterator it = entries.begin(); it != entries.end(); ++it) {
 		if (it->second.isNull()) {
@@ -366,9 +375,9 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 		jobject bold = createJavaFileInfo(env, it->second->Bold);
 		jobject italic = createJavaFileInfo(env, it->second->Italic);
 		jobject boldItalic = createJavaFileInfo(env, it->second->BoldItalic);
-
+        // 调用java方法, 保存entries数据
 		AndroidUtil::Method_BookModel_registerFontEntry->call(
-				javaModel, family.j(), normal, bold, italic, boldItalic
+				javaBookModel, family.j(), normal, bold, italic, boldItalic
 		);
 
 		if (boldItalic != 0) env->DeleteLocalRef(boldItalic);

@@ -37,6 +37,11 @@ import org.geometerplus.fbreader.formats.oeb.OEBNativePlugin;
 
 import timber.log.Timber;
 
+/**
+ * 调用cpp JavaNativeFormatPlugin进行图书文件解析
+ * 只支持2种格式, epub: {@link OEBNativePlugin}, fb2: {@link FB2NativePlugin}
+ *
+ */
 public class NativeFormatPlugin extends BuiltinFormatPlugin {
 	private static final Object ourNativeLock = new Object();
 
@@ -105,6 +110,10 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 
 	private native void detectLanguageAndEncodingNative(AbstractBook book);
 
+	/**
+	 * 核心方法入口, 开始解析图书
+	 * @param model BookModel, 之后要提供给自定义TextView进行渲染操作
+	 */
 	@Override
 	synchronized public void readModel(BookModel model) throws BookReadingException {
 		final int code;

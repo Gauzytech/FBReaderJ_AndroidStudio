@@ -53,7 +53,7 @@ public final class BookModel {
 
 		// 保存图书基本信息: title, path, encoding,
 		final BookModel model = new BookModel(book);
-		// 调用cpp层开始图书解析
+		// 图书解析入口, 调用cpp层开始图书解析
 		((BuiltinFormatPlugin) plugin).readModel(model);
 		return model;
 	}
@@ -104,40 +104,6 @@ public final class BookModel {
 		return label;
 	}
 
-	public void registerFontFamilyList(String[] families) {
-		FontManager.index(Arrays.asList(families));
-	}
-
-	public void registerFontEntry(String family, FontEntry entry) {
-		FontManager.Entries.put(family, entry);
-	}
-
-	public void registerFontEntry(String family, FileInfo normal, FileInfo bold, FileInfo italic, FileInfo boldItalic) {
-		registerFontEntry(family, new FontEntry(family, normal, bold, italic, boldItalic));
-	}
-
-	public ZLTextModel createTextModel(
-		String id, String language, int paragraphsNumber,
-		int[] entryIndices, int[] entryOffsets,
-		int[] paragraphLenghts, int[] textSizes, byte[] paragraphKinds,
-		String directoryName, String fileExtension, int blocksNumber
-	) {
-		return new ZLTextPlainModel(
-			id, language, paragraphsNumber,
-			entryIndices, entryOffsets,
-			paragraphLenghts, textSizes, paragraphKinds,
-			directoryName, fileExtension, blocksNumber, myImageMap, FontManager
-		);
-	}
-
-	public void setBookTextModel(ZLTextModel model) {
-		myBookTextModel = model;
-	}
-
-	public void setFootnoteModel(ZLTextModel model) {
-		myFootnotes.put(model.getId(), model);
-	}
-
 	public ZLTextModel getTextModel() {
 		return myBookTextModel;
 	}
@@ -148,25 +114,6 @@ public final class BookModel {
 
 	public void addImage(String id, ZLImage image) {
 		myImageMap.put(id, image);
-	}
-
-	public void initInternalHyperlinks(String directoryName, String fileExtension, int blocksNumber) {
-		myInternalHyperlinks = new CachedCharStorage(directoryName, fileExtension, blocksNumber);
-	}
-
-	private TOCTree myCurrentTree = TOCTree;
-
-	public void addTOCItem(String text, int reference) {
-		myCurrentTree = new TOCTree(myCurrentTree);
-		myCurrentTree.setText(text);
-		myCurrentTree.setReference(myBookTextModel, reference);
-	}
-
-	public void leaveTOCItem() {
-		myCurrentTree = myCurrentTree.Parent;
-		if (myCurrentTree == null) {
-			myCurrentTree = TOCTree;
-		}
 	}
 
 	private Label getLabelInternal(String id) {
@@ -194,6 +141,62 @@ public final class BookModel {
 		}
 		return null;
 	}
+
+	/********************************** 以下为cpp调用java的方法 *******************************/
+	public void registerFontFamilyList(String[] families) {
+		FontManager.index(Arrays.asList(families));
+	}
+
+	public void registerFontEntry(String family, FontEntry entry) {
+		FontManager.Entries.put(family, entry);
+	}
+
+	public void registerFontEntry(String family, FileInfo normal, FileInfo bold, FileInfo italic, FileInfo boldItalic) {
+		registerFontEntry(family, new FontEntry(family, normal, bold, italic, boldItalic));
+	}
+
+	public ZLTextModel createTextModel(
+			String id, String language, int paragraphsNumber,
+			int[] entryIndices, int[] entryOffsets,
+			int[] paragraphLenghts, int[] textSizes, byte[] paragraphKinds,
+			String directoryName, String fileExtension, int blocksNumber
+	) {
+		return new ZLTextPlainModel(
+				id, language, paragraphsNumber,
+				entryIndices, entryOffsets,
+				paragraphLenghts, textSizes, paragraphKinds,
+				directoryName, fileExtension, blocksNumber, myImageMap, FontManager
+		);
+	}
+
+	public void setBookTextModel(ZLTextModel model) {
+		Timber.v("cpp解析打印, cpp调用java方法");
+		myBookTextModel = model;
+	}
+
+	public void setFootnoteModel(ZLTextModel model) {
+		myFootnotes.put(model.getId(), model);
+	}
+
+	public void initInternalHyperlinks(String directoryName, String fileExtension, int blocksNumber) {
+		myInternalHyperlinks = new CachedCharStorage(directoryName, fileExtension, blocksNumber);
+	}
+
+	private TOCTree myCurrentTree = TOCTree;
+
+	public void addTOCItem(String text, int reference) {
+		myCurrentTree = new TOCTree(myCurrentTree);
+		myCurrentTree.setText(text);
+		myCurrentTree.setReference(myBookTextModel, reference);
+	}
+
+	public void leaveTOCItem() {
+		myCurrentTree = myCurrentTree.Parent;
+		if (myCurrentTree == null) {
+			myCurrentTree = TOCTree;
+		}
+	}
+	/********************************** 以上为cpp调用java的方法 *******************************/
 
 	@Override
 	public String toString() {

@@ -26,10 +26,15 @@
 NCXReader::NCXReader(BookReader &modelReader) : myModelReader(modelReader), myReadState(READ_NONE), myPlayIndex(-65535) {
 }
 
+// 目录结构最外层tag
 static const std::string TAG_NAVMAP = "navMap";
+// 一个navPoint代表一条toc item
 static const std::string TAG_NAVPOINT = "navPoint";
+// navLabel代表toc item的title
 static const std::string TAG_NAVLABEL = "navLabel";
+// content代表toc link
 static const std::string TAG_CONTENT = "content";
+// text包含在navLabel里, 代表toc title文字
 static const std::string TAG_TEXT = "text";
 
 void NCXReader::startElementHandler(const char *fullTag, const char **attributes) {

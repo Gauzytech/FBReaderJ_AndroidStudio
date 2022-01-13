@@ -510,9 +510,12 @@ public final class FBReaderApp extends ZLApplication {
 
         // BuiltinFormatPlugin: FB2NativePlugin, OEBNativePlugin
         try {
-            // 在这里解析图书, 将所有图书内容读到char数组中
+            // 开始解析图书, 将所有图书内容存入bookModel中
+            // bookModel.myBookTextModel里保存了所有章节渲染信息
             Model = BookModel.createModel(book, plugin);
+            // 保存图书基本信息
             Collection.saveBook(book);
+            // 这一部干啥的????
             ZLTextHyphenator.Instance().load(book.getLanguage());
             // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
             // 并且将图书定位到之前读过的位置: moveStartCursor
@@ -526,6 +529,7 @@ public final class FBReaderApp extends ZLApplication {
                 gotoBookmark(bookmark, false);
             }
             Collection.addToRecentlyOpened(book);
+            // 将author append到书名title后面
             final StringBuilder title = new StringBuilder(book.getTitle());
             if (!book.authors().isEmpty()) {
                 boolean first = true;
@@ -545,6 +549,7 @@ public final class FBReaderApp extends ZLApplication {
         // 触发ZLAndroidWidget类的onDraw方法, 显示图书
         getViewWidget().repaint();
 
+        // 如果是不支持的DRM解析格式, 显示错误信息
         for (FileEncryptionInfo info : plugin.readEncryptionInfos(book)) {
             if (info != null && !EncryptionMethod.isSupported(info.Method)) {
                 showErrorMessage("unsupportedEncryptionMethod", book.getPath());

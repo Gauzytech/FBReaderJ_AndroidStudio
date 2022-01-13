@@ -40,6 +40,10 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 		super(systemInfo, "ePub");
 	}
 
+	/**
+	 * 核心方法入口, 调用super开始解析图书
+	 * @param model BookModel, 之后要提供给自定义TextView进行渲染操作
+	 */
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
 		Timber.v("ceshi123, 读取图书并创建model: \n" + model.toString());
@@ -52,7 +56,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 		Timber.v("ceshi123,  创建bookFile: " + file.getClass().getSimpleName());
 		file.setCached(true);
 		try {
-			// 调用cpp层进行解析
+			// 调用cpp层进行解析, 最终解析的图书数据会全部保存到bookModel.myBookTextModel中
 			super.readModel(model);
 			model.setLabelResolver(new BookModel.LabelResolver() {
 				public List<String> getCandidates(String id) {
