@@ -27,4 +27,11 @@ public class ZLTextStyleElement extends ZLTextElement {
 	ZLTextStyleElement(ZLTextStyleEntry entry) {
 		Entry = entry;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextStyleElement{" +
+				"Entry=" + Entry +
+				'}';
+	}
 }

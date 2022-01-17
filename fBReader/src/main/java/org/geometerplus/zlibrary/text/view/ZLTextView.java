@@ -45,6 +45,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import timber.log.Timber;
+
 public abstract class ZLTextView extends ZLTextViewBase {
 
     public static final int SCROLLBAR_HIDE = 0;
@@ -65,7 +67,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private ZLTextPage myNextPage = new ZLTextPage();
     private ZLTextRegion.Soul myOutlinedRegionSoul;
     private boolean myShowOutline = true;
-    private CursorManager myCursorManager;
+    private CursorManager myCursorManager; // LRU缓存
     private int myLettersBufferLength = 0;
     private ZLTextModel myLettersModel = null;
     private float myCharWidth = -1f;
@@ -81,6 +83,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public synchronized void setModel(ZLTextModel model) {
+        // 这是个LRU, 缓存ZLTextParagraphCursor
         myCursorManager = model != null ? new CursorManager(model, getExtensionManager()) : null;
 
         mySelection.clear();
@@ -97,7 +100,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (myModel != null) {
             final int paragraphsNumber = myModel.getParagraphsNumber();
             if (paragraphsNumber > 0) {
-                myCurrentPage.moveStartCursor(cursor(0));
+                // 先将cursor定位到第一页
+                // 从cursorManager LRU中获得第一章的cursor, 因为此时是cursorManager是空的, 所以初始化第一章ZLTextParagraphCursor
+                ZLTextParagraphCursor start = cursor(0);
+                Timber.v("渲染流程, 获得startCursor: " + start.toString());
+                myCurrentPage.moveStartCursor(start);
             }
         }
         Application.getViewWidget().reset();
@@ -733,7 +740,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (paragraphCursor == null) {
             return -1;
         }
-        final int paragraphIndex = paragraphCursor.Index;
+        final int paragraphIndex = paragraphCursor.index;
         int sizeOfText = myModel.getTextLength(paragraphIndex - 1);
         final int paragraphLength = paragraphCursor.getParagraphLength();
         if (paragraphLength > 0) {
@@ -984,7 +991,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
                     // 文本位置信息
-                    final ZLTextPosition pos = new ZLTextFixedPosition(info.ParagraphCursor.Index, wordIndex, 0);
+                    final ZLTextPosition pos = new ZLTextFixedPosition(info.ParagraphCursor.index, wordIndex, 0);
                     // 文本高亮信息
                     final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
                     // 高亮前景色
@@ -1042,7 +1049,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final int len = info.EndCharIndex - start;
             final ZLTextWord word = (ZLTextWord) paragraph.getElement(info.EndElementIndex);
             final ZLTextPosition pos =
-                    new ZLTextFixedPosition(info.ParagraphCursor.Index, info.EndElementIndex, 0);
+                    new ZLTextFixedPosition(info.ParagraphCursor.index, info.EndElementIndex, 0);
             final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
             drawWord(
@@ -1434,7 +1441,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         fx += info.LeftIndent;
 
         final ZLTextParagraphCursor paragraph = info.ParagraphCursor;
-        final int paragraphIndex = paragraph.Index;
+        final int paragraphIndex = paragraph.index;
         // 获取当前行最后一个字的位置
         final int endElementIndex = info.EndElementIndex;
         int charIndex = info.RealStartCharIndex;
@@ -1951,7 +1958,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return page.TextElementMap.getRegion(myOutlinedRegionSoul);
     }
 
-    ZLTextParagraphCursor cursor(int index) {
+    public ZLTextParagraphCursor cursor(int index) {
+        Timber.v("渲染流程, 段落号 = %s", index);
         return myCursorManager.get(index);
     }
 

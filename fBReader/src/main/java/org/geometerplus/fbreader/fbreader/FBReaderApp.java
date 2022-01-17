@@ -513,9 +513,10 @@ public final class FBReaderApp extends ZLApplication {
             // 开始解析图书, 将所有图书内容存入bookModel中
             // bookModel.myBookTextModel里保存了所有章节渲染信息
             Model = BookModel.createModel(book, plugin);
+            Timber.v("渲染流程, 解析成功！----------------------------------------------------------------------接下来将开始渲染流程------------------------------------------------------------------------------");
             // 保存图书基本信息
             Collection.saveBook(book);
-            // 这一部干啥的????
+            // 这一步干啥的????
             ZLTextHyphenator.Instance().load(book.getLanguage());
             // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
             // 并且将图书定位到之前读过的位置: moveStartCursor

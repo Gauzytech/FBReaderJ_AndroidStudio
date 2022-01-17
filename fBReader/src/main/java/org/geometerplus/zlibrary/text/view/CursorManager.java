@@ -19,22 +19,27 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
 import androidx.collection.LruCache;
 
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
-final class CursorManager extends LruCache<Integer,ZLTextParagraphCursor> {
+final class CursorManager extends LruCache<Integer, ZLTextParagraphCursor> {
 	private final ZLTextModel myModel;
 	final ExtensionElementManager ExtensionManager;
 
-	CursorManager(ZLTextModel model, ExtensionElementManager extManager) {
+	public CursorManager(ZLTextModel model, ExtensionElementManager extManager) {
 		super(200); // max 200 cursors in the cache
 		myModel = model;
 		ExtensionManager = extManager;
 	}
 
+	/**
+	 * LRU value的创建方法
+	 * @param index key
+	 */
 	@Override
-	protected ZLTextParagraphCursor create(Integer index) {
+	protected ZLTextParagraphCursor create(@NonNull Integer index) {
 		return new ZLTextParagraphCursor(this, myModel, index);
 	}
 }

@@ -1,5 +1,8 @@
 package org.vimgadgets.linebreak;
 
+/**
+ * 通过cpp LineBreak库进行分页操作
+ */
 public final class LineBreaker {
 	static {
 		System.loadLibrary("LineBreak-v2");

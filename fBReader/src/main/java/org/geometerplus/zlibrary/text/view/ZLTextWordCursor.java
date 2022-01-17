@@ -79,7 +79,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 
 	@Override
 	public int getParagraphIndex() {
-		return myParagraphCursor != null ? myParagraphCursor.Index : 0;
+		return myParagraphCursor != null ? myParagraphCursor.index : 0;
 	}
 
 	@Override
@@ -112,9 +112,9 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 			wordIndex++;
 		}
 		if (wordIndex < paragraphLength) {
-			return new ZLTextMark(paragraph.Index, ((ZLTextWord)paragraph.getElement(wordIndex)).getParagraphOffset(), 0);
+			return new ZLTextMark(paragraph.index, ((ZLTextWord)paragraph.getElement(wordIndex)).getParagraphOffset(), 0);
 		}
-		return new ZLTextMark(paragraph.Index + 1, 0, 0);
+		return new ZLTextMark(paragraph.index + 1, 0, 0);
 	}
 
 	public void nextWord() {
@@ -164,10 +164,10 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	}
 
 	public void moveToParagraph(int paragraphIndex) {
-		if (!isNull() && (paragraphIndex != myParagraphCursor.Index)) {
-			final ZLTextModel model = myParagraphCursor.Model;
+		if (!isNull() && (paragraphIndex != myParagraphCursor.index)) {
+			final ZLTextModel model = myParagraphCursor.textModel;
 			paragraphIndex = Math.max(0, Math.min(paragraphIndex, model.getParagraphsNumber() - 1));
-			myParagraphCursor = myParagraphCursor.CursorManager.get(paragraphIndex);
+			myParagraphCursor = myParagraphCursor.cursorManager.get(paragraphIndex);
 			moveToParagraphStart();
 		}
 	}

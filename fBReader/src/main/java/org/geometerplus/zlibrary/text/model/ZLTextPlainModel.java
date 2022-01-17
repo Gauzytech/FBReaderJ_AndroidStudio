@@ -19,11 +19,16 @@
 
 package org.geometerplus.zlibrary.text.model;
 
-import java.util.*;
-
 import org.geometerplus.zlibrary.core.fonts.FontManager;
 import org.geometerplus.zlibrary.core.image.ZLImage;
-import org.geometerplus.zlibrary.core.util.*;
+import org.geometerplus.zlibrary.core.util.ZLSearchPattern;
+import org.geometerplus.zlibrary.core.util.ZLSearchUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Feature {
 	private final String myId;
@@ -42,11 +47,181 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 
 	// 实际存储文本信息与标签信息的地方
 	private final CachedCharStorage myStorage;
+	// 存文件所有图片的map
+	// key: 图片文件名, value: 图片对象
 	private final Map<String,ZLImage> myImageMap;
 
 	private ArrayList<ZLTextMark> myMarks;
-
+	// 保存字体list
 	private final FontManager myFontManager;
+
+	public ZLTextPlainModel(
+		String id,
+		String language,
+		int paragraphsNumber,
+		int[] entryIndices,
+		int[] entryOffsets,
+		int[] paragraphLengths,
+		int[] textSizes,
+		byte[] paragraphKinds,
+		String directoryName,
+		String fileExtension,
+		int blocksNumber,
+		Map<String,ZLImage> imageMap,
+		FontManager fontManager
+	) {
+		myId = id;
+		myLanguage = language;
+		myParagraphsNumber = paragraphsNumber;
+		myStartEntryIndices = entryIndices;
+		myStartEntryOffsets = entryOffsets;
+		myParagraphLengths = paragraphLengths;
+		myTextSizes = textSizes;
+		myParagraphKinds = paragraphKinds;
+		myStorage = new CachedCharStorage(directoryName, fileExtension, blocksNumber);
+		myImageMap = imageMap;
+		myFontManager = fontManager;
+	}
+
+	public final String getId() {
+		return myId;
+	}
+
+	public final String getLanguage() {
+		return myLanguage;
+	}
+
+	public final ZLTextMark getFirstMark() {
+		return (myMarks == null || myMarks.isEmpty()) ? null : myMarks.get(0);
+	}
+
+	public final ZLTextMark getLastMark() {
+		return (myMarks == null || myMarks.isEmpty()) ? null : myMarks.get(myMarks.size() - 1);
+	}
+
+	public final ZLTextMark getNextMark(ZLTextMark position) {
+		if (position == null || myMarks == null) {
+			return null;
+		}
+
+		ZLTextMark mark = null;
+		for (ZLTextMark current : myMarks) {
+			if (current.compareTo(position) >= 0) {
+				if ((mark == null) || (mark.compareTo(current) > 0)) {
+					mark = current;
+				}
+			}
+		}
+		return mark;
+	}
+
+	public final ZLTextMark getPreviousMark(ZLTextMark position) {
+		if ((position == null) || (myMarks == null)) {
+			return null;
+		}
+
+		ZLTextMark mark = null;
+		for (ZLTextMark current : myMarks) {
+			if (current.compareTo(position) < 0) {
+				if ((mark == null) || (mark.compareTo(current) < 0)) {
+					mark = current;
+				}
+			}
+		}
+		return mark;
+	}
+
+	public final int search(final String text, int startIndex, int endIndex, boolean ignoreCase) {
+		int count = 0;
+		ZLSearchPattern pattern = new ZLSearchPattern(text, ignoreCase);
+		myMarks = new ArrayList<ZLTextMark>();
+		if (startIndex > myParagraphsNumber) {
+			startIndex = myParagraphsNumber;
+		}
+		if (endIndex > myParagraphsNumber) {
+			endIndex = myParagraphsNumber;
+		}
+		int index = startIndex;
+		final EntryIteratorImpl it = new EntryIteratorImpl(index);
+		while (true) {
+			int offset = 0;
+			while (it.next()) {
+				if (it.getType() == ZLTextParagraph.Entry.TEXT) {
+					char[] textData = it.getTextData();
+					int textOffset = it.getTextOffset();
+					int textLength = it.getTextLength();
+					for (ZLSearchUtil.Result res = ZLSearchUtil.find(textData, textOffset, textLength, pattern); res != null;
+						res = ZLSearchUtil.find(textData, textOffset, textLength, pattern, res.Start + 1)) {
+						myMarks.add(new ZLTextMark(index, offset + res.Start, res.Length));
+						++count;
+					}
+					offset += textLength;
+				}
+			}
+			if (++index >= endIndex) {
+				break;
+			}
+			it.reset(index);
+		}
+		return count;
+	}
+
+	public final List<ZLTextMark> getMarks() {
+		return myMarks != null ? myMarks : Collections.<ZLTextMark>emptyList();
+	}
+
+	public final void removeAllMarks() {
+		myMarks = null;
+	}
+
+	public final int getParagraphsNumber() {
+		return myParagraphsNumber;
+	}
+
+	/**
+	 * 根据index获得对应段落的类型
+	 * @param index paragraph index
+	 * @return Paragraph placement class
+	 */
+	public final ZLTextParagraph getParagraph(int index) {
+		final byte kind = myParagraphKinds[index];
+		return (kind == ZLTextParagraph.Kind.TEXT_PARAGRAPH) ?
+			new ZLTextParagraphImpl(this, index) :
+			new ZLTextSpecialParagraphImpl(kind, this, index);
+	}
+
+	public final int getTextLength(int index) {
+		if (myTextSizes.length == 0) {
+			return 0;
+		}
+		return myTextSizes[Math.max(Math.min(index, myParagraphsNumber - 1), 0)];
+	}
+
+	private static int binarySearch(int[] array, int length, int value) {
+		int lowIndex = 0;
+		int highIndex = length - 1;
+
+		while (lowIndex <= highIndex) {
+			int midIndex = (lowIndex + highIndex) >>> 1;
+			int midValue = array[midIndex];
+			if (midValue > value) {
+				highIndex = midIndex - 1;
+			} else if (midValue < value) {
+				lowIndex = midIndex + 1;
+			} else {
+				return midIndex;
+			}
+		}
+		return -lowIndex - 1;
+	}
+
+	public final int findParagraphByTextLength(int length) {
+		int index = binarySearch(myTextSizes, myParagraphsNumber, length);
+		if (index >= 0) {
+			return index;
+		}
+		return Math.min(-index - 1, myParagraphsNumber - 1);
+	}
 
 	final class EntryIteratorImpl implements ZLTextParagraph.EntryIterator {
 		private int myCounter;
@@ -228,9 +403,9 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 				{
 					final short depth = (short)((first >> 8) & 0xFF);
 					final ZLTextStyleEntry entry =
-						type == ZLTextParagraph.Entry.STYLE_CSS
-							? new ZLTextCSSStyleEntry(depth)
-							: new ZLTextOtherStyleEntry();
+							type == ZLTextParagraph.Entry.STYLE_CSS
+									? new ZLTextCSSStyleEntry(depth)
+									: new ZLTextOtherStyleEntry();
 
 					final short mask = (short)data[dataOffset++];
 					for (int i = 0; i < NUMBER_OF_LENGTHS; ++i) {
@@ -241,7 +416,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 						}
 					}
 					if (ZLTextStyleEntry.isFeatureSupported(mask, ALIGNMENT_TYPE) ||
-						ZLTextStyleEntry.isFeatureSupported(mask, NON_LENGTH_VERTICAL_ALIGN)) {
+							ZLTextStyleEntry.isFeatureSupported(mask, NON_LENGTH_VERTICAL_ALIGN)) {
 						final short value = (short)data[dataOffset++];
 						if (ZLTextStyleEntry.isFeatureSupported(mask, ALIGNMENT_TYPE)) {
 							entry.setAlignmentType((byte)(value & 0xFF));
@@ -310,166 +485,4 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		}
 	}
 
-	public ZLTextPlainModel(
-		String id,
-		String language,
-		int paragraphsNumber,
-		int[] entryIndices,
-		int[] entryOffsets,
-		int[] paragraphLengths,
-		int[] textSizes,
-		byte[] paragraphKinds,
-		String directoryName,
-		String fileExtension,
-		int blocksNumber,
-		Map<String,ZLImage> imageMap,
-		FontManager fontManager
-	) {
-		myId = id;
-		myLanguage = language;
-		myParagraphsNumber = paragraphsNumber;
-		myStartEntryIndices = entryIndices;
-		myStartEntryOffsets = entryOffsets;
-		myParagraphLengths = paragraphLengths;
-		myTextSizes = textSizes;
-		myParagraphKinds = paragraphKinds;
-		myStorage = new CachedCharStorage(directoryName, fileExtension, blocksNumber);
-		myImageMap = imageMap;
-		myFontManager = fontManager;
-	}
-
-	public final String getId() {
-		return myId;
-	}
-
-	public final String getLanguage() {
-		return myLanguage;
-	}
-
-	public final ZLTextMark getFirstMark() {
-		return (myMarks == null || myMarks.isEmpty()) ? null : myMarks.get(0);
-	}
-
-	public final ZLTextMark getLastMark() {
-		return (myMarks == null || myMarks.isEmpty()) ? null : myMarks.get(myMarks.size() - 1);
-	}
-
-	public final ZLTextMark getNextMark(ZLTextMark position) {
-		if (position == null || myMarks == null) {
-			return null;
-		}
-
-		ZLTextMark mark = null;
-		for (ZLTextMark current : myMarks) {
-			if (current.compareTo(position) >= 0) {
-				if ((mark == null) || (mark.compareTo(current) > 0)) {
-					mark = current;
-				}
-			}
-		}
-		return mark;
-	}
-
-	public final ZLTextMark getPreviousMark(ZLTextMark position) {
-		if ((position == null) || (myMarks == null)) {
-			return null;
-		}
-
-		ZLTextMark mark = null;
-		for (ZLTextMark current : myMarks) {
-			if (current.compareTo(position) < 0) {
-				if ((mark == null) || (mark.compareTo(current) < 0)) {
-					mark = current;
-				}
-			}
-		}
-		return mark;
-	}
-
-	public final int search(final String text, int startIndex, int endIndex, boolean ignoreCase) {
-		int count = 0;
-		ZLSearchPattern pattern = new ZLSearchPattern(text, ignoreCase);
-		myMarks = new ArrayList<ZLTextMark>();
-		if (startIndex > myParagraphsNumber) {
-			startIndex = myParagraphsNumber;
-		}
-		if (endIndex > myParagraphsNumber) {
-			endIndex = myParagraphsNumber;
-		}
-		int index = startIndex;
-		final EntryIteratorImpl it = new EntryIteratorImpl(index);
-		while (true) {
-			int offset = 0;
-			while (it.next()) {
-				if (it.getType() == ZLTextParagraph.Entry.TEXT) {
-					char[] textData = it.getTextData();
-					int textOffset = it.getTextOffset();
-					int textLength = it.getTextLength();
-					for (ZLSearchUtil.Result res = ZLSearchUtil.find(textData, textOffset, textLength, pattern); res != null;
-						res = ZLSearchUtil.find(textData, textOffset, textLength, pattern, res.Start + 1)) {
-						myMarks.add(new ZLTextMark(index, offset + res.Start, res.Length));
-						++count;
-					}
-					offset += textLength;
-				}
-			}
-			if (++index >= endIndex) {
-				break;
-			}
-			it.reset(index);
-		}
-		return count;
-	}
-
-	public final List<ZLTextMark> getMarks() {
-		return myMarks != null ? myMarks : Collections.<ZLTextMark>emptyList();
-	}
-
-	public final void removeAllMarks() {
-		myMarks = null;
-	}
-
-	public final int getParagraphsNumber() {
-		return myParagraphsNumber;
-	}
-
-	public final ZLTextParagraph getParagraph(int index) {
-		final byte kind = myParagraphKinds[index];
-		return (kind == ZLTextParagraph.Kind.TEXT_PARAGRAPH) ?
-			new ZLTextParagraphImpl(this, index) :
-			new ZLTextSpecialParagraphImpl(kind, this, index);
-	}
-
-	public final int getTextLength(int index) {
-		if (myTextSizes.length == 0) {
-			return 0;
-		}
-		return myTextSizes[Math.max(Math.min(index, myParagraphsNumber - 1), 0)];
-	}
-
-	private static int binarySearch(int[] array, int length, int value) {
-		int lowIndex = 0;
-		int highIndex = length - 1;
-
-		while (lowIndex <= highIndex) {
-			int midIndex = (lowIndex + highIndex) >>> 1;
-			int midValue = array[midIndex];
-			if (midValue > value) {
-				highIndex = midIndex - 1;
-			} else if (midValue < value) {
-				lowIndex = midIndex + 1;
-			} else {
-				return midIndex;
-			}
-		}
-		return -lowIndex - 1;
-	}
-
-	public final int findParagraphByTextLength(int length) {
-		int index = binarySearch(myTextSizes, myParagraphsNumber, length);
-		if (index >= 0) {
-			return index;
-		}
-		return Math.min(-index - 1, myParagraphsNumber - 1);
-	}
 }

@@ -26,6 +26,13 @@ public interface ZLTextModel {
 	String getLanguage();
 
 	int getParagraphsNumber();
+
+	/**
+	 * 根据index获得段落的placement类
+	 * @param index 段落号
+	 * @return TEXT_PARAGRAPH: ZLTextParagraphImpl,
+	 * 		   其他: ZLTextSpecialParagraphImpl
+	 */
 	ZLTextParagraph getParagraph(int index);
 
 	void removeAllMarks();

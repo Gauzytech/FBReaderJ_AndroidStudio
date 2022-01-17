@@ -209,10 +209,12 @@ public abstract class ZLTextStyleEntry {
 		final StringBuilder buffer = new StringBuilder("StyleEntry[");
 		buffer.append("features: ").append(myFeatureMask).append(";");
 		if (isFeatureSupported(Feature.LENGTH_SPACE_BEFORE)) {
-			buffer.append("space-before: ").append(myLengths[Feature.LENGTH_SPACE_BEFORE]).append(";");
+			buffer.append(" ")
+					.append("space-before: ").append(myLengths[Feature.LENGTH_SPACE_BEFORE]).append(";");
 		}
 		if (isFeatureSupported(Feature.LENGTH_SPACE_AFTER)) {
-			buffer.append("space-after: ").append(myLengths[Feature.LENGTH_SPACE_AFTER]).append(";");
+			buffer.append(" ")
+					.append("space-after: ").append(myLengths[Feature.LENGTH_SPACE_AFTER]).append(";");
 		}
 		buffer.append("]");
 		return buffer.toString();

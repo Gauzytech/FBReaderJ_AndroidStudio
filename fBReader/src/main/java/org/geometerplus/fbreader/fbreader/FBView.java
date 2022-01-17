@@ -83,6 +83,9 @@ public final class FBView extends ZLTextView {
         myBookElementManager = new BookElementManager(this);
     }
 
+    /**
+     * 渲染入口, 通过textModel加载渲染信息
+     */
     public void setModel(ZLTextModel model) {
         super.setModel(model);
         if (myFooter != null) {
