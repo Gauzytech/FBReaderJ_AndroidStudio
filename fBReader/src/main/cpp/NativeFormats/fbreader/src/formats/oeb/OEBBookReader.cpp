@@ -264,7 +264,11 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 			}
 		}
 		LogUtil::print("readBook, para count = %s", std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()));
-        LogUtil::print("xhtmlReader.readFile, <<<------------END %s", xhtmlFile.path());
+		const std::string& fileName = xhtmlFile.name(false);
+//		if (fileName == "titlepage.xhtml" || fileName == "text/part0000_split_000.html") {
+//			myModelReader.model().bookTextModel()->printParagraph();
+//		}
+		LogUtil::print("xhtmlReader.readFile, <<<------------END %s", fileName);
 	}
 
 	// 生成目录信息

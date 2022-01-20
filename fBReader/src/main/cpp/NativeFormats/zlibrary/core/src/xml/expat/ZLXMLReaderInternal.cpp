@@ -145,7 +145,7 @@ void ZLXMLReaderInternal::setupEntities() {
  * 初始化expat(c++XML解析库), 并注册相关handler
  */
 void ZLXMLReaderInternal::init(const char *encoding) {
-    LogUtil::print("ZLXMLReaderInternal.init, %s", "初始化expat: myParser");
+    LogUtil::print("ZLXMLReaderInternal.init, 初始化expat", "");
     // 初始化expat(c++XML解析库)
 	if (myInitialized) {
 		XML_ParserReset(myParser, encoding);

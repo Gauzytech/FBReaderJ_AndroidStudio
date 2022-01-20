@@ -29,7 +29,16 @@
 #include <ZLStringUtil.h>
 
 #include "ZLCachedMemoryAllocator.h"
+#include <LogUtil.h>
 
+/**
+ * 缓存解析文件结果工具类
+ * @param rowSize
+ * @param directoryName /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/cache
+ * @param fileExtension 比如: ncache: paragraph解析结果
+ * 							 footnotes: 脚注
+ * 							 nlinks: 超链接
+ */
 ZLCachedMemoryAllocator::ZLCachedMemoryAllocator(const std::size_t rowSize,
 		const std::string &directoryName, const std::string &fileExtension) :
 	myRowSize(rowSize),
@@ -39,6 +48,7 @@ ZLCachedMemoryAllocator::ZLCachedMemoryAllocator(const std::size_t rowSize,
 	myFailed(false),
 	myDirectoryName(directoryName),
 	myFileExtension(fileExtension) {
+	// 创建cache文件夹
 	ZLFile(directoryName).directory(true);
 }
 
@@ -56,7 +66,7 @@ void ZLCachedMemoryAllocator::flush() {
 	char *ptr = myPool.back() + myOffset;
 	*ptr++ = 0;
 	*ptr = 0;
-	writeCache(myOffset + 2);
+	writeCache(myOffset + 2, "");
 	myHasChanges = false;
 }
 
@@ -64,15 +74,20 @@ std::string ZLCachedMemoryAllocator::makeFileName(std::size_t index) {
 	std::string name(myDirectoryName);
 	name.append("/");
 	ZLStringUtil::appendNumber(name, index);
+	LogUtil::print("缓存文件名 %s", name);
 	return name.append(".").append(myFileExtension);
 }
 
-void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength) {
-	if (myFailed || myPool.size() == 0) {
+void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, std::string from) {
+	if (myFailed || myPool.empty()) {
 		return;
 	}
+//	LogUtil::print("writeCache %s", std::to_string(blockLength));
+
 	const std::size_t index = myPool.size() - 1;
 	const std::string fileName = makeFileName(index);
+	LogUtil::print("writeCache, " + from + " name = %s", fileName);
+
 	ZLFile file(fileName);
 	shared_ptr<ZLOutputStream> stream = file.outputStream();
 	if (stream.isNull() || !stream->open()) {
@@ -83,7 +98,7 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength) {
 	stream->close();
 }
 
-char *ZLCachedMemoryAllocator::allocate(std::size_t size) {
+char *ZLCachedMemoryAllocator::allocate(std::size_t size, std::string from) {
 	myHasChanges = true;
 	if (myPool.empty()) {
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
@@ -96,7 +111,7 @@ char *ZLCachedMemoryAllocator::allocate(std::size_t size) {
 		*ptr++ = 0;
 		*ptr++ = 0;
 		std::memcpy(ptr, &row, sizeof(char*));
-		writeCache(myOffset + 2);
+		writeCache(myOffset + 2, from);
 
 		myPool.push_back(row);
 		myOffset = 0;
@@ -107,6 +122,7 @@ char *ZLCachedMemoryAllocator::allocate(std::size_t size) {
 }
 
 char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
+	LogUtil::print("reallocateLast %s", std::to_string(newSize));
 	myHasChanges = true;
 	const std::size_t oldOffset = ptr - myPool.back();
 	if (oldOffset + newSize + 2 + sizeof(char*) <= myCurrentRowSize) {
@@ -120,7 +136,7 @@ char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
 		*ptr++ = 0;
 		*ptr++ = 0;
 		std::memcpy(ptr, &row, sizeof(char*));
-		writeCache(oldOffset + 2);
+		writeCache(oldOffset + 2, "");
 
 		myPool.push_back(row);
 		myOffset = newSize;

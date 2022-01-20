@@ -182,7 +182,7 @@ static bool initInternalHyperlinks(JNIEnv *env, jobject javaModel, BookModel &mo
 		const std::size_t idLen = ucs2id.size() * 2;
 		const std::size_t modelIdLen = ucs2modelId.size() * 2;
 
-		char *ptr = allocator.allocate(idLen + modelIdLen + 8);
+		char *ptr = allocator.allocate(idLen + modelIdLen + 8, "initInternalHyperlinks");
 		ZLCachedMemoryAllocator::writeUInt16(ptr, ucs2id.size());
 		ptr += 2;
 		std::memcpy(ptr, &ucs2id.front(), idLen);

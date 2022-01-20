@@ -28,9 +28,18 @@
 #include "../formats/FormatPlugin.h"
 #include "../library/Book.h"
 
+/**
+ * BookModel constructor
+ * @param book  book model
+ * @param javaModel javaBookModel
+ * @param cacheDir 缓存解析数据的文件夹, /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/cache
+ */
 BookModel::BookModel(const shared_ptr<Book> book, jobject javaModel, const std::string &cacheDir) : CacheDir(cacheDir), myBook(book) {
 	myJavaModel = AndroidUtil::getEnv()->NewGlobalRef(javaModel);
 
+	// 在这里初始化保存图书渲染paragraph信息的TextModel, 并且创建解析缓存工具类ZLCachedMemoryAllocator
+	// ncache 缓存paragraph解析数组文件的extension
+	// 131072 一行的大小
 	myBookTextModel = new ZLTextPlainModel(std::string(), book->language(), 131072, CacheDir, "ncache", myFontManager);
 	myContentsTree = new ContentsTree();
 	/*shared_ptr<FormatPlugin> plugin = PluginCollection::Instance().plugin(book->file(), false);

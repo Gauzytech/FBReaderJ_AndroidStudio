@@ -27,7 +27,7 @@ import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 public final class ZLTextWord extends ZLTextElement {
     // 代表CachedCharStorage类内char数组的引用
     public final char[] Data;
-    // 代表当前字在char数组中的偏移量
+    // 代表当前字在char[]中的偏移量
     public final int Offset;
     // 为1
     public final int Length;
@@ -39,7 +39,7 @@ public final class ZLTextWord extends ZLTextElement {
     /**
      * 标记
      */
-    class Mark {
+    static class Mark {
         /**
          * 起始
          */

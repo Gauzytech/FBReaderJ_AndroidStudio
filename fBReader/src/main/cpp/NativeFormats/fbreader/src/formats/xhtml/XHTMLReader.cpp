@@ -559,8 +559,12 @@ void XHTMLTagHyperlinkAction::doAtEnd(XHTMLReader &reader) {
 XHTMLTagParagraphWithControlAction::XHTMLTagParagraphWithControlAction(FBTextKind control) : myControl(control) {
 }
 
+/**
+ *	ZLXMLParser类的processStartTag方法  ->  XHTMLReader类的startElementHandler方法  ->  XHTMLTagParagraphWithControlAction类的doAtStart方法
+ */
 void XHTMLTagParagraphWithControlAction::doAtStart(XHTMLReader &reader, const char**) {
-	if (myControl == TITLE && bookReader(reader).model().bookTextModel()->paragraphsNumber() > 1) {
+	if (myControl == TITLE
+		&& bookReader(reader).model().bookTextModel()->paragraphsNumber() > 1) {
 		bookReader(reader).insertEndOfSectionParagraph();
 	}
 	// 在myKindStack属性中添加FBTextKind.H1 (31)
@@ -665,7 +669,7 @@ void XHTMLReader::fillTagTable() {
 
 		addAction("img", new XHTMLTagImageAction("src"));
 		addAction("object", new XHTMLTagImageAction("data"));
-		XHTMLSvgImageNamePredicate *predicate = new XHTMLSvgImageNamePredicate();
+		auto *predicate = new XHTMLSvgImageNamePredicate();
 		addAction("svg", new XHTMLTagSvgAction(*predicate));
 		addAction("image", new XHTMLTagImageAction(predicate));
 		addAction(ZLXMLNamespace::Svg, "svg", new XHTMLTagSvgAction(*predicate));

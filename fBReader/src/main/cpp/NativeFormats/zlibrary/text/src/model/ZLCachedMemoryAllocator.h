@@ -30,7 +30,7 @@ public:
 	ZLCachedMemoryAllocator(const std::size_t rowSize, const std::string &directoryName, const std::string &fileExtension);
 	~ZLCachedMemoryAllocator();
 
-	char *allocate(std::size_t size);
+	char *allocate(std::size_t size, std::string from);
 	char *reallocateLast(char *ptr, std::size_t newSize);
 
 	void flush();
@@ -50,7 +50,7 @@ public:
 
 private:
 	std::string makeFileName(std::size_t index);
-	void writeCache(std::size_t blockLength);
+	void writeCache(std::size_t blockLength, std::string from);
 
 private:
 	const std::size_t myRowSize;

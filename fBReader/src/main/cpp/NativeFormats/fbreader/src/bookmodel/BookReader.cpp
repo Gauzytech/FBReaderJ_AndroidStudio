@@ -97,8 +97,11 @@ bool BookReader::isKindStackEmpty() const {
 
 void BookReader::beginParagraph(ZLTextParagraph::Kind kind) {
 	endParagraph();
-	if (myCurrentTextModel != 0) {
+	if (myCurrentTextModel != nullptr) {
+		// 通过textModel创建一个paragraph
+		// kind两种情况TEXT_PARAGRAPH或者其他
 		((ZLTextPlainModel&)*myCurrentTextModel).createParagraph(kind);
+		// 遍历myKindStack, 循环调用addControl方法
 		for (std::vector<FBTextKind>::const_iterator it = myKindStack.begin(); it != myKindStack.end(); ++it) {
 			myCurrentTextModel->addControl(*it, true);
 		}

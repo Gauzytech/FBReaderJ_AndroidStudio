@@ -32,6 +32,7 @@
 #include <ZLTextKind.h>
 //#include <ZLTextMark.h>
 #include <ZLCachedMemoryAllocator.h>
+#include <LogUtil.h>
 
 class ZLTextStyleEntry;
 class ZLVideoEntry;
@@ -89,6 +90,7 @@ public:
 	const std::vector<jint> &paragraphLengths() const;
 	const std::vector<jint> &textSizes() const;
 	const std::vector<jbyte> &paragraphKinds() const;
+	const void printParagraph();
 
 protected:
 	void addParagraphInternal(ZLTextParagraph *paragraph);
@@ -143,6 +145,13 @@ inline ZLTextParagraph *ZLTextModel::operator [] (std::size_t index) {
 
 inline const ZLTextParagraph *ZLTextModel::operator [] (std::size_t index) const {
 	return myParagraphs[std::min(myParagraphs.size() - 1, index)];
+}
+
+inline const void ZLTextModel::printParagraph() {
+	for (int i = 0; i < myParagraphs.size(); ++i) {
+		LogUtil::print("TextModel, paraNum=" + std::to_string(i) + " entry %s",
+				 std::to_string(myParagraphs[i]->entryNumber()));
+	}
 }
 
 #endif /* __ZLTEXTMODEL_H__ */

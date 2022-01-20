@@ -49,11 +49,16 @@ enum XHTMLReadingState {
 	XHTML_READ_VIDEO
 };
 
+/**
+ * epub文件中有很多标签，不同的标签代表不同的不同的结构，
+ * 所以FBReader也为不同的标签提供了不同的处理类。这些处理类都是XHTMLTagAction接口的实现类
+ */
 class XHTMLTagAction {
 
 public:
 	virtual ~XHTMLTagAction();
 
+	// 标签一般都是成对出现的，XHTMLTagAction接口中的两个方法分别就对应了
 	// 处理标签对的开始部分
 	virtual void doAtStart(XHTMLReader &reader, const char **xmlattributes) = 0;
 	// 处理标签对的结束部分

@@ -36,7 +36,7 @@ public class ZLTextHyperlink {
 
 	void addElementIndex(int elementIndex) {
 		if (myElementIndexes == null) {
-			myElementIndexes = new LinkedList<Integer>();
+			myElementIndexes = new LinkedList<>();
 		}
 		myElementIndexes.add(elementIndex);
 	}

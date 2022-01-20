@@ -33,7 +33,9 @@ public class ZLTextControlElement extends ZLTextElement {
 		return element;
 	}
 
+	// 代表标签种类
 	public final byte Kind;
+	// 代表是标签对的开始还是结束标签
 	public final boolean IsStart;
 
 	protected ZLTextControlElement(byte kind, boolean isStart) {

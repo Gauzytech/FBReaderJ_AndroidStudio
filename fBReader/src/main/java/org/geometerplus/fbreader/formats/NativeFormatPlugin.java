@@ -142,7 +142,7 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 	/**
 	 * 核心方法, 调用cpp进行图书解析操作
 	 * @param model BookModel, 之后要提供给自定义TextView进行渲染操作
-	 * @param cacheDir 缓存文件夹
+	 * @param cacheDir 缓存解析数据的文件夹, /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/cache
 	 */
 	private native int readModelNative(BookModel model, String cacheDir);
 

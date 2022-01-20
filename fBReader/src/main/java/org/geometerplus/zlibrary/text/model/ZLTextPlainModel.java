@@ -30,15 +30,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 通过cpp调用进行创建
+ * <p>
+ * 一组p标签就代表一个段落(Paragraph)
+ */
 public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Feature {
 	private final String myId;
 	private final String myLanguage;
 
-	// 记录了每个段落具体在CachedCharStorage类内部的哪一个char数组里面
+	// 记录了每个段落具体在CachedCharStorage类内部的哪一个char[]里面
 	private int[] myStartEntryIndices;
-	// 记录了每个段落从CachedCharStorage类内部char数组的哪个位置开始
+	// 记录了每个段落从CachedCharStorage类内部char[]的哪个位置开始
 	private int[] myStartEntryOffsets;
-	// 记录每个段落在CachedCharStorage类内部char数组中占据多少长度；
+	// 记录每个段落在CachedCharStorage类内部char[]中占据多少长度
 	private int[] myParagraphLengths;
 	private int[] myTextSizes;
 	private byte[] myParagraphKinds;
@@ -49,26 +54,26 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	private final CachedCharStorage myStorage;
 	// 存文件所有图片的map
 	// key: 图片文件名, value: 图片对象
-	private final Map<String,ZLImage> myImageMap;
+	private final Map<String, ZLImage> myImageMap;
 
 	private ArrayList<ZLTextMark> myMarks;
 	// 保存字体list
 	private final FontManager myFontManager;
 
 	public ZLTextPlainModel(
-		String id,
-		String language,
-		int paragraphsNumber,
-		int[] entryIndices,
-		int[] entryOffsets,
-		int[] paragraphLengths,
-		int[] textSizes,
-		byte[] paragraphKinds,
-		String directoryName,
-		String fileExtension,
-		int blocksNumber,
-		Map<String,ZLImage> imageMap,
-		FontManager fontManager
+			String id,
+			String language,
+			int paragraphsNumber,
+			int[] entryIndices,
+			int[] entryOffsets,
+			int[] paragraphLengths,
+			int[] textSizes,
+			byte[] paragraphKinds,
+			String directoryName,
+			String fileExtension,
+			int blocksNumber,
+			Map<String, ZLImage> imageMap,
+			FontManager fontManager
 	) {
 		myId = id;
 		myLanguage = language;
@@ -151,7 +156,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 					int textOffset = it.getTextOffset();
 					int textLength = it.getTextLength();
 					for (ZLSearchUtil.Result res = ZLSearchUtil.find(textData, textOffset, textLength, pattern); res != null;
-						res = ZLSearchUtil.find(textData, textOffset, textLength, pattern, res.Start + 1)) {
+						 res = ZLSearchUtil.find(textData, textOffset, textLength, pattern, res.Start + 1)) {
 						myMarks.add(new ZLTextMark(index, offset + res.Start, res.Length));
 						++count;
 					}
@@ -186,8 +191,8 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	public final ZLTextParagraph getParagraph(int index) {
 		final byte kind = myParagraphKinds[index];
 		return (kind == ZLTextParagraph.Kind.TEXT_PARAGRAPH) ?
-			new ZLTextParagraphImpl(this, index) :
-			new ZLTextSpecialParagraphImpl(kind, this, index);
+				new ZLTextParagraphImpl(this, index) :
+				new ZLTextSpecialParagraphImpl(kind, this, index);
 	}
 
 	public final int getTextLength(int index) {
@@ -276,9 +281,11 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		public char[] getTextData() {
 			return myTextData;
 		}
+
 		public int getTextOffset() {
 			return myTextOffset;
 		}
+
 		public int getTextLength() {
 			return myTextLength;
 		}
@@ -286,12 +293,15 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		public byte getControlKind() {
 			return myControlKind;
 		}
+
 		public boolean getControlIsStart() {
 			return myControlIsStart;
 		}
+
 		public byte getHyperlinkType() {
 			return myHyperlinkType;
 		}
+
 		public String getHyperlinkId() {
 			return myHyperlinkId;
 		}
@@ -322,73 +332,71 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 			}
 
 			int dataOffset = myDataOffset;
-			// 获取对应需要显示的段落的char数组
+			// 获取对应需要显示段落的char[]
 			char[] data = myStorage.block(myDataIndex);
 			if (data == null) {
 				return false;
 			}
-			// 如果char数组d 内容读完了，自动获取下一个char数组内容
+			// 如果char[] data 内容读完了，自动获取下一个char数组内容
 			if (dataOffset >= data.length) {
+				// ++myDataIndex返回+1后的值
 				data = myStorage.block(++myDataIndex);
 				if (data == null) {
 					return false;
 				}
 				dataOffset = 0;
 			}
-			short first = (short)data[dataOffset];
-			byte type = (byte)first;
+			// 依靠dataOffset递增，不断读取char数组内容
+			short first = (short) data[dataOffset];
+			byte type = (byte) first;
 			if (type == 0) {
 				data = myStorage.block(++myDataIndex);
 				if (data == null) {
 					return false;
 				}
 				dataOffset = 0;
-				first = (short)data[0];
-				type = (byte)first;
+				first = (short) data[0];
+				type = (byte) first;
 			}
 			myType = type;
 			++dataOffset;
 			switch (type) {
-				// 处理文本信息
-				case ZLTextParagraph.Entry.TEXT:
-				{
+				// 遇到常量(ZLTextParagraph.Entry.TEXT)时, 就按照文本信息处理
+				case ZLTextParagraph.Entry.TEXT: {
 					// 记录文本信息的长度
-					int textLength = (int)data[dataOffset++];
-					textLength += (((int)data[dataOffset++]) << 16);
+					int textLength = (int) data[dataOffset++];
+					textLength += (((int) data[dataOffset++]) << 16);
 					textLength = Math.min(textLength, data.length - dataOffset);
 					myTextLength = textLength;
-					// 存数当前char数组的引用
+					// 存数当前char[]的引用
 					myTextData = data;
 					myTextOffset = dataOffset;
-					// 向前跳过char数组中涉及这段文本信息的部分
+					// 向前跳过char[]中涉及这段文本信息的部分
 					dataOffset += textLength;
 					break;
 				}
-				// 处理标签信息
-				case ZLTextParagraph.Entry.CONTROL:
-				{
-					short kind = (short)data[dataOffset++];
-					myControlKind = (byte)kind;
+				// 遇到常量(ZLTextParagraph.Entry.CONTROL)时, 就按照标签信息处理
+				case ZLTextParagraph.Entry.CONTROL: {
+					short kind = (short) data[dataOffset++];
+					myControlKind = (byte) kind;
 					// 标记: 开始标签还是结束标签
 					myControlIsStart = (kind & 0x0100) == 0x0100;
 					myHyperlinkType = 0;
 					break;
 				}
-				case ZLTextParagraph.Entry.HYPERLINK_CONTROL:
-				{
-					final short kind = (short)data[dataOffset++];
-					myControlKind = (byte)kind;
+				case ZLTextParagraph.Entry.HYPERLINK_CONTROL: {
+					final short kind = (short) data[dataOffset++];
+					myControlKind = (byte) kind;
 					myControlIsStart = true;
-					myHyperlinkType = (byte)(kind >> 8);
-					final short labelLength = (short)data[dataOffset++];
+					myHyperlinkType = (byte) (kind >> 8);
+					final short labelLength = (short) data[dataOffset++];
 					myHyperlinkId = new String(data, dataOffset, labelLength);
 					dataOffset += labelLength;
 					break;
 				}
-				case ZLTextParagraph.Entry.IMAGE:
-				{
-					final short vOffset = (short)data[dataOffset++];
-					final short len = (short)data[dataOffset++];
+				case ZLTextParagraph.Entry.IMAGE: {
+					final short vOffset = (short) data[dataOffset++];
+					final short len = (short) data[dataOffset++];
 					final String id = new String(data, dataOffset, len);
 					dataOffset += len;
 					final boolean isCover = data[dataOffset++] != 0;
@@ -396,28 +404,27 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 					break;
 				}
 				case ZLTextParagraph.Entry.FIXED_HSPACE:
-					myFixedHSpaceLength = (short)data[dataOffset++];
+					myFixedHSpaceLength = (short) data[dataOffset++];
 					break;
 				case ZLTextParagraph.Entry.STYLE_CSS:
-				case ZLTextParagraph.Entry.STYLE_OTHER:
-				{
-					final short depth = (short)((first >> 8) & 0xFF);
+				case ZLTextParagraph.Entry.STYLE_OTHER: {
+					final short depth = (short) ((first >> 8) & 0xFF);
 					final ZLTextStyleEntry entry =
 							type == ZLTextParagraph.Entry.STYLE_CSS
 									? new ZLTextCSSStyleEntry(depth)
 									: new ZLTextOtherStyleEntry();
 
-					final short mask = (short)data[dataOffset++];
+					final short mask = (short) data[dataOffset++];
 					for (int i = 0; i < NUMBER_OF_LENGTHS; ++i) {
 						if (ZLTextStyleEntry.isFeatureSupported(mask, i)) {
-							final short size = (short)data[dataOffset++];
-							final byte unit = (byte)data[dataOffset++];
+							final short size = (short) data[dataOffset++];
+							final byte unit = (byte) data[dataOffset++];
 							entry.setLength(i, size, unit);
 						}
 					}
 					if (ZLTextStyleEntry.isFeatureSupported(mask, ALIGNMENT_TYPE) ||
 							ZLTextStyleEntry.isFeatureSupported(mask, NON_LENGTH_VERTICAL_ALIGN)) {
-						final short value = (short)data[dataOffset++];
+						final short value = (short) data[dataOffset++];
 						if (ZLTextStyleEntry.isFeatureSupported(mask, ALIGNMENT_TYPE)) {
 							entry.setAlignmentType((byte)(value & 0xFF));
 						}
@@ -444,34 +451,32 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 				case ZLTextParagraph.Entry.AUDIO:
 					// No data
 					break;
-				case ZLTextParagraph.Entry.VIDEO:
-				{
+				case ZLTextParagraph.Entry.VIDEO: {
 					myVideoEntry = new ZLVideoEntry();
-					final short mapSize = (short)data[dataOffset++];
+					final short mapSize = (short) data[dataOffset++];
 					for (short i = 0; i < mapSize; ++i) {
-						short len = (short)data[dataOffset++];
+						short len = (short) data[dataOffset++];
 						final String mime = new String(data, dataOffset, len);
 						dataOffset += len;
-						len = (short)data[dataOffset++];
+						len = (short) data[dataOffset++];
 						final String src = new String(data, dataOffset, len);
 						dataOffset += len;
 						myVideoEntry.addSource(mime, src);
 					}
 					break;
 				}
-				case ZLTextParagraph.Entry.EXTENSION:
-				{
-					final short kindLength = (short)data[dataOffset++];
+				case ZLTextParagraph.Entry.EXTENSION: {
+					final short kindLength = (short) data[dataOffset++];
 					final String kind = new String(data, dataOffset, kindLength);
 					dataOffset += kindLength;
 
-					final Map<String,String> map = new HashMap<String,String>();
-					final short dataSize = (short)((first >> 8) & 0xFF);
+					final Map<String, String> map = new HashMap<String, String>();
+					final short dataSize = (short) ((first >> 8) & 0xFF);
 					for (short i = 0; i < dataSize; ++i) {
-						final short keyLength = (short)data[dataOffset++];
+						final short keyLength = (short) data[dataOffset++];
 						final String key = new String(data, dataOffset, keyLength);
 						dataOffset += keyLength;
-						final short valueLength = (short)data[dataOffset++];
+						final short valueLength = (short) data[dataOffset++];
 						map.put(key, new String(data, dataOffset, valueLength));
 						dataOffset += valueLength;
 					}
