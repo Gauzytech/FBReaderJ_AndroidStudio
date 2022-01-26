@@ -112,6 +112,9 @@ void BookReader::beginParagraph(ZLTextParagraph::Kind kind) {
 	}
 }
 
+/**
+ * 对内存中paragraph解析数据进行缓存或者添加到本地
+ */
 void BookReader::endParagraph() {
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
@@ -213,6 +216,8 @@ void BookReader::addHyperlinkLabel(const std::string &label, int paragraphNumber
 }
 
 void BookReader::addData(const std::string &data) {
+    LogUtil::print("addData = %s", data);
+
 	if (!data.empty() && paragraphIsOpen()) {
 		if (!myInsideTitle) {
 			mySectionContainsRegularContents = true;
@@ -263,9 +268,9 @@ void BookReader::addExtensionEntry(const std::string &action, const std::map<std
 }
 
 void BookReader::insertEndParagraph(ZLTextParagraph::Kind kind) {
-	if (myCurrentTextModel != 0 && mySectionContainsRegularContents) {
+	if (myCurrentTextModel != nullptr && mySectionContainsRegularContents) {
 		std::size_t size = myCurrentTextModel->paragraphsNumber();
-		if (size > 0 && ((*myCurrentTextModel)[(std::size_t)-1])->kind() != kind) {
+		if (size > 0 && ((*myCurrentTextModel)[(std::size_t) - 1])->kind() != kind) {
 			endParagraph();
 			((ZLTextPlainModel&)*myCurrentTextModel).createParagraph(kind);
 			mySectionContainsRegularContents = false;
@@ -293,7 +298,7 @@ void BookReader::insertEncryptedSectionParagraph() {
 }
 
 void BookReader::addImageReference(const std::string &id, short vOffset, bool isCover) {
-	if (myCurrentTextModel != 0) {
+	if (myCurrentTextModel != nullptr) {
 		mySectionContainsRegularContents = true;
 		if (paragraphIsOpen()) {
 			flushTextBufferToParagraph();

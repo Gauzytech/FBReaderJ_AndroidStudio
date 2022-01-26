@@ -74,11 +74,11 @@ std::string ZLCachedMemoryAllocator::makeFileName(std::size_t index) {
 	std::string name(myDirectoryName);
 	name.append("/");
 	ZLStringUtil::appendNumber(name, index);
-	LogUtil::print("缓存文件名 %s", name);
+	LogUtil::print("解析缓存流程", "缓存文件名 %s", name);
 	return name.append(".").append(myFileExtension);
 }
 
-void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, std::string from) {
+void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, const std::string& from) {
 	if (myFailed || myPool.empty()) {
 		return;
 	}
@@ -86,7 +86,7 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, std::string fr
 
 	const std::size_t index = myPool.size() - 1;
 	const std::string fileName = makeFileName(index);
-	LogUtil::print("writeCache, " + from + " name = %s", fileName);
+	LogUtil::print("解析缓存流程", "writeCache, " + from + " name = %s", fileName);
 
 	ZLFile file(fileName);
 	shared_ptr<ZLOutputStream> stream = file.outputStream();
@@ -98,12 +98,18 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, std::string fr
 	stream->close();
 }
 
-char *ZLCachedMemoryAllocator::allocate(std::size_t size, std::string from) {
+/**
+ * allocate内存给当前读到的text, 如果超出了解析缓存长度myPool, 就直接创建一个本地缓存文件
+ * @param size 当前读到的text长度
+ */
+char *ZLCachedMemoryAllocator::allocate(std::size_t size, const std::string& from) {
 	myHasChanges = true;
 	if (myPool.empty()) {
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
 		myPool.push_back(new char[myCurrentRowSize]);
 	} else if (myOffset + size + 2 + sizeof(char*) > myCurrentRowSize) {
+	    // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
+	    // TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
 		char *row = new char[myCurrentRowSize];
 
@@ -112,8 +118,9 @@ char *ZLCachedMemoryAllocator::allocate(std::size_t size, std::string from) {
 		*ptr++ = 0;
 		std::memcpy(ptr, &row, sizeof(char*));
 		writeCache(myOffset + 2, from);
-
+		// 缓存写入完毕了, 加一个新的char[]到myPool中
 		myPool.push_back(row);
+		// 重新开始计算char[]的offset
 		myOffset = 0;
 	}
 	char *ptr = myPool.back() + myOffset;
@@ -122,9 +129,10 @@ char *ZLCachedMemoryAllocator::allocate(std::size_t size, std::string from) {
 }
 
 char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
-	LogUtil::print("reallocateLast %s", std::to_string(newSize));
+	LogUtil::print("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
 	myHasChanges = true;
 	const std::size_t oldOffset = ptr - myPool.back();
+	// sizeof(char*) 返回字符型指针所占内存的大小, 值为4
 	if (oldOffset + newSize + 2 + sizeof(char*) <= myCurrentRowSize) {
 		myOffset = oldOffset + newSize;
 		return ptr;
@@ -137,8 +145,9 @@ char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
 		*ptr++ = 0;
 		std::memcpy(ptr, &row, sizeof(char*));
 		writeCache(oldOffset + 2, "");
-
+		// 缓存写入完毕了, 加一个新的char[]到myPool中
 		myPool.push_back(row);
+		// char[]的offset从newSize开始
 		myOffset = newSize;
 		return row;
 	}

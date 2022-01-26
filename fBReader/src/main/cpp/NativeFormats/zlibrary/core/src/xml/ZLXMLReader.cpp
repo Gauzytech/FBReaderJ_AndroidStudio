@@ -161,26 +161,26 @@ void ZLXMLReader::collectExternalEntities(std::map<std::string,std::string> &ent
 }
 
 const char *ZLXMLReader::attributeValue(const char **xmlattributes, const char *name) const {
-	while (*xmlattributes != 0) {
+	while (*xmlattributes != nullptr) {
 		bool useNext = std::strcmp(*xmlattributes, name) == 0;
 		++xmlattributes;
-		if (*xmlattributes == 0) {
-			return 0;
+		if (*xmlattributes == nullptr) {
+			return nullptr;
 		}
 		if (useNext) {
 			return *xmlattributes;
 		}
 		++xmlattributes;
 	}
-	return 0;
+	return nullptr;
 }
 
 std::map<std::string,std::string> ZLXMLReader::attributeMap(const char **xmlattributes) const {
 	std::map<std::string,std::string> map;
-	while (*xmlattributes != 0) {
+	while (*xmlattributes != nullptr) {
 		std::string key = *xmlattributes;
 		++xmlattributes;
-		if (*xmlattributes == 0) {
+		if (*xmlattributes == nullptr) {
 			break;
 		}
 		map[key] = *xmlattributes;

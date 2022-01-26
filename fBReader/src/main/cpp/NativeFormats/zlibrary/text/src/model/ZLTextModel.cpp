@@ -34,6 +34,8 @@
 #include "ZLTextStyleEntry.h"
 #include "ZLVideoEntry.h"
 
+#include <LogUtil.h>
+
 ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, const std::size_t rowSize,
 		const std::string &directoryName, const std::string &fileExtension, FontManager &fontManager) :
 	myId(id),
@@ -166,19 +168,26 @@ void ZLTextModel::addText(const std::string &text) {
 	ZLUnicodeUtil::utf8ToUcs2(ucs2str, text);
 	const std::size_t len = ucs2str.size();
 
-	if (myLastEntryStart != 0 && *myLastEntryStart == ZLTextParagraphEntry::TEXT_ENTRY) {
+	if (myLastEntryStart != nullptr && *myLastEntryStart == ZLTextParagraphEntry::TEXT_ENTRY) {
 		const std::size_t oldLen = ZLCachedMemoryAllocator::readUInt32(myLastEntryStart + 2);
 		const std::size_t newLen = oldLen + len;
 		myLastEntryStart = myAllocator->reallocateLast(myLastEntryStart, 2 * newLen + 6);
 		ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, newLen);
 		std::memcpy(myLastEntryStart + 6 + oldLen, &ucs2str.front(), 2 * newLen);
 	} else {
+		// myLastEntryStart: 记录当前paragraph char[]中最后一个char的idx位置
+		// paragraph char[]就是ZLCachedMemoryAllocator.myPool
+		// 获得myPool末端char[]可写入ptr的地址
 		myLastEntryStart = myAllocator->allocate(2 * len + 6, "addText");
+		// 准备myPool末端char[]可写入ptr的地址
 		*myLastEntryStart = ZLTextParagraphEntry::TEXT_ENTRY;
 		*(myLastEntryStart + 1) = 0;
 		ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, len);
+		// 最后将xhtml文件的text从ptr开始拷贝到char[]中
 		std::memcpy(myLastEntryStart + 6, &ucs2str.front(), 2 * len);
+		// 将处理完的ptr存到myParagraphs中, 从这个ptr开始就能读到添加的text
 		myParagraphs.back()->addEntry(myLastEntryStart);
+		// 因为加了一个ptr, 所以myParagraphLengths也要增加
 		++myParagraphLengths.back();
 	}
 	myTextSizes.back() += len;
@@ -195,6 +204,7 @@ void ZLTextModel::addText(const std::vector<std::string> &text) {
 		return;
 	}
 	std::size_t fullLength = 0;
+	// 遍历text vector计算长度
 	for (const auto & it : text) {
 		fullLength += ZLUnicodeUtil::utf8Length(it);
 	}
@@ -225,7 +235,7 @@ void ZLTextModel::addText(const std::vector<std::string> &text) {
 			std::memcpy(myLastEntryStart + offset, &ucs2str.front(), len);
 			offset += len;
 			ucs2str.clear();
-		}
+        }
 		myParagraphs.back()->addEntry(myLastEntryStart);
 		++myParagraphLengths.back();
 	}

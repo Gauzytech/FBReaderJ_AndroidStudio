@@ -257,7 +257,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 		}
 		// xhtmlReader类的readFile方法会开始对xhtml文件的解析
 		// readFile会注册xhtmlReader的elementHandler
-		LogUtil::print("xhtmlReader.readFile, START----------->>> %s", xhtmlFile.path());
+		LogUtil::print("xhtmlReader.readFile, START------------->>> %s ---------------->>>", xhtmlFile.path());
 		if (!xhtmlReader.readFile(xhtmlFile, *it)) {
 			if (opfFile.exists() && !myEncryptionMap.isNull()) {
 				myModelReader.insertEncryptedSectionParagraph();
@@ -268,7 +268,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 //		if (fileName == "titlepage.xhtml" || fileName == "text/part0000_split_000.html") {
 //			myModelReader.model().bookTextModel()->printParagraph();
 //		}
-		LogUtil::print("xhtmlReader.readFile, <<<------------END %s", fileName);
+		LogUtil::print("xhtmlReader.readFile, <<<--------------END %s <<<--------------", fileName);
 	}
 
 	// 生成目录信息

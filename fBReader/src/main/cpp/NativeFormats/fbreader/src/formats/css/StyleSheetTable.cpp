@@ -24,12 +24,13 @@
 #include "StyleSheetTable.h"
 #include "StyleSheetUtil.h"
 #include "CSSSelector.h"
-
+#include <LogUtil.h>
 bool StyleSheetTable::isEmpty() const {
 	return myControlMap.empty() && myPageBreakBeforeMap.empty() && myPageBreakAfterMap.empty();
 }
 
 void StyleSheetTable::addMap(shared_ptr<CSSSelector> selectorPtr, const AttributeMap &map) {
+	LogUtil::print("添加css style: %s", selectorPtr->Tag + selectorPtr->Class);
 	if (!selectorPtr.isNull() && !map.empty()) {
 		const CSSSelector &selector = *selectorPtr;
 		myControlMap[selector] = createOrUpdateControl(map, myControlMap[selector]);
@@ -102,7 +103,7 @@ void StyleSheetTable::setLength(ZLTextStyleEntry &entry, ZLTextStyleEntry::Featu
 }
 
 ZLBoolean3 StyleSheetTable::doBreakBefore(const std::string &tag, const std::string &aClass) const {
-	std::map<CSSSelector,bool>::const_iterator it = myPageBreakBeforeMap.find(CSSSelector(tag, aClass));
+	std::map<CSSSelector, bool>::const_iterator it = myPageBreakBeforeMap.find(CSSSelector(tag, aClass));
 	if (it != myPageBreakBeforeMap.end()) {
 		return b3Value(it->second);
 	}
@@ -140,23 +141,28 @@ ZLBoolean3 StyleSheetTable::doBreakAfter(const std::string &tag, const std::stri
 }
 
 shared_ptr<ZLTextStyleEntry> StyleSheetTable::control(const std::string &tag, const std::string &aClass) const {
-	std::map<CSSSelector,shared_ptr<ZLTextStyleEntry> >::const_iterator it =
-		myControlMap.find(CSSSelector(tag, aClass));
-	return it != myControlMap.end() ? it->second : 0;
+	LogUtil::print("control %s", tag + " " + aClass);
+	std::map<CSSSelector, shared_ptr<ZLTextStyleEntry> >::const_iterator it =
+			myControlMap.find(CSSSelector(tag, aClass));
+	return it != myControlMap.end() ? it->second : nullptr;
 }
 
 std::vector<std::pair<CSSSelector,shared_ptr<ZLTextStyleEntry> > > StyleSheetTable::allControls(const std::string &tag, const std::string &aClass) const {
+	LogUtil::print("allControls %s", tag + " " + aClass);
 	const CSSSelector key(tag, aClass);
-	std::vector<std::pair<CSSSelector,shared_ptr<ZLTextStyleEntry> > > pairs;
+	std::vector<std::pair<CSSSelector, shared_ptr<ZLTextStyleEntry> > > pairs;
 
-	std::map<CSSSelector,shared_ptr<ZLTextStyleEntry> >::const_iterator it =
-		myControlMap.lower_bound(key);
-	for (std::map<CSSSelector,shared_ptr<ZLTextStyleEntry> >::const_iterator jt = it; jt != myControlMap.end() && key.weakEquals(jt->first); ++jt) {
+	std::map<CSSSelector, shared_ptr<ZLTextStyleEntry> >::const_iterator it =
+			myControlMap.lower_bound(key);
+	for (auto jt = it; jt != myControlMap.end() && key.weakEquals(jt->first); ++jt) {
 		pairs.push_back(*jt);
 	}
 	return pairs;
 }
 
+/**
+ * 通过tag名称找到对应的attribute value
+ */
 const std::string &StyleSheetTable::value(const AttributeMap &map, const std::string &name) {
 	const AttributeMap::const_iterator it = map.find(name);
 	if (it != map.end()) {

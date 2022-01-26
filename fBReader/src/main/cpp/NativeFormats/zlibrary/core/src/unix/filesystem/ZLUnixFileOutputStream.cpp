@@ -22,9 +22,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <utility>
+
 #include "ZLUnixFileOutputStream.h"
 
-ZLUnixFileOutputStream::ZLUnixFileOutputStream(const std::string &name) : myName(name), myHasErrors(false), myFile(0) {
+ZLUnixFileOutputStream::ZLUnixFileOutputStream(std::string name) : myName(std::move(name)), myHasErrors(false), myFile(0) {
 }
 
 ZLUnixFileOutputStream::~ZLUnixFileOutputStream() {

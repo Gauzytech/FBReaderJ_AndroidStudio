@@ -38,8 +38,9 @@ void ZLXMLReaderInternal::fStartElementHandler(void *userData, const char *name,
 	ZLXMLReader &reader = *(ZLXMLReader*)userData;
 	if (!reader.isInterrupted()) {
 		if (reader.processNamespaces()) {
+			LogUtil::print("processNamespaces", "");
 			int count = 0;
-			for (const char **a = attributes; (*a != 0) && (*(a + 1) != 0); a += 2) {
+			for (const char **a = attributes; (*a != nullptr) && (*(a + 1) != nullptr); a += 2) {
 				if (std::strncmp(*a, "xmlns", 5) == 0) {
 					std::string id;
 					if ((*a)[5] == ':') {
@@ -157,7 +158,7 @@ void ZLXMLReaderInternal::init(const char *encoding) {
 	setupEntities();
 
 	XML_SetUserData(myParser, &myReader);
-	if (encoding != 0) {
+	if (encoding != nullptr) {
 		XML_SetEncoding(myParser, encoding);
 	}
 

@@ -254,16 +254,17 @@ public:
 
 void XHTMLTagStyleAction::doAtStart(XHTMLReader &reader, const char **xmlattributes) {
 	static const std::string TYPE = "text/css";
-
+	LogUtil::print("解析文件 %s", TYPE);
 	const char *type = reader.attributeValue(xmlattributes, "type");
-	if (type == 0 || TYPE != type) {
+	if (type == nullptr || TYPE != type) {
 		return;
 	}
 
 	if (reader.myReadState == XHTML_READ_NOTHING) {
 		reader.myReadState = XHTML_READ_STYLE;
 		reader.myTableParser = new StyleSheetTableParser(reader.myPathPrefix, reader.myStyleSheetTable, reader.myFontMap, reader.myEncryptionMap);
-		ZLLogger::Instance().println("CSS", "parsing style tag content");
+//		ZLLogger::Instance().println("CSS", "parsing style tag content");
+		LogUtil::print("CSS, parsing style tag content", "");
 	}
 }
 
@@ -277,25 +278,26 @@ void XHTMLTagStyleAction::doAtEnd(XHTMLReader &reader) {
 void XHTMLTagLinkAction::doAtStart(XHTMLReader &reader, const char **xmlattributes) {
 	static const std::string REL = "stylesheet";
 	const char *rel = reader.attributeValue(xmlattributes, "rel");
-	if (rel == 0 || REL != ZLUnicodeUtil::toLower(rel)) {
+	if (rel == nullptr || REL != ZLUnicodeUtil::toLower(rel)) {
 		return;
 	}
 	static const std::string TYPE = "text/css";
 
 	const char *type = reader.attributeValue(xmlattributes, "type");
-	if (type == 0 || TYPE != ZLUnicodeUtil::toLower(type)) {
+	if (type == nullptr || TYPE != ZLUnicodeUtil::toLower(type)) {
 		return;
 	}
 
 	const char *href = reader.attributeValue(xmlattributes, "href");
-	if (href == 0) {
+	if (href == nullptr) {
 		return;
 	}
 
 	std::string cssFilePath = reader.myPathPrefix + MiscUtil::decodeHtmlURL(href);
-	//ZLLogger::Instance().registerClass("CSS");
-	ZLLogger::Instance().println("CSS", "style file: " + cssFilePath);
-	const ZLFile cssFile(cssFilePath);
+//	ZLLogger::Instance().registerClass("CSS");
+//	ZLLogger::Instance().println("CSS", "style file: " + cssFilePath);
+    LogUtil::print("CSS, style file:  %s", cssFilePath);
+    const ZLFile cssFile(cssFilePath);
 	cssFilePath = cssFile.path();
 	shared_ptr<StyleSheetParserWithCache> parser = reader.myFileParsers[cssFilePath];
 	if (parser.isNull()) {
@@ -306,10 +308,12 @@ void XHTMLTagLinkAction::doAtStart(XHTMLReader &reader, const char **xmlattribut
 			reader.myEncryptionMap
 		);
 		reader.myFileParsers[cssFilePath] = parser;
-		ZLLogger::Instance().println("CSS", "creating stream");
+//		ZLLogger::Instance().println("CSS", "creating stream");
+        LogUtil::print("CSS, creating stream", "");
 		shared_ptr<ZLInputStream> cssStream = cssFile.inputStream(reader.myEncryptionMap);
 		if (!cssStream.isNull()) {
-			ZLLogger::Instance().println("CSS", "parsing file");
+//			ZLLogger::Instance().println("CSS", "parsing file");
+            LogUtil::print("CSS, parsing file", "");
 			parser->parseStream(cssStream);
 		}
 	}
@@ -430,7 +434,7 @@ bool XHTMLTagSourceAction::isEnabled(XHTMLReadingState state) {
 void XHTMLTagSourceAction::doAtStart(XHTMLReader &reader, const char **xmlattributes) {
 	const char *mime = reader.attributeValue(xmlattributes, "type");
 	const char *href = reader.attributeValue(xmlattributes, "src");
-	if (mime != 0 && href != 0) {
+	if (mime != nullptr && href != nullptr) {
 		reader.myVideoEntry->addSource(
 			mime,
 			ZLFile(pathPrefix(reader) + MiscUtil::decodeHtmlURL(href)).path()
@@ -501,6 +505,7 @@ void XHTMLTagImageAction::doAtEnd(XHTMLReader&) {
 }
 
 XHTMLTagControlAction::XHTMLTagControlAction(FBTextKind control) : myControl(control) {
+    LogUtil::print("创建XHTMLTagControlAction, 更新control = %s", std::to_string(control));
 }
 
 void XHTMLTagControlAction::doAtStart(XHTMLReader &reader, const char**) {
@@ -557,14 +562,14 @@ void XHTMLTagHyperlinkAction::doAtEnd(XHTMLReader &reader) {
 }
 
 XHTMLTagParagraphWithControlAction::XHTMLTagParagraphWithControlAction(FBTextKind control) : myControl(control) {
+    LogUtil::print("创建XHTMLTagParagraphWithControlAction, 更新control = %s", std::to_string(control));
 }
 
 /**
  *	ZLXMLParser类的processStartTag方法  ->  XHTMLReader类的startElementHandler方法  ->  XHTMLTagParagraphWithControlAction类的doAtStart方法
  */
 void XHTMLTagParagraphWithControlAction::doAtStart(XHTMLReader &reader, const char**) {
-	if (myControl == TITLE
-		&& bookReader(reader).model().bookTextModel()->paragraphsNumber() > 1) {
+	if (myControl == TITLE && bookReader(reader).model().bookTextModel()->paragraphsNumber() > 1) {
 		bookReader(reader).insertEndOfSectionParagraph();
 	}
 	// 在myKindStack属性中添加FBTextKind.H1 (31)
@@ -611,7 +616,7 @@ XHTMLTagAction *XHTMLReader::addAction(const std::string &ns, const std::string 
 XHTMLTagAction *XHTMLReader::getAction(const std::string &tag) {
 	const std::string lTag = ZLUnicodeUtil::toLower(tag);
 	XHTMLTagAction *action = ourTagActions[lTag];
-	if (action != 0) {
+	if (action != nullptr) {
 		return action;
 	}
 	for (std::map<shared_ptr<FullNamePredicate>,XHTMLTagAction*>::const_iterator it = ourNsTagActions.begin(); it != ourNsTagActions.end(); ++it) {
@@ -619,10 +624,13 @@ XHTMLTagAction *XHTMLReader::getAction(const std::string &tag) {
 			return it->second;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
-// 具体当前支持的标签
+/**
+ * 具体当前支持的标签
+ * 添加对应标签的action到ourTagActions中
+ */
 void XHTMLReader::fillTagTable() {
 	if (ourTagActions.empty()) {
 		//addAction("html", new XHTMLTagAction());
@@ -866,7 +874,8 @@ void XHTMLReader::addTextStyleEntry(const ZLTextStyleEntry &entry, unsigned char
 
 void XHTMLReader::startElementHandler(const char *tag, const char **attributes) {
 	//LogUtil::print("xhtmlReader.startElementHandler %s", tag);
-
+	LogUtil::print("startElementHandler tag = %s", tag);
+	// 统一将xhtml标签转成小写
 	const std::string sTag = ZLUnicodeUtil::toLower(tag);
 	if (sTag == "br") {
 		restartParagraph(true);
@@ -874,45 +883,62 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 	}
 
 	std::vector<std::string> classesList;
+	// html中的class是设置标签的类，用于指定元素属于何种样式的类。在CSS样式中以小写的“点”及“.”来命名，在html页面里则以class="css5" 来选择调用，命名好的CSS又叫css选择器
+	// 如：  .css5{属性：属性值;}
+	// 使用: 选择器在html调用为“<div class="css5">我是class例子</div>
+    //　　   .baobao { color: lime; background: #ff80c0 }
+    // 使用: class="baobao"
+	//
+    // 搜索标签之中class这个值, eg: <div class="calibre1">
 	const char *aClasses = attributeValue(attributes, "class");
-	if (aClasses != 0) {
-		const std::vector<std::string> split = ZLStringUtil::split(aClasses, " ", true);
-		for (std::vector<std::string>::const_iterator it = split.begin(); it != split.end(); ++it) {
-			classesList.push_back(*it);
+    if (aClasses != nullptr) {
+        LogUtil::print("获取标签中class的值: aClasses = %s", aClasses);
+        // 可以给HTML元素赋予多个class，例如：<span class= "left_menu important">, 这么做可以把若干个CSS类合并到一个HTML元素
+        // 所以根据空格把class的值分割并存入classList中
+        const std::vector<std::string> split = ZLStringUtil::split(aClasses, " ", true);
+		for (const auto & it : split) {
+            LogUtil::print("split aClasses: str = %s", it);
+            classesList.push_back(it);
 		}
 	}
-
+    LogUtil::print("myTagDataStack size = %s", std::to_string(myTagDataStack.size()));
 	if (!myTagDataStack.empty()) {
+	    // 把当前标签和其对应的class的值(可以有多个)保存到myTagDataStack中
 		myTagDataStack.back()->Children.push_back(XHTMLTagInfo(sTag, classesList));
 	}
+	// 一对标签就创建一个TagData对象
 	myTagDataStack.push_back(new TagData());
 	TagData &tagData = *myTagDataStack.back();
 
 	static const std::string HASH = "#";
+	// 获得标签中的id属性, getElementById("...")就是这个id
 	const char *id = attributeValue(attributes, "id");
-	if (id != 0) {
+	// 有id就添加一个超链接
+	if (id != nullptr) {
 		myModelReader.addHyperlinkLabel(myReferenceAlias + HASH + id);
 	}
 
+	// 判断是否需要break
 	ZLBoolean3 breakBefore = myStyleSheetTable.doBreakBefore(sTag, EMPTY);
 	tagData.PageBreakAfter = myStyleSheetTable.doBreakAfter(sTag, EMPTY);
 	for (std::vector<std::string>::const_iterator it = classesList.begin(); it != classesList.end(); ++it) {
-		const ZLBoolean3 bb = myStyleSheetTable.doBreakBefore(sTag, *it);
-		if (bb != B3_UNDEFINED) {
-			breakBefore = bb;
+		const ZLBoolean3 brkBefore = myStyleSheetTable.doBreakBefore(sTag, *it);
+		if (brkBefore != B3_UNDEFINED) {
+			breakBefore = brkBefore;
 		}
-		const ZLBoolean3 ba = myStyleSheetTable.doBreakAfter(sTag, *it);
-		if (ba != B3_UNDEFINED) {
-			tagData.PageBreakAfter = ba;
+		const ZLBoolean3 brkAfter = myStyleSheetTable.doBreakAfter(sTag, *it);
+		if (brkAfter != B3_UNDEFINED) {
+			tagData.PageBreakAfter = brkAfter;
 		}
 	}
 	if (breakBefore == B3_TRUE) {
+		// 结束paragraph, 写入缓存
 		myModelReader.insertEndOfSectionParagraph();
 	}
 
 	XHTMLTagAction *action = getAction(sTag);
 	// 创建一个paragraph
-	if (action != 0 && action->isEnabled(myReadState)) {
+	if (action != nullptr && action->isEnabled(myReadState)) {
 		action->doAtStart(*this, attributes);
 	}
 
@@ -923,8 +949,8 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 		applyTagStyles(sTag, *it);
 	}
 	const char *style = attributeValue(attributes, "style");
-	if (style != 0) {
-		//ZLLogger::Instance().println("CSS", std::string("parsing style attribute: ") + style);
+	if (style != nullptr) {
+		ZLLogger::Instance().println("CSS", std::string("parsing style attribute: ") + style);
 		applySingleEntry(myStyleParser->parseSingleEntry(style));
 	}
 	if (tagData.DisplayCode == ZLTextStyleEntry::DC_BLOCK) {
@@ -933,7 +959,8 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 }
 
 void XHTMLReader::endElementHandler(const char *tag) {
-	const std::string sTag = ZLUnicodeUtil::toLower(tag);
+    LogUtil::print("endElementHandler tag = %s", tag);
+    const std::string sTag = ZLUnicodeUtil::toLower(tag);
 	if (sTag == "br") {
 		return;
 	}
@@ -1033,7 +1060,9 @@ void XHTMLReader::characterDataHandler(const char *text, std::size_t len) {
 			break;
 		case XHTML_READ_BODY:
 			if (myPreformatted) {
+				// \r 回车, \n换行, 表示新的段落
 				if (*text == '\r' || *text == '\n') {
+					// 缓存操作会调用restartParagraph - > flushTextBufferToParagraph()
 					restartParagraph(true);
 					text += 1;
 					len -= 1;
@@ -1056,6 +1085,7 @@ void XHTMLReader::characterDataHandler(const char *text, std::size_t len) {
 			if (len > 0) {
 				myCurrentParagraphIsEmpty = false;
 				if (!myModelReader.paragraphIsOpen()) {
+					// 缓存操作会调用restartParagraph - > flushTextBufferToParagraph()
 					myModelReader.beginParagraph();
 				}
 				myModelReader.addData(std::string(text, len));
@@ -1102,5 +1132,6 @@ const std::string &XHTMLReader::fileAlias(const std::string &fileName) const {
 	return it->second;
 }
 
+// 查看XHTMLReader.h -> struct TagData
 XHTMLReader::TagData::TagData() : PageBreakAfter(B3_UNDEFINED), DisplayCode(ZLTextStyleEntry::DC_INLINE) {
 }

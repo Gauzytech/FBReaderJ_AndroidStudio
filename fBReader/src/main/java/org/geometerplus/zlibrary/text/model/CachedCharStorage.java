@@ -19,13 +19,21 @@
 
 package org.geometerplus.zlibrary.text.model;
 
+import org.geometerplus.zlibrary.core.util.SystemInfo;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
+
+import timber.log.Timber;
 
 public final class CachedCharStorage {
 	// char数组里面的元素就代表一个.xhtml文件的文本信息与标签信息
@@ -36,9 +44,10 @@ public final class CachedCharStorage {
 	private final String myFileExtension;
 
 	public CachedCharStorage(String directoryName, String fileExtension, int blocksNumber) {
+		Timber.v("解析缓存流程, 创建: dir = %s ext = %s blocksNumber = %d", directoryName, fileExtension, blocksNumber);
 		myDirectoryName = directoryName + '/';
 		myFileExtension = '.' + fileExtension;
-		myArray.addAll(Collections.nCopies(blocksNumber, new WeakReference<char[]>(null)));
+		myArray.addAll(Collections.nCopies(blocksNumber, new WeakReference<>(null)));
 	}
 
 	private String fileName(int index) {
@@ -92,6 +101,7 @@ public final class CachedCharStorage {
 		if (block == null) {
 			try {
 				File file = new File(fileName(index));
+				Timber.v("解析缓存流程, 读取解析缓存: %s", file.getName());
 				int size = (int) file.length();
 				if (size < 0) {
 					throw new CachedCharStorageException(exceptionMessage(index, "size = " + size));
@@ -104,6 +114,9 @@ public final class CachedCharStorage {
 					throw new CachedCharStorageException(exceptionMessage(index, "; " + totalRead + " != " + block.length));
 				}
 				reader.close();
+
+				// 测试, 输出utf8解析文件缓存
+				outputDebugBlockFile(index, block.clone(), false);
 			} catch (IOException e) {
 				throw new CachedCharStorageException(exceptionMessage(index, null), e);
 			}
@@ -111,5 +124,17 @@ public final class CachedCharStorage {
 			myArray.set(index, new WeakReference<>(block));
 		}
 		return block;
+	}
+
+	private void outputDebugBlockFile(int index, char[] testBlock, boolean output) throws IOException {
+		if (!output) return;
+		String root = "/storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android";
+		File dir = new File(root + "/utf8test");
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(root + "/utf8test/" + index + "_utf8.txt"), "UTF-8");
+		writer.write(testBlock);
+		writer.close();
 	}
 }

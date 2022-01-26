@@ -30,6 +30,7 @@
 #include "StringInputStream.h"
 #include "CSSInputStream.h"
 #include "../util/MiscUtil.h"
+#include <LogUtil.h>
 
 StyleSheetParser::StyleSheetParser(const std::string &pathPrefix) : myPathPrefix(pathPrefix) {
 	//ZLLogger::Instance().registerClass("CSS-IMPORT");
@@ -197,7 +198,7 @@ void StyleSheetParser::processWord(const std::string &word) {
 	if (word.empty()) {
 		return;
 	}
-
+	LogUtil::print("processWord %s", word);
 	switch (myReadState) {
 		case WAITING_FOR_SELECTOR:
 			mySelectorString = word;
