@@ -40,6 +40,7 @@ public:
 		virtual ~NamePredicate();
 		virtual bool accepts(const ZLXMLReader &reader, const char *name) const = 0;
 		virtual bool accepts(const ZLXMLReader &reader, const std::string &name) const = 0;
+		virtual std::string getName()= 0;
 	};
 
 	class SimpleNamePredicate : public NamePredicate {
@@ -48,6 +49,9 @@ public:
 		SimpleNamePredicate(const std::string &name);
 		bool accepts(const ZLXMLReader &reader, const char *name) const;
 		bool accepts(const ZLXMLReader &reader, const std::string &name) const;
+		std::string getName() {
+			return myName;
+		}
 
 	private:
 		const std::string myName;
@@ -59,6 +63,9 @@ public:
 		IgnoreCaseNamePredicate(const std::string &lowerCaseName);
 		bool accepts(const ZLXMLReader &reader, const char *name) const;
 		bool accepts(const ZLXMLReader &reader, const std::string &name) const;
+		std::string getName() {
+			return myLowerCaseName;
+		}
 
 	private:
 		const std::string myLowerCaseName;
@@ -70,6 +77,9 @@ public:
 		FullNamePredicate(const std::string &ns, const std::string &name);
 		bool accepts(const ZLXMLReader &reader, const char *name) const;
 		bool accepts(const ZLXMLReader &reader, const std::string &name) const;
+		std::string getName() {
+			return myName;
+		}
 
 	private:
 		const std::string myNamespaceName;
@@ -82,6 +92,9 @@ public:
 		BrokenNamePredicate(const std::string &name);
 		bool accepts(const ZLXMLReader &reader, const char *name) const;
 		bool accepts(const ZLXMLReader &reader, const std::string &name) const;
+		std::string getName() {
+			return myName;
+		}
 
 	private:
 		const std::string myName;

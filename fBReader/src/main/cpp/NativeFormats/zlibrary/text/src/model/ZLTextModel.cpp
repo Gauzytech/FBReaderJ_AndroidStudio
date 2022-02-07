@@ -44,14 +44,24 @@ ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, con
 	myAllocator(new ZLCachedMemoryAllocator(rowSize, directoryName, fileExtension)),
 	myLastEntryStart(nullptr),
 	myFontManager(fontManager) {
+    LogUtil::print("创建ZLTextModel constructor1, rowSize = %s", std::to_string(rowSize));
+
+    // 新实现
+    // 清空字符串, empty string, length = 0
+	currentFile.clear();
 }
 
 ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, shared_ptr<ZLCachedMemoryAllocator> allocator, FontManager &fontManager) :
 	myId(id),
 	myLanguage(language.empty() ? ZLibrary::Language() : language),
 	myAllocator(allocator),
-	myLastEntryStart(0),
+	myLastEntryStart(nullptr),
 	myFontManager(fontManager) {
+    LogUtil::print("创建ZLTextModel constructor2, ext = %s", allocator->fileExtension());
+
+	// 新实现
+	// 清空字符串, empty string, length = 0
+    currentFile.clear();
 }
 
 ZLTextModel::~ZLTextModel() {
@@ -127,13 +137,15 @@ ZLTextMark ZLTextModel::previousMark(ZLTextMark position) const {
 */
 
 /**
- * 更新了ZLTextModel类中的三个属性: myStartEntryIndices, myStartEntryOffsets,myParagraphLengths，
+ * 更新了ZLTextModel类中的三个属性: myStartEntryIndices, myStartEntryOffsets, myParagraphLengths，
  * 以后会依靠这三个属性在CachedCharStorage类的char数组中快速定位某一个段落
  *
  * @param paragraph 段落处理工具类, 代表一对p标签对应的paragraph. 利用工具类中的方法操作textModel中段落数据, JAVA中也有这个类
  */
 void ZLTextModel::addParagraphInternal(ZLTextParagraph *paragraph) {
+	// myPool size
 	const std::size_t dataSize = myAllocator->blocksNumber();
+	// myOffset
 	const std::size_t bytesOffset = myAllocator->currentBytesOffset();
 
 	// 记录当前段落在CachedCharStorage类中具体哪一个char[]里面
@@ -171,14 +183,17 @@ void ZLTextModel::addText(const std::string &text) {
 	if (myLastEntryStart != nullptr && *myLastEntryStart == ZLTextParagraphEntry::TEXT_ENTRY) {
 		const std::size_t oldLen = ZLCachedMemoryAllocator::readUInt32(myLastEntryStart + 2);
 		const std::size_t newLen = oldLen + len;
-		myLastEntryStart = myAllocator->reallocateLast(myLastEntryStart, 2 * newLen + 6);
-		ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, newLen);
-		std::memcpy(myLastEntryStart + 6 + oldLen, &ucs2str.front(), 2 * newLen);
+        // 获得myPool末端char[]可写入ptr的地址
+        myLastEntryStart = myAllocator->reallocateLast(currentFile, myLastEntryStart, 2 * newLen + 6);
+        // 准备myPool末端char[]可写入ptr的地址
+        ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, newLen);
+        // 最后将xhtml文件的text从ptr开始拷贝到char[]中
+        std::memcpy(myLastEntryStart + 6 + oldLen, &ucs2str.front(), 2 * newLen);
 	} else {
 		// myLastEntryStart: 记录当前paragraph char[]中最后一个char的idx位置
 		// paragraph char[]就是ZLCachedMemoryAllocator.myPool
 		// 获得myPool末端char[]可写入ptr的地址
-		myLastEntryStart = myAllocator->allocate(2 * len + 6, "addText");
+		myLastEntryStart = myAllocator->allocate(currentFile, 2 * len + 6, "addText");
 		// 准备myPool末端char[]可写入ptr的地址
 		*myLastEntryStart = ZLTextParagraphEntry::TEXT_ENTRY;
 		*(myLastEntryStart + 1) = 0;
@@ -208,30 +223,41 @@ void ZLTextModel::addText(const std::vector<std::string> &text) {
 	for (const auto & it : text) {
 		fullLength += ZLUnicodeUtil::utf8Length(it);
 	}
-
 	ZLUnicodeUtil::Ucs2String ucs2str;
+	// myAllocator中myPool末端char[]没有填满的情况
 	if (myLastEntryStart != nullptr && *myLastEntryStart == ZLTextParagraphEntry::TEXT_ENTRY) {
 		const std::size_t oldLen = ZLCachedMemoryAllocator::readUInt32(myLastEntryStart + 2);
 		const std::size_t newLen = oldLen + fullLength;
-		myLastEntryStart = myAllocator->reallocateLast(myLastEntryStart, 2 * newLen + 6);
+		// myLastEntryStart: 记录当前paragraph char[]中最后一个char的idx位置
+		// paragraph char[]就是ZLCachedMemoryAllocator.myPool
+		// 获得myPool末端char[]可写入ptr的地址
+		myLastEntryStart = myAllocator->reallocateLast(currentFile, myLastEntryStart, 2 * newLen + 6);
+		// 准备myPool末端char[]可写入ptr的地址
 		ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, newLen);
 		std::size_t offset = 6 + oldLen;
+		// 遍历文字text
 		for (const auto & it : text) {
 			ZLUnicodeUtil::utf8ToUcs2(ucs2str, it);
 			const std::size_t len = 2 * ucs2str.size();
+			// 最后将xhtml文件的text从ptr开始拷贝到char[]中
 			std::memcpy(myLastEntryStart + offset, &ucs2str.front(), len);
 			offset += len;
 			ucs2str.clear();
 		}
 	} else {
-		myLastEntryStart = myAllocator->allocate(2 * fullLength + 6, "addText");
+		// myAllocator中myPool末端char[]满了的情况
+		// 获得myPool末端char[]可写入ptr的地址
+		myLastEntryStart = myAllocator->allocate(currentFile, 2 * fullLength + 6, "addText");
+		// 准备myPool末端char[]可写入ptr的地址
 		*myLastEntryStart = ZLTextParagraphEntry::TEXT_ENTRY;
 		*(myLastEntryStart + 1) = 0;
 		ZLCachedMemoryAllocator::writeUInt32(myLastEntryStart + 2, fullLength);
 		std::size_t offset = 6;
+		// 遍历文字text
 		for (const auto & it : text) {
 			ZLUnicodeUtil::utf8ToUcs2(ucs2str, it);
 			const std::size_t len = 2 * ucs2str.size();
+			// 最后将xhtml文件的text从ptr开始拷贝到char[]中
 			std::memcpy(myLastEntryStart + offset, &ucs2str.front(), len);
 			offset += len;
 			ucs2str.clear();
@@ -243,7 +269,7 @@ void ZLTextModel::addText(const std::vector<std::string> &text) {
 }
 
 void ZLTextModel::addFixedHSpace(unsigned char length) {
-	myLastEntryStart = myAllocator->allocate(4, "addFixedHSpace");
+	myLastEntryStart = myAllocator->allocate(currentFile, 4, "addFixedHSpace");
 	*myLastEntryStart = ZLTextParagraphEntry::FIXED_HSPACE_ENTRY;
 	*(myLastEntryStart + 1) = 0;
 	*(myLastEntryStart + 2) = length;
@@ -254,7 +280,7 @@ void ZLTextModel::addFixedHSpace(unsigned char length) {
 
 void ZLTextModel::addControl(ZLTextKind textKind, bool isStart) {
 	// 初始化size = 4 的char[]
-	myLastEntryStart = myAllocator->allocate(4, "addControl");
+	myLastEntryStart = myAllocator->allocate(currentFile, 4, "addControl");
 	*myLastEntryStart = ZLTextParagraphEntry::CONTROL_ENTRY; // idx = 0, entry kind
 	*(myLastEntryStart + 1) = 0; 							 // idx = 1,
 	*(myLastEntryStart + 2) = textKind;						 // idx = 2, text kind
@@ -301,7 +327,7 @@ void ZLTextModel::addStyleEntry(const ZLTextStyleEntry &entry, const std::vector
 */
 
 	// +++ writing entry
-	myLastEntryStart = myAllocator->allocate(len, "addStyleEntry");
+	myLastEntryStart = myAllocator->allocate(currentFile, len, "addStyleEntry");
 	char *address = myLastEntryStart;
 
 	*address++ = entry.entryKind();
@@ -335,7 +361,7 @@ void ZLTextModel::addStyleEntry(const ZLTextStyleEntry &entry, const std::vector
 }
 
 void ZLTextModel::addStyleCloseEntry() {
-	myLastEntryStart = myAllocator->allocate(2, "addStyleCloseEntry");
+	myLastEntryStart = myAllocator->allocate(currentFile, 2, "addStyleCloseEntry");
 	char *address = myLastEntryStart;
 
 	*address++ = ZLTextParagraphEntry::STYLE_CLOSE_ENTRY;
@@ -351,7 +377,7 @@ void ZLTextModel::addHyperlinkControl(ZLTextKind textKind, ZLHyperlinkType hyper
 
 	const std::size_t len = ucs2label.size() * 2;
 
-	myLastEntryStart = myAllocator->allocate(len + 6, "addHyperlinkControl");
+	myLastEntryStart = myAllocator->allocate(currentFile, len + 6, "addHyperlinkControl");
 	*myLastEntryStart = ZLTextParagraphEntry::HYPERLINK_CONTROL_ENTRY;
 	*(myLastEntryStart + 1) = 0;
 	*(myLastEntryStart + 2) = textKind;
@@ -368,7 +394,7 @@ void ZLTextModel::addImage(const std::string &id, short vOffset, bool isCover) {
 
 	const std::size_t len = ucs2id.size() * 2;
 
-	myLastEntryStart = myAllocator->allocate(len + 8, "addImage");
+	myLastEntryStart = myAllocator->allocate(currentFile, len + 8, "addImage");
 	*myLastEntryStart = ZLTextParagraphEntry::IMAGE_ENTRY;
 	*(myLastEntryStart + 1) = 0;
 	ZLCachedMemoryAllocator::writeUInt16(myLastEntryStart + 2, vOffset);
@@ -380,7 +406,7 @@ void ZLTextModel::addImage(const std::string &id, short vOffset, bool isCover) {
 }
 
 void ZLTextModel::addBidiReset() {
-	myLastEntryStart = myAllocator->allocate(2, "addBidiReset");
+	myLastEntryStart = myAllocator->allocate(currentFile, 2, "addBidiReset");
 	*myLastEntryStart = ZLTextParagraphEntry::RESET_BIDI_ENTRY;
 	*(myLastEntryStart + 1) = 0;
 	myParagraphs.back()->addEntry(myLastEntryStart);
@@ -395,7 +421,7 @@ void ZLTextModel::addVideoEntry(const ZLVideoEntry &entry) {
 		len += 2 * (ZLUnicodeUtil::utf8Length(it->first) + ZLUnicodeUtil::utf8Length(it->second)) + 4;
 	}
 
-	myLastEntryStart = myAllocator->allocate(len, "addVideoEntry");
+	myLastEntryStart = myAllocator->allocate(currentFile, len, "addVideoEntry");
 	*myLastEntryStart = ZLTextParagraphEntry::VIDEO_ENTRY;
 	*(myLastEntryStart + 1) = 0;
 	char *p = ZLCachedMemoryAllocator::writeUInt16(myLastEntryStart + 2, sources.size());
@@ -420,7 +446,7 @@ void ZLTextModel::addExtensionEntry(const std::string &action, const std::map<st
 		fullLength += 2 + ZLUnicodeUtil::utf8Length(it->second) * 2;   // data value
 	}
 
-	myLastEntryStart = myAllocator->allocate(fullLength, "addExtensionEntry");
+	myLastEntryStart = myAllocator->allocate(currentFile, fullLength, "addExtensionEntry");
 	*myLastEntryStart = ZLTextParagraphEntry::EXTENSION_ENTRY;
 	*(myLastEntryStart + 1) = data.size();
 
@@ -443,5 +469,22 @@ void ZLTextModel::addExtensionEntry(const std::string &action, const std::map<st
 }
 
 void ZLTextModel::flush() {
+    LogUtil::print("ZLTextModel.flush", "");
 	myAllocator->flush();
+}
+
+/******************************** 新实现 ******************************/
+void ZLTextModel::finishCurrentFile() {
+	LogUtil::print("解析缓存流程", "finishCurrentFile = %s", currentFile.fileName);
+	if (currentFile.valid()) return;
+
+    myAllocator->finishCurrentFile(currentFile);
+    // 当前xhtml文件解析完毕了, 清除currentFile
+    currentFile.clear();
+}
+
+void ZLTextModel::setCurrentFile(const std::string& fileName) {
+	int idx = fileName.find_last_of("/");
+    currentFile = CurProcessFile{fileName.substr(idx + 1, fileName.length()),
+						1};
 }

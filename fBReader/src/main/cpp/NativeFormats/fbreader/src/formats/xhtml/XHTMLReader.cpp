@@ -89,6 +89,9 @@ class XHTMLTagStyleAction : public XHTMLGlobalTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagStyleAction <style>";
+	}
 };
 
 class XHTMLTagLinkAction : public XHTMLGlobalTagAction {
@@ -96,6 +99,9 @@ class XHTMLTagLinkAction : public XHTMLGlobalTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagLinkAction <link>";
+	}
 };
 
 class XHTMLTagParagraphAction : public XHTMLTextModeTagAction {
@@ -107,6 +113,13 @@ public:
 	XHTMLTagParagraphAction(FBTextKind textKind = (FBTextKind)-1);
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		if (myTextKind == XHTML_TAG_P) {
+			return "XHTMLTagParagraphAction <p>";
+		} else {
+			return "ParagraphAction <div>, <dt>, <td>, <th> " + std::to_string(myTextKind);
+		}
+	}
 };
 
 class XHTMLTagBodyAction : public XHTMLGlobalTagAction {
@@ -114,6 +127,9 @@ class XHTMLTagBodyAction : public XHTMLGlobalTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagBodyAction <body>";
+	}
 };
 
 class XHTMLTagSectionAction : public XHTMLGlobalTagAction {
@@ -121,6 +137,9 @@ class XHTMLTagSectionAction : public XHTMLGlobalTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagSectionAction";
+	}
 };
 
 class XHTMLTagPseudoSectionAction : public XHTMLGlobalTagAction {
@@ -128,6 +147,9 @@ class XHTMLTagPseudoSectionAction : public XHTMLGlobalTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagPseudoSectionAction <aside>";
+	}
 };
 
 class XHTMLTagVideoAction : public XHTMLTagAction {
@@ -138,6 +160,9 @@ private:
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagVideoAction <video>";
+	}
 };
 
 class XHTMLTagSourceAction : public XHTMLTagAction {
@@ -148,6 +173,9 @@ private:
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagSourceAction <source>";
+	}
 };
 
 class XHTMLTagImageAction : public XHTMLTextModeTagAction {
@@ -158,7 +186,15 @@ public:
 
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		if (myPredicate->getName() == "src") {
+			return "XHTMLTagImageAction <img>";
+		} else if (myPredicate->getName() == "data") {
+			return "XHTMLTagImageAction <object>";
+		}
 
+		return "XHTMLTagImageAction" + myPredicate->getName();
+	}
 private:
 	shared_ptr<ZLXMLReader::NamePredicate> myPredicate;
 };
@@ -181,6 +217,9 @@ public:
 	XHTMLTagSvgAction(XHTMLSvgImageNamePredicate &predicate);
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagSvgAction <svg>, <image>";
+	}
 
 private:
 	XHTMLSvgImageNamePredicate &myPredicate;
@@ -195,6 +234,14 @@ public:
 	XHTMLTagListAction(int startIndex = -1);
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		if (myStartIndex == 1) {
+			return "XHTMLTagListAction <ol>";
+		} else if (myStartIndex == 0) {
+			return "XHTMLTagListAction <ul>";
+		}
+		return "XHTMLTagListAction unknown" + std::to_string(myStartIndex);
+	}
 };
 
 class XHTMLTagItemAction : public XHTMLTextModeTagAction {
@@ -202,6 +249,9 @@ class XHTMLTagItemAction : public XHTMLTextModeTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagItemAction <li>";
+	}
 };
 
 class XHTMLTagHyperlinkAction : public XHTMLTextModeTagAction {
@@ -209,7 +259,9 @@ class XHTMLTagHyperlinkAction : public XHTMLTextModeTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
-
+	std::string actionName() override {
+		return "XHTMLTagHyperlinkAction <a>";
+	}
 private:
 	std::stack<FBTextKind> myHyperlinkStack;
 };
@@ -221,6 +273,33 @@ public:
 
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		if (myControl == STRONG) {
+			return "XHTMLTagControlAction <strong>";
+		} else if (myControl == BOLD) {
+			return "XHTMLTagControlAction <b>";
+		} else if (myControl == EMPHASIS) {
+			return "XHTMLTagControlAction <em>";
+		} else if (myControl == ITALIC) {
+			return "XHTMLTagControlAction <i>";
+		} else if (myControl == CODE) {
+			return "XHTMLTagControlAction <code>, <tt>, <kbd>, <var>, <samp>";
+		} else if (myControl == CITE) {
+			return "XHTMLTagControlAction <cite>";
+		} else if (myControl == SUB) {
+			return "XHTMLTagControlAction <sub>";
+		} else if (myControl == SUP) {
+			return "XHTMLTagControlAction <sup>";
+		} else if (myControl == DEFINITION_DESCRIPTION) {
+			return "XHTMLTagControlAction <dd>";
+		} else if (myControl == DEFINITION) {
+			return "XHTMLTagControlAction <dfn>";
+		} else if (myControl == STRIKETHROUGH) {
+			return "XHTMLTagControlAction <strike>";
+		}
+
+		return "XHTMLTagControlAction unknown";
+	}
 
 private:
 	FBTextKind myControl;
@@ -233,6 +312,22 @@ public:
 
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		if (myControl == H1) {
+			return "XHTMLTagParagraphWithControlAction <h1>";
+		} else if (myControl == H2) {
+			return "XHTMLTagParagraphWithControlAction <h2>";
+		} else if (myControl == H3) {
+			return "XHTMLTagParagraphWithControlAction <h3>";
+		} else if (myControl == H4) {
+			return "XHTMLTagParagraphWithControlAction <h4>";
+		} else if (myControl == H5) {
+			return "XHTMLTagParagraphWithControlAction <h5>";
+		} else if (myControl == H6) {
+			return "XHTMLTagParagraphWithControlAction <h6>";
+		}
+		return "XHTMLTagParagraphWithControlAction unknown";
+	}
 
 private:
 	FBTextKind myControl;
@@ -243,6 +338,9 @@ class XHTMLTagPreAction : public XHTMLTextModeTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagPreAction <pre>";
+	}
 };
 
 class XHTMLTagOpdsAction : public XHTMLTextModeTagAction {
@@ -250,6 +348,9 @@ class XHTMLTagOpdsAction : public XHTMLTextModeTagAction {
 public:
 	void doAtStart(XHTMLReader &reader, const char **xmlattributes);
 	void doAtEnd(XHTMLReader &reader);
+	std::string actionName() override {
+		return "XHTMLTagOpdsAction <opds>";
+	}
 };
 
 void XHTMLTagStyleAction::doAtStart(XHTMLReader &reader, const char **xmlattributes) {
@@ -455,7 +556,7 @@ XHTMLTagImageAction::XHTMLTagImageAction(const std::string &attributeName) {
 
 void XHTMLTagImageAction::doAtStart(XHTMLReader &reader, const char **xmlattributes) {
 	const char *fileName = reader.attributeValue(xmlattributes, *myPredicate);
-	if (fileName == 0) {
+	if (fileName == nullptr) {
 		return;
 	}
 
@@ -505,7 +606,6 @@ void XHTMLTagImageAction::doAtEnd(XHTMLReader&) {
 }
 
 XHTMLTagControlAction::XHTMLTagControlAction(FBTextKind control) : myControl(control) {
-    LogUtil::print("创建XHTMLTagControlAction, 更新control = %s", std::to_string(control));
 }
 
 void XHTMLTagControlAction::doAtStart(XHTMLReader &reader, const char**) {
@@ -562,7 +662,6 @@ void XHTMLTagHyperlinkAction::doAtEnd(XHTMLReader &reader) {
 }
 
 XHTMLTagParagraphWithControlAction::XHTMLTagParagraphWithControlAction(FBTextKind control) : myControl(control) {
-    LogUtil::print("创建XHTMLTagParagraphWithControlAction, 更新control = %s", std::to_string(control));
 }
 
 /**
@@ -811,7 +910,7 @@ bool XHTMLReader::matches(const shared_ptr<CSSSelector::Component> next, int dep
 	}
 }
 
-void XHTMLReader::applySingleEntry(shared_ptr<ZLTextStyleEntry> entry) {
+void XHTMLReader::applySingleEntry(const shared_ptr<ZLTextStyleEntry>& entry) {
 	if (entry.isNull()) {
 		return;
 	}
@@ -874,7 +973,7 @@ void XHTMLReader::addTextStyleEntry(const ZLTextStyleEntry &entry, unsigned char
 
 void XHTMLReader::startElementHandler(const char *tag, const char **attributes) {
 	//LogUtil::print("xhtmlReader.startElementHandler %s", tag);
-	LogUtil::print("startElementHandler tag = %s", tag);
+	LogUtil::print("XHTMLReader::startElementHandler tag = %s", tag);
 	// 统一将xhtml标签转成小写
 	const std::string sTag = ZLUnicodeUtil::toLower(tag);
 	if (sTag == "br") {
@@ -897,11 +996,11 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
         // 所以根据空格把class的值分割并存入classList中
         const std::vector<std::string> split = ZLStringUtil::split(aClasses, " ", true);
 		for (const auto & it : split) {
-            LogUtil::print("split aClasses: str = %s", it);
+            LogUtil::print("split aClasses中的str = %s", it);
             classesList.push_back(it);
 		}
 	}
-    LogUtil::print("myTagDataStack size = %s", std::to_string(myTagDataStack.size()));
+    LogUtil::print("添加tagData之前, myTagDataStack size = %s", std::to_string(myTagDataStack.size()) + " " + sTag);
 	if (!myTagDataStack.empty()) {
 	    // 把当前标签和其对应的class的值(可以有多个)保存到myTagDataStack中
 		myTagDataStack.back()->Children.push_back(XHTMLTagInfo(sTag, classesList));
@@ -932,18 +1031,29 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 		}
 	}
 	if (breakBefore == B3_TRUE) {
+	    LogUtil::print("B3_TRUE, 段落结束 %s", sTag);
 		// 结束paragraph, 写入缓存
 		myModelReader.insertEndOfSectionParagraph();
 	}
 
 	XHTMLTagAction *action = getAction(sTag);
-	// 创建一个paragraph
+
+	// 获得对应标签的action进行创建一个paragraph操作
 	if (action != nullptr && action->isEnabled(myReadState)) {
+		LogUtil::print("操作tagAction = %s", action->actionName());
 		action->doAtStart(*this, attributes);
+	} else {
+		if (action == nullptr) {
+			LogUtil::print("操作tagAction不存在 %s", sTag);
+		} else {
+			LogUtil::print("操作tagAction = %s 没有enable", action->actionName());
+		}
 	}
 
+	// 添加主tag的style
 	applyTagStyles(ANY, EMPTY);
 	applyTagStyles(sTag, EMPTY);
+	// 添加主tag中包含副标签的style eg: <div class="css5">我是class例子</div>
 	for (std::vector<std::string>::const_iterator it = classesList.begin(); it != classesList.end(); ++it) {
 		applyTagStyles(EMPTY, *it);
 		applyTagStyles(sTag, *it);
@@ -953,6 +1063,8 @@ void XHTMLReader::startElementHandler(const char *tag, const char **attributes) 
 		ZLLogger::Instance().println("CSS", std::string("parsing style attribute: ") + style);
 		applySingleEntry(myStyleParser->parseSingleEntry(style));
 	}
+
+	// applySingleEntry中会更新tagData.DisplayCode
 	if (tagData.DisplayCode == ZLTextStyleEntry::DC_BLOCK) {
 		restartParagraph(false);
 	}
@@ -979,7 +1091,7 @@ void XHTMLReader::endElementHandler(const char *tag) {
 	}
 
 	XHTMLTagAction *action = getAction(sTag);
-	if (action != 0 && action->isEnabled(myReadState)) {
+	if (action != nullptr && action->isEnabled(myReadState)) {
 		action->doAtEnd(*this);
 		myNewParagraphInProgress = false;
 	}

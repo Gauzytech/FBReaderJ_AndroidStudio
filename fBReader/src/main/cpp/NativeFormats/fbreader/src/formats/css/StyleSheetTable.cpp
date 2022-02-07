@@ -148,7 +148,6 @@ shared_ptr<ZLTextStyleEntry> StyleSheetTable::control(const std::string &tag, co
 }
 
 std::vector<std::pair<CSSSelector,shared_ptr<ZLTextStyleEntry> > > StyleSheetTable::allControls(const std::string &tag, const std::string &aClass) const {
-	LogUtil::print("allControls %s", tag + " " + aClass);
 	const CSSSelector key(tag, aClass);
 	std::vector<std::pair<CSSSelector, shared_ptr<ZLTextStyleEntry> > > pairs;
 

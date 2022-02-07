@@ -66,15 +66,14 @@ void ZLCachedMemoryAllocator::flush() {
 	char *ptr = myPool.back() + myOffset;
 	*ptr++ = 0;
 	*ptr = 0;
-	writeCache(myOffset + 2, "");
+	writeCache(myOffset + 2, "flush");
 	myHasChanges = false;
 }
 
-std::string ZLCachedMemoryAllocator::makeFileName(std::size_t index) {
+std::string ZLCachedMemoryAllocator::makeFileName(std::size_t index, const std::string& from) {
 	std::string name(myDirectoryName);
 	name.append("/");
 	ZLStringUtil::appendNumber(name, index);
-	LogUtil::print("解析缓存流程", "缓存文件名 %s", name);
 	return name.append(".").append(myFileExtension);
 }
 
@@ -82,10 +81,11 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, const std::str
 	if (myFailed || myPool.empty()) {
 		return;
 	}
-//	LogUtil::print("writeCache %s", std::to_string(blockLength));
+
+	LogUtil::print("解析缓存流程", "writeCache %s", std::to_string(blockLength) + " " + from);
 
 	const std::size_t index = myPool.size() - 1;
-	const std::string fileName = makeFileName(index);
+	const std::string fileName = makeFileName(index, from);
 	LogUtil::print("解析缓存流程", "writeCache, " + from + " name = %s", fileName);
 
 	ZLFile file(fileName);
@@ -102,20 +102,29 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, const std::str
  * allocate内存给当前读到的text, 如果超出了解析缓存长度myPool, 就直接创建一个本地缓存文件
  * @param size 当前读到的text长度
  */
-char *ZLCachedMemoryAllocator::allocate(std::size_t size, const std::string& from) {
+char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from) {
+//	LogUtil::print("解析缓存流程", "allocate %s " + myFileExtension, std::to_string(size));
+	// 新实现
+	if (myFileExtension == "ncache") {
+		allocateBeta(currentFile, size, from);
+	}
+
 	myHasChanges = true;
 	if (myPool.empty()) {
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
 		myPool.push_back(new char[myCurrentRowSize]);
 	} else if (myOffset + size + 2 + sizeof(char*) > myCurrentRowSize) {
+	    LogUtil::print("解析缓存流程", "%s 超过maxSize = " + std::to_string(myCurrentRowSize) + ", 写入cache", std::to_string(myOffset + size + 2 + sizeof(char*)));
 	    // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
 	    // TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
 		char *row = new char[myCurrentRowSize];
 
+		// ptr就是myLastEntryStart, 指向myPool末端的char[] row
 		char *ptr = myPool.back() + myOffset;
 		*ptr++ = 0;
 		*ptr++ = 0;
+		// 把char[]的地址复制到myPool末端
 		std::memcpy(ptr, &row, sizeof(char*));
 		writeCache(myOffset + 2, from);
 		// 缓存写入完毕了, 加一个新的char[]到myPool中
@@ -125,11 +134,17 @@ char *ZLCachedMemoryAllocator::allocate(std::size_t size, const std::string& fro
 	}
 	char *ptr = myPool.back() + myOffset;
 	myOffset += size;
+
 	return ptr;
 }
 
-char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
+char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize) {
 	LogUtil::print("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
+	// 新实现
+	if (myFileExtension == "ncache") {
+		reallocateLastBeta(currentFile, ptr, newSize);
+	}
+
 	myHasChanges = true;
 	const std::size_t oldOffset = ptr - myPool.back();
 	// sizeof(char*) 返回字符型指针所占内存的大小, 值为4
@@ -144,11 +159,122 @@ char *ZLCachedMemoryAllocator::reallocateLast(char *ptr, std::size_t newSize) {
 		*ptr++ = 0;
 		*ptr++ = 0;
 		std::memcpy(ptr, &row, sizeof(char*));
-		writeCache(oldOffset + 2, "");
+		writeCache(oldOffset + 2, "reallocateLast");
 		// 缓存写入完毕了, 加一个新的char[]到myPool中
 		myPool.push_back(row);
 		// char[]的offset从newSize开始
 		myOffset = newSize;
 		return row;
 	}
+}
+
+/******************************************************* 新实现 *******************************************************/
+/**
+ * 在一个文件解析完毕之后调用, 缓存myPool解析数据, 然后准备下一个文件的char[]数组
+ * 一个文件对应多个解析缓存文件
+ * @return *表示返回一个指针
+ */
+char *ZLCachedMemoryAllocator::finishCurrentFile(CurProcessFile& currentFile) {
+    myHasChanges = true;
+
+	myCurrentRowSizeBeta = myRowSize;
+	char *row = new char[myCurrentRowSizeBeta];
+	// ptr就是myLastEntryStart, 指向myPool末端的char[] row
+	char *ptr = myPoolBeta.back() + myOffsetBeta;
+	*ptr++ = 0;
+	*ptr++ = 0;
+	// 把char[]的地址复制到myPool末端
+	std::memcpy(ptr, &row, sizeof(char*));
+	writeCacheBeta(myOffsetBeta + 2, currentFile);
+	// 缓存写入完毕了, 加一个新的char[]到myPool中
+	myPoolBeta.push_back(row);
+	// 重新开始计算char[]的offset
+	myOffsetBeta = 0;
+
+    char *endPtr = myPoolBeta.back() + myOffsetBeta;
+    return endPtr;
+}
+
+// TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
+char *ZLCachedMemoryAllocator::allocateBeta(CurProcessFile& currentFile, std::size_t size, const std::string& from) {
+    myHasChanges = true;
+    if (myPoolBeta.empty()) {
+        myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
+        myPoolBeta.push_back(new char[myCurrentRowSizeBeta]);
+    } else if (myOffsetBeta + size + 2 + sizeof(char*) > myCurrentRowSizeBeta) {
+        LogUtil::print("解析缓存流程beta", "%s 超过maxSize = " + std::to_string(myCurrentRowSizeBeta) + ", 写入cache",
+                       std::to_string(myOffsetBeta + size + 2 + sizeof(char*)));
+        // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
+		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
+        char *newRow = new char[myCurrentRowSizeBeta];
+
+        // ptr就是myLastEntryStart, 指向myPool末端的char[] row
+        char *ptr = myPoolBeta.back() + myOffsetBeta;
+        *ptr++ = 0;
+        *ptr++ = 0;
+        std::memcpy(ptr, &newRow, sizeof(char*));
+        writeCacheBeta(myOffsetBeta + 2, currentFile);
+        myPoolBeta.push_back(newRow);
+        myOffsetBeta = 0;
+    }
+    char *endPtr = myPoolBeta.back() + myOffsetBeta;
+    myOffsetBeta += size;
+    return endPtr;
+}
+
+char *ZLCachedMemoryAllocator::reallocateLastBeta(CurProcessFile& currentFile, char *ptr, std::size_t newSize) {
+    LogUtil::print("解析缓存流程beta", "reallocateLastBeta %s", std::to_string(newSize));
+    myHasChanges = true;
+    const std::size_t oldOffset = ptr - myPoolBeta.back();
+    // sizeof(char*) 返回字符型指针所占内存的大小, 值为4
+    if (oldOffset + newSize + 2 + sizeof(char*) <= myCurrentRowSizeBeta) {
+        myOffsetBeta = oldOffset + newSize;
+        return ptr;
+    } else {
+		myCurrentRowSizeBeta = std::max(myRowSize, newSize + 2 + sizeof(char*));
+        char *newRow = new char[myCurrentRowSizeBeta];
+        std::memcpy(newRow, ptr, myOffsetBeta - oldOffset);
+
+        *ptr++ = 0;
+        *ptr++ = 0;
+        std::memcpy(ptr, &newRow, sizeof(char*));
+		writeCacheBeta(oldOffset + 2, currentFile);
+        // 缓存写入完毕了, 加一个新的char[]到myPool中
+        myPoolBeta.push_back(newRow);
+        // char[]的offset从newSize开始
+        myOffsetBeta = newSize;
+        return newRow;
+    }
+}
+
+void ZLCachedMemoryAllocator::writeCacheBeta(std::size_t blockLength, CurProcessFile& currentFile) {
+    if (myFailed || myPoolBeta.empty()) {
+        return;
+    }
+
+    const std::size_t index = myPoolBeta.size() - 1;
+    const std::string fileName = makeFileNameBeta(index, currentFile);
+    LogUtil::print("解析缓存流程", "writeCache, name = %s", fileName);
+
+    ZLFile file(fileName);
+    shared_ptr<ZLOutputStream> stream = file.outputStream();
+    if (stream.isNull() || !stream->open()) {
+        myFailed = true;
+        return;
+    }
+    stream->write(myPoolBeta[index], blockLength);
+    stream->close();
+}
+
+std::string ZLCachedMemoryAllocator::makeFileNameBeta(std::size_t index, CurProcessFile& currentFile) {
+	std::string name(myDirectoryName);
+	// 缓存文件名: xhtml文件名 + 该文件缓存文件数量 + myPool中的idx + 后缀(.ncache)
+	// eg: part0000+1_0.cache
+	// +1代表只有一个缓存文件, 由于一个.xhtml文件过大导致有多个缓存文件
+	name.append("/").append(currentFile.fileName).append("+");
+	ZLStringUtil::appendNumber(name, currentFile.cacheFileCount);
+	currentFile.cacheFileCount++;
+	name.append("_");
+	ZLStringUtil::appendNumber(name, index);
+	return name.append(".").append(myFileExtension);
 }

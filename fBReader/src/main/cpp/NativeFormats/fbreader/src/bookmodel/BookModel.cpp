@@ -70,6 +70,7 @@ const shared_ptr<Book> BookModel::book() const {
 }
 
 bool BookModel::flush() {
+	LogUtil::print("BookModel.flush", "");
 	myBookTextModel->flush();
 	if (myBookTextModel->allocator().failed()) {
 		return false;

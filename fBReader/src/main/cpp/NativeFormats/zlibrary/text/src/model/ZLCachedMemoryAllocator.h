@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <ZLUnicodeUtil.h>
+#include <CurProcessFile.h>
 
 class ZLCachedMemoryAllocator {
 
@@ -30,8 +31,8 @@ public:
 	ZLCachedMemoryAllocator(const std::size_t rowSize, const std::string &directoryName, const std::string &fileExtension);
 	~ZLCachedMemoryAllocator();
 
-	char *allocate(std::size_t size, const std::string& from);
-	char *reallocateLast(char *ptr, std::size_t newSize);
+	char *allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from);
+	char *reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize);
 
 	void flush();
 
@@ -41,6 +42,11 @@ public:
 	static uint16_t readUInt16(const char *ptr);
 	static uint32_t readUInt32(const char *ptr);
 
+	// 新实现
+	char *allocateBeta(CurProcessFile& currentFile, std::size_t size, const std::string& from);
+	char *reallocateLastBeta(CurProcessFile& currentFile, char *ptr, std::size_t newSize);
+	char *finishCurrentFile(CurProcessFile& currentFile);
+
 public:
 	const std::string &directoryName() const;
 	const std::string &fileExtension() const;
@@ -49,9 +55,12 @@ public:
 	bool failed() const;
 
 private:
-	std::string makeFileName(std::size_t index);
+	std::string makeFileName(std::size_t index, const std::string& from);
 	void writeCache(std::size_t blockLength, const std::string& from);
 
+	// 新实现
+	std::string makeFileNameBeta(std::size_t index, CurProcessFile& currentFile);
+	void writeCacheBeta(std::size_t blockLength, CurProcessFile& currentFile);
 private:
 	const std::size_t myRowSize;
 	std::size_t myCurrentRowSize;
@@ -63,6 +72,11 @@ private:
 
 	const std::string myDirectoryName;
 	const std::string myFileExtension;
+
+	// 新实现
+	std::size_t myCurrentRowSizeBeta;
+	std::vector<char*> myPoolBeta;
+	std::size_t myOffsetBeta;
 
 private: // disable copying
 	ZLCachedMemoryAllocator(const ZLCachedMemoryAllocator&);

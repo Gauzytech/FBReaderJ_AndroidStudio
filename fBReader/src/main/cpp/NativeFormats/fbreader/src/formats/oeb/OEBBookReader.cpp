@@ -258,16 +258,23 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 		// xhtmlReader类的readFile方法会开始对xhtml文件的解析
 		// readFile会注册xhtmlReader的elementHandler
 		LogUtil::print("xhtmlReader.readFile, START------------->>> %s ---------------->>>", xhtmlFile.path());
+		// 新实现, 在ZLTextModel中保存当前正在解析的file, 我们需要将其append到缓存文件名字中
+		myModelReader.model().bookTextModel()->setCurrentFile(xhtmlFile.name(true));
 		if (!xhtmlReader.readFile(xhtmlFile, *it)) {
 			if (opfFile.exists() && !myEncryptionMap.isNull()) {
 				myModelReader.insertEncryptedSectionParagraph();
 			}
 		}
+        // 新实现
+        // TODO
+        //  一个xhtml文件解析完毕, 通知mAllocator将myPool末端char[]写到本地缓存
+        //  flushCache()逻辑还没实现
+        myModelReader.model().bookTextModel()->finishCurrentFile();
 		LogUtil::print("readBook, para count = %s", std::to_string(myModelReader.model().bookTextModel()->paragraphsNumber()));
-		const std::string& fileName = xhtmlFile.name(false);
 //		if (fileName == "titlepage.xhtml" || fileName == "text/part0000_split_000.html") {
 //			myModelReader.model().bookTextModel()->printParagraph();
 //		}
+		const std::string& fileName = xhtmlFile.name(false);
 		LogUtil::print("xhtmlReader.readFile, <<<--------------END %s <<<--------------", fileName);
 	}
 

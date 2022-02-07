@@ -172,27 +172,32 @@ static bool initInternalHyperlinks(JNIEnv *env, jobject javaModel, BookModel &mo
 	const std::map<std::string,BookModel::Label> &links = model.internalHyperlinks();
 	std::map<std::string,BookModel::Label>::const_iterator it = links.begin();
 	for (; it != links.end(); ++it) {
-		const std::string &id = it->first; // key
-		const BookModel::Label &label = it->second; // value
-		if (label.Model.isNull()) {
-			continue;
-		}
-		ZLUnicodeUtil::utf8ToUcs2(ucs2id, id);
-		ZLUnicodeUtil::utf8ToUcs2(ucs2modelId, label.Model->id());
-		const std::size_t idLen = ucs2id.size() * 2;
-		const std::size_t modelIdLen = ucs2modelId.size() * 2;
+        const std::string &id = it->first; // key
+        const BookModel::Label &label = it->second; // value
+        if (label.Model.isNull()) {
+            continue;
+        }
+        ZLUnicodeUtil::utf8ToUcs2(ucs2id, id);
+        ZLUnicodeUtil::utf8ToUcs2(ucs2modelId, label.Model->id());
+        const std::size_t idLen = ucs2id.size() * 2;
+        const std::size_t modelIdLen = ucs2modelId.size() * 2;
 
-		char *ptr = allocator.allocate(idLen + modelIdLen + 8, "initInternalHyperlinks");
-		ZLCachedMemoryAllocator::writeUInt16(ptr, ucs2id.size());
-		ptr += 2;
-		std::memcpy(ptr, &ucs2id.front(), idLen);
-		ptr += idLen;
-		ZLCachedMemoryAllocator::writeUInt16(ptr, ucs2modelId.size());
-		ptr += 2;
-		std::memcpy(ptr, &ucs2modelId.front(), modelIdLen);
-		ptr += modelIdLen;
-		ZLCachedMemoryAllocator::writeUInt32(ptr, label.ParagraphNumber);
-	}
+        // 创建一个PlaceHolder
+		CurProcessFile file = CurProcessFile{"", -1};
+        char *ptr = allocator.allocate(
+				file,
+                idLen + modelIdLen + 8,
+                "initInternalHyperlinks");
+        ZLCachedMemoryAllocator::writeUInt16(ptr, ucs2id.size());
+        ptr += 2;
+        std::memcpy(ptr, &ucs2id.front(), idLen);
+        ptr += idLen;
+        ZLCachedMemoryAllocator::writeUInt16(ptr, ucs2modelId.size());
+        ptr += 2;
+        std::memcpy(ptr, &ucs2modelId.front(), modelIdLen);
+        ptr += modelIdLen;
+        ZLCachedMemoryAllocator::writeUInt32(ptr, label.ParagraphNumber);
+    }
 	allocator.flush();
 
 	JString linksDirectoryName(env, allocator.directoryName(), false);
@@ -298,43 +303,45 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 	// 3.2 通过javaBook创建cpp book
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
 	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
-	shared_ptr<BookModel> model = new BookModel(book, javaBookModel, cacheDir);
+    shared_ptr<BookModel> model = new BookModel(book, javaBookModel, cacheDir);
 
-	LogUtil::print("readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    LogUtil::print("readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
 
     // 4. 使用plugin对cpp bookModel进行解析
     // 读取了opf, container, 所有xhtml文件, 和toc.ncx文件
     if (!plugin->readModel(*model)) {
-    	// 解析失败
-		return 2;
-	}
-	if (!model->flush()) {
-		// 内存不足
-		return 3;
-	}
+        // 解析失败
+        return 2;
+    }
 
-	if (!initInternalHyperlinks(env, javaBookModel, *model, cacheDir)) {
-		// 初始化超链接失败
-		return 4;
-	}
-	// 5. 调用java方法, 将toc数据保存到java
-	initTOC(env, javaBookModel, *model->contentsTree());
+    // 4.1 最后一步, 通知allocator将myPool末端char[]中的解析数据缓存到本地
+    if (!model->flush()) {
+        // 内存不足
+        return 3;
+    }
 
-	// 6. 获得渲染模型
-	shared_ptr<ZLTextModel> textModel = model->bookTextModel();
-	// 7. 通过cpp textModel: ZLTextModel创建java textModel: ZLTextPlainModel
-	jobject javaTextModel = createTextModel(env, javaBookModel, *textModel);
-	if (javaTextModel == 0) {
-		return 5;
-	}
-	// 7.1 调用java方法, 将javaTextModel保存到java bookModel中
-	AndroidUtil::Method_BookModel_setBookTextModel->call(javaBookModel, javaTextModel);
-	if (env->ExceptionCheck()) {
-		return 6;
-	}
-	env->DeleteLocalRef(javaTextModel);
+    if (!initInternalHyperlinks(env, javaBookModel, *model, cacheDir)) {
+        // 初始化超链接失败
+        return 4;
+    }
+    // 5. 调用java方法, 将toc数据保存到java
+    initTOC(env, javaBookModel, *model->contentsTree());
 
-	// 8. 脚注, 是个底部弹窗， 见https://fbreader.org/tags/footnotes
+    // 6. 获得渲染模型
+    shared_ptr<ZLTextModel> textModel = model->bookTextModel();
+    // 7. 通过cpp textModel: ZLTextModel创建java textModel: ZLTextPlainModel
+    jobject javaTextModel = createTextModel(env, javaBookModel, *textModel);
+    if (javaTextModel == nullptr) {
+        return 5;
+    }
+    // 7.1 调用java方法, 将javaTextModel保存到java bookModel中
+    AndroidUtil::Method_BookModel_setBookTextModel->call(javaBookModel, javaTextModel);
+    if (env->ExceptionCheck()) {
+        return 6;
+    }
+    env->DeleteLocalRef(javaTextModel);
+
+    // 8. 脚注, 是个底部弹窗， 见https://fbreader.org/tags/footnotes
 	const std::map<std::string,shared_ptr<ZLTextModel> > &footnotes = model->footnotes();
 	std::map<std::string,shared_ptr<ZLTextModel> >::const_iterator it = footnotes.begin();
 	for (; it != footnotes.end(); ++it) {

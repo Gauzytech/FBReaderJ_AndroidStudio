@@ -35,7 +35,7 @@
 #include <LogUtil.h>
 
 BookReader::BookReader(BookModel &model) : myModel(model) {
-	LogUtil::print("BookReader constructor %s", "初始化");
+	LogUtil::print("BookReader constructor %s", "");
 	myCurrentTextModel = 0;
 
 	myInsideTitle = false;
@@ -252,7 +252,7 @@ void BookReader::addImage(const std::string &id, shared_ptr<const ZLImage> image
 }
 
 void BookReader::addVideoEntry(const ZLVideoEntry &entry) {
-	if (myCurrentTextModel != 0) {
+	if (myCurrentTextModel != nullptr) {
 		mySectionContainsRegularContents = true;
 		endParagraph();
 		beginParagraph();
@@ -262,7 +262,7 @@ void BookReader::addVideoEntry(const ZLVideoEntry &entry) {
 }
 
 void BookReader::addExtensionEntry(const std::string &action, const std::map<std::string,std::string> &data) {
-	if (myCurrentTextModel != 0) {
+	if (myCurrentTextModel != nullptr) {
 		myCurrentTextModel->addExtensionEntry(action, data);
 	}
 }

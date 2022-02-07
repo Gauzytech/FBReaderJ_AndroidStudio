@@ -56,6 +56,9 @@ public:
 	std::size_t paragraphsNumber() const;
 	ZLTextParagraph *operator [] (std::size_t index);
 	const ZLTextParagraph *operator [] (std::size_t index) const;
+
+	// 新实现
+
 /*
 	const std::vector<ZLTextMark> &marks() const;
 
@@ -72,25 +75,45 @@ public:
 	void addStyleEntry(const ZLTextStyleEntry &entry, unsigned char depth);
 	void addStyleEntry(const ZLTextStyleEntry &entry, const std::vector<std::string> &fontFamilies, unsigned char depth);
 	void addStyleCloseEntry();
-	void addHyperlinkControl(ZLTextKind textKind, ZLHyperlinkType hyperlinkType, const std::string &label);
+
+	void addHyperlinkControl(ZLTextKind textKind, ZLHyperlinkType hyperlinkType,
+							 const std::string &label);
+
 	void addText(const std::string &text);
+
 	void addText(const std::vector<std::string> &text);
+
 	void addImage(const std::string &id, short vOffset, bool isCover);
+
 	void addFixedHSpace(unsigned char length);
+
 	void addBidiReset();
+
 	void addVideoEntry(const ZLVideoEntry &entry);
-	void addExtensionEntry(const std::string &action, const std::map<std::string,std::string> &data);
+
+	void
+	addExtensionEntry(const std::string &action, const std::map<std::string, std::string> &data);
 
 	void flush();
+
+	void finishCurrentFile();
 
 	const ZLCachedMemoryAllocator &allocator() const;
 
 	const std::vector<jint> &startEntryIndices() const;
+
 	const std::vector<jint> &startEntryOffsets() const;
+
 	const std::vector<jint> &paragraphLengths() const;
+
 	const std::vector<jint> &textSizes() const;
+
 	const std::vector<jbyte> &paragraphKinds() const;
+
 	const void printParagraph();
+
+	// 新实现
+	void setCurrentFile(const std::string &fileName);
 
 protected:
 	void addParagraphInternal(ZLTextParagraph *paragraph);
@@ -98,7 +121,7 @@ protected:
 private:
 	const std::string myId;
 	const std::string myLanguage;
-	std::vector<ZLTextParagraph*> myParagraphs;
+	std::vector<ZLTextParagraph *> myParagraphs;
 	//mutable std::vector<ZLTextMark> myMarks;
 	mutable shared_ptr<ZLCachedMemoryAllocator> myAllocator;
 
@@ -112,9 +135,13 @@ private:
 
 	FontManager &myFontManager;
 
+	// 新实现
+	CurProcessFile currentFile;
+
 private:
-	ZLTextModel(const ZLTextModel&);
-	const ZLTextModel &operator = (const ZLTextModel&);
+	ZLTextModel(const ZLTextModel &);
+
+	const ZLTextModel &operator=(const ZLTextModel &);
 };
 
 class ZLTextPlainModel : public ZLTextModel {
@@ -143,14 +170,14 @@ inline ZLTextParagraph *ZLTextModel::operator [] (std::size_t index) {
 	return myParagraphs[std::min(myParagraphs.size() - 1, index)];
 }
 
-inline const ZLTextParagraph *ZLTextModel::operator [] (std::size_t index) const {
+inline const ZLTextParagraph *ZLTextModel::operator[](std::size_t index) const {
 	return myParagraphs[std::min(myParagraphs.size() - 1, index)];
 }
 
 inline const void ZLTextModel::printParagraph() {
 	for (int i = 0; i < myParagraphs.size(); ++i) {
 		LogUtil::print("TextModel, paraNum=" + std::to_string(i) + " entry %s",
-				 std::to_string(myParagraphs[i]->entryNumber()));
+					   std::to_string(myParagraphs[i]->entryNumber()));
 	}
 }
 

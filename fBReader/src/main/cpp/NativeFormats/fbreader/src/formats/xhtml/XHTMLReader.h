@@ -64,6 +64,7 @@ public:
 	// 处理标签对的结束部分
 	virtual void doAtEnd(XHTMLReader &reader) = 0;
 	virtual bool isEnabled(XHTMLReadingState state) = 0;
+	virtual std::string actionName() = 0;
 
 protected:
 	static BookReader &bookReader(XHTMLReader &reader);
@@ -119,7 +120,7 @@ private:
 	const XHTMLTagInfoList &tagInfos(size_t depth) const;
 	bool matches(const shared_ptr<CSSSelector::Component> next, int depth = 0, int pos = -1) const;
 
-	void applySingleEntry(shared_ptr<ZLTextStyleEntry> entry);
+	void applySingleEntry(const shared_ptr<ZLTextStyleEntry>& entry);
 	void applyTagStyles(const std::string &tag, const std::string &aClass);
 	void addTextStyleEntry(const ZLTextStyleEntry &entry, unsigned char depth);
 

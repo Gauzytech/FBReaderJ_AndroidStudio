@@ -38,7 +38,7 @@ void ZLXMLReaderInternal::fStartElementHandler(void *userData, const char *name,
 	ZLXMLReader &reader = *(ZLXMLReader*)userData;
 	if (!reader.isInterrupted()) {
 		if (reader.processNamespaces()) {
-			LogUtil::print("processNamespaces", "");
+			LogUtil::print("ZLXMLReaderInternal::fStartElementHandler, processNamespaces", "");
 			int count = 0;
 			for (const char **a = attributes; (*a != nullptr) && (*(a + 1) != nullptr); a += 2) {
 				if (std::strncmp(*a, "xmlns", 5) == 0) {
