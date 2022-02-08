@@ -32,7 +32,7 @@ public:
 	~ZLCachedMemoryAllocator();
 
 	char *allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from);
-	char *reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize);
+	char *reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize, const std::string& from);
 
 	void flush();
 
@@ -45,7 +45,8 @@ public:
 	// 新实现
 	char *allocateBeta(CurProcessFile& currentFile, std::size_t size, const std::string& from);
 	char *reallocateLastBeta(CurProcessFile& currentFile, char *ptr, std::size_t newSize);
-	char *finishCurrentFile(CurProcessFile& currentFile);
+	void flushCurrentFile(CurProcessFile& currentFile);
+	bool isExceedMaxSize(int offset, int newSize) const;
 
 public:
 	const std::string &directoryName() const;
@@ -53,6 +54,11 @@ public:
 	std::size_t blocksNumber() const;
 	std::size_t currentBytesOffset() const;
 	bool failed() const;
+
+	// 新实现
+	std::size_t blocksNumberBeta() const;
+	std::size_t currentBytesOffsetBeta() const;
+
 
 private:
 	std::string makeFileName(std::size_t index, const std::string& from);
@@ -88,6 +94,10 @@ inline const std::string &ZLCachedMemoryAllocator::fileExtension() const { retur
 inline std::size_t ZLCachedMemoryAllocator::blocksNumber() const { return myPool.size(); }
 inline std::size_t ZLCachedMemoryAllocator::currentBytesOffset() const { return myOffset; }
 inline bool ZLCachedMemoryAllocator::failed() const { return myFailed; }
+
+// 新实现
+inline std::size_t ZLCachedMemoryAllocator::blocksNumberBeta() const { return myPool.size(); }
+inline std::size_t ZLCachedMemoryAllocator::currentBytesOffsetBeta() const { return myOffset; }
 
 inline char *ZLCachedMemoryAllocator::writeUInt16(char *ptr, uint16_t value) {
 	*ptr++ = value;

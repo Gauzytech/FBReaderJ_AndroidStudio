@@ -57,7 +57,6 @@ public:
 	ZLTextParagraph *operator [] (std::size_t index);
 	const ZLTextParagraph *operator [] (std::size_t index) const;
 
-	// 新实现
 
 /*
 	const std::vector<ZLTextMark> &marks() const;
@@ -115,8 +114,25 @@ public:
 	// 新实现
 	void setCurrentFile(const std::string &fileName);
 
+	void addControlBeta(ZLTextKind textKind, bool isStart);
+	void addStyleEntryBeta(const ZLTextStyleEntry &entry, const std::vector<std::string> &fontFamilies, unsigned char depth);
+	void addStyleCloseEntryBeta();
+	void addHyperlinkControlBeta(ZLTextKind textKind, ZLHyperlinkType hyperlinkType,
+							 const std::string &label);
+
+	void addTextBeta(const std::string &text);
+	void addTextBeta(const std::vector<std::string> &text);
+	void addImageBeta(const std::string &id, short vOffset, bool isCover);
+	void addFixedHSpaceBeta(unsigned char length);
+	void addBidiResetBeta();
+	void addVideoEntryBeta(const ZLVideoEntry &entry);
+	void addExtensionEntryBeta(const std::string &action, const std::map<std::string, std::string> &data);
+
 protected:
 	void addParagraphInternal(ZLTextParagraph *paragraph);
+
+	// 新实现
+	void addParagraphInternalBeta(ZLTextParagraph *paragraph);
 
 private:
 	const std::string myId;
@@ -137,6 +153,14 @@ private:
 
 	// 新实现
 	CurProcessFile currentFile;
+	char *myLastEntryStartBeta;
+
+	std::vector<jint> myStartEntryIndicesBeta;
+	std::vector<jint> myStartEntryOffsetsBeta;
+	std::vector<ZLTextParagraph *> myParagraphsBeta;
+	std::vector<jint> myParagraphLengthsBeta;
+	std::vector<jint> myTextSizesBeta;
+	std::vector<jbyte> myParagraphKindsBeta;
 
 private:
 	ZLTextModel(const ZLTextModel &);

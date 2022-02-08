@@ -934,7 +934,8 @@ void XHTMLReader::applyTagStyles(const std::string &tag, const std::string &aCla
 }
 
 void XHTMLReader::addTextStyleEntry(const ZLTextStyleEntry &entry, unsigned char depth) {
-	if (!entry.isFeatureSupported(ZLTextStyleEntry::FONT_FAMILY)) {
+    LogUtil::print("addTextStyleEntry", "");
+    if (!entry.isFeatureSupported(ZLTextStyleEntry::FONT_FAMILY)) {
 		myModelReader.addStyleEntry(entry, depth);
 		return;
 	}

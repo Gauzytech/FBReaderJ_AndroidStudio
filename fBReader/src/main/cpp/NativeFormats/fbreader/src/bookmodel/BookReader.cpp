@@ -103,10 +103,15 @@ void BookReader::beginParagraph(ZLTextParagraph::Kind kind) {
 		((ZLTextPlainModel&)*myCurrentTextModel).createParagraph(kind);
 		// 遍历myKindStack, 循环调用addControl方法
 		for (std::vector<FBTextKind>::const_iterator it = myKindStack.begin(); it != myKindStack.end(); ++it) {
+			LogUtil::print("解析缓存流程", "BookReader.beginParagraph.addControl", "");
 			myCurrentTextModel->addControl(*it, true);
+			// 新实现
+			myCurrentTextModel->addControlBeta(*it, true);
 		}
 		if (!myHyperlinkReference.empty()) {
 			myCurrentTextModel->addHyperlinkControl(myHyperlinkKind, myHyperlinkType, myHyperlinkReference);
+			// 新实现
+			myCurrentTextModel->addHyperlinkControlBeta(myHyperlinkKind, myHyperlinkType, myHyperlinkReference);
 		}
 		myModelsWithOpenParagraphs.push_back(myCurrentTextModel);
 	}
@@ -123,9 +128,12 @@ void BookReader::endParagraph() {
 }
 
 void BookReader::addControl(FBTextKind kind, bool start) {
+	LogUtil::print("解析缓存流程", "BookReader.addControl", "");
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addControl(kind, start);
+		// 新实现
+		myCurrentTextModel->addControlBeta(kind, start);
 	}
 	if (!start && !myHyperlinkReference.empty() && (kind == myHyperlinkKind)) {
 		myHyperlinkReference.erase();
@@ -136,6 +144,8 @@ void BookReader::addStyleEntry(const ZLTextStyleEntry &entry, const std::vector<
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addStyleEntry(entry, fontFamilies, depth);
+		// 新实现
+		myCurrentTextModel->addStyleEntryBeta(entry, fontFamilies, depth);
 	}
 }
 
@@ -150,6 +160,8 @@ void BookReader::addStyleCloseEntry() {
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addStyleCloseEntry();
+		// 新实现
+		myCurrentTextModel->addStyleCloseEntryBeta();
 	}
 }
 
@@ -157,6 +169,8 @@ void BookReader::addFixedHSpace(unsigned char length) {
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addFixedHSpace(length);
+		// 新实现
+		myCurrentTextModel->addFixedHSpaceBeta(length);
 	}
 }
 
@@ -191,6 +205,8 @@ void BookReader::addHyperlinkControl(FBTextKind kind, const std::string &label) 
 	if (paragraphIsOpen()) {
 		flushTextBufferToParagraph();
 		myCurrentTextModel->addHyperlinkControl(kind, myHyperlinkType, label);
+		// 新实现
+		myCurrentTextModel->addHyperlinkControlBeta(kind, myHyperlinkType, label);
 	}
 	myHyperlinkReference = label;
 }
@@ -234,6 +250,8 @@ void BookReader::addContentsData(const std::string &data) {
 
 void BookReader::flushTextBufferToParagraph() {
 	myCurrentTextModel->addText(myBuffer);
+	// 新实现
+	myCurrentTextModel->addTextBeta(myBuffer);
 	myBuffer.clear();
 }
 
@@ -257,6 +275,8 @@ void BookReader::addVideoEntry(const ZLVideoEntry &entry) {
 		endParagraph();
 		beginParagraph();
 		myCurrentTextModel->addVideoEntry(entry);
+		// 新实现
+		myCurrentTextModel->addVideoEntryBeta(entry);
 		endParagraph();
 	}
 }
@@ -264,6 +284,8 @@ void BookReader::addVideoEntry(const ZLVideoEntry &entry) {
 void BookReader::addExtensionEntry(const std::string &action, const std::map<std::string,std::string> &data) {
 	if (myCurrentTextModel != nullptr) {
 		myCurrentTextModel->addExtensionEntry(action, data);
+		// 新实现
+		myCurrentTextModel->addExtensionEntryBeta(action, data);
 	}
 }
 
@@ -298,16 +320,27 @@ void BookReader::insertEncryptedSectionParagraph() {
 }
 
 void BookReader::addImageReference(const std::string &id, short vOffset, bool isCover) {
+	LogUtil::print("解析缓存流程", "BookReader.addImageReference", "");
 	if (myCurrentTextModel != nullptr) {
 		mySectionContainsRegularContents = true;
 		if (paragraphIsOpen()) {
 			flushTextBufferToParagraph();
 			myCurrentTextModel->addImage(id, vOffset, isCover);
+			// 新实现
+			myCurrentTextModel->addImageBeta(id, vOffset, isCover);
 		} else {
 			beginParagraph();
 			myCurrentTextModel->addControl(IMAGE, true);
+			// 新实现
+			myCurrentTextModel->addControlBeta(IMAGE, true);
+
 			myCurrentTextModel->addImage(id, vOffset, isCover);
+			// 新实现
+			myCurrentTextModel->addImageBeta(id, vOffset, isCover);
+
 			myCurrentTextModel->addControl(IMAGE, false);
+			// 新实现
+			myCurrentTextModel->addControlBeta(IMAGE, false);
 			endParagraph();
 		}
 	}

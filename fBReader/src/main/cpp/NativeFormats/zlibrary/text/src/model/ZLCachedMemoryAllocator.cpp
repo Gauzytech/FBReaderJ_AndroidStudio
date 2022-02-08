@@ -103,10 +103,16 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, const std::str
  * @param size 当前读到的text长度
  */
 char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from) {
-//	LogUtil::print("解析缓存流程", "allocate %s " + myFileExtension, std::to_string(size));
+//	LogUtil::print("解析缓存流程", from + " -- allocate %s " + myFileExtension, std::to_string(size));
 	// 新实现
 	if (myFileExtension == "ncache") {
-		allocateBeta(currentFile, size, from);
+//		allocateBeta(currentFile, size, from);
+
+		if (from != "addText" && from != "addControl") {
+			allocateBeta(currentFile, size, from);
+		} else {
+			LogUtil::print("解析缓存流程", "不执行allocateBeta", "");
+		}
 	}
 
 	myHasChanges = true;
@@ -138,11 +144,17 @@ char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t
 	return ptr;
 }
 
-char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize) {
+char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize, const std::string& from) {
 	LogUtil::print("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
 	// 新实现
 	if (myFileExtension == "ncache") {
-		reallocateLastBeta(currentFile, ptr, newSize);
+//		reallocateLastBeta(currentFile, ptr, newSize);
+
+		if (from != "addText" && from != "addControl") {
+			reallocateLastBeta(currentFile, ptr, newSize);
+		} else {
+			LogUtil::print("解析缓存流程", "不执行reallocateLastBeta", "");
+		}
 	}
 
 	myHasChanges = true;
@@ -174,7 +186,7 @@ char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char 
  * 一个文件对应多个解析缓存文件
  * @return *表示返回一个指针
  */
-char *ZLCachedMemoryAllocator::finishCurrentFile(CurProcessFile& currentFile) {
+void ZLCachedMemoryAllocator::flushCurrentFile(CurProcessFile& currentFile) {
     myHasChanges = true;
 
 	myCurrentRowSizeBeta = myRowSize;
@@ -190,9 +202,6 @@ char *ZLCachedMemoryAllocator::finishCurrentFile(CurProcessFile& currentFile) {
 	myPoolBeta.push_back(row);
 	// 重新开始计算char[]的offset
 	myOffsetBeta = 0;
-
-    char *endPtr = myPoolBeta.back() + myOffsetBeta;
-    return endPtr;
 }
 
 // TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
@@ -201,8 +210,9 @@ char *ZLCachedMemoryAllocator::allocateBeta(CurProcessFile& currentFile, std::si
     if (myPoolBeta.empty()) {
         myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
         myPoolBeta.push_back(new char[myCurrentRowSizeBeta]);
-    } else if (myOffsetBeta + size + 2 + sizeof(char*) > myCurrentRowSizeBeta) {
-        LogUtil::print("解析缓存流程beta", "%s 超过maxSize = " + std::to_string(myCurrentRowSizeBeta) + ", 写入cache",
+    } else if (isExceedMaxSize(myOffsetBeta, size)) {
+        LogUtil::print("解析缓存流程beta",
+					   "%s 超过maxSize = " + std::to_string(myCurrentRowSizeBeta) + ", 写入cache",
                        std::to_string(myOffsetBeta + size + 2 + sizeof(char*)));
         // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
 		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
@@ -227,7 +237,7 @@ char *ZLCachedMemoryAllocator::reallocateLastBeta(CurProcessFile& currentFile, c
     myHasChanges = true;
     const std::size_t oldOffset = ptr - myPoolBeta.back();
     // sizeof(char*) 返回字符型指针所占内存的大小, 值为4
-    if (oldOffset + newSize + 2 + sizeof(char*) <= myCurrentRowSizeBeta) {
+    if (!isExceedMaxSize(oldOffset, newSize)) {
         myOffsetBeta = oldOffset + newSize;
         return ptr;
     } else {
@@ -271,10 +281,17 @@ std::string ZLCachedMemoryAllocator::makeFileNameBeta(std::size_t index, CurProc
 	// 缓存文件名: xhtml文件名 + 该文件缓存文件数量 + myPool中的idx + 后缀(.ncache)
 	// eg: part0000+1_0.cache
 	// +1代表只有一个缓存文件, 由于一个.xhtml文件过大导致有多个缓存文件
+	currentFile.cacheFileCount++;
 	name.append("/").append(currentFile.fileName).append("+");
 	ZLStringUtil::appendNumber(name, currentFile.cacheFileCount);
-	currentFile.cacheFileCount++;
 	name.append("_");
 	ZLStringUtil::appendNumber(name, index);
 	return name.append(".").append(myFileExtension);
+}
+
+/**
+ * @return 'true' exceed maxSize, 'false' not exceed
+ */
+bool ZLCachedMemoryAllocator::isExceedMaxSize(int offset, int newSize) const {
+	return offset + newSize + 2 + sizeof(char*) > myCurrentRowSizeBeta;
 }
