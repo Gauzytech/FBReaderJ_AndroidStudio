@@ -69,6 +69,7 @@ private:
 	void writeCacheBeta(std::size_t blockLength, CurProcessFile& currentFile);
 private:
 	const std::size_t myRowSize;
+
 	std::size_t myCurrentRowSize;
 	std::vector<char*> myPool;
 	std::size_t myOffset;
@@ -96,8 +97,8 @@ inline std::size_t ZLCachedMemoryAllocator::currentBytesOffset() const { return 
 inline bool ZLCachedMemoryAllocator::failed() const { return myFailed; }
 
 // 新实现
-inline std::size_t ZLCachedMemoryAllocator::blocksNumberBeta() const { return myPool.size(); }
-inline std::size_t ZLCachedMemoryAllocator::currentBytesOffsetBeta() const { return myOffset; }
+inline std::size_t ZLCachedMemoryAllocator::blocksNumberBeta() const { return myPoolBeta.size(); }
+inline std::size_t ZLCachedMemoryAllocator::currentBytesOffsetBeta() const { return myOffsetBeta; }
 
 inline char *ZLCachedMemoryAllocator::writeUInt16(char *ptr, uint16_t value) {
 	*ptr++ = value;
