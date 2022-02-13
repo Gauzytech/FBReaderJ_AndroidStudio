@@ -25,13 +25,16 @@ import androidx.collection.LruCache;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
 final class CursorManager extends LruCache<Integer, ZLTextParagraphCursor> {
-	private final ZLTextModel myModel;
-	final ExtensionElementManager ExtensionManager;
+	private final ZLTextModel textModel;
+	final ExtensionElementManager extensionManager;
 
+	/**
+	 * @param extManager FbView中的bookElementManager, 用来加载一些图书信息: OPDS
+	 */
 	public CursorManager(ZLTextModel model, ExtensionElementManager extManager) {
 		super(200); // max 200 cursors in the cache
-		myModel = model;
-		ExtensionManager = extManager;
+		textModel = model;
+		extensionManager = extManager;
 	}
 
 	/**
@@ -40,6 +43,6 @@ final class CursorManager extends LruCache<Integer, ZLTextParagraphCursor> {
 	 */
 	@Override
 	protected ZLTextParagraphCursor create(@NonNull Integer index) {
-		return new ZLTextParagraphCursor(this, myModel, index);
+		return new ZLTextParagraphCursor(this, textModel, index);
 	}
 }

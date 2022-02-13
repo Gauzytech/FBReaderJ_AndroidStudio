@@ -37,19 +37,23 @@ import java.util.List;
 import timber.log.Timber;
 
 public final class ZLTextParagraphCursor {
+	// index对应于cpp myPool中char[] row的idx
+	// 一般来说一个row数组就代表了一个xhtml文件的所有解析缓存数据, eg: .ncache
+	// 如果xhtml文件太大, 则可能对应多个row数组, 所以可能是多个index
 	public final int index;
 	final CursorManager cursorManager;
 	public final ZLTextModel textModel;
-	private final ArrayList<ZLTextElement> myElements = new ArrayList<ZLTextElement>();
+	private final ArrayList<ZLTextElement> myElements;
 
 	public ZLTextParagraphCursor(ZLTextModel textModel, int index) {
 		this(new CursorManager(textModel, null), textModel, index);
 	}
 
-	public ZLTextParagraphCursor(CursorManager cManager, ZLTextModel textModel, int index) {
-		this.cursorManager = cManager;
+	public ZLTextParagraphCursor(CursorManager cursorManager, ZLTextModel textModel, int index) {
+		this.cursorManager = cursorManager;
 		this.textModel = textModel;
 		this.index = Math.min(index, textModel.getParagraphsNumber() - 1);
+		this.myElements = new ArrayList<>();
 		// 从textModel中获得Index对应的段落
 		fill();
 		Timber.v("渲染流程, index = %d myElements size = %s", index, myElements.size());
@@ -76,14 +80,20 @@ public final class ZLTextParagraphCursor {
 		// ENCRYPTED_SECTION_PARAGRAPH
 		switch (paragraph.getKind()) {
 			case ZLTextParagraph.Kind.TEXT_PARAGRAPH:
+				Timber.v("填充段落kind: TEXT_PARAGRAPH ");
 				// 处理文本段落
-				new Processor(paragraph, cursorManager.ExtensionManager, new LineBreaker(textModel.getLanguage()), textModel.getMarks(), index, myElements).fill();
+				LineBreaker lineBreaker = new LineBreaker(textModel.getLanguage());
+				List<ZLTextMark> marks = textModel.getMarks();
+				Processor processor = new Processor(paragraph, cursorManager.extensionManager, lineBreaker, marks, index);
+				processor.fill(myElements);
 				break;
 			case ZLTextParagraph.Kind.EMPTY_LINE_PARAGRAPH:
+				Timber.v("填充段落kind: EMPTY_LINE_PARAGRAPH ");
 				// 处理占位空段落，占满一行
 				myElements.add(new ZLTextWord(SPACE_ARRAY, 0, 1, 0));
 				break;
 			case ZLTextParagraph.Kind.ENCRYPTED_SECTION_PARAGRAPH: {
+				Timber.v("填充段落kind: ENCRYPTED_SECTION_PARAGRAPH ");
 				// 处理加密段落
 				final ZLTextStyleEntry entry = new ZLTextOtherStyleEntry();
 				entry.setFontModifier(ZLTextStyleEntry.FontModifier.FONT_MODIFIER_BOLD, true);
@@ -155,7 +165,6 @@ public final class ZLTextParagraphCursor {
 		private final ZLTextParagraph myParagraph;
 		private final ExtensionElementManager myExtManager;
 		private final LineBreaker myLineBreaker;
-		private final ArrayList<ZLTextElement> myElements;
 		private int myOffset;
 		private int myFirstMark;
 		private int myLastMark;
@@ -167,17 +176,15 @@ public final class ZLTextParagraphCursor {
 		 * 将char[]中代表当前段落的部分转换成一个元素为ZLTextElement类的ArrayList的工作
 		 *
 		 * @param paragraph      段落处理工具类, 代表一对p标签对应的paragraph. 利用工具类中的方法操作textModel中段落数据
-		 * @param extManager     cacheManager中的extManager
+		 * @param extManager     FbView中的bookElementManager, 用来加载一些图书信息: OPDS
 		 * @param lineBreaker    分行cpp工具类
 		 * @param marks          textModel中mark类, 这是干啥的????
 		 * @param paragraphIndex 段落号
-		 * @param elements       填充对象
 		 */
-		private Processor(ZLTextParagraph paragraph, ExtensionElementManager extManager, LineBreaker lineBreaker, List<ZLTextMark> marks, int paragraphIndex, ArrayList<ZLTextElement> elements) {
+		private Processor(ZLTextParagraph paragraph, ExtensionElementManager extManager, LineBreaker lineBreaker, List<ZLTextMark> marks, int paragraphIndex) {
 			this.myParagraph = paragraph;
 			this.myExtManager = extManager;
 			this.myLineBreaker = lineBreaker;
-			this.myElements = elements;
 			this.myMarks = marks;
 			// 定位mark操作
 			// 在addWord()中会被用到
@@ -207,7 +214,7 @@ public final class ZLTextParagraphCursor {
 		 * 根据myParagraph entry初始化myElements
 		 * 一组p标签就代表一个Paragraph
 		 */
-		public void fill() {
+		public void fill(List<ZLTextElement> myElements) {
 			int hyperlinkDepth = 0;
 			ZLTextHyperlink hyperlink = null;
 
@@ -226,7 +233,7 @@ public final class ZLTextParagraphCursor {
 					// 2. 调用Processor类的processTextEntry方法
 					// 	2.1 将ZLTextWord类加入ZLTextParagraphCursor.myElements
 					case ZLTextParagraph.Entry.TEXT:
-						processTextEntry(it.getTextData(), it.getTextOffset(), it.getTextLength(), hyperlink);
+						processTextEntry(myElements, it.getTextData(), it.getTextOffset(), it.getTextLength(), hyperlink);
 						break;
 					// 对于标签信息
 					// 1. 先在iterator.next()对ZLTextParagraph.Entry.CONTROL的处理:
@@ -303,7 +310,8 @@ public final class ZLTextParagraphCursor {
 		private static final int NO_SPACE = 0;
 		private static final int SPACE = 1;
 		private static final int NON_BREAKABLE_SPACE = 2;
-		private void processTextEntry(final char[] data, final int offset, final int length, ZLTextHyperlink hyperlink) {
+
+		private void processTextEntry(List<ZLTextElement> myElements, final char[] data, final int offset, final int length, ZLTextHyperlink hyperlink) {
 			if (length != 0) {
 				if (ourBreaks.length < length) {
 					ourBreaks = new byte[length];
@@ -311,13 +319,9 @@ public final class ZLTextParagraphCursor {
 				final byte[] breaks = ourBreaks;
 				myLineBreaker.setLineBreaks(data, offset, length, breaks);
 
-				// 正常space: SPACE
-				final ZLTextElement hSpace = ZLTextElement.HSpace;
-				// NON_BREAKABLE_SPACE
-				final ZLTextElement nbSpace = ZLTextElement.NBSpace;
 //				final ArrayList<ZLTextElement> elements = myElements;
 				char ch = 0;
-				char previousChar = 0;
+				char previousChar;
 				int spaceState = NO_SPACE;
 				int wordStart = 0;
 				// 使用for循环一个一个读取char数组中的元素，然后对每个元素调用Processor类的addWord方法
@@ -328,26 +332,28 @@ public final class ZLTextParagraphCursor {
 					if (Character.isWhitespace(ch)) {
 						// 正常space
 						if (index > 0 && spaceState == NO_SPACE) {
-							addWord(data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
+							ZLTextWord word = addWord(myElements.size(), data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
+							myElements.add(word);
 						}
 						spaceState = SPACE;
 					} else if (Character.isSpaceChar(ch)) {
 						// NON_BREAKABLE_SPACE
 						if (index > 0 && spaceState == NO_SPACE) {
-							addWord(data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
+							ZLTextWord word = addWord(myElements.size(), data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
+							myElements.add(word);
 						}
-						myElements.add(nbSpace);
+						myElements.add(ZLTextElement.NBSpace);
 						// 正常space > NON_BREAKABLE_SPACE, 如果两种space连在一起, 继续当做正常space
 						if (spaceState != SPACE) {
 							spaceState = NON_BREAKABLE_SPACE;
 						}
 					} else {
 						switch (spaceState) {
-							// 空格
+							// 空格, 正常space: SPACE
 							case SPACE:
 								//if (breaks[index - 1] == LineBreak.NOBREAK || previousChar == '-') {
 								//}
-								myElements.add(hSpace);
+								myElements.add(ZLTextElement.HSpace);
 								wordStart = index;
 								break;
 							case NON_BREAKABLE_SPACE:
@@ -359,11 +365,13 @@ public final class ZLTextParagraphCursor {
 										breaks[index - 1] != LineBreaker.NOBREAK &&
 										previousChar != '-' &&
 										index != wordStart) {
-									addWord(data,                                      // char数组的引用
+									ZLTextWord word = addWord(myElements.size(),
+											data,                                      // char数组的引用
 											offset + wordStart,                  // 这个字在char[]中的偏移量
 											index - wordStart,                     // 此参数一直为1
 											myOffset + wordStart,        // 这个字在该段落中的偏移量
 											hyperlink);                                 // 代表超链接信息
+									myElements.add(word);
 									// 将index赋值给wordStart
 									// 保证下次循环index - wordStart为1
 									wordStart = index;
@@ -375,20 +383,21 @@ public final class ZLTextParagraphCursor {
 				}
 				switch (spaceState) {
 					case SPACE:
-						myElements.add(hSpace);
+						myElements.add(ZLTextElement.HSpace);
 						break;
 					case NON_BREAKABLE_SPACE:
-						myElements.add(nbSpace);
+						myElements.add(ZLTextElement.NBSpace);
 						break;
 					case NO_SPACE:
-						addWord(data, offset + wordStart, length - wordStart, myOffset + wordStart, hyperlink);
+						ZLTextWord word = addWord(myElements.size(), data, offset + wordStart, length - wordStart, myOffset + wordStart, hyperlink);
+						myElements.add(word);
 						break;
 				}
 				myOffset += length;
 			}
 		}
 
-		private void addWord(char[] data, int offset, int len, int paragraphOffset, ZLTextHyperlink hyperlink) {
+		private ZLTextWord addWord(int elementIdx, char[] data, int offset, int len, int paragraphOffset, ZLTextHyperlink hyperlink) {
 			// 初始化一个ZLTextWord类
 			ZLTextWord word = new ZLTextWord(data, offset, len, paragraphOffset);
 			for (int i = myFirstMark; i < myLastMark; ++i) {
@@ -398,10 +407,12 @@ public final class ZLTextParagraphCursor {
 				}
 			}
 			if (hyperlink != null) {
-				hyperlink.addElementIndex(myElements.size());
+//				hyperlink.addElementIndex(myElements.size());
+				hyperlink.addElementIndex(elementIdx);
 			}
 			// 将新建的ZLTextWord类加入ZLTextParagraphCursor类myElement属性
-			myElements.add(word);
+//			myElements.add(word);
+			return word;
 		}
 	}
 

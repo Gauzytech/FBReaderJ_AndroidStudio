@@ -86,8 +86,8 @@ public final class FBView extends ZLTextView {
     /**
      * 渲染入口, 通过textModel加载渲染信息
      */
-    public void setModel(ZLTextModel model) {
-        super.setModel(model);
+    public void setTextModel(ZLTextModel textModel) {
+        super.setTextModel(textModel);
         if (myFooter != null) {
             myFooter.resetTOCMarks();
         }

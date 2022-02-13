@@ -56,8 +56,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private static final char[] SPACE = new char[]{' '};
     private final HashMap<ZLTextLineInfo, ZLTextLineInfo> myLineInfoCache = new HashMap<ZLTextLineInfo, ZLTextLineInfo>();
     private final ZLTextSelection mySelection = new ZLTextSelection(this);
-    private final Set<ZLTextHighlighting> myHighlightingList = Collections.synchronizedSet(new TreeSet<ZLTextHighlighting>());
-    private final Set<ZLTextHighlighting> myBookMarkList = Collections.synchronizedSet(new TreeSet<ZLTextHighlighting>());
+    private final Set<ZLTextHighlighting> myHighlightingList = Collections.synchronizedSet(new TreeSet<>());
+    private final Set<ZLTextHighlighting> myBookMarkList = Collections.synchronizedSet(new TreeSet<>());
     private final char[] myLettersBuffer = new char[512];
     private ZLTextModel myModel;
     private int myScrollingMode;
@@ -82,17 +82,17 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return myModel;
     }
 
-    public synchronized void setModel(ZLTextModel model) {
+    public synchronized void setTextModel(ZLTextModel model) {
         // 这是个LRU, 缓存ZLTextParagraphCursor
-        myCursorManager = model != null ? new CursorManager(model, getExtensionManager()) : null;
+        this.myCursorManager = model != null ? new CursorManager(model, getExtensionManager()) : null;
 
         mySelection.clear();
         myHighlightingList.clear();
 
-        myModel = model;
-        myCurrentPage.reset();
-        myPreviousPage.reset();
-        myNextPage.reset();
+        this.myModel = model;
+        this.myCurrentPage.reset();
+        this.myPreviousPage.reset();
+        this.myNextPage.reset();
         // 负责定位到指定的段落
         // 定位的过程主要是维护ZLTextPage类中的StartCursor属性指向的ZLTextWordCursor类
         // ZLTextWordCursor类中的三个属性myParagraphCursor、myElementIndex、myCharIndex结合起来就完成来了定位到指定段落的流程。

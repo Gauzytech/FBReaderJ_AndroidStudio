@@ -60,6 +60,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	// 保存字体list
 	private final FontManager myFontManager;
 
+	/** cpp直接调用constructor */
 	public ZLTextPlainModel(
 			String id,
 			String language,
@@ -244,6 +245,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		// ControlEntry data
 		private byte myControlKind;
 		private boolean myControlIsStart;
+
 		// HyperlinkControlEntry data
 		private byte myHyperlinkType;
 		private String myHyperlinkId;
@@ -338,6 +340,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 				return false;
 			}
 			// 如果char[] data 内容读完了，自动获取下一个char数组内容
+			// 这个char[] 就是cpp allocate()中myPool[]中的row[], myLastEntryStart作为pointer永远指向row[]的末端可写入的idx
 			if (dataOffset >= data.length) {
 				// ++myDataIndex返回+1后的值
 				data = myStorage.block(++myDataIndex);
@@ -349,6 +352,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 			// 依靠dataOffset递增，不断读取char数组内容
 			short first = (short) data[dataOffset];
 			byte type = (byte) first;
+			// type == 0 是空行？？？所以直接读取下一个char[]
 			if (type == 0) {
 				data = myStorage.block(++myDataIndex);
 				if (data == null) {

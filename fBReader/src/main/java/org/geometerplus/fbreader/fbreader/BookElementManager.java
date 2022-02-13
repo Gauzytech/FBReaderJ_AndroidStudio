@@ -19,21 +19,31 @@
 
 package org.geometerplus.fbreader.fbreader;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.*;
-
-import org.geometerplus.zlibrary.core.network.*;
+import org.geometerplus.fbreader.network.NetworkLibrary;
+import org.geometerplus.fbreader.network.opds.OPDSBookItem;
+import org.geometerplus.fbreader.network.opds.OPDSXMLReader;
+import org.geometerplus.fbreader.network.opds.SimpleOPDSFeedHandler;
+import org.geometerplus.zlibrary.core.network.QuietNetworkContext;
+import org.geometerplus.zlibrary.core.network.ZLNetworkException;
+import org.geometerplus.zlibrary.core.network.ZLNetworkRequest;
 import org.geometerplus.zlibrary.text.view.ExtensionElementManager;
 
-import org.geometerplus.fbreader.network.NetworkLibrary;
-import org.geometerplus.fbreader.network.opds.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import timber.log.Timber;
 
 class BookElementManager extends ExtensionElementManager {
 	private final FBView myView;
 	private final Runnable myScreenRefresher;
-	private final Map<Map<String,String>,List<BookElement>> myCache =
-		new HashMap<Map<String,String>,List<BookElement>>();
+	private final Map<Map<String,String>, List<BookElement>> myCache = new HashMap<>();
 	private Timer myTimer;
 
 	BookElementManager(final FBView view) {
@@ -56,7 +66,7 @@ class BookElementManager extends ExtensionElementManager {
 		if (elements == null) {
 			try {
 				final int count = Integer.valueOf(data.get("size"));
-				elements = new ArrayList<BookElement>(count);
+				elements = new ArrayList<>(count);
 				for (int i = 0; i < count; ++i) {
 					elements.add(new BookElement(myView));
 				}
@@ -79,7 +89,9 @@ class BookElementManager extends ExtensionElementManager {
 					new QuietNetworkContext().perform(new ZLNetworkRequest.Get(url, true) {
 						@Override
 						public void handleStream(InputStream inputStream, int length) throws IOException, ZLNetworkException {
-							new OPDSXMLReader(library, handler, false).read(inputStream);
+							Timber.v("ceshi123, handleStream");
+							new OPDSXMLReader(library, handler, false)
+									.read(inputStream);
 						}
 					});
 					if (handler.books().isEmpty()) {

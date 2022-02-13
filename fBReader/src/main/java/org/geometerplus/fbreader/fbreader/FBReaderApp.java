@@ -302,7 +302,7 @@ public final class FBReaderApp extends ZLApplication {
 
     private void setFootnoteModel(String modelId) {
         final ZLTextModel model = Model.getFootnoteModel(modelId);
-        FootnoteView.setModel(model);
+        FootnoteView.setTextModel(model);
         if (model != null) {
             myFootnoteModelId = modelId;
             setBookNoteHighlighting(FootnoteView, modelId);
@@ -472,8 +472,8 @@ public final class FBReaderApp extends ZLApplication {
         hideActivePopup();
         storePosition();
 
-        BookTextView.setModel(null);
-        FootnoteView.setModel(null);
+        BookTextView.setTextModel(null);
+        FootnoteView.setTextModel(null);
         clearTextCaches();
         Model = null;
         ExternalBook = null;
@@ -520,7 +520,7 @@ public final class FBReaderApp extends ZLApplication {
             ZLTextHyphenator.Instance().load(book.getLanguage());
             // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
             // 并且将图书定位到之前读过的位置: moveStartCursor
-            BookTextView.setModel(Model.getTextModel());
+            BookTextView.setTextModel(Model.getTextModel());
             gotoStoredPosition();
             setBookMarkHighlighting(BookTextView, null);
             setBookNoteHighlighting(BookTextView, null);
