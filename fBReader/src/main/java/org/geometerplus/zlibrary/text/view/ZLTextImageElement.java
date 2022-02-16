@@ -33,4 +33,14 @@ public final class ZLTextImageElement extends ZLTextElement {
 		URL = url;
 		IsCover = isCover;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextImageElement{" +
+				"Id='" + Id + '\'' +
+				", ImageData=" + ImageData +
+				", URL='" + URL + '\'' +
+				", IsCover=" + IsCover +
+				'}';
+	}
 }

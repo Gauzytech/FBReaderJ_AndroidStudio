@@ -219,7 +219,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	public void rebuild() {
 		if (!isNull()) {
 			myParagraphCursor.clear();
-			myParagraphCursor.fill();
+			myParagraphCursor.fillElements();
 			moveTo(myElementIndex, myCharIndex);
 		}
 	}

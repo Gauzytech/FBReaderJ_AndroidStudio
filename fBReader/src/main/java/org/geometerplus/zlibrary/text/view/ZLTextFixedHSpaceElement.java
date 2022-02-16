@@ -40,4 +40,11 @@ public class ZLTextFixedHSpaceElement extends ZLTextElement {
 	private ZLTextFixedHSpaceElement(short length) {
 		Length = length;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextFixedHSpaceElement{" +
+				"Length=" + Length +
+				'}';
+	}
 }

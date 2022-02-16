@@ -126,6 +126,6 @@ public final class ZLTextWord extends ZLTextElement {
     }
 
     public String getString() {
-        return new String(Data, Offset, Length);
+        return "ZLTextWord: " + new String(Data, Offset, Length);
     }
 }

@@ -55,7 +55,7 @@ public final class ZLTextParagraphCursor {
 		this.index = Math.min(index, textModel.getParagraphsNumber() - 1);
 		this.myElements = new ArrayList<>();
 		// 从textModel中获得Index对应的段落
-		fill();
+		fillElements();
 		Timber.v("渲染流程, index = %d myElements size = %s", index, myElements.size());
 		if (index < 10) {
 			Timber.v("渲染流程, -------------------------------------------%d-------------------------------------------", index);
@@ -71,7 +71,7 @@ public final class ZLTextParagraphCursor {
 	/**
 	 * 填充myElements
 	 */
-	public void fill() {
+	public void fillElements() {
 		// 获得段落的placement类
 		ZLTextParagraph paragraph = textModel.getParagraph(index);
 		// 根据paragraph类型对myElements进行填充
@@ -85,7 +85,7 @@ public final class ZLTextParagraphCursor {
 				LineBreaker lineBreaker = new LineBreaker(textModel.getLanguage());
 				List<ZLTextMark> marks = textModel.getMarks();
 				Processor processor = new Processor(paragraph, cursorManager.extensionManager, lineBreaker, marks, index);
-				processor.fill(myElements);
+				processor.fillElements(myElements);
 				break;
 			case ZLTextParagraph.Kind.EMPTY_LINE_PARAGRAPH:
 				Timber.v("填充段落kind: EMPTY_LINE_PARAGRAPH ");
@@ -214,7 +214,7 @@ public final class ZLTextParagraphCursor {
 		 * 根据myParagraph entry初始化myElements
 		 * 一组p标签就代表一个Paragraph
 		 */
-		public void fill(List<ZLTextElement> myElements) {
+		public void fillElements(List<ZLTextElement> myElements) {
 			int hyperlinkDepth = 0;
 			ZLTextHyperlink hyperlink = null;
 

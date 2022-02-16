@@ -59,7 +59,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private final Set<ZLTextHighlighting> myHighlightingList = Collections.synchronizedSet(new TreeSet<>());
     private final Set<ZLTextHighlighting> myBookMarkList = Collections.synchronizedSet(new TreeSet<>());
     private final char[] myLettersBuffer = new char[512];
-    private ZLTextModel myModel;
+    private ZLTextModel myTextModel;
     private int myScrollingMode;
     private int myOverlappingValue;
     private ZLTextPage myPreviousPage = new ZLTextPage();
@@ -79,17 +79,17 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final ZLTextModel getModel() {
-        return myModel;
+        return myTextModel;
     }
 
-    public synchronized void setTextModel(ZLTextModel model) {
+    public synchronized void setTextModel(ZLTextModel textModel) {
         // 这是个LRU, 缓存ZLTextParagraphCursor
-        this.myCursorManager = model != null ? new CursorManager(model, getExtensionManager()) : null;
+        this.myCursorManager = textModel != null ? new CursorManager(textModel, getExtensionManager()) : null;
 
         mySelection.clear();
         myHighlightingList.clear();
 
-        this.myModel = model;
+        this.myTextModel = textModel;
         this.myCurrentPage.reset();
         this.myPreviousPage.reset();
         this.myNextPage.reset();
@@ -97,8 +97,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 定位的过程主要是维护ZLTextPage类中的StartCursor属性指向的ZLTextWordCursor类
         // ZLTextWordCursor类中的三个属性myParagraphCursor、myElementIndex、myCharIndex结合起来就完成来了定位到指定段落的流程。
         // 这三个属性中，myParagraphCursor属性指向的就是代表指定段落的ZLTextParagraphCursor类
-        if (myModel != null) {
-            final int paragraphsNumber = myModel.getParagraphsNumber();
+        if (myTextModel != null) {
+            final int paragraphsNumber = myTextModel.getParagraphsNumber();
             if (paragraphsNumber > 0) {
                 // 先将cursor定位到第一页
                 // 从cursorManager LRU中获得第一章的cursor, 因为此时是cursorManager是空的, 所以初始化第一章ZLTextParagraphCursor
@@ -197,15 +197,15 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public synchronized int search(final String text, boolean ignoreCase, boolean wholeText, boolean backward, boolean thisSectionOnly) {
-        if (myModel == null || text.length() == 0) {
+        if (myTextModel == null || text.length() == 0) {
             return 0;
         }
         int startIndex = 0;
-        int endIndex = myModel.getParagraphsNumber();
+        int endIndex = myTextModel.getParagraphsNumber();
         if (thisSectionOnly) {
             // TODO: implement
         }
-        int count = myModel.search(text, startIndex, endIndex, ignoreCase);
+        int count = myTextModel.search(text, startIndex, endIndex, ignoreCase);
         myPreviousPage.reset();
         myNextPage.reset();
         if (!myCurrentPage.StartCursor.isNull()) {
@@ -213,8 +213,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             if (count > 0) {
                 ZLTextMark mark = myCurrentPage.StartCursor.getMark();
                 gotoMark(wholeText ?
-                        (backward ? myModel.getLastMark() : myModel.getFirstMark()) :
-                        (backward ? myModel.getPreviousMark(mark) : myModel.getNextMark(mark)));
+                        (backward ? myTextModel.getLastMark() : myTextModel.getFirstMark()) :
+                        (backward ? myTextModel.getPreviousMark(mark) : myTextModel.getNextMark(mark)));
             }
             Application.getViewWidget().reset();
             Application.getViewWidget().repaint();
@@ -224,31 +224,31 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     public boolean canFindNext() {
         final ZLTextWordCursor end = myCurrentPage.EndCursor;
-        return !end.isNull() && (myModel != null) && (myModel.getNextMark(end.getMark()) != null);
+        return !end.isNull() && (myTextModel != null) && (myTextModel.getNextMark(end.getMark()) != null);
     }
 
     public synchronized void findNext() {
         final ZLTextWordCursor end = myCurrentPage.EndCursor;
         if (!end.isNull()) {
-            gotoMark(myModel.getNextMark(end.getMark()));
+            gotoMark(myTextModel.getNextMark(end.getMark()));
         }
     }
 
     public boolean canFindPrevious() {
         final ZLTextWordCursor start = myCurrentPage.StartCursor;
-        return !start.isNull() && (myModel != null) && (myModel.getPreviousMark(start.getMark()) != null);
+        return !start.isNull() && (myTextModel != null) && (myTextModel.getPreviousMark(start.getMark()) != null);
     }
 
     public synchronized void findPrevious() {
         final ZLTextWordCursor start = myCurrentPage.StartCursor;
         if (!start.isNull()) {
-            gotoMark(myModel.getPreviousMark(start.getMark()));
+            gotoMark(myTextModel.getPreviousMark(start.getMark()));
         }
     }
 
     public void clearFindResults() {
         if (!findResultsAreEmpty()) {
-            myModel.removeAllMarks();
+            myTextModel.removeAllMarks();
             rebuildPaintInfo();
             Application.getViewWidget().reset();
             Application.getViewWidget().repaint();
@@ -256,7 +256,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public boolean findResultsAreEmpty() {
-        return myModel == null || myModel.getMarks().isEmpty();
+        return myTextModel == null || myTextModel.getMarks().isEmpty();
     }
 
     protected synchronized void rebuildPaintInfo() {
@@ -447,7 +447,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             context.clear(getBackgroundColor());
         }
 
-        if (myModel == null || myModel.getParagraphsNumber() == 0) {
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return;
         }
 
@@ -631,10 +631,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     protected final synchronized int sizeOfFullText() {
-        if (myModel == null || myModel.getParagraphsNumber() == 0) {
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return 1;
         }
-        return myModel.getTextLength(myModel.getParagraphsNumber() - 1);
+        return myTextModel.getTextLength(myTextModel.getParagraphsNumber() - 1);
     }
 
     @Override
@@ -715,11 +715,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     protected final synchronized int sizeOfTextBeforeParagraph(int paragraphIndex) {
-        return myModel != null ? myModel.getTextLength(paragraphIndex - 1) : 0;
+        return myTextModel != null ? myTextModel.getTextLength(paragraphIndex - 1) : 0;
     }
 
     private synchronized int getCurrentCharNumber(PageIndex pageIndex, boolean startNotEndOfPage) {
-        if (myModel == null || myModel.getParagraphsNumber() == 0) {
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return 0;
         }
         final ZLTextPage page = getPage(pageIndex);
@@ -729,7 +729,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         } else {
             int end = sizeOfTextBeforeCursor(page.EndCursor);
             if (end == -1) {
-                end = myModel.getTextLength(myModel.getParagraphsNumber() - 1) - 1;
+                end = myTextModel.getTextLength(myTextModel.getParagraphsNumber() - 1) - 1;
             }
             return Math.max(1, end);
         }
@@ -741,11 +741,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return -1;
         }
         final int paragraphIndex = paragraphCursor.index;
-        int sizeOfText = myModel.getTextLength(paragraphIndex - 1);
+        int sizeOfText = myTextModel.getTextLength(paragraphIndex - 1);
         final int paragraphLength = paragraphCursor.getParagraphLength();
         if (paragraphLength > 0) {
             sizeOfText +=
-                    (myModel.getTextLength(paragraphIndex) - sizeOfText)
+                    (myTextModel.getTextLength(paragraphIndex) - sizeOfText)
                             * wordCursor.getElementIndex()
                             / paragraphLength;
         }
@@ -763,8 +763,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final int textWidth = getTextColumnWidth();
         final int textHeight = getTextAreaHeight();
 
-        final int num = myModel.getParagraphsNumber();
-        final int totalTextSize = myModel.getTextLength(num - 1);
+        final int num = myTextModel.getParagraphsNumber();
+        final int totalTextSize = myTextModel.getTextLength(num - 1);
         final float charsPerParagraph = ((float) totalTextSize) / num;
 
         final float charWidth = computeCharWidth();
@@ -790,7 +790,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * @return 页数
      */
     private synchronized int computeTextPageNumber(int textSize) {
-        if (myModel == null || myModel.getParagraphsNumber() == 0) {
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return 1;
         }
 
@@ -800,19 +800,19 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     private float computeCharWidth() {
-        if (myLettersModel != myModel) {
-            myLettersModel = myModel;
+        if (myLettersModel != myTextModel) {
+            myLettersModel = myTextModel;
             myLettersBufferLength = 0;
             myCharWidth = -1f;
 
             int paragraph = 0;
-            final int textSize = myModel.getTextLength(myModel.getParagraphsNumber() - 1);
+            final int textSize = myTextModel.getTextLength(myTextModel.getParagraphsNumber() - 1);
             if (textSize > myLettersBuffer.length) {
-                paragraph = myModel.findParagraphByTextLength((textSize - myLettersBuffer.length) / 2);
+                paragraph = myTextModel.findParagraphByTextLength((textSize - myLettersBuffer.length) / 2);
             }
-            while (paragraph < myModel.getParagraphsNumber()
+            while (paragraph < myTextModel.getParagraphsNumber()
                     && myLettersBufferLength < myLettersBuffer.length) {
-                final ZLTextParagraph.EntryIterator it = myModel.getParagraph(paragraph++).iterator();
+                final ZLTextParagraph.EntryIterator it = myTextModel.getParagraph(paragraph++).iterator();
                 while (myLettersBufferLength < myLettersBuffer.length && it.next()) {
                     if (it.getType() == ZLTextParagraph.Entry.TEXT) {
                         final int len = Math.min(it.getTextLength(),
@@ -890,7 +890,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final synchronized void gotoPage(int page) {
-        if (myModel == null || myModel.getParagraphsNumber() == 0) {
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return;
         }
 
@@ -898,18 +898,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final float textSize = page * factor;
 
         int intTextSize = (int) textSize;
-        int paragraphIndex = myModel.findParagraphByTextLength(intTextSize);
+        int paragraphIndex = myTextModel.findParagraphByTextLength(intTextSize);
 
-        if (paragraphIndex > 0 && myModel.getTextLength(paragraphIndex) > intTextSize) {
+        if (paragraphIndex > 0 && myTextModel.getTextLength(paragraphIndex) > intTextSize) {
             --paragraphIndex;
         }
-        intTextSize = myModel.getTextLength(paragraphIndex);
+        intTextSize = myTextModel.getTextLength(paragraphIndex);
 
-        int sizeOfTextBefore = myModel.getTextLength(paragraphIndex - 1);
+        int sizeOfTextBefore = myTextModel.getTextLength(paragraphIndex - 1);
         while (paragraphIndex > 0 && intTextSize == sizeOfTextBefore) {
             --paragraphIndex;
             intTextSize = sizeOfTextBefore;
-            sizeOfTextBefore = myModel.getTextLength(paragraphIndex - 1);
+            sizeOfTextBefore = myTextModel.getTextLength(paragraphIndex - 1);
         }
 
         final int paragraphLength = intTextSize - sizeOfTextBefore;
@@ -1564,7 +1564,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final synchronized void gotoPosition(int paragraphIndex, int wordIndex, int charIndex) {
-        if (myModel != null && myModel.getParagraphsNumber() > 0) {
+        if (myTextModel != null && myTextModel.getParagraphsNumber() > 0) {
             Application.getViewWidget().reset();
             myCurrentPage.moveStartCursor(paragraphIndex, wordIndex, charIndex);
             myPreviousPage.reset();
@@ -1576,8 +1576,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
     }
 
-    private final synchronized void gotoPositionByEnd(int paragraphIndex, int wordIndex, int charIndex) {
-        if (myModel != null && myModel.getParagraphsNumber() > 0) {
+    private synchronized void gotoPositionByEnd(int paragraphIndex, int wordIndex, int charIndex) {
+        if (myTextModel != null && myTextModel.getParagraphsNumber() > 0) {
             myCurrentPage.moveEndCursor(paragraphIndex, wordIndex, charIndex);
             myPreviousPage.reset();
             myNextPage.reset();

@@ -63,4 +63,21 @@ public final class ZLTextElementArea extends ZLTextFixedPosition {
 	boolean isLastInElement() {
 		return myIsLastInElement;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextElementArea{" +
+				"XStart=" + XStart +
+				", XEnd=" + XEnd +
+				", YStart=" + YStart +
+				", YEnd=" + YEnd +
+				", ColumnIndex=" + ColumnIndex +
+				", Length=" + Length +
+				", AddHyphenationSign=" + AddHyphenationSign +
+				", ChangeStyle=" + ChangeStyle +
+				", Style=" + Style +
+				", Element=" + Element +
+				", myIsLastInElement=" + myIsLastInElement +
+				'}';
+	}
 }
