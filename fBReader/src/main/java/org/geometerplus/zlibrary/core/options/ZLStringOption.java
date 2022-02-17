@@ -48,4 +48,5 @@ public final class ZLStringOption extends ZLOption {
             Config.Instance().setSpecialStringValue(mySpecialName, getValue());
         }
     }
+
 }

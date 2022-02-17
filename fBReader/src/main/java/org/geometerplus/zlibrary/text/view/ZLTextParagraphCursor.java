@@ -56,13 +56,16 @@ public final class ZLTextParagraphCursor {
 		this.myElements = new ArrayList<>();
 		// 从textModel中获得Index对应的段落
 		fillElements();
-		Timber.v("渲染流程, index = %d myElements size = %s", index, myElements.size());
-		if (index < 10) {
-			Timber.v("渲染流程, Start -------------------------------------------%d-------------------------------------------", index);
-			for (ZLTextElement item : myElements) {
-				Timber.v("渲染流程, | %s ", item.toString());
+		if (myElements.isEmpty()) {
+			Timber.v("渲染流程, index = %d, no elements", index);
+		} else {
+			if (index < 10) {
+				Timber.v("渲染流程, Start ------------------------------------------- %d --- myElements size = %s ---------------------------------", index, myElements.size());
+				for (ZLTextElement item : myElements) {
+					Timber.v("渲染流程, | %s ", item.toString());
+				}
+				Timber.v("渲染流程, End ---------------------------------------------------------------------------------------");
 			}
-			Timber.v("渲染流程, End ---------------------------------------------------------------------------------------");
 		}
 	}
 

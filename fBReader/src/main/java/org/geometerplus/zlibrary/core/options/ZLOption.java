@@ -51,4 +51,13 @@ public abstract class ZLOption {
 			}
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "ZLOption{" +
+				"myId=" + myId +
+				", myDefaultStringValue='" + myDefaultStringValue + '\'' +
+				", mySpecialName='" + mySpecialName + '\'' +
+				'}';
+	}
 }

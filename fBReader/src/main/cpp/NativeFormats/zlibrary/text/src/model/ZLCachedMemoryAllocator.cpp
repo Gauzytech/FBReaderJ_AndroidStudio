@@ -47,14 +47,23 @@ ZLCachedMemoryAllocator::ZLCachedMemoryAllocator(const std::size_t rowSize,
 	myHasChanges(false),
 	myFailed(false),
 	myDirectoryName(directoryName),
+	// 新实现
+	myCurrentRowSizeBeta(0),
+	myOffsetBeta(0),
 	myFileExtension(fileExtension) {
 	// 创建cache文件夹
 	ZLFile(directoryName).directory(true);
+
 }
 
 ZLCachedMemoryAllocator::~ZLCachedMemoryAllocator() {
 	flush();
 	for (std::vector<char*>::const_iterator it = myPool.begin(); it != myPool.end(); ++it) {
+		delete[] *it;
+	}
+
+	// 新实现
+	for (std::vector<char*>::const_iterator it = myPoolBeta.begin(); it != myPoolBeta.end(); ++it) {
 		delete[] *it;
 	}
 }
@@ -196,21 +205,21 @@ char *ZLCachedMemoryAllocator::allocateBeta(CurProcessFile& currentFile, std::si
 	if (myPoolBeta.empty()) {
 		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char *));
 		myPoolBeta.push_back(new char[myCurrentRowSizeBeta]);
-	} else if (isExceedMaxSize(myOffsetBeta, size)) {
+	} else if (myOffsetBeta + size + 2 + sizeof(char*) > myCurrentRowSizeBeta) {
 		LogUtil::print("解析缓存流程beta",
 					   "%s 超过maxSize = " + std::to_string(myCurrentRowSizeBeta) + ", 写入cache",
 					   std::to_string(myOffsetBeta + size + 2 + sizeof(char *)));
 		// 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
 		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char *));
-		char *newRow = new char[myCurrentRowSizeBeta];
+		char *row = new char[myCurrentRowSizeBeta];
 
         // ptr就是myLastEntryStart, 指向myPool末端的char[] row
         char *ptr = myPoolBeta.back() + myOffsetBeta;
         *ptr++ = 0;
         *ptr++ = 0;
-        std::memcpy(ptr, &newRow, sizeof(char*));
+        std::memcpy(ptr, &row, sizeof(char*));
         writeCacheBeta(myOffsetBeta + 2, currentFile);
-        myPoolBeta.push_back(newRow);
+        myPoolBeta.push_back(row);
         myOffsetBeta = 0;
     }
     char *endPtr = myPoolBeta.back() + myOffsetBeta;
@@ -219,27 +228,27 @@ char *ZLCachedMemoryAllocator::allocateBeta(CurProcessFile& currentFile, std::si
 }
 
 char *ZLCachedMemoryAllocator::reallocateLastBeta(CurProcessFile& currentFile, char *ptr, std::size_t newSize) {
-    LogUtil::print("解析缓存流程beta", "reallocateLastBeta %s", std::to_string(newSize));
+//    LogUtil::print("解析缓存流程beta", "reallocateLastBeta %s", std::to_string(newSize));
     myHasChanges = true;
     const std::size_t oldOffset = ptr - myPoolBeta.back();
     // sizeof(char*) 返回字符型指针所占内存的大小, 值为4
-    if (!isExceedMaxSize(oldOffset, newSize)) {
+    if (oldOffset + newSize + 2 + sizeof(char*) <= myCurrentRowSize) {
         myOffsetBeta = oldOffset + newSize;
         return ptr;
     } else {
 		myCurrentRowSizeBeta = std::max(myRowSize, newSize + 2 + sizeof(char*));
-        char *newRow = new char[myCurrentRowSizeBeta];
-        std::memcpy(newRow, ptr, myOffsetBeta - oldOffset);
+        char *row = new char[myCurrentRowSizeBeta];
+        std::memcpy(row, ptr, myOffsetBeta - oldOffset);
 
         *ptr++ = 0;
         *ptr++ = 0;
-        std::memcpy(ptr, &newRow, sizeof(char*));
+        std::memcpy(ptr, &row, sizeof(char*));
 		writeCacheBeta(oldOffset + 2, currentFile);
         // 缓存写入完毕了, 加一个新的char[]到myPool中
-        myPoolBeta.push_back(newRow);
+        myPoolBeta.push_back(row);
         // char[]的offset从newSize开始
         myOffsetBeta = newSize;
-        return newRow;
+        return row;
     }
 }
 
@@ -273,11 +282,4 @@ std::string ZLCachedMemoryAllocator::makeFileNameBeta(std::size_t index, CurProc
 	name.append("_");
 	ZLStringUtil::appendNumber(name, index);
 	return name.append(".").append(myFileExtension);
-}
-
-/**
- * @return 'true' exceed maxSize, 'false' not exceed
- */
-bool ZLCachedMemoryAllocator::isExceedMaxSize(int offset, int newSize) const {
-	return offset + newSize + 2 + sizeof(char*) > myCurrentRowSizeBeta;
 }

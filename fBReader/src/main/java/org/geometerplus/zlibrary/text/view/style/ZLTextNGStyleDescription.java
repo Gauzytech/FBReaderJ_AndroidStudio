@@ -276,4 +276,25 @@ public class ZLTextNGStyleDescription {
 		ourCache.put(value, length != null ? length : ourNullObject);
 		return length;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextNGStyleDescription{" +
+				"Name='" + Name + '\'' +
+				", FontFamilyOption=" + FontFamilyOption +
+				", FontSizeOption=" + FontSizeOption +
+				", FontWeightOption=" + FontWeightOption +
+				", FontStyleOption=" + FontStyleOption +
+				", TextDecorationOption=" + TextDecorationOption +
+				", HyphenationOption=" + HyphenationOption +
+				", MarginTopOption=" + MarginTopOption +
+				", MarginBottomOption=" + MarginBottomOption +
+				", MarginLeftOption=" + MarginLeftOption +
+				", MarginRightOption=" + MarginRightOption +
+				", TextIndentOption=" + TextIndentOption +
+				", AlignmentOption=" + AlignmentOption +
+				", VerticalAlignOption=" + VerticalAlignOption +
+				", LineHeightOption=" + LineHeightOption +
+				'}';
+	}
 }

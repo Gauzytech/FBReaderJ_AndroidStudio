@@ -46,7 +46,6 @@ public:
 	char *allocateBeta(CurProcessFile& currentFile, std::size_t size, const std::string& from);
 	char *reallocateLastBeta(CurProcessFile& currentFile, char *ptr, std::size_t newSize);
 	void flushCurrentFile(CurProcessFile& currentFile);
-	bool isExceedMaxSize(int offset, int newSize) const;
 
 public:
 	const std::string &directoryName() const;
