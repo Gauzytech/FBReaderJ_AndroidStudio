@@ -101,29 +101,21 @@ void ZLCachedMemoryAllocator::writeCache(std::size_t blockLength, const std::str
 /**
  * allocate内存给当前读到的text, 如果超出了解析缓存长度myPool, 就直接创建一个本地缓存文件
  * @param size 当前读到的text长度
+ *
+ * 对应新实现allocateBeta()
  */
 char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from) {
 //	LogUtil::print("解析缓存流程", from + " -- allocate %s " + myFileExtension, std::to_string(size));
-	// 新实现
-	if (myFileExtension == "ncache") {
-//		allocateBeta(currentFile, size, from);
-
-		if (from != "addText" && from != "addControl") {
-			allocateBeta(currentFile, size, from);
-		} else {
-			LogUtil::print("解析缓存流程", "不执行allocateBeta", "");
-		}
-	}
-
 	myHasChanges = true;
 	if (myPool.empty()) {
 		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
 		myPool.push_back(new char[myCurrentRowSize]);
 	} else if (myOffset + size + 2 + sizeof(char*) > myCurrentRowSize) {
-	    LogUtil::print("解析缓存流程", "%s 超过maxSize = " + std::to_string(myCurrentRowSize) + ", 写入cache", std::to_string(myOffset + size + 2 + sizeof(char*)));
-	    // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
-	    // TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
-		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char*));
+		LogUtil::print("解析缓存流程",
+					   "%s 超过maxSize = " + std::to_string(myCurrentRowSize) + ", 写入cache",
+					   std::to_string(myOffset + size + 2 + sizeof(char *)));
+		// 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
+		myCurrentRowSize = std::max(myRowSize, size + 2 + sizeof(char *));
 		char *row = new char[myCurrentRowSize];
 
 		// ptr就是myLastEntryStart, 指向myPool末端的char[] row
@@ -144,19 +136,12 @@ char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t
 	return ptr;
 }
 
+/**
+ *
+ * 对应新实现reallocateLastBeta()
+ */
 char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize, const std::string& from) {
 	LogUtil::print("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
-	// 新实现
-	if (myFileExtension == "ncache") {
-//		reallocateLastBeta(currentFile, ptr, newSize);
-
-		if (from != "addText" && from != "addControl") {
-			reallocateLastBeta(currentFile, ptr, newSize);
-		} else {
-			LogUtil::print("解析缓存流程", "不执行reallocateLastBeta", "");
-		}
-	}
-
 	myHasChanges = true;
 	const std::size_t oldOffset = ptr - myPool.back();
 	// sizeof(char*) 返回字符型指针所占内存的大小, 值为4
@@ -206,17 +191,18 @@ void ZLCachedMemoryAllocator::flushCurrentFile(CurProcessFile& currentFile) {
 
 // TODO 需要改成在一个xhtml文件内容全部解析完毕时，进行一次writeCache操作, 此操作可以实现1个xhtml文件对应1个或多个本地缓存.ncahce文件
 char *ZLCachedMemoryAllocator::allocateBeta(CurProcessFile& currentFile, std::size_t size, const std::string& from) {
-    myHasChanges = true;
-    if (myPoolBeta.empty()) {
-        myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
-        myPoolBeta.push_back(new char[myCurrentRowSizeBeta]);
-    } else if (isExceedMaxSize(myOffsetBeta, size)) {
-        LogUtil::print("解析缓存流程beta",
+//	LogUtil::print("解析缓存流程", from + " -- allocateBeta %s " + myFileExtension, std::to_string(size));
+	myHasChanges = true;
+	if (myPoolBeta.empty()) {
+		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char *));
+		myPoolBeta.push_back(new char[myCurrentRowSizeBeta]);
+	} else if (isExceedMaxSize(myOffsetBeta, size)) {
+		LogUtil::print("解析缓存流程beta",
 					   "%s 超过maxSize = " + std::to_string(myCurrentRowSizeBeta) + ", 写入cache",
-                       std::to_string(myOffsetBeta + size + 2 + sizeof(char*)));
-        // 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
-		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char*));
-        char *newRow = new char[myCurrentRowSizeBeta];
+					   std::to_string(myOffsetBeta + size + 2 + sizeof(char *)));
+		// 当前读取的char[]长度已经超过了最大长度myCurrentRowSize
+		myCurrentRowSizeBeta = std::max(myRowSize, size + 2 + sizeof(char *));
+		char *newRow = new char[myCurrentRowSizeBeta];
 
         // ptr就是myLastEntryStart, 指向myPool末端的char[] row
         char *ptr = myPoolBeta.back() + myOffsetBeta;
