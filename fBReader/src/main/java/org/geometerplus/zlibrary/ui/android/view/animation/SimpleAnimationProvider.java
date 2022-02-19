@@ -43,20 +43,20 @@ abstract class SimpleAnimationProvider extends AnimationProvider {
     @Override
     public ZLViewEnums.PageIndex getPageToScrollTo(int x, int y) {
         if (myDirection == null) {
-            return ZLViewEnums.PageIndex.current;
+            return ZLViewEnums.PageIndex.CURRENT;
         }
 
         switch (myDirection) {
             case rightToLeft:
-                return myStartX < x ? ZLViewEnums.PageIndex.previous : ZLViewEnums.PageIndex.next;
+                return myStartX < x ? ZLViewEnums.PageIndex.PREV : ZLViewEnums.PageIndex.NEXT;
             case leftToRight:
-                return myStartX < x ? ZLViewEnums.PageIndex.next : ZLViewEnums.PageIndex.previous;
+                return myStartX < x ? ZLViewEnums.PageIndex.NEXT : ZLViewEnums.PageIndex.PREV;
             case up:
-                return myStartY < y ? ZLViewEnums.PageIndex.previous : ZLViewEnums.PageIndex.next;
+                return myStartY < y ? ZLViewEnums.PageIndex.PREV : ZLViewEnums.PageIndex.NEXT;
             case down:
-                return myStartY < y ? ZLViewEnums.PageIndex.next : ZLViewEnums.PageIndex.previous;
+                return myStartY < y ? ZLViewEnums.PageIndex.NEXT : ZLViewEnums.PageIndex.PREV;
         }
-        return ZLViewEnums.PageIndex.current;
+        return ZLViewEnums.PageIndex.CURRENT;
     }
 
     @Override

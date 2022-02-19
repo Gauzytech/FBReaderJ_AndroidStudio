@@ -83,13 +83,13 @@ public final class FBView extends ZLTextView {
         myBookElementManager = new BookElementManager(this);
     }
 
-    /**
-     * 渲染入口, 通过textModel加载渲染信息
-     */
+    /*** 渲染入口, 通过textModel加载渲染信息 **/
     public void setTextModel(ZLTextModel textModel) {
         super.setTextModel(textModel);
+        // 初始化脚注
+        // todo 理解脚注逻辑
         if (myFooter != null) {
-            myFooter.resetTOCMarks();
+            myFooter.resetTocMarks();
         }
     }
 
@@ -145,7 +145,7 @@ public final class FBView extends ZLTextView {
     }
 
     @Override
-    public String getTOCText(ZLTextWordCursor cursor) {
+    public String getTocText(ZLTextWordCursor cursor) {
         int index = cursor.getParagraphIndex();
         if (cursor.isEndOfParagraph()) {
             ++index;
@@ -726,7 +726,7 @@ public final class FBView extends ZLTextView {
             return myViewOptions.FooterHeight.getValue();
         }
 
-        public synchronized void resetTOCMarks() {
+        public synchronized void resetTocMarks() {
             myTOCMarks = null;
         }
 

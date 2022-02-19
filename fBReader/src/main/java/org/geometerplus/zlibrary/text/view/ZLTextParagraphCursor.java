@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+
 import org.geometerplus.zlibrary.core.image.ZLImage;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.image.ZLImageManager;
@@ -28,6 +30,7 @@ import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextOtherStyleEntry;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
+import org.geometerplus.zlibrary.text.model.ZLTextPlainModel;
 import org.geometerplus.zlibrary.text.model.ZLTextStyleEntry;
 import org.vimgadgets.linebreak.LineBreaker;
 
@@ -36,31 +39,43 @@ import java.util.List;
 
 import timber.log.Timber;
 
+/**
+ * 本地缓存解析文件类, 包含一个paragraph的解析信息
+ * <p>
+ * 通过{@link #getParagraph()}获得paragraph的解析信息, 利用Iterator将paragraph读取每个entry然后加到myElements
+ *
+ * @see Processor
+ * @see ZLTextPlainModel.EntryIteratorImpl
+ */
 public final class ZLTextParagraphCursor {
-	// index对应于cpp myPool中char[] row的idx
-	// 一般来说一个row数组就代表了一个xhtml文件的所有解析缓存数据, eg: .ncache
-	// 如果xhtml文件太大, 则可能对应多个row数组, 所以可能是多个index
-	public final int index;
-	final CursorManager cursorManager;
+	public final static String DRM = "drm";
+	public final static String ENCRYPTED_SECTION = "encryptedSection";
+
+	// index是paragraphIndex, 1个或多个paragraphIndex对应1个cpp myPool中char[] row的idx
+	public final int paragraphIdx;
+	private final CursorManager cursorManager;
 	public final ZLTextModel textModel;
 	private final ArrayList<ZLTextElement> myElements;
 
-	public ZLTextParagraphCursor(ZLTextModel textModel, int index) {
-		this(new CursorManager(textModel, null), textModel, index);
+	public ZLTextParagraphCursor(ZLTextModel textModel, int paragraphIndex) {
+		this(new CursorManager(textModel, null), textModel, paragraphIndex);
 	}
 
-	public ZLTextParagraphCursor(CursorManager cursorManager, ZLTextModel textModel, int index) {
+	public ZLTextParagraphCursor(CursorManager cursorManager, ZLTextModel textModel, int paragraphIndex) {
 		this.cursorManager = cursorManager;
 		this.textModel = textModel;
-		this.index = Math.min(index, textModel.getParagraphsNumber() - 1);
+		this.paragraphIdx = Math.min(paragraphIndex, textModel.getParagraphsNumber() - 1);
 		this.myElements = new ArrayList<>();
+
+		Timber.v("渲染流程, CursorManager index = %d, finalIdx = %d", paragraphIndex, this.paragraphIdx);
+
 		// 从textModel中获得Index对应的段落
 		fillElements();
 		if (myElements.isEmpty()) {
-			Timber.v("渲染流程, index = %d, no elements", index);
+			Timber.v("渲染流程, index = %d, no elements", paragraphIdx);
 		} else {
-			if (index < 10) {
-				Timber.v("渲染流程, Start ------------------------------------------- %d --- myElements size = %s ---------------------------------", index, myElements.size());
+			if (paragraphIdx < 10) {
+				Timber.v("渲染流程, Start ------------------------------------------- %d --- myElements.size = %s ---------------------------------", paragraphIdx, myElements.size());
 				for (ZLTextElement item : myElements) {
 					Timber.v("渲染流程, | %s ", item.toString());
 				}
@@ -72,12 +87,13 @@ public final class ZLTextParagraphCursor {
 	private static final char[] SPACE_ARRAY = {' '};
 
 	/**
-	 * 填充myElements
+	 * 填充paragraph每个元素的信息到myElements,
+	 * eg: 样式标签, 每个text word
 	 */
 	public void fillElements() {
-		// 获得段落的placement类
-		ZLTextParagraph paragraph = textModel.getParagraph(index);
-		// 根据paragraph类型对myElements进行填充
+		// 这个paragraph其实包含了一个缓存解析文件的所有数据, 通过调用其中的iterator将所有数据填充到myElements中
+		ZLTextParagraph paragraph = getParagraph();
+		// 根据kind类型对myElements进行填充
 		// TEXT_PARAGRAPH
 		// EMPTY_LINE_PARAGRAPH
 		// ENCRYPTED_SECTION_PARAGRAPH
@@ -87,7 +103,7 @@ public final class ZLTextParagraphCursor {
 				// 处理文本段落
 				LineBreaker lineBreaker = new LineBreaker(textModel.getLanguage());
 				List<ZLTextMark> marks = textModel.getMarks();
-				Processor processor = new Processor(paragraph, cursorManager.extensionManager, lineBreaker, marks, index);
+				Processor processor = new Processor(paragraph, cursorManager.extensionManager, lineBreaker, marks, paragraphIdx);
 				processor.fillElements(myElements);
 				break;
 			case ZLTextParagraph.Kind.EMPTY_LINE_PARAGRAPH:
@@ -101,7 +117,7 @@ public final class ZLTextParagraphCursor {
 				final ZLTextStyleEntry entry = new ZLTextOtherStyleEntry();
 				entry.setFontModifier(ZLTextStyleEntry.FontModifier.FONT_MODIFIER_BOLD, true);
 				myElements.add(new ZLTextStyleElement(entry));
-				myElements.add(new ZLTextWord(ZLResource.resource("drm").getResource("encryptedSection").getValue(), 0));
+				myElements.add(new ZLTextWord(ZLResource.resource(DRM).getResource(ENCRYPTED_SECTION).getValue(), 0));
 				break;
 			}
 			default:
@@ -114,15 +130,15 @@ public final class ZLTextParagraphCursor {
 	}
 
 	public boolean isFirst() {
-		return index == 0;
+		return paragraphIdx == 0;
 	}
 
 	public boolean isLast() {
-		return index + 1 >= textModel.getParagraphsNumber();
+		return paragraphIdx + 1 >= textModel.getParagraphsNumber();
 	}
 
 	public boolean isLikeEndOfSection() {
-		switch (textModel.getParagraph(index).getKind()) {
+		switch (textModel.getParagraph(paragraphIdx).getKind()) {
 			case ZLTextParagraph.Kind.END_OF_SECTION_PARAGRAPH:
 			case ZLTextParagraph.Kind.PSEUDO_END_OF_SECTION_PARAGRAPH:
 				return true;
@@ -132,7 +148,7 @@ public final class ZLTextParagraphCursor {
 	}
 
 	public boolean isEndOfSection() {
-		return textModel.getParagraph(index).getKind() == ZLTextParagraph.Kind.END_OF_SECTION_PARAGRAPH;
+		return textModel.getParagraph(paragraphIdx).getKind() == ZLTextParagraph.Kind.END_OF_SECTION_PARAGRAPH;
 	}
 
 	int getParagraphLength() {
@@ -140,11 +156,15 @@ public final class ZLTextParagraphCursor {
 	}
 
 	public ZLTextParagraphCursor previous() {
-		return isFirst() ? null : cursorManager.get(index - 1);
+		return isFirst() ? null : getCursor(paragraphIdx - 1);
 	}
 
 	public ZLTextParagraphCursor next() {
-		return isLast() ? null : cursorManager.get(index + 1);
+		return isLast() ? null : getCursor(paragraphIdx + 1);
+	}
+
+	public ZLTextParagraphCursor getCursor(int idx) {
+		return cursorManager.get(idx);
 	}
 
 	ZLTextElement getElement(int index) {
@@ -156,12 +176,13 @@ public final class ZLTextParagraphCursor {
 	}
 
 	ZLTextParagraph getParagraph() {
-		return textModel.getParagraph(index);
+		return textModel.getParagraph(paragraphIdx);
 	}
 
+	@NonNull
 	@Override
 	public String toString() {
-		return "ZLTextParagraphCursor [" + index + " (0.." + myElements.size() + ")]";
+		return "ZLTextParagraphCursor [" + paragraphIdx + " (0.." + myElements.size() + ")]";
 	}
 
 	private static final class Processor {

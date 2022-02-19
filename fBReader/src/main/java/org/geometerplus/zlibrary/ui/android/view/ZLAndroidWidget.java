@@ -176,13 +176,13 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             switch (oldMode) {
                 case AnimatedScrollingForward: {
                     final ZLView.PageIndex index = animator.getPageToScrollTo();
-                    myBitmapManager.shift(index == ZLView.PageIndex.next);
+                    myBitmapManager.shift(index == ZLView.PageIndex.NEXT);
                     view.onScrollingFinished(index);
                     ZLApplication.Instance().onRepaintFinished();
                     break;
                 }
                 case AnimatedScrollingBackward:
-                    view.onScrollingFinished(ZLView.PageIndex.current);
+                    view.onScrollingFinished(ZLView.PageIndex.CURRENT);
                     break;
             }
             onDrawStatic(canvas);
@@ -221,14 +221,14 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         if (myScreenIsTouched) {
             final ZLView view = ZLApplication.Instance().getCurrentView();
             myScreenIsTouched = false;
-            view.onScrollingFinished(ZLView.PageIndex.current);
+            view.onScrollingFinished(ZLView.PageIndex.CURRENT);
         }
     }
 
     @Override
     public void startAnimatedScrolling(ZLView.PageIndex pageIndex, int x, int y, ZLView.Direction direction, int speed) {
         final ZLView view = ZLApplication.Instance().getCurrentView();
-        if (pageIndex == ZLView.PageIndex.current || !view.canScroll(pageIndex)) {
+        if (pageIndex == ZLView.PageIndex.CURRENT || !view.canScroll(pageIndex)) {
             return;
         }
         final AnimationProvider animator = getAnimationProvider();
@@ -242,7 +242,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     @Override
     public void startAnimatedScrolling(ZLView.PageIndex pageIndex, ZLView.Direction direction, int speed) {
         final ZLView view = ZLApplication.Instance().getCurrentView();
-        if (pageIndex == ZLView.PageIndex.current || !view.canScroll(pageIndex)) {
+        if (pageIndex == ZLView.PageIndex.CURRENT || !view.canScroll(pageIndex)) {
             return;
         }
         final AnimationProvider animator = getAnimationProvider();
@@ -389,16 +389,16 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     private void onDrawStatic(final Canvas canvas) {
 
         if (isPreview) {
-            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.previous), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
+            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
             // 绘制边框
             canvas.drawRect(0, 0, getWidth(), getHeight(), borderPaint);
         }
         // 获取内容的bitmap
-        Bitmap bitmap = myBitmapManager.getBitmap(ZLView.PageIndex.current);
+        Bitmap bitmap = myBitmapManager.getBitmap(ZLView.PageIndex.CURRENT);
         // 将bitmap类所代表的的画布会被显示在屏幕上
         canvas.drawBitmap(bitmap, 0, 0, myPaint);
         if (isPreview) {
-            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.next), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
+            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.NEXT), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
         }
 
         if (ZLApplication.Instance().getCurrentView().canMagnifier()) {
@@ -406,8 +406,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         }
 
         post(() -> PrepareService.execute(() -> {
-            preparePage(ZLViewEnums.PageIndex.previous);
-            preparePage(ZLViewEnums.PageIndex.next);
+            preparePage(ZLViewEnums.PageIndex.PREV);
+            preparePage(ZLViewEnums.PageIndex.NEXT);
         }));
     }
 
@@ -783,12 +783,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         }
         final AnimationProvider animator = getAnimationProvider();
         if (animator.inProgress()) {
-            final int from = view.getScrollbarThumbLength(ZLView.PageIndex.current);
+            final int from = view.getScrollbarThumbLength(ZLView.PageIndex.CURRENT);
             final int to = view.getScrollbarThumbLength(animator.getPageToScrollTo());
             final int percent = animator.getScrolledPercent();
             return (from * (100 - percent) + to * percent) / 100;
         } else {
-            return view.getScrollbarThumbLength(ZLView.PageIndex.current);
+            return view.getScrollbarThumbLength(ZLView.PageIndex.CURRENT);
         }
     }
 
@@ -800,12 +800,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         }
         final AnimationProvider animator = getAnimationProvider();
         if (animator.inProgress()) {
-            final int from = view.getScrollbarThumbPosition(ZLView.PageIndex.current);
+            final int from = view.getScrollbarThumbPosition(ZLView.PageIndex.CURRENT);
             final int to = view.getScrollbarThumbPosition(animator.getPageToScrollTo());
             final int percent = animator.getScrolledPercent();
             return (from * (100 - percent) + to * percent) / 100;
         } else {
-            return view.getScrollbarThumbPosition(ZLView.PageIndex.current);
+            return view.getScrollbarThumbPosition(ZLView.PageIndex.CURRENT);
         }
     }
 

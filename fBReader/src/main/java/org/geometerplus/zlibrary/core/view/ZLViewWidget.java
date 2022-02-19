@@ -19,7 +19,14 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import org.geometerplus.zlibrary.ui.android.view.BitmapManagerImpl;
+
 public interface ZLViewWidget {
+
+	/**
+	 * 重置缓存索引
+	 * @see BitmapManagerImpl
+	 */
 	void reset();
 	void repaint();
 

@@ -141,7 +141,7 @@ public abstract class AnimationProvider {
             return;
         }
         // 滑动目标页是当前页 --> 返回
-        if (getPageToScrollTo(x, y) == ZLViewEnums.PageIndex.current) {
+        if (getPageToScrollTo(x, y) == ZLViewEnums.PageIndex.CURRENT) {
             return;
         }
 
@@ -180,7 +180,7 @@ public abstract class AnimationProvider {
         }
         myDrawInfos.clear();
 
-        if (getPageToScrollTo() == ZLViewEnums.PageIndex.previous) {
+        if (getPageToScrollTo() == ZLViewEnums.PageIndex.PREV) {
             forward = !forward;
         }
 
@@ -209,11 +209,11 @@ public abstract class AnimationProvider {
         switch (myDirection) {
             case up:
             case rightToLeft:
-                mySpeed = pageIndex == ZLViewEnums.PageIndex.next ? -15 : 15;
+                mySpeed = pageIndex == ZLViewEnums.PageIndex.NEXT ? -15 : 15;
                 break;
             case leftToRight:
             case down:
-                mySpeed = pageIndex == ZLViewEnums.PageIndex.next ? 15 : -15;
+                mySpeed = pageIndex == ZLViewEnums.PageIndex.NEXT ? 15 : -15;
                 break;
         }
         setupAnimatedScrollingStart(x, y);
@@ -296,7 +296,7 @@ public abstract class AnimationProvider {
     }
 
     protected Bitmap getBitmapFrom() {
-        return myBitmapManager.getBitmap(ZLViewEnums.PageIndex.current);
+        return myBitmapManager.getBitmap(ZLViewEnums.PageIndex.CURRENT);
     }
 
     protected Bitmap getBitmapTo() {
@@ -304,7 +304,7 @@ public abstract class AnimationProvider {
     }
 
     protected void drawBitmapFrom(Canvas canvas, int x, int y, Paint paint) {
-        myBitmapManager.drawBitmap(canvas, x, y, ZLViewEnums.PageIndex.current, paint);
+        myBitmapManager.drawBitmap(canvas, x, y, ZLViewEnums.PageIndex.CURRENT, paint);
     }
 
     protected void drawBitmapTo(Canvas canvas, int x, int y, Paint paint) {

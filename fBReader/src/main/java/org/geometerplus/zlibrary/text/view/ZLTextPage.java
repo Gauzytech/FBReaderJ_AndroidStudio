@@ -23,11 +23,11 @@ import java.util.ArrayList;
 
 final class ZLTextPage {
 
-    final ZLTextWordCursor StartCursor = new ZLTextWordCursor();
-    final ZLTextWordCursor EndCursor = new ZLTextWordCursor();
-    final ArrayList<ZLTextLineInfo> LineInfos = new ArrayList<ZLTextLineInfo>();
-    int Column0Height;
-    int PaintState = PaintStateEnum.NOTHING_TO_PAINT;
+    final ZLTextWordCursor startCursor = new ZLTextWordCursor();
+    final ZLTextWordCursor endCursor = new ZLTextWordCursor();
+    final ArrayList<ZLTextLineInfo> lineInfos = new ArrayList<ZLTextLineInfo>();
+    int column0Height;
+    int paintState = PaintStateEnum.NOTHING_TO_PAINT;
 
     final ZLTextElementAreaVector TextElementMap = new ZLTextElementAreaVector();
 
@@ -35,7 +35,7 @@ final class ZLTextPage {
     private int myHeight;
     private boolean myTwoColumnView;
 
-    void setSize(int columnWidth, int height, boolean twoColumnView, boolean keepEndNotStart) {
+    protected void setSize(int columnWidth, int height, boolean twoColumnView, boolean keepEndNotStart) {
         if (myColumnWidth == columnWidth && myHeight == height && myColumnWidth == columnWidth) {
             return;
         }
@@ -43,84 +43,91 @@ final class ZLTextPage {
         myHeight = height;
         myTwoColumnView = twoColumnView;
 
-        if (PaintState != PaintStateEnum.NOTHING_TO_PAINT) {
-            LineInfos.clear();
+        if (paintState != PaintStateEnum.NOTHING_TO_PAINT) {
+            lineInfos.clear();
             if (keepEndNotStart) {
-                if (!EndCursor.isNull()) {
-                    StartCursor.reset();
-                    PaintState = PaintStateEnum.END_IS_KNOWN;
-                } else if (!StartCursor.isNull()) {
-                    EndCursor.reset();
-                    PaintState = PaintStateEnum.START_IS_KNOWN;
+                if (!endCursor.isNull()) {
+                    startCursor.reset();
+                    paintState = PaintStateEnum.END_IS_KNOWN;
+                } else if (!startCursor.isNull()) {
+                    endCursor.reset();
+                    paintState = PaintStateEnum.START_IS_KNOWN;
                 }
             } else {
-                if (!StartCursor.isNull()) {
-                    EndCursor.reset();
-                    PaintState = PaintStateEnum.START_IS_KNOWN;
-                } else if (!EndCursor.isNull()) {
-                    StartCursor.reset();
-                    PaintState = PaintStateEnum.END_IS_KNOWN;
+                if (!startCursor.isNull()) {
+                    endCursor.reset();
+                    paintState = PaintStateEnum.START_IS_KNOWN;
+                } else if (!endCursor.isNull()) {
+                    startCursor.reset();
+                    paintState = PaintStateEnum.END_IS_KNOWN;
                 }
             }
         }
     }
 
-    void reset() {
-        StartCursor.reset();
-        EndCursor.reset();
-        LineInfos.clear();
-        PaintState = PaintStateEnum.NOTHING_TO_PAINT;
+    protected void reset() {
+        startCursor.reset();
+        endCursor.reset();
+        lineInfos.clear();
+        paintState = PaintStateEnum.NOTHING_TO_PAINT;
     }
 
-    void moveStartCursor(ZLTextParagraphCursor cursor) {
+    /**
+     * 移动当前page的起始cursor
+     */
+    protected void moveStartCursor(ZLTextParagraphCursor cursor) {
         // 对startCursor属性指向的ZLTextWordCursor类的属性进行赋值
-        StartCursor.setCursor(cursor);
-        EndCursor.reset();
-        LineInfos.clear();
-        PaintState = PaintStateEnum.START_IS_KNOWN;
+        startCursor.setCursor(cursor);
+        endCursor.reset();
+        lineInfos.clear();
+        paintState = PaintStateEnum.START_IS_KNOWN;
     }
 
-    void moveStartCursor(int paragraphIndex, int wordIndex, int charIndex) {
-        if (StartCursor.isNull()) {
-            StartCursor.setCursor(EndCursor);
+    /**
+     * 直接移动到之前的阅读进度
+     *
+     */
+    protected void moveStartCursor(int paragraphIndex, int wordIndex, int charIndex) {
+        if (startCursor.isNull()) {
+            startCursor.setCursor(endCursor);
         }
-        StartCursor.moveToParagraph(paragraphIndex);
-        StartCursor.moveTo(wordIndex, charIndex);
-        EndCursor.reset();
-        LineInfos.clear();
-        PaintState = PaintStateEnum.START_IS_KNOWN;
+        startCursor.moveToParagraph(paragraphIndex);
+        startCursor.moveTo(wordIndex, charIndex);
+        endCursor.reset();
+        lineInfos.clear();
+        paintState = PaintStateEnum.START_IS_KNOWN;
     }
 
-    void moveEndCursor(int paragraphIndex, int wordIndex, int charIndex) {
-        if (EndCursor.isNull()) {
-            EndCursor.setCursor(StartCursor);
+    protected void moveEndCursor(int paragraphIndex, int wordIndex, int charIndex) {
+        if (endCursor.isNull()) {
+            endCursor.setCursor(startCursor);
         }
-        EndCursor.moveToParagraph(paragraphIndex);
+        endCursor.moveToParagraph(paragraphIndex);
         if ((paragraphIndex > 0) && (wordIndex == 0) && (charIndex == 0)) {
-            EndCursor.previousParagraph();
-            EndCursor.moveToParagraphEnd();
+            endCursor.previousParagraph();
+            endCursor.moveToParagraphEnd();
         } else {
-            EndCursor.moveTo(wordIndex, charIndex);
+            endCursor.moveTo(wordIndex, charIndex);
         }
-        StartCursor.reset();
-        LineInfos.clear();
-        PaintState = PaintStateEnum.END_IS_KNOWN;
+        startCursor.reset();
+        lineInfos.clear();
+        paintState = PaintStateEnum.END_IS_KNOWN;
     }
 
-    int getTextWidth() {
+    protected int getTextWidth() {
         return myColumnWidth;
     }
 
-    int getTextHeight() {
+    protected int getTextHeight() {
         return myHeight;
     }
 
-    boolean twoColumnView() {
+    protected boolean twoColumnView() {
         return myTwoColumnView;
     }
 
-    boolean isEmptyPage() {
-        for (ZLTextLineInfo info : LineInfos) {
+    protected boolean isEmptyPage() {
+        for (ZLTextLineInfo info : lineInfos) {
             if (info.IsVisible) {
                 return false;
             }
@@ -128,13 +135,13 @@ final class ZLTextPage {
         return true;
     }
 
-    void findLineFromStart(ZLTextWordCursor cursor, int overlappingValue) {
-        if (LineInfos.isEmpty() || (overlappingValue == 0)) {
+    protected void findLineFromStart(ZLTextWordCursor cursor, int overlappingValue) {
+        if (lineInfos.isEmpty() || (overlappingValue == 0)) {
             cursor.reset();
             return;
         }
         ZLTextLineInfo info = null;
-        for (ZLTextLineInfo i : LineInfos) {
+        for (ZLTextLineInfo i : lineInfos) {
             info = i;
             if (info.IsVisible) {
                 --overlappingValue;
@@ -147,12 +154,12 @@ final class ZLTextPage {
         cursor.moveTo(info.EndElementIndex, info.EndCharIndex);
     }
 
-    void findLineFromEnd(ZLTextWordCursor cursor, int overlappingValue) {
-        if (LineInfos.isEmpty() || (overlappingValue == 0)) {
+    protected void findLineFromEnd(ZLTextWordCursor cursor, int overlappingValue) {
+        if (lineInfos.isEmpty() || (overlappingValue == 0)) {
             cursor.reset();
             return;
         }
-        final ArrayList<ZLTextLineInfo> infos = LineInfos;
+        final ArrayList<ZLTextLineInfo> infos = lineInfos;
         final int size = infos.size();
         ZLTextLineInfo info = null;
         for (int i = size - 1; i >= 0; --i) {
@@ -168,15 +175,15 @@ final class ZLTextPage {
         cursor.moveTo(info.StartElementIndex, info.StartCharIndex);
     }
 
-    void findPercentFromStart(ZLTextWordCursor cursor, int percent) {
-        if (LineInfos.isEmpty()) {
+    protected void findPercentFromStart(ZLTextWordCursor cursor, int percent) {
+        if (lineInfos.isEmpty()) {
             cursor.reset();
             return;
         }
         int height = myHeight * percent / 100;
         boolean visibleLineOccured = false;
         ZLTextLineInfo info = null;
-        for (ZLTextLineInfo i : LineInfos) {
+        for (ZLTextLineInfo i : lineInfos) {
             info = i;
             if (info.IsVisible) {
                 visibleLineOccured = true;

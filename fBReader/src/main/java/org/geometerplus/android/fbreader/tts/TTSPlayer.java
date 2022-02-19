@@ -10,7 +10,6 @@ import org.geometerplus.android.fbreader.tts.util.TimeUtils;
 import org.geometerplus.fbreader.book.Book;
 import org.geometerplus.fbreader.fbreader.FBReaderApp;
 import org.geometerplus.fbreader.fbreader.FBView;
-import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -221,7 +220,7 @@ public class TTSPlayer implements IPlayer {
 
     public String getName() {
         FBView view = mFBReaderApp.getTextView();
-        String tocText = view.getTOCText(view.getStartCursor());
+        String tocText = view.getTocText(view.getStartCursor());
         return tocText == null ? "" : tocText;
     }
 

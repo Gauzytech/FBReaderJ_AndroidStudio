@@ -45,9 +45,9 @@ public abstract class ZLTextHighlighting implements Comparable<ZLTextHighlightin
     boolean intersects(ZLTextPage page) {
         return
                 !isEmpty() &&
-                        !page.StartCursor.isNull() && !page.EndCursor.isNull() &&
-                        page.StartCursor.compareTo(getEndPosition()) < 0 &&
-                        page.EndCursor.compareTo(getStartPosition()) > 0;
+                        !page.startCursor.isNull() && !page.endCursor.isNull() &&
+                        page.startCursor.compareTo(getEndPosition()) < 0 &&
+                        page.endCursor.compareTo(getStartPosition()) > 0;
     }
 
     boolean intersects(ZLTextRegion region) {

@@ -29,7 +29,7 @@ public interface ZLViewEnums {
      */
     enum PageIndex {
 
-        previous2, previous, current, next, next2;
+        PREV_2, PREV, CURRENT, NEXT, NEXT_2;
 
         /**
          * 获取下一页对应索引
@@ -38,14 +38,14 @@ public interface ZLViewEnums {
          */
         public PageIndex getNext() {
             switch (this) {
-                case previous2:
-                    return previous2;
-                case previous:
-                    return current;
-                case current:
-                    return next;
-                case next:
-                    return next2;
+                case PREV_2:
+                    return PREV_2;
+                case PREV:
+                    return CURRENT;
+                case CURRENT:
+                    return NEXT;
+                case NEXT:
+                    return NEXT_2;
                 default:
                     return null;
             }
@@ -58,14 +58,14 @@ public interface ZLViewEnums {
          */
         public PageIndex getPrevious() {
             switch (this) {
-                case next2:
-                    return next;
-                case next:
-                    return current;
-                case current:
-                    return previous;
-                case previous:
-                    return previous2;
+                case NEXT_2:
+                    return NEXT;
+                case NEXT:
+                    return CURRENT;
+                case CURRENT:
+                    return PREV;
+                case PREV:
+                    return PREV_2;
                 default:
                     return null;
             }

@@ -210,20 +210,20 @@ public final class CurlAnimationProvider extends AnimationProvider {
 	@Override
 	public ZLViewEnums.PageIndex getPageToScrollTo(int x, int y) {
 		if (myDirection == null) {
-			return ZLViewEnums.PageIndex.current;
+			return ZLViewEnums.PageIndex.CURRENT;
 		}
 
 		switch (myDirection) {
 			case leftToRight:
-				return myStartX < myWidth / 2 ? ZLViewEnums.PageIndex.next : ZLViewEnums.PageIndex.previous;
+				return myStartX < myWidth / 2 ? ZLViewEnums.PageIndex.NEXT : ZLViewEnums.PageIndex.PREV;
 			case rightToLeft:
-				return myStartX < myWidth / 2 ? ZLViewEnums.PageIndex.previous : ZLViewEnums.PageIndex.next;
+				return myStartX < myWidth / 2 ? ZLViewEnums.PageIndex.PREV : ZLViewEnums.PageIndex.NEXT;
 			case up:
-				return myStartY < myHeight / 2 ? ZLViewEnums.PageIndex.previous : ZLViewEnums.PageIndex.next;
+				return myStartY < myHeight / 2 ? ZLViewEnums.PageIndex.PREV : ZLViewEnums.PageIndex.NEXT;
 			case down:
-				return myStartY < myHeight / 2 ? ZLViewEnums.PageIndex.next : ZLViewEnums.PageIndex.previous;
+				return myStartY < myHeight / 2 ? ZLViewEnums.PageIndex.NEXT : ZLViewEnums.PageIndex.PREV;
 		}
-		return ZLViewEnums.PageIndex.current;
+		return ZLViewEnums.PageIndex.CURRENT;
 	}
 
 	@Override

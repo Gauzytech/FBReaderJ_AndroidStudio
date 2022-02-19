@@ -82,6 +82,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return myTextModel;
     }
 
+    /**
+     * 初始化textModel, 并通过{@link #getParagraphCursor(int)}获得图书第一个paragraph的对象,
+     * 并将myCurrentPage设为该对象
+     *
+     * @param textModel 通过cpp解析出来的包含图书解析信息的model
+     */
     public synchronized void setTextModel(ZLTextModel textModel) {
         // 这是个LRU, 缓存ZLTextParagraphCursor
         this.myCursorManager = textModel != null ? new CursorManager(textModel, getExtensionManager()) : null;
@@ -101,29 +107,31 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final int paragraphsNumber = myTextModel.getParagraphsNumber();
             if (paragraphsNumber > 0) {
                 // 先将cursor定位到第一页
-                // 从cursorManager LRU中获得第一章的cursor, 因为此时是cursorManager是空的, 所以初始化第一章ZLTextParagraphCursor
-                ZLTextParagraphCursor start = cursor(0);
-                Timber.v("渲染流程, 获得startCursor: " + start.toString());
+                // 从cursorManager LRU中获得第一个解析缓存文件的cursor, 因为此时是cursorManager是空的, 所以缓存解析文件肯定包括了第一章解析内容
+                ZLTextParagraphCursor start = getParagraphCursor(0);
+                Timber.v("渲染流程, 初始化startCursor: %s", start.toString());
+                // 重置currentPage的信息
                 myCurrentPage.moveStartCursor(start);
             }
         }
+        // 重置所有缓存, 我们会使用BitmapManager缓存4个bitmap对象
         Application.getViewWidget().reset();
     }
 
     protected abstract ExtensionElementManager getExtensionManager();
 
     public ZLTextWordCursor getStartCursor() {
-        if (myCurrentPage.StartCursor.isNull()) {
+        if (myCurrentPage.startCursor.isNull()) {
             preparePaintInfo(myCurrentPage);
         }
-        return myCurrentPage.StartCursor;
+        return myCurrentPage.startCursor;
     }
 
     public ZLTextWordCursor getEndCursor() {
-        if (myCurrentPage.EndCursor.isNull()) {
+        if (myCurrentPage.endCursor.isNull()) {
             preparePaintInfo(myCurrentPage);
         }
-        return myCurrentPage.EndCursor;
+        return myCurrentPage.endCursor;
     }
 
     private synchronized void gotoMark(ZLTextMark mark) {
@@ -134,29 +142,29 @@ public abstract class ZLTextView extends ZLTextViewBase {
         myPreviousPage.reset();
         myNextPage.reset();
         boolean doRepaint = false;
-        if (myCurrentPage.StartCursor.isNull()) {
+        if (myCurrentPage.startCursor.isNull()) {
             doRepaint = true;
             preparePaintInfo(myCurrentPage);
         }
-        if (myCurrentPage.StartCursor.isNull()) {
+        if (myCurrentPage.startCursor.isNull()) {
             return;
         }
-        if (myCurrentPage.StartCursor.getParagraphIndex() != mark.ParagraphIndex ||
-                myCurrentPage.StartCursor.getMark().compareTo(mark) > 0) {
+        if (myCurrentPage.startCursor.getParagraphIndex() != mark.ParagraphIndex ||
+                myCurrentPage.startCursor.getMark().compareTo(mark) > 0) {
             doRepaint = true;
             gotoPosition(mark.ParagraphIndex, 0, 0);
             preparePaintInfo(myCurrentPage);
         }
-        if (myCurrentPage.EndCursor.isNull()) {
+        if (myCurrentPage.endCursor.isNull()) {
             preparePaintInfo(myCurrentPage);
         }
-        while (mark.compareTo(myCurrentPage.EndCursor.getMark()) > 0) {
+        while (mark.compareTo(myCurrentPage.endCursor.getMark()) > 0) {
             doRepaint = true;
             turnPage(true, ScrollingMode.NO_OVERLAPPING, 0);
             preparePaintInfo(myCurrentPage);
         }
         if (doRepaint) {
-            if (myCurrentPage.StartCursor.isNull()) {
+            if (myCurrentPage.startCursor.isNull()) {
                 preparePaintInfo(myCurrentPage);
             }
             Application.getViewWidget().reset();
@@ -168,18 +176,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
         myPreviousPage.reset();
         myNextPage.reset();
         boolean doRepaint = false;
-        if (myCurrentPage.StartCursor.isNull()) {
+        if (myCurrentPage.startCursor.isNull()) {
             doRepaint = true;
             preparePaintInfo(myCurrentPage);
         }
-        if (myCurrentPage.StartCursor.isNull()) {
+        if (myCurrentPage.startCursor.isNull()) {
             return;
         }
         if (!highlighting.intersects(myCurrentPage)) {
             gotoPosition(highlighting.getStartPosition().getParagraphIndex(), 0, 0);
             preparePaintInfo(myCurrentPage);
         }
-        if (myCurrentPage.EndCursor.isNull()) {
+        if (myCurrentPage.endCursor.isNull()) {
             preparePaintInfo(myCurrentPage);
         }
         while (!highlighting.intersects(myCurrentPage)) {
@@ -188,7 +196,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             preparePaintInfo(myCurrentPage);
         }
         if (doRepaint) {
-            if (myCurrentPage.StartCursor.isNull()) {
+            if (myCurrentPage.startCursor.isNull()) {
                 preparePaintInfo(myCurrentPage);
             }
             Application.getViewWidget().reset();
@@ -208,10 +216,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
         int count = myTextModel.search(text, startIndex, endIndex, ignoreCase);
         myPreviousPage.reset();
         myNextPage.reset();
-        if (!myCurrentPage.StartCursor.isNull()) {
+        if (!myCurrentPage.startCursor.isNull()) {
             rebuildPaintInfo();
             if (count > 0) {
-                ZLTextMark mark = myCurrentPage.StartCursor.getMark();
+                ZLTextMark mark = myCurrentPage.startCursor.getMark();
                 gotoMark(wholeText ?
                         (backward ? myTextModel.getLastMark() : myTextModel.getFirstMark()) :
                         (backward ? myTextModel.getPreviousMark(mark) : myTextModel.getNextMark(mark)));
@@ -223,24 +231,24 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public boolean canFindNext() {
-        final ZLTextWordCursor end = myCurrentPage.EndCursor;
+        final ZLTextWordCursor end = myCurrentPage.endCursor;
         return !end.isNull() && (myTextModel != null) && (myTextModel.getNextMark(end.getMark()) != null);
     }
 
     public synchronized void findNext() {
-        final ZLTextWordCursor end = myCurrentPage.EndCursor;
+        final ZLTextWordCursor end = myCurrentPage.endCursor;
         if (!end.isNull()) {
             gotoMark(myTextModel.getNextMark(end.getMark()));
         }
     }
 
     public boolean canFindPrevious() {
-        final ZLTextWordCursor start = myCurrentPage.StartCursor;
+        final ZLTextWordCursor start = myCurrentPage.startCursor;
         return !start.isNull() && (myTextModel != null) && (myTextModel.getPreviousMark(start.getMark()) != null);
     }
 
     public synchronized void findPrevious() {
-        final ZLTextWordCursor start = myCurrentPage.StartCursor;
+        final ZLTextWordCursor start = myCurrentPage.startCursor;
         if (!start.isNull()) {
             gotoMark(myTextModel.getPreviousMark(start.getMark()));
         }
@@ -266,16 +274,16 @@ public abstract class ZLTextView extends ZLTextViewBase {
             myCursorManager.evictAll();
         }
 
-        if (myCurrentPage.PaintState != PaintStateEnum.NOTHING_TO_PAINT) {
-            myCurrentPage.LineInfos.clear();
-            if (!myCurrentPage.StartCursor.isNull()) {
-                myCurrentPage.StartCursor.rebuild();
-                myCurrentPage.EndCursor.reset();
-                myCurrentPage.PaintState = PaintStateEnum.START_IS_KNOWN;
-            } else if (!myCurrentPage.EndCursor.isNull()) {
-                myCurrentPage.EndCursor.rebuild();
-                myCurrentPage.StartCursor.reset();
-                myCurrentPage.PaintState = PaintStateEnum.END_IS_KNOWN;
+        if (myCurrentPage.paintState != PaintStateEnum.NOTHING_TO_PAINT) {
+            myCurrentPage.lineInfos.clear();
+            if (!myCurrentPage.startCursor.isNull()) {
+                myCurrentPage.startCursor.rebuild();
+                myCurrentPage.endCursor.reset();
+                myCurrentPage.paintState = PaintStateEnum.START_IS_KNOWN;
+            } else if (!myCurrentPage.endCursor.isNull()) {
+                myCurrentPage.endCursor.rebuild();
+                myCurrentPage.startCursor.reset();
+                myCurrentPage.paintState = PaintStateEnum.END_IS_KNOWN;
             }
         }
 
@@ -454,23 +462,23 @@ public abstract class ZLTextView extends ZLTextViewBase {
         ZLTextPage page;
         switch (pageIndex) {
             default:
-            case current:
+            case CURRENT:
                 page = myCurrentPage;
                 break;
-            case previous:
+            case PREV:
                 page = myPreviousPage;
-                if (myPreviousPage.PaintState == PaintStateEnum.NOTHING_TO_PAINT) {
+                if (myPreviousPage.paintState == PaintStateEnum.NOTHING_TO_PAINT) {
                     preparePaintInfo(myCurrentPage);
-                    myPreviousPage.EndCursor.setCursor(myCurrentPage.StartCursor);
-                    myPreviousPage.PaintState = PaintStateEnum.END_IS_KNOWN;
+                    myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
+                    myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
                 }
                 break;
-            case next:
+            case NEXT:
                 page = myNextPage;
-                if (myNextPage.PaintState == PaintStateEnum.NOTHING_TO_PAINT) {
+                if (myNextPage.paintState == PaintStateEnum.NOTHING_TO_PAINT) {
                     preparePaintInfo(myCurrentPage);
-                    myNextPage.StartCursor.setCursor(myCurrentPage.EndCursor);
-                    myNextPage.PaintState = PaintStateEnum.START_IS_KNOWN;
+                    myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
+                    myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
                 }
         }
 
@@ -480,11 +488,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
         preparePaintInfo(page);
 
-        if (page.StartCursor.isNull() || page.EndCursor.isNull()) {
+        if (page.startCursor.isNull() || page.endCursor.isNull()) {
             return;
         }
 
-        final ArrayList<ZLTextLineInfo> lineInfoList = page.LineInfos;
+        final ArrayList<ZLTextLineInfo> lineInfoList = page.lineInfos;
         final int[] labels = new int[lineInfoList.size() + 1];
         int x = getLeftMargin();
         int y = getTopMargin();
@@ -500,7 +508,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             y += info.Height + info.Descent + info.VSpaceAfter;
             // labels指向的int数组将被用于迭代ZLTextPage类TextElementMap属性
             labels[++index] = page.TextElementMap.size();
-            if (index == page.Column0Height) {
+            if (index == page.column0Height) {
                 // 获取顶部页边距, 作为屏幕上第一行的y坐标
                 y = getTopMargin();
                 x += page.getTextWidth() + getSpaceBetweenColumns();
@@ -540,7 +548,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             drawTextLine(page, highlightingList, info, labels[index], labels[index + 1]);
             y += info.Height + info.Descent + info.VSpaceAfter;
             ++index;
-            if (index == page.Column0Height) {
+            if (index == page.column0Height) {
                 y = getTopMargin();
                 x += page.getTextWidth() + getSpaceBetweenColumns();
             }
@@ -559,7 +567,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 绘制头部（章节标题）
         context.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
         String progressText = getPageProgress();
-        context.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTOCText(page.StartCursor));
+        context.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
         int footerX = getContextWidth() - getRightMargin() - context.getExtraStringWidth(progressText);
         int footerY = (int) (getTopMargin() + getTextAreaHeight() + getBottomMargin() / 1.3);
         context.drawFooter(footerX, footerY, progressText);
@@ -575,42 +583,42 @@ public abstract class ZLTextView extends ZLTextViewBase {
     @Override
     public synchronized void onScrollingFinished(PageIndex pageIndex) {
         switch (pageIndex) {
-            case current:
+            case CURRENT:
                 break;
-            case previous: {
+            case PREV: {
                 final ZLTextPage swap = myNextPage;
                 myNextPage = myCurrentPage;
                 myCurrentPage = myPreviousPage;
                 myPreviousPage = swap;
                 myPreviousPage.reset();
-                switch (myCurrentPage.PaintState) {
+                switch (myCurrentPage.paintState) {
                     case PaintStateEnum.NOTHING_TO_PAINT:
                         preparePaintInfo(myNextPage);
-                        myCurrentPage.EndCursor.setCursor(myNextPage.StartCursor);
-                        myCurrentPage.PaintState = PaintStateEnum.END_IS_KNOWN;
+                        myCurrentPage.endCursor.setCursor(myNextPage.startCursor);
+                        myCurrentPage.paintState = PaintStateEnum.END_IS_KNOWN;
                         break;
                     case PaintStateEnum.READY:
-                        myCurrentPage.EndCursor.setCursor(myNextPage.StartCursor);
-                        myCurrentPage.PaintState = PaintStateEnum.END_IS_KNOWN;
+                        myCurrentPage.endCursor.setCursor(myNextPage.startCursor);
+                        myCurrentPage.paintState = PaintStateEnum.END_IS_KNOWN;
                         break;
                 }
                 break;
             }
-            case next: {
+            case NEXT: {
                 final ZLTextPage swap = myPreviousPage;
                 myPreviousPage = myCurrentPage;
                 myCurrentPage = myNextPage;
                 myNextPage = swap;
                 myNextPage.reset();
-                switch (myCurrentPage.PaintState) {
+                switch (myCurrentPage.paintState) {
                     case PaintStateEnum.NOTHING_TO_PAINT:
                         preparePaintInfo(myPreviousPage);
-                        myCurrentPage.StartCursor.setCursor(myPreviousPage.EndCursor);
-                        myCurrentPage.PaintState = PaintStateEnum.START_IS_KNOWN;
+                        myCurrentPage.startCursor.setCursor(myPreviousPage.endCursor);
+                        myCurrentPage.paintState = PaintStateEnum.START_IS_KNOWN;
                         break;
                     case PaintStateEnum.READY:
-                        myNextPage.StartCursor.setCursor(myCurrentPage.EndCursor);
-                        myNextPage.PaintState = PaintStateEnum.START_IS_KNOWN;
+                        myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
+                        myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
                         break;
                 }
                 break;
@@ -655,11 +663,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         switch (index) {
             default:
                 return true;
-            case next: {
+            case NEXT: {
                 final ZLTextWordCursor cursor = getEndCursor();
                 return cursor != null && !cursor.isNull() && !cursor.isEndOfText();
             }
-            case previous: {
+            case PREV: {
                 final ZLTextWordCursor cursor = getStartCursor();
                 return cursor != null && !cursor.isNull() && !cursor.isStartOfText();
             }
@@ -705,11 +713,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private ZLTextPage getPage(PageIndex pageIndex) {
         switch (pageIndex) {
             default:
-            case current:
+            case CURRENT:
                 return myCurrentPage;
-            case previous:
+            case PREV:
                 return myPreviousPage;
-            case next:
+            case NEXT:
                 return myNextPage;
         }
     }
@@ -725,9 +733,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final ZLTextPage page = getPage(pageIndex);
         preparePaintInfo(page);
         if (startNotEndOfPage) {
-            return Math.max(0, sizeOfTextBeforeCursor(page.StartCursor));
+            return Math.max(0, sizeOfTextBeforeCursor(page.startCursor));
         } else {
-            int end = sizeOfTextBeforeCursor(page.EndCursor);
+            int end = sizeOfTextBeforeCursor(page.endCursor);
             if (end == -1) {
                 end = myTextModel.getTextLength(myTextModel.getParagraphsNumber() - 1) - 1;
             }
@@ -740,7 +748,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (paragraphCursor == null) {
             return -1;
         }
-        final int paragraphIndex = paragraphCursor.index;
+        final int paragraphIndex = paragraphCursor.paragraphIdx;
         int sizeOfText = myTextModel.getTextLength(paragraphIndex - 1);
         final int paragraphLength = paragraphCursor.getParagraphLength();
         if (paragraphLength > 0) {
@@ -841,7 +849,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final synchronized PagePosition pagePosition() {
-        int current = computeTextPageNumber(getCurrentCharNumber(PageIndex.current, false));
+        int current = computeTextPageNumber(getCurrentCharNumber(PageIndex.CURRENT, false));
         int total = computeTextPageNumber(sizeOfFullText());
 
         if (total > 3) {
@@ -849,7 +857,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         preparePaintInfo(myCurrentPage);
-        ZLTextWordCursor cursor = myCurrentPage.StartCursor;
+        ZLTextWordCursor cursor = myCurrentPage.startCursor;
         if (cursor.isNull()) {
             return new PagePosition(current, total);
         }
@@ -857,10 +865,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (cursor.isStartOfText()) {
             current = 1;
         } else {
-            ZLTextWordCursor prevCursor = myPreviousPage.StartCursor;
+            ZLTextWordCursor prevCursor = myPreviousPage.startCursor;
             if (prevCursor.isNull()) {
                 preparePaintInfo(myPreviousPage);
-                prevCursor = myPreviousPage.StartCursor;
+                prevCursor = myPreviousPage.startCursor;
             }
             if (!prevCursor.isNull()) {
                 current = prevCursor.isStartOfText() ? 2 : 3;
@@ -868,15 +876,15 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         total = current;
-        cursor = myCurrentPage.EndCursor;
+        cursor = myCurrentPage.endCursor;
         if (cursor.isNull()) {
             return new PagePosition(current, total);
         }
         if (!cursor.isEndOfText()) {
-            ZLTextWordCursor nextCursor = myNextPage.EndCursor;
+            ZLTextWordCursor nextCursor = myNextPage.endCursor;
             if (nextCursor.isNull()) {
                 preparePaintInfo(myNextPage);
-                nextCursor = myNextPage.EndCursor;
+                nextCursor = myNextPage.endCursor;
             }
             total += nextCursor.isEndOfText() ? 1 : 2;
         }
@@ -919,7 +927,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             wordIndex = 0;
         } else {
             preparePaintInfo(myCurrentPage);
-            final ZLTextWordCursor cursor = new ZLTextWordCursor(myCurrentPage.EndCursor);
+            final ZLTextWordCursor cursor = new ZLTextWordCursor(myCurrentPage.endCursor);
             cursor.moveToParagraph(paragraphIndex);
             wordIndex = cursor.getParagraphCursor().getParagraphLength();
         }
@@ -991,7 +999,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
                     // 文本位置信息
-                    final ZLTextPosition pos = new ZLTextFixedPosition(info.ParagraphCursor.index, wordIndex, 0);
+                    final ZLTextPosition pos = new ZLTextFixedPosition(info.ParagraphCursor.paragraphIdx, wordIndex, 0);
                     // 文本高亮信息
                     final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
                     // 高亮前景色
@@ -1049,7 +1057,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final int len = info.EndCharIndex - start;
             final ZLTextWord word = (ZLTextWord) paragraph.getElement(info.EndElementIndex);
             final ZLTextPosition pos =
-                    new ZLTextFixedPosition(info.ParagraphCursor.index, info.EndElementIndex, 0);
+                    new ZLTextFixedPosition(info.ParagraphCursor.paragraphIdx, info.EndElementIndex, 0);
             final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
             drawWord(
@@ -1081,8 +1089,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         result.setCursor(start);
         // 屏幕能显示的总高度
         int textAreaHeight = page.getTextHeight();
-        page.LineInfos.clear();
-        page.Column0Height = 0;
+        page.lineInfos.clear();
+        page.column0Height = 0;
         boolean nextParagraph;
         ZLTextLineInfo info = null;
         do {
@@ -1100,11 +1108,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // textAreaHeight递减，代表屏幕上能显示的总高度在不断减小
                 textAreaHeight -= info.Height + info.Descent;
                 // 当textAreaHeight < 0, 就代表屏幕y已经被填充满了
-                if (textAreaHeight < 0 && page.LineInfos.size() > page.Column0Height) {
-                    if (page.Column0Height == 0 && page.twoColumnView()) {
+                if (textAreaHeight < 0 && page.lineInfos.size() > page.column0Height) {
+                    if (page.column0Height == 0 && page.twoColumnView()) {
                         textAreaHeight = page.getTextHeight();
                         textAreaHeight -= info.Height + info.Descent;
-                        page.Column0Height = page.LineInfos.size();
+                        page.column0Height = page.lineInfos.size();
                     } else {
                         break;
                     }
@@ -1113,11 +1121,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 每一行的字就是下一行的第一个字
                 result.moveTo(info.EndElementIndex, info.EndCharIndex);
                 // 代表每一行的ZLTextLineInfo类将被加入到ZLTextPage类的LineInfos属性中去
-                page.LineInfos.add(info);
+                page.lineInfos.add(info);
                 if (textAreaHeight < 0) {
-                    if (page.Column0Height == 0 && page.twoColumnView()) {
+                    if (page.column0Height == 0 && page.twoColumnView()) {
                         textAreaHeight = page.getTextHeight();
-                        page.Column0Height = page.LineInfos.size();
+                        page.column0Height = page.lineInfos.size();
                     } else {
                         break;
                     }
@@ -1126,14 +1134,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
             // 如果当前段落的内容被全部读完时，代码就自动定位到下一个段落
             nextParagraph = result.isEndOfParagraph() && result.nextParagraph();
             if (nextParagraph && result.getParagraphCursor().isEndOfSection()) {
-                if (page.Column0Height == 0 && page.twoColumnView() && !page.LineInfos.isEmpty()) {
+                if (page.column0Height == 0 && page.twoColumnView() && !page.lineInfos.isEmpty()) {
                     textAreaHeight = page.getTextHeight();
-                    page.Column0Height = page.LineInfos.size();
+                    page.column0Height = page.lineInfos.size();
                 }
             }
         } while (nextParagraph && textAreaHeight >= 0 &&
                 (!result.getParagraphCursor().isEndOfSection() ||
-                        page.LineInfos.size() == page.Column0Height)
+                        page.lineInfos.size() == page.column0Height)
         );
         resetTextStyle();
     }
@@ -1441,7 +1449,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         fx += info.LeftIndent;
 
         final ZLTextParagraphCursor paragraph = info.ParagraphCursor;
-        final int paragraphIndex = paragraph.index;
+        final int paragraphIndex = paragraph.paragraphIdx;
         // 获取当前行最后一个字的位置
         final int endElementIndex = info.EndElementIndex;
         int charIndex = info.RealStartCharIndex;
@@ -1550,8 +1558,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         preparePaintInfo(myCurrentPage);
         myPreviousPage.reset();
         myNextPage.reset();
-        if (myCurrentPage.PaintState == PaintStateEnum.READY) {
-            myCurrentPage.PaintState = forward ? PaintStateEnum.TO_SCROLL_FORWARD : PaintStateEnum.TO_SCROLL_BACKWARD;
+        if (myCurrentPage.paintState == PaintStateEnum.READY) {
+            myCurrentPage.paintState = forward ? PaintStateEnum.TO_SCROLL_FORWARD : PaintStateEnum.TO_SCROLL_BACKWARD;
             myScrollingMode = scrollingMode;
             myOverlappingValue = value;
         }
@@ -1603,22 +1611,22 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         page.setSize(getTextColumnWidth(), getTextAreaHeight(), twoColumnView(), page == myPreviousPage);
 
-        if (page.PaintState == PaintStateEnum.NOTHING_TO_PAINT || page.PaintState == PaintStateEnum.READY) {
+        if (page.paintState == PaintStateEnum.NOTHING_TO_PAINT || page.paintState == PaintStateEnum.READY) {
             return;
         }
 
-        final int oldState = page.PaintState;
+        final int oldState = page.paintState;
 
-        for (ZLTextLineInfo info : page.LineInfos) {
+        for (ZLTextLineInfo info : page.lineInfos) {
             myLineInfoCache.put(info, info);
         }
 
-        switch (page.PaintState) {
+        switch (page.paintState) {
             default:
                 break;
             case PaintStateEnum.TO_SCROLL_FORWARD:
                 // 滑动到下一页
-                if (!page.EndCursor.isEndOfText()) {
+                if (!page.endCursor.isEndOfText()) {
                     // 起始游标
                     final ZLTextWordCursor startCursor = new ZLTextWordCursor();
                     switch (myScrollingMode) {
@@ -1638,75 +1646,75 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             break;
                     }
 
-                    if (!startCursor.isNull() && startCursor.samePositionAs(page.StartCursor)) {
+                    if (!startCursor.isNull() && startCursor.samePositionAs(page.startCursor)) {
                         page.findLineFromStart(startCursor, 1);
                     }
 
                     if (!startCursor.isNull()) {
                         final ZLTextWordCursor endCursor = new ZLTextWordCursor();
                         buildInfos(page, startCursor, endCursor);
-                        if (!page.isEmptyPage() && (myScrollingMode != ScrollingMode.KEEP_LINES || !endCursor.samePositionAs(page.EndCursor))) {
-                            page.StartCursor.setCursor(startCursor);
-                            page.EndCursor.setCursor(endCursor);
+                        if (!page.isEmptyPage() && (myScrollingMode != ScrollingMode.KEEP_LINES || !endCursor.samePositionAs(page.endCursor))) {
+                            page.startCursor.setCursor(startCursor);
+                            page.endCursor.setCursor(endCursor);
                             break;
                         }
                     }
 
-                    page.StartCursor.setCursor(page.EndCursor);
-                    buildInfos(page, page.StartCursor, page.EndCursor);
+                    page.startCursor.setCursor(page.endCursor);
+                    buildInfos(page, page.startCursor, page.endCursor);
                 }
                 break;
             case PaintStateEnum.TO_SCROLL_BACKWARD:
-                if (!page.StartCursor.isStartOfText()) {
+                if (!page.startCursor.isStartOfText()) {
                     switch (myScrollingMode) {
                         case ScrollingMode.NO_OVERLAPPING:
-                            page.StartCursor.setCursor(findStartOfPrevousPage(page, page.StartCursor));
+                            page.startCursor.setCursor(findStartOfPreviousPage(page, page.startCursor));
                             break;
                         case ScrollingMode.KEEP_LINES: {
                             ZLTextWordCursor endCursor = new ZLTextWordCursor();
                             page.findLineFromStart(endCursor, myOverlappingValue);
-                            if (!endCursor.isNull() && endCursor.samePositionAs(page.EndCursor)) {
+                            if (!endCursor.isNull() && endCursor.samePositionAs(page.endCursor)) {
                                 page.findLineFromEnd(endCursor, 1);
                             }
                             if (!endCursor.isNull()) {
-                                ZLTextWordCursor startCursor = findStartOfPrevousPage(page, endCursor);
-                                if (startCursor.samePositionAs(page.StartCursor)) {
-                                    page.StartCursor.setCursor(findStartOfPrevousPage(page, page.StartCursor));
+                                ZLTextWordCursor startCursor = findStartOfPreviousPage(page, endCursor);
+                                if (startCursor.samePositionAs(page.startCursor)) {
+                                    page.startCursor.setCursor(findStartOfPreviousPage(page, page.startCursor));
                                 } else {
-                                    page.StartCursor.setCursor(startCursor);
+                                    page.startCursor.setCursor(startCursor);
                                 }
                             } else {
-                                page.StartCursor.setCursor(findStartOfPrevousPage(page, page.StartCursor));
+                                page.startCursor.setCursor(findStartOfPreviousPage(page, page.startCursor));
                             }
                             break;
                         }
                         case ScrollingMode.SCROLL_LINES:
-                            page.StartCursor.setCursor(findStart(page, page.StartCursor, SizeUnit.LINE_UNIT, myOverlappingValue));
+                            page.startCursor.setCursor(findStart(page, page.startCursor, SizeUnit.LINE_UNIT, myOverlappingValue));
                             break;
                         case ScrollingMode.SCROLL_PERCENTAGE:
-                            page.StartCursor.setCursor(findStart(page, page.StartCursor, SizeUnit.PIXEL_UNIT, page.getTextHeight() * myOverlappingValue / 100));
+                            page.startCursor.setCursor(findStart(page, page.startCursor, SizeUnit.PIXEL_UNIT, page.getTextHeight() * myOverlappingValue / 100));
                             break;
                     }
-                    buildInfos(page, page.StartCursor, page.EndCursor);
+                    buildInfos(page, page.startCursor, page.endCursor);
                     if (page.isEmptyPage()) {
-                        page.StartCursor.setCursor(findStart(page, page.StartCursor, SizeUnit.LINE_UNIT, 1));
-                        buildInfos(page, page.StartCursor, page.EndCursor);
+                        page.startCursor.setCursor(findStart(page, page.startCursor, SizeUnit.LINE_UNIT, 1));
+                        buildInfos(page, page.startCursor, page.endCursor);
                     }
                 }
                 break;
             case PaintStateEnum.START_IS_KNOWN:
-                if (!page.StartCursor.isNull()) {
-                    buildInfos(page, page.StartCursor, page.EndCursor);
+                if (!page.startCursor.isNull()) {
+                    buildInfos(page, page.startCursor, page.endCursor);
                 }
                 break;
             case PaintStateEnum.END_IS_KNOWN:
-                if (!page.EndCursor.isNull()) {
-                    page.StartCursor.setCursor(findStartOfPrevousPage(page, page.EndCursor));
-                    buildInfos(page, page.StartCursor, page.EndCursor);
+                if (!page.endCursor.isNull()) {
+                    page.startCursor.setCursor(findStartOfPreviousPage(page, page.endCursor));
+                    buildInfos(page, page.startCursor, page.endCursor);
                 }
                 break;
         }
-        page.PaintState = PaintStateEnum.READY;
+        page.paintState = PaintStateEnum.READY;
 
         myLineInfoCache.clear();
 
@@ -1779,7 +1787,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
     }
 
-    private ZLTextWordCursor findStartOfPrevousPage(ZLTextPage page, ZLTextWordCursor end) {
+    private ZLTextWordCursor findStartOfPreviousPage(ZLTextPage page, ZLTextWordCursor end) {
         if (twoColumnView()) {
             end = findStart(page, end, SizeUnit.PIXEL_UNIT, page.getTextHeight());
         }
@@ -1958,7 +1966,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return page.TextElementMap.getRegion(myOutlinedRegionSoul);
     }
 
-    public ZLTextParagraphCursor cursor(int index) {
+    public ZLTextParagraphCursor getParagraphCursor(int index) {
         Timber.v("渲染流程, 段落号 = %s", index);
         return myCursorManager.get(index);
     }
@@ -1969,7 +1977,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * @param cursor 该页的StartCursor
      * @return 该页章节名
      */
-    protected abstract String getTOCText(ZLTextWordCursor cursor);
+    protected abstract String getTocText(ZLTextWordCursor cursor);
 
     protected abstract ZLColor getExtraColor();
 

@@ -39,7 +39,11 @@ final class CursorManager extends LruCache<Integer, ZLTextParagraphCursor> {
 
 	/**
 	 * LRU value的创建方法
-	 * @param index key
+	 *
+	 * 一组p标签就代表一个段落(Paragraph),
+	 * ZLTextParagraphCursor对应一个paragraph的解析信息
+	 *
+	 * @param index 缓存解析文件的index
 	 */
 	@Override
 	protected ZLTextParagraphCursor create(@NonNull Integer index) {

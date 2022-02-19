@@ -122,7 +122,7 @@ public class TTSHelper implements TTSReader {
             // 文字游标
             final ZLTextWordCursor cursor = new ZLTextWordCursor(zlTextParagraphCursor);
             // 段落索引
-            pIndex = zlTextParagraphCursor.index;
+            pIndex = zlTextParagraphCursor.paragraphIdx;
             // 开始元素位置索引
             startEIndex = cursor.getElementIndex();
 
@@ -194,7 +194,7 @@ public class TTSHelper implements TTSReader {
         if (zlTextParagraphCursor != null) {
             zlTextParagraphCursor = zlTextParagraphCursor.next();
             if (zlTextParagraphCursor != null) {
-                lastParagraphIndex = zlTextParagraphCursor.index;
+                lastParagraphIndex = zlTextParagraphCursor.paragraphIdx;
             }
         }
 

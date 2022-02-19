@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.model;
 
+import androidx.annotation.VisibleForTesting;
+
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 
 import java.io.File;
@@ -38,6 +40,7 @@ import timber.log.Timber;
 public final class CachedCharStorage {
 	// char数组里面的元素就代表一个.xhtml文件的文本信息与标签信息
 	// 每个char[]称为block
+	// 对应cpp中的mPool, 每个char[]在cpp中称为row
 	protected final ArrayList<WeakReference<char[]>> myArray = new ArrayList<>();
 
 	private final String myDirectoryName;
@@ -50,7 +53,7 @@ public final class CachedCharStorage {
 		myArray.addAll(Collections.nCopies(blocksNumber, new WeakReference<>(null)));
 	}
 
-	private String fileName(int index) {
+	private String makeFileName(int index) {
 		return myDirectoryName + index + myFileExtension;
 	}
 
@@ -59,7 +62,7 @@ public final class CachedCharStorage {
 	}
 
 	private String exceptionMessage(int index, String extra) {
-		final StringBuilder buffer = new StringBuilder("Cannot read " + fileName(index));
+		final StringBuilder buffer = new StringBuilder("Cannot read " + makeFileName(index));
 		if (extra != null) {
 			buffer.append("; ").append(extra);
 		}
@@ -83,8 +86,8 @@ public final class CachedCharStorage {
 
 	/**
 	 * char数组的长度最长不会超过这个长度（65536），一旦超过这个长度，代码就会新建一个char数组，同时旧的数组会被持久化以便以后再用。
-	 * ”所以当前在内存中的char数组不一定会包含需要显示的数组，
-	 * 如果不包含需要显示的数组就需要根据ZLTextWritablePlainModel类的myStartEntryIndices属性找到对应的char数组
+	 * 所以当前在内存中的char数组不一定会包含需要显示的数组，
+	 * 如果不包含需要显示的数组就需要根据{@link ZLTextPlainModel}类的myStartEntryIndices属性找到对应的char数组
 	 *
 	 * 读取本地持久化数组的方法
 	 *
@@ -95,37 +98,38 @@ public final class CachedCharStorage {
 		if (index < 0 || index >= myArray.size()) {
 			return null;
 		}
-		char[] block = myArray.get(index).get();
+		char[] parseFileData = myArray.get(index).get();
 		// 如果当前内存中的char[]不包含需要显示的段落,
 		// 就从已经持久化的char[]中需找对应的那一个，读入内存
-		if (block == null) {
+		if (parseFileData == null) {
 			try {
-				File file = new File(fileName(index));
+				File file = new File(makeFileName(index));
 				Timber.v("解析缓存流程, 读取解析缓存: %s", file.getName());
 				int size = (int) file.length();
 				if (size < 0) {
 					throw new CachedCharStorageException(exceptionMessage(index, "size = " + size));
 				}
-				block = new char[size / 2];
+				parseFileData = new char[size / 2];
 				InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-16LE");
 				// 将指定的已经持久化的char[]读入内存block中
-				final int totalRead = reader.read(block);
-				if (totalRead != block.length) {
-					throw new CachedCharStorageException(exceptionMessage(index, "; " + totalRead + " != " + block.length));
+				final int totalRead = reader.read(parseFileData);
+				if (totalRead != parseFileData.length) {
+					throw new CachedCharStorageException(exceptionMessage(index, "; " + totalRead + " != " + parseFileData.length));
 				}
 				reader.close();
 
 				// 测试, 输出utf8解析文件缓存
-				outputDebugBlockFile(index, block.clone(), false);
+				outputDebugBlockFile(index, parseFileData.clone(), false);
 			} catch (IOException e) {
 				throw new CachedCharStorageException(exceptionMessage(index, null), e);
 			}
 			// 将读取的char[]缓存到myArray
-			myArray.set(index, new WeakReference<>(block));
+			myArray.set(index, new WeakReference<>(parseFileData));
 		}
-		return block;
+		return parseFileData;
 	}
 
+	@VisibleForTesting
 	private void outputDebugBlockFile(int index, char[] testBlock, boolean output) throws IOException {
 		if (!output) return;
 		String root = "/storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android";

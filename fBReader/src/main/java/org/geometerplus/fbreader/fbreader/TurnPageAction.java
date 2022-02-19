@@ -50,7 +50,7 @@ class TurnPageAction extends FBAction {
             final int x = (Integer) params[0];
             final int y = (Integer) params[1];
             Reader.getViewWidget().startAnimatedScrolling(
-                    myForward ? FBView.PageIndex.next : FBView.PageIndex.previous,
+                    myForward ? FBView.PageIndex.NEXT : FBView.PageIndex.PREV,
                     x, y,
                     preferences.Horizontal.getValue()
                             ? FBView.Direction.rightToLeft : FBView.Direction.up,
@@ -58,7 +58,7 @@ class TurnPageAction extends FBAction {
             );
         } else {
             Reader.getViewWidget().startAnimatedScrolling(
-                    myForward ? FBView.PageIndex.next : FBView.PageIndex.previous,
+                    myForward ? FBView.PageIndex.NEXT : FBView.PageIndex.PREV,
                     preferences.Horizontal.getValue()
                             ? FBView.Direction.rightToLeft : FBView.Direction.up,
                     preferences.AnimationSpeed.getValue()

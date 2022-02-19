@@ -32,14 +32,16 @@ import org.geometerplus.zlibrary.ui.android.view.animation.BitmapManager;
 /**
  * Bitmap管理（绘制后的图）的实现
  */
-final class BitmapManagerImpl implements BitmapManager {
+public final class BitmapManagerImpl implements BitmapManager {
 
     /**
      * 缓存Bitmap大小
      */
-    private final int SIZE = 4;
-    private final Bitmap[] myBitmaps = new Bitmap[SIZE];
-    private final ZLView.PageIndex[] myIndexes = new ZLView.PageIndex[SIZE];
+    private final int CACHE_SIZE = 4;
+    private final Bitmap[] myBitmaps = new Bitmap[CACHE_SIZE];
+    // 缓存4个pageIndex
+    // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
+    private final ZLView.PageIndex[] cachedPageIndexes = new ZLView.PageIndex[CACHE_SIZE];
 
     private int myWidth;
     private int myHeight;
@@ -60,9 +62,9 @@ final class BitmapManagerImpl implements BitmapManager {
         if (myWidth != w || myHeight != h) {
             myWidth = w;
             myHeight = h;
-            for (int i = 0; i < SIZE; ++i) {
+            for (int i = 0; i < CACHE_SIZE; ++i) {
                 myBitmaps[i] = null;
-                myIndexes[i] = null;
+                cachedPageIndexes[i] = null;
             }
             System.gc();
             System.gc();
@@ -77,13 +79,13 @@ final class BitmapManagerImpl implements BitmapManager {
      * @return 阅读器内容Bitmap
      */
     public Bitmap getBitmap(ZLView.PageIndex index) {
-        for (int i = 0; i < SIZE; ++i) {
-            if (index == myIndexes[i]) {
+        for (int i = 0; i < CACHE_SIZE; ++i) {
+            if (index == cachedPageIndexes[i]) {
                 return myBitmaps[i];
             }
         }
         final int iIndex = getInternalIndex(index);
-        myIndexes[iIndex] = index;
+        cachedPageIndexes[iIndex] = index;
 
         // 如果该位置的Bitmap为null就创建一个
         if (myBitmaps[iIndex] == null) {
@@ -127,11 +129,11 @@ final class BitmapManagerImpl implements BitmapManager {
      */
     @Override
     public void drawPreviewBitmap(Canvas canvas, int x, int y, ZLViewEnums.PageIndex index, Paint paint) {
-        Bitmap previousBitmap = getBitmap(ZLView.PageIndex.previous);
+        Bitmap previousBitmap = getBitmap(ZLView.PageIndex.PREV);
         int width = previousBitmap.getWidth();
         canvas.drawBitmap(previousBitmap, x / PreviewConfig.SCALE_VALUE - width - width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
-        canvas.drawBitmap(getBitmap(ZLView.PageIndex.current), x / PreviewConfig.SCALE_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
-        canvas.drawBitmap(getBitmap(ZLView.PageIndex.next), x / PreviewConfig.SCALE_VALUE + width + width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
+        canvas.drawBitmap(getBitmap(ZLView.PageIndex.CURRENT), x / PreviewConfig.SCALE_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
+        canvas.drawBitmap(getBitmap(ZLView.PageIndex.NEXT), x / PreviewConfig.SCALE_VALUE + width + width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
     }
 
     /**
@@ -141,14 +143,14 @@ final class BitmapManagerImpl implements BitmapManager {
      */
     private int getInternalIndex(ZLViewEnums.PageIndex index) {
         // 寻找没有存储内容的位置
-        for (int i = 0; i < SIZE; ++i) {
-            if (myIndexes[i] == null) {
+        for (int i = 0; i < CACHE_SIZE; ++i) {
+            if (cachedPageIndexes[i] == null) {
                 return i;
             }
         }
         // 如果没有，找一个不是当前的位置
-        for (int i = 0; i < SIZE; ++i) {
-            if (myIndexes[i] != ZLView.PageIndex.current && myIndexes[i] != ZLView.PageIndex.previous && myIndexes[i] != ZLView.PageIndex.next) {
+        for (int i = 0; i < CACHE_SIZE; ++i) {
+            if (cachedPageIndexes[i] != ZLView.PageIndex.CURRENT && cachedPageIndexes[i] != ZLView.PageIndex.PREV && cachedPageIndexes[i] != ZLView.PageIndex.NEXT) {
                 return i;
             }
         }
@@ -160,8 +162,8 @@ final class BitmapManagerImpl implements BitmapManager {
      * TODO: 需要精确rest（避免不必要的缓存失效）
      */
     void reset() {
-        for (int i = 0; i < SIZE; ++i) {
-            myIndexes[i] = null;
+        for (int i = 0; i < CACHE_SIZE; ++i) {
+            cachedPageIndexes[i] = null;
         }
     }
 
@@ -171,11 +173,11 @@ final class BitmapManagerImpl implements BitmapManager {
      * @param forward 是否向前
      */
     void shift(boolean forward) {
-        for (int i = 0; i < SIZE; ++i) {
-            if (myIndexes[i] == null) {
+        for (int i = 0; i < CACHE_SIZE; ++i) {
+            if (cachedPageIndexes[i] == null) {
                 continue;
             }
-            myIndexes[i] = forward ? myIndexes[i].getPrevious() : myIndexes[i].getNext();
+            cachedPageIndexes[i] = forward ? cachedPageIndexes[i].getPrevious() : cachedPageIndexes[i].getNext();
         }
     }
 }

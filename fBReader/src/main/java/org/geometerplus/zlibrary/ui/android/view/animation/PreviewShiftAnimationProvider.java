@@ -76,7 +76,7 @@ public final class PreviewShiftAnimationProvider extends SimpleAnimationProvider
     @Override
     protected void drawBitmapFrom(Canvas canvas, int x, int y, Paint paint) {
         if (isPreview()) {
-            myBitmapManager.drawPreviewBitmap(canvas, x, y, ZLViewEnums.PageIndex.current, paint);
+            myBitmapManager.drawPreviewBitmap(canvas, x, y, ZLViewEnums.PageIndex.CURRENT, paint);
         } else {
             super.drawBitmapFrom(canvas, x, y, paint);
         }

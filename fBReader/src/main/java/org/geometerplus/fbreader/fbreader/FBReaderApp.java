@@ -518,9 +518,9 @@ public final class FBReaderApp extends ZLApplication {
             Collection.saveBook(book);
             // 这一步干啥的????
             ZLTextHyphenator.Instance().load(book.getLanguage());
-            // 将xhtml文件需要显示的部分从char数组转换成一个有ZLTextElement组成的ArrayList
-            // 并且将图书定位到之前读过的位置: moveStartCursor
+            // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page
             BookTextView.setTextModel(Model.getTextModel());
+            // 阅读进度跳转
             gotoStoredPosition();
             setBookMarkHighlighting(BookTextView, null);
             setBookNoteHighlighting(BookTextView, null);
