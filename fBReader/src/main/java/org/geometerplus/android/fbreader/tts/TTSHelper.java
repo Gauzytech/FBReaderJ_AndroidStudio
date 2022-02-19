@@ -84,8 +84,8 @@ public class TTSHelper implements TTSReader {
     public void processText(int paragraphIndex) {
         // 无效判断
         if (myFBReaderApp == null || myFBReaderApp.getCurrentTOCElement() == null ||
-                myFBReaderApp.getCurrentTOCElement().getReference() == null || myFBReaderApp.Model == null ||
-                myFBReaderApp.Model.getTextModel() == null || myFBReaderApp.getTextView() == null ||
+                myFBReaderApp.getCurrentTOCElement().getReference() == null || myFBReaderApp.bookModel == null ||
+                myFBReaderApp.bookModel.getTextModel() == null || myFBReaderApp.getTextView() == null ||
                 myFBReaderApp.getTextView().getStartCursor() == null) {
             return;
         }
@@ -116,7 +116,7 @@ public class TTSHelper implements TTSReader {
         // 全章节的文字内容
         StringBuilder paragraphBuilder = new StringBuilder();
         // 段落游标
-        ZLTextParagraphCursor zlTextParagraphCursor = new ZLTextParagraphCursor(myFBReaderApp.Model.getTextModel(), paragraphIndex);
+        ZLTextParagraphCursor zlTextParagraphCursor = new ZLTextParagraphCursor(myFBReaderApp.bookModel.getTextModel(), paragraphIndex);
         // 如果不是章节结束就循环读取游标
         while (!zlTextParagraphCursor.isEndOfSection()) {
             // 文字游标

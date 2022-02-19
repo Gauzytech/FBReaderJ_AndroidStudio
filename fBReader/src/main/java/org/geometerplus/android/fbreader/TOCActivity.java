@@ -48,7 +48,7 @@ public class TOCActivity extends ListActivity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		final FBReaderApp fbreader = (FBReaderApp)ZLApplication.Instance();
-		final TOCTree root = fbreader.Model.TOCTree;
+		final TOCTree root = fbreader.bookModel.TOCTree;
 		myAdapter = new TOCAdapter(root);
 		TOCTree treeToSelect = fbreader.getCurrentTOCElement();
 		myAdapter.selectItem(treeToSelect);
@@ -118,7 +118,7 @@ public class TOCActivity extends ListActivity {
 				finish();
 				final FBReaderApp fbreader = (FBReaderApp)ZLApplication.Instance();
 				fbreader.addInvisibleBookmark();
-				fbreader.BookTextView.gotoPosition(reference.ParagraphIndex, 0, 0);
+				fbreader.bookTextView.gotoPosition(reference.ParagraphIndex, 0, 0);
 				fbreader.showBookTextView();
 				fbreader.storePosition();
 			}

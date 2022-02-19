@@ -122,9 +122,9 @@ public class SyncData {
 
 	private Map<String,Object> position2Map(ZLTextFixedPosition.WithTimestamp pos) {
 		final Map<String,Object> map = new HashMap<String,Object>();
-		map.put("para", pos.ParagraphIndex);
-		map.put("elmt", pos.ElementIndex);
-		map.put("char", pos.CharIndex);
+		map.put("para", pos.paragraphIndex);
+		map.put("elmt", pos.elementIndex);
+		map.put("char", pos.charIndex);
 		map.put("timestamp", pos.Timestamp);
 		return map;
 	}

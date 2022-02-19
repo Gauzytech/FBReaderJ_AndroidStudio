@@ -151,7 +151,7 @@ public final class FBView extends ZLTextView {
             ++index;
         }
         TOCTree treeToSelect = null;
-        for (TOCTree tree : myReader.Model.TOCTree) {
+        for (TOCTree tree : myReader.bookModel.TOCTree) {
             final TOCTree.Reference reference = tree.getReference();
             if (reference == null) {
                 continue;
@@ -836,7 +836,7 @@ public final class FBView extends ZLTextView {
                 context.clear(getBackgroundColor());
             }
 
-            final BookModel model = myReader.Model;
+            final BookModel model = myReader.bookModel;
             if (model == null) {
                 return;
             }
@@ -900,7 +900,7 @@ public final class FBView extends ZLTextView {
             final ColorProfile cProfile = myViewOptions.getColorProfile();
             context.clear(cProfile.FooterNGBackgroundOption.getValue());
 
-            final BookModel model = myReader.Model;
+            final BookModel model = myReader.bookModel;
             if (model == null) {
                 return;
             }

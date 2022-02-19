@@ -244,9 +244,9 @@ public final class Bookmark extends ZLTextFixedPosition {
     // not equals, we do not compare ids
     boolean sameAs(Bookmark other) {
         return
-                ParagraphIndex == other.ParagraphIndex &&
-                        ElementIndex == other.ElementIndex &&
-                        CharIndex == other.CharIndex &&
+                paragraphIndex == other.paragraphIndex &&
+                        elementIndex == other.elementIndex &&
+                        charIndex == other.charIndex &&
                         ComparisonUtil.equal(myText, other.myText);
     }
 

@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+
 public final class ZLTextElementArea extends ZLTextFixedPosition {
 	public final int XStart;
 	public final int XEnd;
@@ -57,14 +59,15 @@ public final class ZLTextElementArea extends ZLTextFixedPosition {
 	}
 
 	boolean isFirstInElement() {
-		return CharIndex == 0;
+		return charIndex == 0;
 	}
 
 	boolean isLastInElement() {
 		return myIsLastInElement;
 	}
 
-	@Override
+	@NonNull
+    @Override
 	public String toString() {
 		return "ZLTextElementArea{" +
 				"XStart=" + XStart +

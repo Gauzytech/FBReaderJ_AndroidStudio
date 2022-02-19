@@ -290,15 +290,15 @@ abstract class ZLTextViewBase extends ZLView {
 
     int getAreaLength(ZLTextParagraphCursor paragraph, ZLTextElementArea area, int toCharIndex) {
         setTextStyle(area.Style);
-        final ZLTextWord word = (ZLTextWord) paragraph.getElement(area.ElementIndex);
-        int length = toCharIndex - area.CharIndex;
+        final ZLTextWord word = (ZLTextWord) paragraph.getElement(area.elementIndex);
+        int length = toCharIndex - area.charIndex;
         boolean selectHyphenationSign = false;
         if (length >= area.Length) {
             selectHyphenationSign = area.AddHyphenationSign;
             length = area.Length;
         }
         if (length > 0) {
-            return getWordWidth(word, area.CharIndex, length, selectHyphenationSign);
+            return getWordWidth(word, area.charIndex, length, selectHyphenationSign);
         }
         return 0;
     }

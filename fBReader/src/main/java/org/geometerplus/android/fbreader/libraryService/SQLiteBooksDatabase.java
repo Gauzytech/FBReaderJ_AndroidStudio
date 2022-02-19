@@ -1557,9 +1557,9 @@ final class SQLiteBooksDatabase extends BooksDatabase {
             SQLiteUtil.bindLong(statement, ++fieldCount, bookmark.getTimestamp(Bookmark.DateType.Modification));
             SQLiteUtil.bindLong(statement, ++fieldCount, bookmark.getTimestamp(Bookmark.DateType.Access));
             SQLiteUtil.bindString(statement, ++fieldCount, bookmark.ModelId);
-            statement.bindLong(++fieldCount, bookmark.ParagraphIndex);
-            statement.bindLong(++fieldCount, bookmark.ElementIndex);
-            statement.bindLong(++fieldCount, bookmark.CharIndex);
+            statement.bindLong(++fieldCount, bookmark.paragraphIndex);
+            statement.bindLong(++fieldCount, bookmark.elementIndex);
+            statement.bindLong(++fieldCount, bookmark.charIndex);
             final ZLTextPosition end = bookmark.getEnd();
             if (end != null) {
                 statement.bindLong(++fieldCount, end.getParagraphIndex());

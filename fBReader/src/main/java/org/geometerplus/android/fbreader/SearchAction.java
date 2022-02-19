@@ -32,7 +32,7 @@ class SearchAction extends FBAndroidAction {
 
     @Override
     public boolean isVisible() {
-        return Reader.Model != null;
+        return Reader.bookModel != null;
     }
 
     @Override

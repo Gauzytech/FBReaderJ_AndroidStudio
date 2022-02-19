@@ -68,13 +68,13 @@ public final class ZLTextRegion {
 		}
 
 		public final int compareTo(ZLTextElementArea area) {
-			if (ParagraphIndex != area.ParagraphIndex) {
-				return ParagraphIndex < area.ParagraphIndex ? -1 : 1;
+			if (ParagraphIndex != area.paragraphIndex) {
+				return ParagraphIndex < area.paragraphIndex ? -1 : 1;
 			}
-			if (EndElementIndex < area.ElementIndex) {
+			if (EndElementIndex < area.elementIndex) {
 				return -1;
 			}
-			if (StartElementIndex > area.ElementIndex) {
+			if (StartElementIndex > area.elementIndex) {
 				return 1;
 			}
 			return 0;

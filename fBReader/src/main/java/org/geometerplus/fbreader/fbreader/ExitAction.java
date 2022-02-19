@@ -26,7 +26,7 @@ class ExitAction extends FBAction {
 
 	@Override
 	protected void run(Object ... params) {
-		if (Reader.getCurrentView() != Reader.BookTextView) {
+		if (Reader.getCurrentView() != Reader.bookTextView) {
 			Reader.showBookTextView();
 		} else {
 			Reader.closeWindow();

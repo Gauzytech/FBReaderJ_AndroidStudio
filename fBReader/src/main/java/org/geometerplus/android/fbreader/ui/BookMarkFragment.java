@@ -82,7 +82,7 @@ public class BookMarkFragment extends BaseFragment implements IBookCollection.Li
 
         final FBReaderApp fbReader = (FBReaderApp) ZLApplication.Instance();
         // 获取目录索引树
-        root = fbReader.Model.TOCTree;
+        root = fbReader.bookModel.TOCTree;
     }
 
     @Override
@@ -288,7 +288,7 @@ public class BookMarkFragment extends BaseFragment implements IBookCollection.Li
                     final int position = Collections.binarySearch(myBookmarksList, b, myComparator);
                     if (position < 0) {
                         // 查询章节标题，并设置
-                        String tocText = getTocText(b.ParagraphIndex);
+                        String tocText = getTocText(b.paragraphIndex);
                         b.setTocText(tocText);
                         myBookmarksList.add(-position - 1, b);
                     }

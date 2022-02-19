@@ -19,7 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
-import javax.annotation.Nonnull;
+import androidx.annotation.NonNull;
+
 
 /**
  * 文本固定位置
@@ -29,38 +30,38 @@ public class ZLTextFixedPosition extends ZLTextPosition {
     /**
      * 段落索引
      */
-    public final int ParagraphIndex;
+    public final int paragraphIndex;
     /**
      * 元素索引
      */
-    public final int ElementIndex;
+    public final int elementIndex;
     /**
      * 字符索引
      */
-    public final int CharIndex;
+    public final int charIndex;
 
     public ZLTextFixedPosition(int paragraphIndex, int elementIndex, int charIndex) {
-        ParagraphIndex = paragraphIndex;
-        ElementIndex = elementIndex;
-        CharIndex = charIndex;
+        this.paragraphIndex = paragraphIndex;
+        this.elementIndex = elementIndex;
+        this.charIndex = charIndex;
     }
 
     public ZLTextFixedPosition(ZLTextPosition position) {
-        ParagraphIndex = position.getParagraphIndex();
-        ElementIndex = position.getElementIndex();
-        CharIndex = position.getCharIndex();
+        this.paragraphIndex = position.getParagraphIndex();
+        this.elementIndex = position.getElementIndex();
+        this.charIndex = position.getCharIndex();
     }
 
     public final int getParagraphIndex() {
-        return ParagraphIndex;
+        return paragraphIndex;
     }
 
     public final int getElementIndex() {
-        return ElementIndex;
+        return elementIndex;
     }
 
     public final int getCharIndex() {
-        return CharIndex;
+        return charIndex;
     }
 
     /**
@@ -75,10 +76,15 @@ public class ZLTextFixedPosition extends ZLTextPosition {
             Timestamp = stamp != null ? stamp : -1;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String toString() {
-            return super.toString() + "; timestamp = " + Timestamp;
+            return "WithTimestamp{" +
+                    "ParagraphIndex=" + paragraphIndex +
+                    ", ElementIndex=" + elementIndex +
+                    ", CharIndex=" + charIndex +
+                    ", Timestamp=" + Timestamp +
+                    '}';
         }
     }
 }
