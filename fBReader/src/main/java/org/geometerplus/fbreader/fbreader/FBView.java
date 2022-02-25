@@ -260,7 +260,7 @@ public final class FBView extends ZLTextView {
     }
 
     @Override
-    public boolean twoColumnView() {
+    public boolean isTwoColumnView() {
         return getContextHeight() <= getContextWidth() && myViewOptions.TwoColumnView.getValue();
     }
 

@@ -20,51 +20,51 @@
 package org.geometerplus.zlibrary.text.view;
 
 final class ZLTextLineInfo {
-	final ZLTextParagraphCursor ParagraphCursor;
-	final int ParagraphCursorLength;
+	final ZLTextParagraphCursor paragraphCursor;
+	final int paragraphCursorLength;
 
-	final int StartElementIndex;
-	final int StartCharIndex;
+	final int startElementIndex;
+	final int startCharIndex;
 	// 代表每一行第一个字在ArrayList中的位置
-	int RealStartElementIndex;
-	int RealStartCharIndex;
+	int realStartElementIndex;
+	int realStartCharIndex;
 	// 代表每一行最后一个字在ArrayList中的位置
-	int EndElementIndex;
-	int EndCharIndex;
+	int endElementIndex;
+	int endCharIndex;
 
-	boolean IsVisible;
-	int LeftIndent;
-	int Width;
-	int Height;
-	int Descent;
+	boolean isVisible;
+	int leftIndent;
+	int width;
+	int height;
+	int descent;
 	int VSpaceBefore;
 	int VSpaceAfter;
-	boolean PreviousInfoUsed;
-	int SpaceCounter;
-	ZLTextStyle StartStyle;
+	boolean previousInfoUsed;
+	int spaceCounter;
+	ZLTextStyle startStyle;
 
 	ZLTextLineInfo(ZLTextParagraphCursor paragraphCursor, int elementIndex, int charIndex, ZLTextStyle style) {
-		ParagraphCursor = paragraphCursor;
-		ParagraphCursorLength = paragraphCursor.getParagraphLength();
+		this.paragraphCursor = paragraphCursor;
+		this.paragraphCursorLength = paragraphCursor.getParagraphLength();
 
-		StartElementIndex = elementIndex;
-		StartCharIndex = charIndex;
-		RealStartElementIndex = elementIndex;
-		RealStartCharIndex = charIndex;
-		EndElementIndex = elementIndex;
-		EndCharIndex = charIndex;
+		this.startElementIndex = elementIndex;
+		this.startCharIndex = charIndex;
+		this.realStartElementIndex = elementIndex;
+		this.realStartCharIndex = charIndex;
+		this.endElementIndex = elementIndex;
+		this.endCharIndex = charIndex;
 
-		StartStyle = style;
+		this.startStyle = style;
 	}
 
 	boolean isEndOfParagraph() {
-		return EndElementIndex == ParagraphCursorLength;
+		return endElementIndex == paragraphCursorLength;
 	}
 
 	void adjust(ZLTextLineInfo previous) {
-		if (!PreviousInfoUsed && previous != null) {
-			Height -= Math.min(previous.VSpaceAfter, VSpaceBefore);
-			PreviousInfoUsed = true;
+		if (!previousInfoUsed && previous != null) {
+			height -= Math.min(previous.VSpaceAfter, VSpaceBefore);
+			previousInfoUsed = true;
 		}
 	}
 
@@ -72,13 +72,37 @@ final class ZLTextLineInfo {
 	public boolean equals(Object o) {
 		ZLTextLineInfo info = (ZLTextLineInfo)o;
 		return
-			(ParagraphCursor == info.ParagraphCursor) &&
-			(StartElementIndex == info.StartElementIndex) &&
-			(StartCharIndex == info.StartCharIndex);
+			(paragraphCursor == info.paragraphCursor) &&
+			(startElementIndex == info.startElementIndex) &&
+			(startCharIndex == info.startCharIndex);
 	}
 
 	@Override
 	public int hashCode() {
-		return ParagraphCursor.hashCode() + StartElementIndex + 239 * StartCharIndex;
+		return paragraphCursor.hashCode() + startElementIndex + 239 * startCharIndex;
+	}
+
+	@Override
+	public String toString() {
+		return "ZLTextLineInfo{" +
+				"paragraphCursor=" + paragraphCursor +
+				", paragraphCursorLength=" + paragraphCursorLength +
+				", startElementIndex=" + startElementIndex +
+				", startCharIndex=" + startCharIndex +
+				", realStartElementIndex=" + realStartElementIndex +
+				", realStartCharIndex=" + realStartCharIndex +
+				", endElementIndex=" + endElementIndex +
+				", endCharIndex=" + endCharIndex +
+				", isVisible=" + isVisible +
+				", leftIndent=" + leftIndent +
+				", width=" + width +
+				", height=" + height +
+				", descent=" + descent +
+				", VSpaceBefore=" + VSpaceBefore +
+				", VSpaceAfter=" + VSpaceAfter +
+				", previousInfoUsed=" + previousInfoUsed +
+				", spaceCounter=" + spaceCounter +
+				", startStyle=" + startStyle +
+				'}';
 	}
 }

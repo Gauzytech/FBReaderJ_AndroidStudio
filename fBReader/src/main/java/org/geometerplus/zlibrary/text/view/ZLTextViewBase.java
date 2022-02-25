@@ -97,20 +97,20 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     protected int getColumnIndex(int x) {
-        if (!twoColumnView()) {
+        if (!isTwoColumnView()) {
             return -1;
         }
         return 2 * x <= getContextWidth() + getLeftMargin() - getRightMargin() ? 0 : 1;
     }
 
-    public abstract boolean twoColumnView();
+    public abstract boolean isTwoColumnView();
 
     public abstract int getLeftMargin();
 
     public abstract int getRightMargin();
 
     public int getTextColumnWidth() {
-        return twoColumnView()
+        return isTwoColumnView()
                 ? (getContextWidth() - getLeftMargin() - getSpaceBetweenColumns() - getRightMargin()) / 2
                 : getContextWidth() - getLeftMargin() - getRightMargin();
     }
@@ -123,6 +123,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     final void setTextStyle(ZLTextStyle style) {
+        Timber.v("style流程, 初始化style, %s", style);
         if (myTextStyle != style) {
             // ZLTextViewBase类的myTextStyle属性将指向代表基本样式的ZLTextBaseStyle类
             myTextStyle = style;
@@ -158,10 +159,9 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     boolean isStyleChangeElement(ZLTextElement element) {
-        return
-                element == ZLTextElement.StyleClose ||
-                        element instanceof ZLTextStyleElement ||
-                        element instanceof ZLTextControlElement;
+        return element == ZLTextElement.StyleClose ||
+                element instanceof ZLTextStyleElement ||
+                element instanceof ZLTextControlElement;
     }
 
     void applyStyleChangeElement(ZLTextElement element) {
@@ -175,7 +175,10 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
-    void applyStyleChanges(ZLTextParagraphCursor cursor, int index, int end) {
+    void applyStyleChanges(ZLTextParagraphCursor cursor, int index, int end, String from) {
+        if (from.equals("gotoPosition")) {
+            Timber.v("渲染流程lineInfo, 1.1 配置style, [%d, %d]", index, end);
+        }
         for (; index != end; ++index) {
             applyStyleChangeElement(cursor.getElement(index));
         }
@@ -278,8 +281,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     final int getWordWidth(ZLTextWord word, int start) {
-        return
-                start == 0 ?
+        return start == 0 ?
                         word.getWidth(getContext()) :
                         getContext().getStringWidth(word.Data, word.Offset + start, word.Length - start);
     }

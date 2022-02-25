@@ -91,9 +91,9 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		myFontManager = fontManager;
 
 
-		for (int i = 0; i < myStartEntryIndices.length; i++) {
-			Timber.v("渲染流程, 初始化, paragraphIdx = %d, ParseFile index = %d", i, myStartEntryIndices[i]);
-		}
+//		for (int i = 0; i < myStartEntryIndices.length; i++) {
+//			Timber.v("渲染流程, 初始化, paragraphIdx = %d, ParseFile index = %d", i, myStartEntryIndices[i]);
+//		}
 	}
 
 	public final String getId() {
@@ -281,7 +281,6 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		private short myFixedHSpaceLength;
 
 		EntryIteratorImpl(int paragraphIndex) {
-			Timber.v("渲染流程, iterator ParagraphIndex = %d", paragraphIndex);
 			reset(paragraphIndex);
 		}
 

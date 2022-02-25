@@ -67,7 +67,7 @@ public final class ZLTextParagraphCursor {
 		this.paragraphIdx = Math.min(paragraphIndex, textModel.getParagraphsNumber() - 1);
 		this.myElements = new ArrayList<>();
 
-		Timber.v("渲染流程, CursorManager index = %d, finalIdx = %d", paragraphIndex, this.paragraphIdx);
+		Timber.v("渲染流程, 初始化ParagraphCursor index = %d, finalIdx = %d", paragraphIndex, this.paragraphIdx);
 
 		// 从textModel中获得Index对应的段落
 		fillElements();
@@ -168,11 +168,10 @@ public final class ZLTextParagraphCursor {
 	}
 
 	ZLTextElement getElement(int index) {
-		try {
+		if (index >= 0 && index < myElements.size()) {
 			return myElements.get(index);
-		} catch (IndexOutOfBoundsException e) {
-			return null;
 		}
+		return null;
 	}
 
 	ZLTextParagraph getParagraph() {
@@ -182,7 +181,7 @@ public final class ZLTextParagraphCursor {
 	@NonNull
 	@Override
 	public String toString() {
-		return "ZLTextParagraphCursor [" + paragraphIdx + " (0.." + myElements.size() + ")]";
+		return "ZLTextParagraphCursor{paragraphIdx = " + paragraphIdx + " (0.." + myElements.size() + ")}";
 	}
 
 	private static final class Processor {
@@ -439,5 +438,4 @@ public final class ZLTextParagraphCursor {
 			return word;
 		}
 	}
-
 }

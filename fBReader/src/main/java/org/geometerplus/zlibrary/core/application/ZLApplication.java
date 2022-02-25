@@ -27,6 +27,8 @@ import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewWidget;
 
+import timber.log.Timber;
+
 public abstract class ZLApplication {
 
     public static ZLApplication Instance() {
@@ -51,8 +53,9 @@ public abstract class ZLApplication {
 
     protected final void setView(ZLView view) {
         if (view != null) {
-            myView = view;
+            this.myView = view;
             final ZLViewWidget widget = getViewWidget();
+            Timber.v("渲染流程:绘制, widget为空: %s", widget == null);
             if (widget != null) {
                 widget.reset();
                 widget.repaint();

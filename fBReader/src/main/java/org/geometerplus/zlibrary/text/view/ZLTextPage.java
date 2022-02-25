@@ -19,13 +19,20 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+
+import org.geometerplus.DebugStringHelper;
+
 import java.util.ArrayList;
+
+import timber.log.Timber;
+
 
 final class ZLTextPage {
 
     final ZLTextWordCursor startCursor = new ZLTextWordCursor();
     final ZLTextWordCursor endCursor = new ZLTextWordCursor();
-    final ArrayList<ZLTextLineInfo> lineInfos = new ArrayList<ZLTextLineInfo>();
+    final ArrayList<ZLTextLineInfo> lineInfos = new ArrayList<>();
     int column0Height;
     int paintState = PaintStateEnum.NOTHING_TO_PAINT;
 
@@ -85,9 +92,10 @@ final class ZLTextPage {
 
     /**
      * 直接移动到之前的阅读进度
-     *
+     * 阅读进度跳转使用
      */
     protected void moveStartCursor(int paragraphIndex, int wordIndex, int charIndex) {
+        Timber.v("渲染流程, currentPage更新阅读进度, 当前endCursor = %s, startCursor == null[%s], lineInfo = %d", endCursor, startCursor.isNull(), lineInfos.size());
         if (startCursor.isNull()) {
             startCursor.setCursor(endCursor);
         }
@@ -128,7 +136,7 @@ final class ZLTextPage {
 
     protected boolean isEmptyPage() {
         for (ZLTextLineInfo info : lineInfos) {
-            if (info.IsVisible) {
+            if (info.isVisible) {
                 return false;
             }
         }
@@ -143,15 +151,15 @@ final class ZLTextPage {
         ZLTextLineInfo info = null;
         for (ZLTextLineInfo i : lineInfos) {
             info = i;
-            if (info.IsVisible) {
+            if (info.isVisible) {
                 --overlappingValue;
                 if (overlappingValue == 0) {
                     break;
                 }
             }
         }
-        cursor.setCursor(info.ParagraphCursor);
-        cursor.moveTo(info.EndElementIndex, info.EndCharIndex);
+        cursor.setCursor(info.paragraphCursor);
+        cursor.moveTo(info.endElementIndex, info.endCharIndex);
     }
 
     protected void findLineFromEnd(ZLTextWordCursor cursor, int overlappingValue) {
@@ -164,15 +172,15 @@ final class ZLTextPage {
         ZLTextLineInfo info = null;
         for (int i = size - 1; i >= 0; --i) {
             info = infos.get(i);
-            if (info.IsVisible) {
+            if (info.isVisible) {
                 --overlappingValue;
                 if (overlappingValue == 0) {
                     break;
                 }
             }
         }
-        cursor.setCursor(info.ParagraphCursor);
-        cursor.moveTo(info.StartElementIndex, info.StartCharIndex);
+        cursor.setCursor(info.paragraphCursor);
+        cursor.moveTo(info.startElementIndex, info.startCharIndex);
     }
 
     protected void findPercentFromStart(ZLTextWordCursor cursor, int percent) {
@@ -185,15 +193,31 @@ final class ZLTextPage {
         ZLTextLineInfo info = null;
         for (ZLTextLineInfo i : lineInfos) {
             info = i;
-            if (info.IsVisible) {
+            if (info.isVisible) {
                 visibleLineOccured = true;
             }
-            height -= info.Height + info.Descent + info.VSpaceAfter;
+            height -= info.height + info.descent + info.VSpaceAfter;
             if (visibleLineOccured && (height <= 0)) {
                 break;
             }
         }
-        cursor.setCursor(info.ParagraphCursor);
-        cursor.moveTo(info.EndElementIndex, info.EndCharIndex);
+        cursor.setCursor(info.paragraphCursor);
+        cursor.moveTo(info.endElementIndex, info.endCharIndex);
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "ZLTextPage{" +
+                "startCursor=" + startCursor +
+                ", endCursor=" + endCursor +
+                ", lineInfos=" + lineInfos +
+                ", column0Height=" + column0Height +
+                ", paintState=" + DebugStringHelper.getPatinStateStr(paintState) +
+                ", TextElementMap=" + TextElementMap +
+                ", myColumnWidth=" + myColumnWidth +
+                ", myHeight=" + myHeight +
+                ", myTwoColumnView=" + myTwoColumnView +
+                '}';
     }
 }

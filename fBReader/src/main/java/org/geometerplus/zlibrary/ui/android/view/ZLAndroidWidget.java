@@ -57,6 +57,8 @@ import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import timber.log.Timber;
+
 public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLongClickListener {
 
     // 放大镜的半径
@@ -191,11 +193,18 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public void reset() {
+        Timber.v("渲染流程, 清空bitmap缓存");
         myBitmapManager.reset();
     }
 
     @Override
     public void repaint() {
+        Timber.v("渲染流程:绘制, 刷新view");
+        // 不是每次都会执行onDraw()
+        // 不执行原因
+        //1.自定义的View所在的布局中,自定义View计算不出位置.
+        //2.确定不了View宽和高
+        //3.在onMeasure()方法中没设置控件的宽和高
         postInvalidate();
     }
 
@@ -387,7 +396,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     private void onDrawStatic(final Canvas canvas) {
-
+        Timber.v("渲染流程:绘制, 非翻页绘制, isPreview = %s", isPreview);
         if (isPreview) {
             canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
             // 绘制边框
@@ -487,7 +496,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     protected void onDraw(final Canvas canvas) {
-
+        Timber.v("渲染流程:绘制, 开始绘制 >>>>>>>>>>>>>>>>>>>>>>>");
         canvas.setDrawFilter(paintFlagsDrawFilter);
 
         // 画布缩放

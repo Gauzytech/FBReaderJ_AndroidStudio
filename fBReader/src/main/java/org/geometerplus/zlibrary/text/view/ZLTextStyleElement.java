@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+
 import org.geometerplus.zlibrary.text.model.ZLTextStyleEntry;
 
 public class ZLTextStyleElement extends ZLTextElement {
@@ -28,6 +30,7 @@ public class ZLTextStyleElement extends ZLTextElement {
 		Entry = entry;
 	}
 
+	@NonNull
 	@Override
 	public String toString() {
 		return "ZLTextStyleElement{" +

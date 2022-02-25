@@ -523,14 +523,19 @@ public final class FBReaderApp extends ZLApplication {
             bookTextView.setTextModel(bookModel.getTextModel());
             // 阅读进度跳转 todo
             gotoStoredPosition();
+            // 书签
             setBookMarkHighlighting(bookTextView, null);
+            // 笔记
             setBookNoteHighlighting(bookTextView, null);
             if (bookmark == null) {
                 setView(bookTextView);
             } else {
                 gotoBookmark(bookmark, false);
             }
+
+            // 将图书添加到"最近阅读"
             Collection.addToRecentlyOpened(book);
+
             // 将author append到书名title后面
             final StringBuilder title = new StringBuilder(book.getTitle());
             if (!book.authors().isEmpty()) {
