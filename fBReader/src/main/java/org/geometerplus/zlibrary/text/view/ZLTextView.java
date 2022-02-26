@@ -447,15 +447,15 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     @Override
-    public synchronized void paint(ZLPaintContext context, PageIndex pageIndex) {
+    public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
         Timber.v("渲染流程:绘制, 在bitMap上绘制, pageIndex = %s", pageIndex.name());
-        setContext(context);
+        setContext(paintContext);
         // 绘制背景
         final ZLFile wallpaper = getWallpaperFile();
         if (wallpaper != null) {
-            context.clear(wallpaper, getFillMode());
+            paintContext.clear(wallpaper, getFillMode());
         } else {
-            context.clear(getBackgroundColor());
+            paintContext.clear(getBackgroundColor());
         }
 
         if (myTextModel == null) {
@@ -502,7 +502,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return;
         }
 
-        final ArrayList<ZLTextLineInfo> lineInfoList = page.lineInfos;
+        final List<ZLTextLineInfo> lineInfoList = page.lineInfos;
         final int[] labels = new int[lineInfoList.size() + 1];
         int x = getLeftMargin();
         int y = getTopMargin();
@@ -527,7 +527,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             previousInfo = info;
         }
 
-        // 绘制高亮
+        // 笔记效果: 计算需要高亮的文字
+        // 长按选中效果见findHighlightingList()
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page);
 
         for (ZLTextHighlighting h : highlightingList) {
@@ -535,13 +536,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             final ZLColor bgColor = h.getBackgroundColor();
             if (bgColor != null) {
-                context.setFillColor(bgColor);
+                paintContext.setFillColor(bgColor);
                 mode |= Hull.DrawMode.Fill;
             }
 
             final ZLColor outlineColor = h.getOutlineColor();
             if (outlineColor != null) {
-                context.setLineColor(outlineColor);
+                paintContext.setLineColor(outlineColor);
                 mode |= Hull.DrawMode.Outline;
             }
 
@@ -552,41 +553,44 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         x = getLeftMargin();
         y = getTopMargin();
-        index = 0;
-        for (ZLTextLineInfo info : lineInfoList) {
+        for (int i = 0; i < lineInfoList.size(); i++) {
+            ZLTextLineInfo info = lineInfoList.get(i);
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
-            drawTextLine(page, highlightingList, info, labels[index], labels[index + 1]);
+            // 将文字内容和高亮一起绘制
+            drawTextLine(page, highlightingList, info, labels[i], labels[i + 1]);
             y += info.height + info.descent + info.VSpaceAfter;
-            ++index;
-            if (index == page.column0Height) {
+            if (i + 1 == page.column0Height) {
                 y = getTopMargin();
                 x += page.getTextWidth() + getSpaceBetweenColumns();
             }
         }
 
+        // 绘制outline ????没发现效果
         final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
         if (outlinedElementRegion != null && myShowOutline) {
-            context.setLineColor(getSelectionBackgroundColor());
-            outlinedElementRegion.hull().draw(context, Hull.DrawMode.Outline);
+            paintContext.setLineColor(getSelectionBackgroundColor());
+            outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
         }
 
         // 绘制选中的左右光标
-        drawSelectionCursor(context, page, SelectionCursor.Which.Left);
-        drawSelectionCursor(context, page, SelectionCursor.Which.Right);
+        drawSelectionCursor(paintContext, page, SelectionCursor.Which.Left);
+        drawSelectionCursor(paintContext, page, SelectionCursor.Which.Right);
 
-        // 绘制头部（章节标题）
-        context.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
+        // 左上角标题效果: 绘制头部（章节标题）
+        paintContext.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
+        paintContext.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
+        // 右下角总页码效果: 绘制底部（总页码）
+        // TODO: 总页码计算不准确
         String progressText = getPageProgress();
-        context.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
-        int footerX = getContextWidth() - getRightMargin() - context.getExtraStringWidth(progressText);
+        int footerX = getContextWidth() - getRightMargin() - paintContext.getExtraStringWidth(progressText);
         int footerY = (int) (getTopMargin() + getTextAreaHeight() + getBottomMargin() / 1.3);
-        context.drawFooter(footerX, footerY, progressText);
+        paintContext.drawFooter(footerX, footerY, progressText);
 
-        // 绘制书签
+        // 书签效果: 绘制书签
         final List<ZLTextHighlighting> bookMarkList = findBookMarkList(page);
-        context.setFillColor(getBookMarkColor());
+        paintContext.setFillColor(getBookMarkColor());
         if (!bookMarkList.isEmpty()) {
-            context.drawBookMark(getContextWidth() - 100, 0, getContextWidth() - 60, 90);
+            paintContext.drawBookMark(getContextWidth() - 100, 0, getContextWidth() - 60, 90);
         }
     }
 
@@ -956,9 +960,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     private List<ZLTextHighlighting> findHighlightingList(ZLTextPage page) {
         final LinkedList<ZLTextHighlighting> highlightingList = new LinkedList<>();
+        // 长按选中高亮效果
         if (mySelection.intersects(page)) {
             highlightingList.add(mySelection);
         }
+        // 笔记高亮效果
         synchronized (myHighlightingList) {
             for (ZLTextHighlighting h : myHighlightingList) {
                 if (h.intersects(page)) {

@@ -202,9 +202,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         Timber.v("渲染流程:绘制, 刷新view");
         // 不是每次都会执行onDraw()
         // 不执行原因
-        //1.自定义的View所在的布局中,自定义View计算不出位置.
-        //2.确定不了View宽和高
-        //3.在onMeasure()方法中没设置控件的宽和高
+        // 1. 自定义的View所在的布局中,自定义View计算不出位置.
+        // 2. 确定不了View宽和高
+        // 3. 在onMeasure()方法中没设置控件的宽和高
+        // onDraw调用需要两个条件，
+        // 1，View背景不透明
+        // 2，View高宽不为0
         postInvalidate();
     }
 
