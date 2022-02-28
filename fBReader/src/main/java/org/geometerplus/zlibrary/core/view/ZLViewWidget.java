@@ -28,7 +28,7 @@ public interface ZLViewWidget {
 	 * @see BitmapManagerImpl
 	 */
 	void reset();
-	void repaint();
+	void repaint(String from);
 
 	void startManualScrolling(int x, int y, ZLView.Direction direction);
 	void scrollManuallyTo(int x, int y);

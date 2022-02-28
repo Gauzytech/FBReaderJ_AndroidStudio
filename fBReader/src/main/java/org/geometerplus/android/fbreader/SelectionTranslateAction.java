@@ -48,7 +48,7 @@ public class SelectionTranslateAction extends FBAndroidAction {
 			new Runnable() {
 				public void run() {
 					fbview.addHighlighting(dictionaryHilite);
-					Reader.getViewWidget().repaint();
+					Reader.getViewWidget().repaint("SelectionTranslateAction.run");
 				}
 			}
 		);

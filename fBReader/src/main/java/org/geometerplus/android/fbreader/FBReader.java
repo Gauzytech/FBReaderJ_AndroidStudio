@@ -586,7 +586,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                     textView.gotoPage(page);
                 }
                 myFBReaderApp.getViewWidget().reset();
-                myFBReaderApp.getViewWidget().repaint();
+                myFBReaderApp.getViewWidget().repaint("gotoPage");
             }
         });
 
@@ -877,7 +877,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                 }
             }.start();
 
-            myFBReaderApp.getViewWidget().repaint();
+            myFBReaderApp.getViewWidget().repaint("onStart");
         });
 
         initPluginActions();
@@ -979,7 +979,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         myFBReaderApp.getTextView().hideOutline();
         myFBReaderApp.getTextView().removeHighlightings(DictionaryHighlighting.class);
         myFBReaderApp.getViewWidget().reset();
-        myFBReaderApp.getViewWidget().repaint();
+        myFBReaderApp.getViewWidget().repaint("hideDictionarySelection");
     }
 
     private void onPreferencesUpdate(Book book) {
@@ -1548,7 +1548,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
 
     public void outlineRegion(ZLTextRegion.Soul soul) {
         myFBReaderApp.getTextView().outlineRegion(soul);
-        myFBReaderApp.getViewWidget().repaint();
+        myFBReaderApp.getViewWidget().repaint("outlineRegion");
     }
 
     /**

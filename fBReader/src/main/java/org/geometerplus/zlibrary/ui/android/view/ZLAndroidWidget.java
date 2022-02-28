@@ -169,12 +169,14 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         final AnimationProvider.Mode oldMode = animator.getMode();
         animator.doStep();
         if (animator.inProgress()) {
+//            Timber.v("渲染流程:绘制, 绘制动画");
             animator.draw(canvas);
             if (animator.getMode().Auto) {
                 postInvalidate();
             }
             // drawFooter(canvas, animator);
         } else {
+            Timber.v("渲染流程:绘制, call onDrawStatic");
             switch (oldMode) {
                 case AnimatedScrollingForward: {
                     final ZLView.PageIndex index = animator.getPageToScrollTo();
@@ -198,8 +200,9 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     @Override
-    public void repaint() {
-        Timber.v("渲染流程:绘制, 刷新view");
+    public void repaint(String from) {
+        if (from.equals("Footer.run")) return;
+        Timber.v("渲染流程:绘制, 刷新view %s", from);
         // 不是每次都会执行onDraw()
         // 不执行原因
         // 1. 自定义的View所在的布局中,自定义View计算不出位置.
@@ -399,7 +402,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     private void onDrawStatic(final Canvas canvas) {
-        Timber.v("渲染流程:绘制, 非翻页绘制, isPreview = %s", isPreview);
+        Timber.v("渲染流程:绘制, 非滚动绘制, isPreview = %s", isPreview);
+        // 点击屏幕, 缩略图有效果
         if (isPreview) {
             canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
             // 绘制边框
@@ -499,7 +503,6 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     protected void onDraw(final Canvas canvas) {
-        Timber.v("渲染流程:绘制, 开始绘制 >>>>>>>>>>>>>>>>>>>>>>>");
         canvas.setDrawFilter(paintFlagsDrawFilter);
 
         // 画布缩放

@@ -168,8 +168,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             if (myCurrentPage.startCursor.isNull()) {
                 preparePaintInfo(myCurrentPage, "getStartCursor");
             }
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("gotoMark");
         }
     }
 
@@ -200,8 +199,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             if (myCurrentPage.startCursor.isNull()) {
                 preparePaintInfo(myCurrentPage, "gotoHighlighting");
             }
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("gotoHighlighting");
         }
     }
 
@@ -225,8 +223,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         (backward ? myTextModel.getLastMark() : myTextModel.getFirstMark()) :
                         (backward ? myTextModel.getPreviousMark(mark) : myTextModel.getNextMark(mark)));
             }
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("search");
         }
         return count;
     }
@@ -259,8 +256,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (!findResultsAreEmpty()) {
             myTextModel.removeAllMarks();
             rebuildPaintInfo();
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("clearFindResults");
         }
     }
 
@@ -275,7 +271,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             myCursorManager.evictAll();
         }
 
-        if (myCurrentPage.paintState != PaintStateEnum.NOTHING_TO_PAINT) {
+        if (!myCurrentPage.isClearPaintState()) {
             myCurrentPage.lineInfos.clear();
             if (!myCurrentPage.startCursor.isNull()) {
                 myCurrentPage.startCursor.rebuild();
@@ -312,22 +308,20 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     public final void addHighlighting(ZLTextHighlighting h) {
         myHighlightingList.add(h);
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("addHighlighting");
     }
 
     public final void addBookMark(ZLTextHighlighting h) {
         myBookMarkList.add(h);
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("addBookMark");
     }
 
     /**
      * 重绘
      */
-    public void repaint() {
+    public void repaint(String from) {
         Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        Application.getViewWidget().repaint(from);
     }
 
     public boolean removeMarkHighlight(Class<? extends ZLTextHighlighting> type) {
@@ -346,14 +340,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     public final void addHighlightings(Collection<ZLTextHighlighting> hilites) {
         myHighlightingList.addAll(hilites);
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("addHighlightings");
     }
 
     public void clearHighlighting() {
         if (removeHighlightings(ZLTextManualHighlighting.class)) {
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("clearHighlighting");
         }
     }
 
@@ -361,14 +353,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         mySelection.setCursorInMovement(which, x, y);
         mySelection.expandTo(myCurrentPage, x, y);
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("moveSelectionCursorTo");
     }
 
     protected void releaseSelectionCursor() {
         mySelection.stop();
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("releaseSelectionCursor");
     }
 
     protected SelectionCursor.Which getSelectionCursorInMovement() {
@@ -448,7 +438,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     @Override
     public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
-        Timber.v("渲染流程:绘制, 在bitMap上绘制, pageIndex = %s", pageIndex.name());
         setContext(paintContext);
         // 绘制背景
         final ZLFile wallpaper = getWallpaperFile();
@@ -459,9 +448,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         if (myTextModel == null) {
-            Timber.v("渲染流程:绘制, 在bitMap上绘制, myTextModel is null, return");
+            Timber.v("渲染流程:Bitmap绘制, myTextModel不存在, 图书没解析, ignore");
         } else {
-            Timber.v("渲染流程:绘制, 在bitMap上绘制, paragraphsNumber = %s", myTextModel.getParagraphsNumber());
+            Timber.v("渲染流程:Bitmap绘制, myTextModel存在, 总paragraphs数 = %s", myTextModel.getParagraphsNumber());
         }
 
         // 还没有图书数据就不绘制
@@ -477,16 +466,16 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 break;
             case PREV:
                 page = myPreviousPage;
-                if (myPreviousPage.paintState == PaintStateEnum.NOTHING_TO_PAINT) {
-                    preparePaintInfo(myCurrentPage, "paint");
+                if (myPreviousPage.isClearPaintState()) {
+                    preparePaintInfo(myCurrentPage, "paint.PREV");
                     myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
                     myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
                 }
                 break;
             case NEXT:
                 page = myNextPage;
-                if (myNextPage.paintState == PaintStateEnum.NOTHING_TO_PAINT) {
-                    preparePaintInfo(myCurrentPage, "paint");
+                if (myNextPage.isClearPaintState()) {
+                    preparePaintInfo(myCurrentPage, "paint.NEXT");
                     myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
                     myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
                 }
@@ -496,35 +485,40 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 从定位指定段落后得到的ZLTextPage类中取出
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
-        preparePaintInfo(page, "paint");
+        preparePaintInfo(page, "paint." + pageIndex.name());
 
         if (page.startCursor.isNull() || page.endCursor.isNull()) {
             return;
         }
 
+
+        Timber.v("渲染流程:Bitmap绘制, %s lineInfos.size = %d", pageIndex.name(), page.lineInfos.size());
+        /*
+         * 内容 + 高亮
+         */
         final List<ZLTextLineInfo> lineInfoList = page.lineInfos;
         final int[] labels = new int[lineInfoList.size() + 1];
         int x = getLeftMargin();
         int y = getTopMargin();
-        int index = 0;
         int columnIndex = 0;
-        ZLTextLineInfo previousInfo = null;
-        for (ZLTextLineInfo info : lineInfoList) {
-            info.adjust(previousInfo);
+        ZLTextLineInfo prevLineInfo = null;
+        for (int i = 0; i < lineInfoList.size(); i++) {
+            ZLTextLineInfo info = lineInfoList.get(i);
+            info.adjust(prevLineInfo);
             // 进一步计算出每一行中的每一个字在屏幕上的绝对位置
             // 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
             prepareTextLine(page, info, x, y, columnIndex);
             // 累加每行的行高，以获取下一行的y坐标
             y += info.height + info.descent + info.VSpaceAfter;
             // labels指向的int数组将被用于迭代ZLTextPage类TextElementMap属性
-            labels[++index] = page.TextElementMap.size();
-            if (index == page.column0Height) {
+            labels[i + 1] = page.TextElementMap.size();
+            if (i + 1 == page.column0Height) {
                 // 获取顶部页边距, 作为屏幕上第一行的y坐标
                 y = getTopMargin();
                 x += page.getTextWidth() + getSpaceBetweenColumns();
                 columnIndex = 1;
             }
-            previousInfo = info;
+            prevLineInfo = info;
         }
 
         // 笔记效果: 计算需要高亮的文字
@@ -1654,18 +1648,19 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * @param page 页面
      */
     private synchronized void preparePaintInfo(ZLTextPage page, String from) {
-        if (from.equals("gotoPosition")) {
-            Timber.v("渲染流程lineInfo, %s -> startCursor = %s, endCursor = %s, lineInfoSize = %d, paintState = %s",
-                    from,
-                    page.startCursor,
-                    page.endCursor,
-                    page.lineInfos.size(),
-                    DebugStringHelper.getPatinStateStr(page.paintState));
+        if (from.contains("paint")) {
+            Timber.v("渲染流程:lineInfo, -> " + from +
+                            ", {\nstartCursor= " + page.startCursor +
+                            ", \nendCursor= " + page.endCursor +
+                            ", \nlineInfoSize= " + page.lineInfos.size() +
+                            ", \npaintState= " + DebugStringHelper.getPatinStateStr(page.paintState) +
+                            '}'
+                    );
         }
 
         page.setSize(getTextColumnWidth(), getTextAreaHeight(), isTwoColumnView(), page == myPreviousPage);
 
-        if (page.paintState == PaintStateEnum.NOTHING_TO_PAINT || page.paintState == PaintStateEnum.READY) {
+        if (page.isClearPaintState() || page.paintState == PaintStateEnum.READY) {
             return;
         }
 
@@ -1946,15 +1941,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (!mySelection.start(x, y)) {
             return false;
         }
-        Application.getViewWidget().reset();
-        Application.getViewWidget().repaint();
+        repaint("initSelection");
         return true;
     }
 
     public void clearSelection() {
         if (mySelection.clear()) {
-            Application.getViewWidget().reset();
-            Application.getViewWidget().repaint();
+            repaint("clearSelection");
         }
     }
 

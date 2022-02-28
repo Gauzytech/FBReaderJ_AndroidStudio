@@ -50,7 +50,7 @@ final class ZLTextPage {
         myHeight = height;
         myTwoColumnView = twoColumnView;
 
-        if (paintState != PaintStateEnum.NOTHING_TO_PAINT) {
+        if (!isClearPaintState()) {
             lineInfos.clear();
             if (keepEndNotStart) {
                 if (!endCursor.isNull()) {
@@ -77,6 +77,10 @@ final class ZLTextPage {
         endCursor.reset();
         lineInfos.clear();
         paintState = PaintStateEnum.NOTHING_TO_PAINT;
+    }
+
+    public boolean isClearPaintState() {
+        return paintState == PaintStateEnum.NOTHING_TO_PAINT;
     }
 
     /**

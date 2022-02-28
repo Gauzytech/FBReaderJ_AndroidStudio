@@ -285,7 +285,7 @@ public final class FBReaderApp extends ZLApplication {
                     setView(footnoteView);
                     footnoteView.gotoPosition(label.ParagraphIndex, 0, 0);
                 }
-                getViewWidget().repaint();
+                getViewWidget().repaint("tryOpenFootnote");
                 storePosition();
             }
         }
@@ -368,7 +368,7 @@ public final class FBReaderApp extends ZLApplication {
             }
         }
         if (!hasBookNote) {
-            view.repaint();
+            view.repaint("setBookNoteHighlighting");
         }
     }
 
@@ -451,7 +451,7 @@ public final class FBReaderApp extends ZLApplication {
             }
         }
         if (!hasBookMark) {
-            view.repaint();
+            view.repaint("setBookMarkHighlighting");
         }
     }
 
@@ -554,7 +554,7 @@ public final class FBReaderApp extends ZLApplication {
 
         getViewWidget().reset();
         // 触发ZLAndroidWidget类的onDraw方法, 显示图书
-        getViewWidget().repaint();
+        getViewWidget().repaint("openBookInternal");
 
         // 如果是不支持的DRM解析格式, 显示错误信息
         for (FileEncryptionInfo info : plugin.readEncryptionInfos(book)) {
@@ -624,7 +624,7 @@ public final class FBReaderApp extends ZLApplication {
             }
             setView(footnoteView);
         }
-        getViewWidget().repaint();
+        getViewWidget().repaint("gotoBookmark");
         storePosition();
     }
 
@@ -771,7 +771,7 @@ public final class FBReaderApp extends ZLApplication {
         } else {
             ZLTextHyphenator.Instance().load(bookModel.Book.getLanguage());
             clearTextCaches();
-            getViewWidget().repaint();
+            getViewWidget().repaint("onBookUpdated");
         }
     }
 

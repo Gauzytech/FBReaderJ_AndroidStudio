@@ -492,7 +492,7 @@ public final class FBView extends ZLTextView {
             if (doSelectRegion) {
                 outlineRegion(region);
                 myReader.getViewWidget().reset();
-                myReader.getViewWidget().repaint();
+                myReader.getViewWidget().repaint("doSelectRegion");
                 return true;
             }
         }
@@ -557,7 +557,7 @@ public final class FBView extends ZLTextView {
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
                             myReader.getViewWidget().reset();
-                            myReader.getViewWidget().repaint();
+                            myReader.getViewWidget().repaint("onFingerMoveAfterLongPress");
                         }
                     }
                 }
@@ -585,7 +585,7 @@ public final class FBView extends ZLTextView {
         if (hyperlinkRegion != null) {
             outlineRegion(hyperlinkRegion);
             myReader.getViewWidget().reset();
-            myReader.getViewWidget().repaint();
+            myReader.getViewWidget().repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             return;
         }
@@ -600,7 +600,7 @@ public final class FBView extends ZLTextView {
         if (videoRegion != null) {
             outlineRegion(videoRegion);
             myReader.getViewWidget().reset();
-            myReader.getViewWidget().repaint();
+            myReader.getViewWidget().repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
             return;
         }
@@ -714,7 +714,7 @@ public final class FBView extends ZLTextView {
         protected ArrayList<TOCTree> myTOCMarks;
         private Runnable UpdateTask = new Runnable() {
             public void run() {
-                myReader.getViewWidget().repaint();
+                myReader.getViewWidget().repaint("Footer.run");
             }
         };
         private int myMaxTOCMarksNumber = -1;

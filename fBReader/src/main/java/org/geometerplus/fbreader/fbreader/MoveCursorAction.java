@@ -53,6 +53,6 @@ class MoveCursorAction extends FBAction {
 		}
 
 		Reader.getViewWidget().reset();
-		Reader.getViewWidget().repaint();
+		Reader.getViewWidget().repaint("MoveCursorAction.run");
 	}
 }

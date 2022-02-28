@@ -28,6 +28,8 @@ import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.ui.android.view.animation.BitmapManager;
 
+import timber.log.Timber;
+
 
 /**
  * Bitmap管理（绘制后的图）的实现
@@ -81,6 +83,7 @@ public final class BitmapManagerImpl implements BitmapManager {
     public Bitmap getBitmap(ZLView.PageIndex index) {
         for (int i = 0; i < CACHE_SIZE; ++i) {
             if (index == cachedPageIndexes[i]) {
+//                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());
                 return myBitmaps[i];
             }
         }
@@ -99,7 +102,7 @@ public final class BitmapManagerImpl implements BitmapManager {
                 myBitmaps[iIndex] = Bitmap.createBitmap(myWidth, myHeight, Bitmap.Config.RGB_565);
             }
         }
-
+        Timber.v("渲染流程:Bitmap绘制, %s 没有缓存, 创建新的", index.name());
         // 绘制出Bitmap
         myWidget.drawOnBitmap(myBitmaps[iIndex], index);
         return myBitmaps[iIndex];

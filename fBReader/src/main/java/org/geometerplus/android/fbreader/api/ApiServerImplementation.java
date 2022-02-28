@@ -466,7 +466,7 @@ public class ApiServerImplementation extends ApiInterface.Stub implements Api, A
 	// manage view
 	public void setPageStart(TextPosition position) {
 		getReader().getTextView().gotoPosition(position.ParagraphIndex, position.ElementIndex, position.CharIndex);
-		getReader().getViewWidget().repaint();
+		getReader().getViewWidget().repaint("setPageStart");
 		getReader().storePosition();
 	}
 

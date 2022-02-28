@@ -51,7 +51,7 @@ class BookElementManager extends ExtensionElementManager {
 		myScreenRefresher = new Runnable() {
 			public void run() {
 				view.Application.getViewWidget().reset();
-				view.Application.getViewWidget().repaint();
+				view.Application.getViewWidget().repaint("BookElementManager.run");
 			}
 		};
 	}

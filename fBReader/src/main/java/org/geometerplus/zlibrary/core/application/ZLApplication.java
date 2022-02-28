@@ -55,10 +55,9 @@ public abstract class ZLApplication {
         if (view != null) {
             this.myView = view;
             final ZLViewWidget widget = getViewWidget();
-            Timber.v("渲染流程:绘制, widget为空: %s", widget == null);
             if (widget != null) {
                 widget.reset();
-                widget.repaint();
+                widget.repaint("ZLApplication.setView");
             }
             hideActivePopup();
         }

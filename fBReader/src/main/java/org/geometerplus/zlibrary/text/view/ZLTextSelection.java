@@ -331,7 +331,7 @@ class ZLTextSelection extends ZLTextHighlighting {
             myView.preparePaintInfo();
             expandTo(myPage, myX, myY);
             myView.Application.getViewWidget().reset();
-            myView.Application.getViewWidget().repaint();
+            myView.Application.getViewWidget().repaint("Scroller.run");
         }
 
         private void stop() {

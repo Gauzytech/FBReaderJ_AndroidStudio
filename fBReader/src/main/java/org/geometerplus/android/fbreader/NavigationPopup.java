@@ -115,7 +115,7 @@ final class NavigationPopup extends ZLApplication.PopupPanel {
 					view.gotoPage(page);
 				}
 				myFBReader.getViewWidget().reset();
-				myFBReader.getViewWidget().repaint();
+				myFBReader.getViewWidget().repaint("NavigationPopUp.gotoPage");
 			}
 
 			public void onStartTrackingTouch(SeekBar seekBar) {
@@ -153,7 +153,7 @@ final class NavigationPopup extends ZLApplication.PopupPanel {
 				myStartPosition = null;
 				Application.hideActivePopup();
 				myFBReader.getViewWidget().reset();
-				myFBReader.getViewWidget().repaint();
+				myFBReader.getViewWidget().repaint("btnOkOk.onClick");
 			}
 		};
 		btnOk.setOnClickListener(listener);

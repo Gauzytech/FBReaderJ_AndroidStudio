@@ -67,7 +67,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 		final ZLTextRegion.Soul soul = region.getSoul();
 		if (soul instanceof ZLTextHyperlinkRegionSoul) {
 			Reader.getTextView().hideOutline();
-			Reader.getViewWidget().repaint();
+			Reader.getViewWidget().repaint("ProcessHyperlinkAction.run");
 			final ZLTextHyperlink hyperlink = ((ZLTextHyperlinkRegionSoul)soul).Hyperlink;
 			switch (hyperlink.Type) {
 				case FBHyperlinkType.EXTERNAL:
@@ -124,7 +124,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 							@Override
 							public void onDismiss(View view) {
 								Reader.getTextView().hideOutline();
-								Reader.getViewWidget().repaint();
+								Reader.getViewWidget().repaint("ProcessHyperlinkAction.onDismiss");
 							}
 						}));
 						Reader.getTextView().outlineRegion(region);
@@ -137,7 +137,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 			}
 		} else if (soul instanceof ZLTextImageRegionSoul) {
 			Reader.getTextView().hideOutline();
-			Reader.getViewWidget().repaint();
+			Reader.getViewWidget().repaint("ProcessHyperlinkAction.ZLTextImageRegionSoul");
 			final String url = ((ZLTextImageRegionSoul)soul).ImageElement.URL;
 			if (url != null) {
 				try {
