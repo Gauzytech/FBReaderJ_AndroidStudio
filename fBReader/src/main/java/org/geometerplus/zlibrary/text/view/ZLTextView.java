@@ -450,7 +450,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (myTextModel == null) {
             Timber.v("渲染流程:Bitmap绘制, myTextModel不存在, 图书没解析, ignore");
         } else {
-            Timber.v("渲染流程:Bitmap绘制, myTextModel存在, 总paragraphs数 = %s", myTextModel.getParagraphsNumber());
+            Timber.v("渲染流程:Bitmap绘制, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
         }
 
         // 还没有图书数据就不绘制
@@ -458,6 +458,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return;
         }
 
+        // 先根据pageIndex选择page
         ZLTextPage page;
         switch (pageIndex) {
             default:
@@ -467,6 +468,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case PREV:
                 page = myPreviousPage;
                 if (myPreviousPage.isClearPaintState()) {
+                    Timber.v("渲染流程:Bitmap绘制, 更新myPreviousPage, currentState= %s", DebugStringHelper.getPatinStateStr(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.PREV");
                     myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
                     myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
@@ -475,6 +477,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case NEXT:
                 page = myNextPage;
                 if (myNextPage.isClearPaintState()) {
+                    Timber.v("渲染流程:Bitmap绘制, 更新myNextPage, currentState= %s", DebugStringHelper.getPatinStateStr(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.NEXT");
                     myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
                     myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
@@ -491,8 +494,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return;
         }
 
-
-        Timber.v("渲染流程:Bitmap绘制, %s lineInfos.size = %d", pageIndex.name(), page.lineInfos.size());
+        Timber.v("渲染流程:Bitmap绘制, <----------------------------- %s lineInfos.size = %d -----------------------------", pageIndex.name(), page.lineInfos.size());
         /*
          * 内容 + 高亮
          */
@@ -1099,7 +1101,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         endCursor.setCursor(startCursor);
         // 屏幕能显示的总高度
         int textAreaHeight = page.getTextHeight();
-        if (from.equals("gotoPosition")) {
+        if (from.equals("paint")) {
             Timber.v("渲染流程lineInfo, 0. 可渲染高度, %d", textAreaHeight);
         }
         page.lineInfos.clear();
@@ -1649,8 +1651,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
      */
     private synchronized void preparePaintInfo(ZLTextPage page, String from) {
         if (from.contains("paint")) {
-            Timber.v("渲染流程:lineInfo, -> " + from +
-                            ", {\nstartCursor= " + page.startCursor +
+            Timber.v("渲染流程:lineInfo, from -> " + from +
+                            ", \n{startCursor= " + page.startCursor +
                             ", \nendCursor= " + page.endCursor +
                             ", \nlineInfoSize= " + page.lineInfos.size() +
                             ", \npaintState= " + DebugStringHelper.getPatinStateStr(page.paintState) +
@@ -1670,6 +1672,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             myLineInfoCache.put(info, info);
         }
 
+        // 根据paint state计算page的startCursor和endCursor
         switch (page.paintState) {
             default:
                 break;
@@ -1763,6 +1766,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
                 break;
         }
+        if (from.contains("paint")) {
+            Timber.v("渲染流程:lineInfo[%s], buildInfos for para [%s, %s]", DebugStringHelper.getPatinStateStr(page.paintState), page.startCursor.getParagraphIndex(), page.endCursor.getParagraphIndex());
+        }
+
         page.paintState = PaintStateEnum.READY;
 
         myLineInfoCache.clear();

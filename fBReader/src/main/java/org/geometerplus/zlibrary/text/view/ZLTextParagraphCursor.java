@@ -52,6 +52,7 @@ public final class ZLTextParagraphCursor {
 	public final static String ENCRYPTED_SECTION = "encryptedSection";
 
 	// index是paragraphIndex, 1个或多个paragraphIndex对应1个cpp myPool中char[] row的idx
+	// 因为一个char[]的内容会写到一个.ncache的文件中, 这个文件会包含一个或者多个paragraph
 	public final int paragraphIdx;
 	private final CursorManager cursorManager;
 	public final ZLTextModel textModel;
@@ -181,7 +182,7 @@ public final class ZLTextParagraphCursor {
 	@NonNull
 	@Override
 	public String toString() {
-		return "ZLTextParagraphCursor{paragraphIdx = " + paragraphIdx + " (0.." + myElements.size() + ")}";
+		return "ZLTextParagraphCursor{paragraphIdx= " + paragraphIdx + " (0.." + myElements.size() + ")}";
 	}
 
 	private static final class Processor {

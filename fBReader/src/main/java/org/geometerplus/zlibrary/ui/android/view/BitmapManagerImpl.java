@@ -80,7 +80,8 @@ public final class BitmapManagerImpl implements BitmapManager {
      * @param index 页索引
      * @return 阅读器内容Bitmap
      */
-    public Bitmap getBitmap(ZLView.PageIndex index) {
+    @Override
+    public Bitmap getBitmap(ZLView.PageIndex index, String from) {
         for (int i = 0; i < CACHE_SIZE; ++i) {
             if (index == cachedPageIndexes[i]) {
 //                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());
@@ -102,7 +103,7 @@ public final class BitmapManagerImpl implements BitmapManager {
                 myBitmaps[iIndex] = Bitmap.createBitmap(myWidth, myHeight, Bitmap.Config.RGB_565);
             }
         }
-        Timber.v("渲染流程:Bitmap绘制, %s 没有缓存, 创建新的", index.name());
+        Timber.v("渲染流程:Bitmap绘制, %s 没有缓存, 创建新的, %s", index.name(), from);
         // 绘制出Bitmap
         myWidget.drawOnBitmap(myBitmaps[iIndex], index);
         return myBitmaps[iIndex];
@@ -118,7 +119,7 @@ public final class BitmapManagerImpl implements BitmapManager {
      * @param paint  画笔
      */
     public void drawBitmap(Canvas canvas, int x, int y, ZLView.PageIndex index, Paint paint) {
-        canvas.drawBitmap(getBitmap(index), x, y, paint);
+        canvas.drawBitmap(getBitmap(index, "drawBitmap"), x, y, paint);
     }
 
     /**
@@ -132,11 +133,11 @@ public final class BitmapManagerImpl implements BitmapManager {
      */
     @Override
     public void drawPreviewBitmap(Canvas canvas, int x, int y, ZLViewEnums.PageIndex index, Paint paint) {
-        Bitmap previousBitmap = getBitmap(ZLView.PageIndex.PREV);
+        Bitmap previousBitmap = getBitmap(ZLView.PageIndex.PREV, "drawPreviewBitmap.PREV");
         int width = previousBitmap.getWidth();
         canvas.drawBitmap(previousBitmap, x / PreviewConfig.SCALE_VALUE - width - width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
-        canvas.drawBitmap(getBitmap(ZLView.PageIndex.CURRENT), x / PreviewConfig.SCALE_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
-        canvas.drawBitmap(getBitmap(ZLView.PageIndex.NEXT), x / PreviewConfig.SCALE_VALUE + width + width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
+        canvas.drawBitmap(getBitmap(ZLView.PageIndex.CURRENT, "drawPreviewBitmap.CURRENT"), x / PreviewConfig.SCALE_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
+        canvas.drawBitmap(getBitmap(ZLView.PageIndex.NEXT, "drawPreviewBitmap.NEXT"), x / PreviewConfig.SCALE_VALUE + width + width * PreviewConfig.SCALE_MARGIN_VALUE, y / PreviewConfig.SCALE_VALUE, paint);
     }
 
     /**

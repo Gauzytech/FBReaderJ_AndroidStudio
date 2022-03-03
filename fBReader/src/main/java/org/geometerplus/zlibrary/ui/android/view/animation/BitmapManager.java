@@ -28,7 +28,7 @@ import org.geometerplus.zlibrary.core.view.ZLViewEnums;
  */
 public interface BitmapManager {
 
-    Bitmap getBitmap(ZLViewEnums.PageIndex index);
+    Bitmap getBitmap(ZLViewEnums.PageIndex index, String from);
 
     void drawBitmap(Canvas canvas, int x, int y, ZLViewEnums.PageIndex index, Paint paint);
 

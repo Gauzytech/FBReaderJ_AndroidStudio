@@ -296,11 +296,11 @@ public abstract class AnimationProvider {
     }
 
     protected Bitmap getBitmapFrom() {
-        return myBitmapManager.getBitmap(ZLViewEnums.PageIndex.CURRENT);
+        return myBitmapManager.getBitmap(ZLViewEnums.PageIndex.CURRENT, "getBitmapFrom");
     }
 
     protected Bitmap getBitmapTo() {
-        return myBitmapManager.getBitmap(getPageToScrollTo());
+        return myBitmapManager.getBitmap(getPageToScrollTo(), "getBitmapTo");
     }
 
     protected void drawBitmapFrom(Canvas canvas, int x, int y, Paint paint) {

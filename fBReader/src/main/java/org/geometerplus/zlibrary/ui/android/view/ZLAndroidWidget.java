@@ -70,7 +70,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     /**
      * 预加载线程
      */
-    public final ExecutorService PrepareService = Executors.newSingleThreadExecutor();
+    public final ExecutorService prepareService = Executors.newSingleThreadExecutor();
     private final Paint myPaint = new Paint();
     private final BitmapManagerImpl myBitmapManager = new BitmapManagerImpl(this);
     private final SystemInfo mySystemInfo;
@@ -202,7 +202,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     @Override
     public void repaint(String from) {
         if (from.equals("Footer.run")) return;
-        Timber.v("渲染流程:绘制, 刷新view %s", from);
+//        Timber.v("渲染流程:绘制, 刷新view %s", from);
         // 不是每次都会执行onDraw()
         // 不执行原因
         // 1. 自定义的View所在的布局中,自定义View计算不出位置.
@@ -402,26 +402,26 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     private void onDrawStatic(final Canvas canvas) {
-        Timber.v("渲染流程:绘制, 非滚动绘制, isPreview = %s", isPreview);
+        Timber.v("渲染流程:绘制, ----------------------------- 非滚动绘制, isPreview = %s ----------------------------->", isPreview);
         // 点击屏幕, 缩略图有效果
         if (isPreview) {
-            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
+            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV, "onDrawStatic.PREV"), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
             // 绘制边框
             canvas.drawRect(0, 0, getWidth(), getHeight(), borderPaint);
         }
         // 获取内容的bitmap
-        Bitmap bitmap = myBitmapManager.getBitmap(ZLView.PageIndex.CURRENT);
+        Bitmap bitmap = myBitmapManager.getBitmap(ZLView.PageIndex.CURRENT, "onDrawStatic.CURRENT");
         // 将bitmap类所代表的的画布会被显示在屏幕上
         canvas.drawBitmap(bitmap, 0, 0, myPaint);
         if (isPreview) {
-            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.NEXT), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
+            canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.NEXT, "onDrawStatic.NEXT"), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
         }
 
         if (ZLApplication.Instance().getCurrentView().canMagnifier()) {
             drawMagnifier(canvas, bitmap);
         }
 
-        post(() -> PrepareService.execute(() -> {
+        post(() -> prepareService.execute(() -> {
             preparePage(ZLViewEnums.PageIndex.PREV);
             preparePage(ZLViewEnums.PageIndex.NEXT);
         }));
@@ -447,9 +447,9 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                 ),
                 view.isScrollbarShown() ? getVerticalScrollbarWidth() : 0
         );
-        // 准备下一页
+        // 准备上一页/下一页
         view.preparePage(context, pageIndex);
-        myBitmapManager.getBitmap(pageIndex);
+        myBitmapManager.getBitmap(pageIndex, "preparePage");
     }
 
     /**
