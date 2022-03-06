@@ -25,10 +25,10 @@ final class ZLTextLineInfo {
 
 	final int startElementIndex;
 	final int startCharIndex;
-	// 代表每一行第一个字在ArrayList中的位置
+	// 代表每一行第一个字在myElements ArrayList中的位置
 	int realStartElementIndex;
 	int realStartCharIndex;
-	// 代表每一行最后一个字在ArrayList中的位置
+	// 代表每一行最后一个字在myElements ArrayList中的位置
 	int endElementIndex;
 	int endCharIndex;
 

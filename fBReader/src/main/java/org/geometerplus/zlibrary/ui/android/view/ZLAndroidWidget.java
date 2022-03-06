@@ -34,6 +34,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.android.fbreader.FBReader;
 import org.geometerplus.android.fbreader.constant.PreviewConfig;
 import org.geometerplus.android.fbreader.util.SizeUtils;
@@ -421,10 +422,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             drawMagnifier(canvas, bitmap);
         }
 
-        post(() -> prepareService.execute(() -> {
-            preparePage(ZLViewEnums.PageIndex.PREV);
-            preparePage(ZLViewEnums.PageIndex.NEXT);
-        }));
+        if (DebugHelper.PRELOAD_NEXT_PREV_PAGE_ENABLE) {
+            post(() -> prepareService.execute(() -> {
+                preparePage(ZLViewEnums.PageIndex.PREV);
+                preparePage(ZLViewEnums.PageIndex.NEXT);
+            }));
+        }
     }
 
     /**

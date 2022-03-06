@@ -4,12 +4,14 @@ import org.geometerplus.zlibrary.text.view.PaintStateEnum;
 
 /**
  * @Package org.geometerplus.zlibrary.text.view
- * @FileName DebugStringHelper
+ * @FileName DebugHelper
  * @Date 2/20/22, 7:48 PM
  * @Author Created by fengchengding
  * @Description FBReaderJ_AndroidStudio
  */
-public class DebugStringHelper {
+public class DebugHelper {
+   public static boolean FOOTER_PAGE_COUNT_ENABLE = false;
+   public static boolean PRELOAD_NEXT_PREV_PAGE_ENABLE = false;
 
    public static String getPatinStateStr(int paintState) {
 
@@ -28,5 +30,9 @@ public class DebugStringHelper {
       }
 
       return null;
+   }
+
+   public static boolean filterTag(String source, String tag) {
+      return source.contains(tag);
    }
 }

@@ -21,7 +21,7 @@ package org.geometerplus.zlibrary.text.view;
 
 import androidx.annotation.NonNull;
 
-import org.geometerplus.DebugStringHelper;
+import org.geometerplus.DebugHelper;
 
 import java.util.ArrayList;
 
@@ -217,7 +217,7 @@ final class ZLTextPage {
                 ", endCursor=" + endCursor +
                 ", lineInfos=" + lineInfos +
                 ", column0Height=" + column0Height +
-                ", paintState=" + DebugStringHelper.getPatinStateStr(paintState) +
+                ", paintState=" + DebugHelper.getPatinStateStr(paintState) +
                 ", TextElementMap=" + TextElementMap +
                 ", myColumnWidth=" + myColumnWidth +
                 ", myHeight=" + myHeight +

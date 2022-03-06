@@ -177,7 +177,7 @@ abstract class ZLTextViewBase extends ZLView {
 
     void applyStyleChanges(ZLTextParagraphCursor cursor, int index, int end, String from) {
         if (from.equals("gotoPosition")) {
-            Timber.v("渲染流程lineInfo, 1.1 配置style, [%d, %d]", index, end);
+            Timber.v("渲染流程:分页, 1.1 配置style, [%d, %d]", index, end);
         }
         for (; index != end; ++index) {
             applyStyleChangeElement(cursor.getElement(index));
@@ -194,7 +194,6 @@ abstract class ZLTextViewBase extends ZLView {
             // kind属性在FBTextKind接口中定义
             final ZLTextNGStyleDescription description =
                     getTextStyleCollection().getDescription(control.Kind);
-            Timber.v("ceshi123, description: " + description);
             // 设置标签样式，覆盖base样式
             if (description != null) {
                 // 应用标签style

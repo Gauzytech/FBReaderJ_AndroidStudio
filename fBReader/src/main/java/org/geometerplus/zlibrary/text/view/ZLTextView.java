@@ -19,7 +19,7 @@
 
 package org.geometerplus.zlibrary.text.view;
 
-import org.geometerplus.DebugStringHelper;
+import org.geometerplus.DebugHelper;
 import org.geometerplus.fbreader.book.Bookmark;
 import org.geometerplus.fbreader.fbreader.BookmarkHighlighting;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
@@ -468,7 +468,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case PREV:
                 page = myPreviousPage;
                 if (myPreviousPage.isClearPaintState()) {
-                    Timber.v("渲染流程:Bitmap绘制, 更新myPreviousPage, currentState= %s", DebugStringHelper.getPatinStateStr(myCurrentPage.paintState));
+                    Timber.v("渲染流程:Bitmap绘制, 更新myPreviousPage, currentState= %s", DebugHelper.getPatinStateStr(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.PREV");
                     myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
                     myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
@@ -477,7 +477,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case NEXT:
                 page = myNextPage;
                 if (myNextPage.isClearPaintState()) {
-                    Timber.v("渲染流程:Bitmap绘制, 更新myNextPage, currentState= %s", DebugStringHelper.getPatinStateStr(myCurrentPage.paintState));
+                    Timber.v("渲染流程:Bitmap绘制, 更新myNextPage, currentState= %s", DebugHelper.getPatinStateStr(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.NEXT");
                     myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
                     myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
@@ -577,10 +577,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         paintContext.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
         // 右下角总页码效果: 绘制底部（总页码）
         // TODO: 总页码计算不准确
-        String progressText = getPageProgress();
-        int footerX = getContextWidth() - getRightMargin() - paintContext.getExtraStringWidth(progressText);
-        int footerY = (int) (getTopMargin() + getTextAreaHeight() + getBottomMargin() / 1.3);
-        paintContext.drawFooter(footerX, footerY, progressText);
+        if (DebugHelper.FOOTER_PAGE_COUNT_ENABLE) {
+            String progressText = getPageProgress();
+            int footerX = getContextWidth() - getRightMargin() - paintContext.getExtraStringWidth(progressText);
+            int footerY = (int) (getTopMargin() + getTextAreaHeight() + getBottomMargin() / 1.3);
+            paintContext.drawFooter(footerX, footerY, progressText);
+        }
 
         // 书签效果: 绘制书签
         final List<ZLTextHighlighting> bookMarkList = findBookMarkList(page);
@@ -657,14 +659,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     @Override
     public final synchronized int getScrollbarThumbPosition(PageIndex pageIndex) {
-        return scrollbarType() == SCROLLBAR_SHOW_AS_PROGRESS ? 0 : getCurrentCharNumber(pageIndex, true);
+        return scrollbarType() == SCROLLBAR_SHOW_AS_PROGRESS ? 0 : getCurrentCharNumber(pageIndex, true, "getScrollbarThumbPosition");
     }
 
     @Override
     public final synchronized int getScrollbarThumbLength(PageIndex pageIndex) {
         int start = scrollbarType() == SCROLLBAR_SHOW_AS_PROGRESS
-                ? 0 : getCurrentCharNumber(pageIndex, true);
-        int end = getCurrentCharNumber(pageIndex, false);
+                ? 0 : getCurrentCharNumber(pageIndex, true, "getScrollbarThumbLength");
+        int end = getCurrentCharNumber(pageIndex, false, "getScrollbarThumbLength");
         return Math.max(1, end - start);
     }
 
@@ -736,12 +738,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return myTextModel != null ? myTextModel.getTextLength(paragraphIndex - 1) : 0;
     }
 
-    private synchronized int getCurrentCharNumber(PageIndex pageIndex, boolean startNotEndOfPage) {
+    private synchronized int getCurrentCharNumber(PageIndex pageIndex, boolean startNotEndOfPage, String form) {
         if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             return 0;
         }
         final ZLTextPage page = getPage(pageIndex);
-        preparePaintInfo(page, "getCurrentCharNumber");
+        preparePaintInfo(page, form);
         if (startNotEndOfPage) {
             return Math.max(0, sizeOfTextBeforeCursor(page.startCursor));
         } else {
@@ -771,6 +773,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     /**
+     * TODO 方法不精确, 需要重写
      * 计算一页的字符数
      *
      * @return 一页的字符数
@@ -803,6 +806,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     /**
+     * TODO 方法不精确, 需要重写
      * 计算页数
      *
      * @return 页数
@@ -859,7 +863,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final synchronized PagePosition pagePosition() {
-        int current = computeTextPageNumber(getCurrentCharNumber(PageIndex.CURRENT, false));
+        int current = computeTextPageNumber(getCurrentCharNumber(PageIndex.CURRENT, false, "pagePosition"));
         int total = computeTextPageNumber(sizeOfFullText());
 
         if (total > 3) {
@@ -1097,53 +1101,69 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return null;
     }
 
+    // 这个是分页算法: 根据可绘制区域高度往里填充textLine,
+    // startCursor/endCursor确定填充几个段落
     private void buildInfos(ZLTextPage page, ZLTextWordCursor startCursor, ZLTextWordCursor endCursor, String from) {
+        if (DebugHelper.filterTag(from, "paint")){
+            Timber.v("渲染流程:分页[%s], 开始分页 -> start = %s, \nend = %s", from, startCursor, endCursor);
+        }
         endCursor.setCursor(startCursor);
         // 屏幕能显示的总高度
         int textAreaHeight = page.getTextHeight();
-        if (from.equals("paint")) {
-            Timber.v("渲染流程lineInfo, 0. 可渲染高度, %d", textAreaHeight);
+        if (DebugHelper.filterTag(from, "paint")) {
+            Timber.v("渲染流程:分页, 0. 可渲染高度, %d", textAreaHeight);
         }
         page.lineInfos.clear();
         page.column0Height = 0;
         boolean nextParagraph;
-        ZLTextLineInfo info = null;
+        ZLTextLineInfo currentLineInfo = null;
         do {
-            final ZLTextLineInfo previousInfo = info;
+            final ZLTextLineInfo previousLineInfo = currentLineInfo;
             // 恢复到基本样式
             resetTextStyle();
+            // 要处理的paragraph数据
             final ZLTextParagraphCursor endParagraphCursor = endCursor.getParagraphCursor();
             final int wordIndex = endCursor.getElementIndex();
-            if (from.equals("gotoPosition")) {
-                Timber.v("渲染流程lineInfo, 1. 准备配置style,  %s, wordIndex = %d, elementSize = %d", endParagraphCursor, wordIndex, endParagraphCursor.getParagraphLength());
-            }
             applyStyleChanges(endParagraphCursor, 0, wordIndex, from);
-            info = new ZLTextLineInfo(endParagraphCursor, wordIndex, endCursor.getCharIndex(), getTextStyle());
+            currentLineInfo = new ZLTextLineInfo(endParagraphCursor, wordIndex, endCursor.getCharIndex(), getTextStyle());
+            if (DebugHelper.filterTag(from, "paint")) {
+                Timber.v("渲染流程:分页, 1. 准备配置style, %s, wordIndex = %d",
+                        endParagraphCursor,
+                        wordIndex);
+            }
             // endIdx就是elementSize
-            final int endIndex = info.paragraphCursorLength;
-            while (info.endElementIndex != endIndex) {
+            final int lastElementIndex = currentLineInfo.paragraphCursorLength;
+            while (currentLineInfo.endElementIndex != lastElementIndex) {
                 // 获取该行的信息，包括行高，左右缩进，包含哪些字等信息
-                if (from.equals("gotoPosition")) {
-                    Timber.v("渲染流程lineInfo, 2. 准备processTextLine, endElementIndex = %d, endCharIndex = %d", info.endElementIndex, info.endCharIndex);
-                }
-                info = processTextLine(page, endParagraphCursor, info.endElementIndex, info.endCharIndex, endIndex, previousInfo, from);
+
+                int debugElementIdx = currentLineInfo.endElementIndex;
+                int debugCharIdx = currentLineInfo.endCharIndex;
+                currentLineInfo = processTextLine(page, endParagraphCursor,
+                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex, lastElementIndex, previousLineInfo, from);
+//                if (DebugHelper.filterTag(from, "paint")) {
+                    Timber.v("渲染流程:分页[%s], 2. element in textLine processed {endElementIndex = %d -> %d, endCharIndex = %d -> %d}",
+                            from,
+                            debugElementIdx, currentLineInfo.endElementIndex,
+                            debugCharIdx, currentLineInfo.endCharIndex);
+//                }
                 // textAreaHeight递减，代表屏幕上能显示的总高度在不断减小
-                textAreaHeight -= info.height + info.descent;
+                textAreaHeight -= currentLineInfo.height + currentLineInfo.descent;
                 // 当textAreaHeight < 0, 就代表屏幕y已经被填充满了
                 if (textAreaHeight < 0 && page.lineInfos.size() > page.column0Height) {
+                    // 处理双列的情况
                     if (page.column0Height == 0 && page.twoColumnView()) {
                         textAreaHeight = page.getTextHeight();
-                        textAreaHeight -= info.height + info.descent;
+                        textAreaHeight -= currentLineInfo.height + currentLineInfo.descent;
                         page.column0Height = page.lineInfos.size();
                     } else {
                         break;
                     }
                 }
-                textAreaHeight -= info.VSpaceAfter;
+                textAreaHeight -= currentLineInfo.VSpaceAfter;
                 // 每一行的字就是下一行的第一个字
-                endCursor.moveTo(info.endElementIndex, info.endCharIndex);
-                // 代表每一行的ZLTextLineInfo类将被加入到ZLTextPage类的LineInfos属性中去
-                page.lineInfos.add(info);
+                endCursor.moveTo(currentLineInfo.endElementIndex, currentLineInfo.endCharIndex);
+                // 保存每一行的ZLTextLineInfo类将被加入到ZLTextPage类的LineInfos属性中去
+                page.lineInfos.add(currentLineInfo);
                 if (textAreaHeight < 0) {
                     if (page.column0Height == 0 && page.twoColumnView()) {
                         textAreaHeight = page.getTextHeight();
@@ -1655,7 +1675,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             ", \n{startCursor= " + page.startCursor +
                             ", \nendCursor= " + page.endCursor +
                             ", \nlineInfoSize= " + page.lineInfos.size() +
-                            ", \npaintState= " + DebugStringHelper.getPatinStateStr(page.paintState) +
+                            ", \npaintState= " + DebugHelper.getPatinStateStr(page.paintState) +
                             '}'
                     );
         }
@@ -1663,6 +1683,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         page.setSize(getTextColumnWidth(), getTextAreaHeight(), isTwoColumnView(), page == myPreviousPage);
 
         if (page.isClearPaintState() || page.paintState == PaintStateEnum.READY) {
+            Timber.v("渲染流程:lineInfo[%s], NO_PAINT/READY ignore", from);
             return;
         }
 
@@ -1761,13 +1782,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 break;
             case PaintStateEnum.END_IS_KNOWN:
                 if (!page.endCursor.isNull()) {
+                    // TODO findStartOfPreviousPage()无法判断从前往后无法判断后面的page是否需要留白
+                    //  最后会导致从后往前，从前往后效果不一样. 所以我们永远需要从前往后进行分页操作:
+                    //  每次加载一个xhtml文件，就从文件第一页开始进行分页确定startCursor, endCursor.
+                    //  最后缓存startCursor/endCursor到数据库
+                    //  这也就是计算总页码的方法
                     page.startCursor.setCursor(findStartOfPreviousPage(page, page.endCursor));
                     buildInfos(page, page.startCursor, page.endCursor, from);
                 }
                 break;
         }
         if (from.contains("paint")) {
-            Timber.v("渲染流程:lineInfo[%s], buildInfos for para [%s, %s]", DebugStringHelper.getPatinStateStr(page.paintState), page.startCursor.getParagraphIndex(), page.endCursor.getParagraphIndex());
+            Timber.v("渲染流程:lineInfo[%s], buildInfos for para [%s, %s]", DebugHelper.getPatinStateStr(page.paintState), page.startCursor.getParagraphIndex(), page.endCursor.getParagraphIndex());
         }
 
         page.paintState = PaintStateEnum.READY;
