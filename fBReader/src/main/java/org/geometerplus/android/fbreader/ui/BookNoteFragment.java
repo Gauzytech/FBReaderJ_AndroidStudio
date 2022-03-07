@@ -67,14 +67,14 @@ public class BookNoteFragment extends BaseFragment implements IBookCollection.Li
         final SearchManager manager = (SearchManager) mActivity.getSystemService(Activity.SEARCH_SERVICE);
         manager.setOnCancelListener(null);
 
-        myBook = ((FBReader) mActivity).getMyFBReaderApp().getCurrentBook();
+        myBook = ((FBReader) mActivity).getReaderController().getCurrentBook();
         if (myBook == null) {
             ((FBReader) mActivity).closeSlideMenu();
         }
 
         myCollection.bindToService(mActivity, new Runnable() {
             public void run() {
-                myThisBookAdapter = new BookmarksAdapter((ListView) getView().findViewById(R.id.listView));
+                myThisBookAdapter = new BookmarksAdapter(getView().findViewById(R.id.listView));
                 myCollection.addListener(BookNoteFragment.this);
 
                 updateStyles();

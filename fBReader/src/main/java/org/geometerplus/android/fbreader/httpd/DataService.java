@@ -28,6 +28,10 @@ import android.os.RemoteException;
 
 import org.geometerplus.android.fbreader.util.AndroidImageSynchronizer;
 
+/**
+ * 见DataInterface.aidl
+ * 提供image, video的service, 通过nanoHttpd实现
+  */
 public class DataService extends Service {
 	final AndroidImageSynchronizer ImageSynchronizer = new AndroidImageSynchronizer(this);
 

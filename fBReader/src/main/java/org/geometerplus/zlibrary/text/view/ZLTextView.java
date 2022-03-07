@@ -1216,9 +1216,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final ZLTextLineInfo info = processTextLineInternal(
                 page, paragraphCursor, startIndex, startCharIndex, endIndex, previousInfo, from
         );
-
-        new ZLTextLineInfo(paragraphCursor, startIndex, startCharIndex, getTextStyle());
-
         if (info.endElementIndex == startIndex && info.endCharIndex == startCharIndex) {
             info.endElementIndex = paragraphCursor.getParagraphLength();
             info.endCharIndex = 0;
@@ -1306,7 +1303,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             boolean removeLastSpace = false;
 
             do {
-                // 利用不断递增的currentElementIndex, 从ZLTextParagraphCursor类中代表当前段落的Arraylist中依次读取元素
+                // 利用不断递增的currentElementIndex, 从ZLTextParagraphCursor类中的myElements Arraylist中依次读取元素
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
                 // 获取每个字将占的宽度, 并将每个字的宽度累加
                 newWidth += getElementWidth(element, currentCharIndex);

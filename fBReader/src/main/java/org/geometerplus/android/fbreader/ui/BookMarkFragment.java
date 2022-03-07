@@ -67,7 +67,7 @@ public class BookMarkFragment extends BaseFragment implements IBookCollection.Li
         final SearchManager manager = (SearchManager) mActivity.getSystemService(Activity.SEARCH_SERVICE);
         manager.setOnCancelListener(null);
 
-        myBook = ((FBReader) mActivity).getMyFBReaderApp().getCurrentBook();
+        myBook = ((FBReader) mActivity).getReaderController().getCurrentBook();
         if (myBook == null) {
             ((FBReader) mActivity).closeSlideMenu();
         }
