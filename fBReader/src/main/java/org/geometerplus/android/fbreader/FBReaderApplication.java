@@ -26,6 +26,9 @@ import com.haowen.bugreport.CrashHandler;
 
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidApplication;
 
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.FlutterEngineCache;
+import io.flutter.embedding.engine.dart.DartExecutor;
 import skin.support.SkinCompatManager;
 import skin.support.app.SkinAppCompatViewInflater;
 import skin.support.app.SkinCardViewInflater;
@@ -34,6 +37,8 @@ import skin.support.design.app.SkinMaterialViewInflater;
 import timber.log.Timber;
 
 public class FBReaderApplication extends ZLAndroidApplication {
+    public static String ENGINE_ID = "engine_id";
+    private FlutterEngine flutterEngine;
 
     @Override
     public void onCreate() {
@@ -53,11 +58,27 @@ public class FBReaderApplication extends ZLAndroidApplication {
                 .loadSkin();
 
         // Timber日志
-        Timber.plant(new Timber.DebugTree(){
+        setDebug();
+
+        configFlutterEngine();
+    }
+
+    private void setDebug() {
+        Timber.plant(new Timber.DebugTree() {
             @Override
             protected String createStackElementTag(@NonNull StackTraceElement element) {
-                return "(" + element.getFileName() + ":" + element.getLineNumber() +")#" + element.getMethodName();
+                return "(" + element.getFileName() + ":" + element.getLineNumber() + ")#" + element.getMethodName();
             }
         });
+    }
+
+    private void configFlutterEngine() {
+        flutterEngine = new FlutterEngine(this);
+        flutterEngine.getNavigationChannel().setInitialRoute("/");
+        flutterEngine.getDartExecutor().executeDartEntrypoint(
+                DartExecutor.DartEntrypoint.createDefault());
+
+        FlutterEngineCache.getInstance()
+                .put(ENGINE_ID, flutterEngine);
     }
 }

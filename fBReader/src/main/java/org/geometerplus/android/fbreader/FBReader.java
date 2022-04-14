@@ -32,6 +32,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
@@ -48,6 +49,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -120,9 +122,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import io.flutter.embedding.android.FlutterFragment;
 import skin.support.SkinCompatManager;
 import timber.log.Timber;
 
+/**
+ * 阅读主界面
+ */
 public final class FBReader extends FBReaderMainActivity implements ZLApplicationWindow {
 
     public static final int RESULT_DO_NOTHING = RESULT_FIRST_USER;
@@ -252,6 +258,8 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
      */
     private TTSPlayer ttsPlayer;
 
+    private FlutterFragment flutterFragment;
+
     public static void openBookActivity(Context context, Book book, Bookmark bookmark) {
         final Intent intent = defaultIntent(context);
         FBReaderIntents.putBookExtra(intent, book);
@@ -266,8 +274,8 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
     }
 
     @Override
-    protected void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 321);
 
@@ -359,6 +367,18 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         // 初始化语音朗读
         ttsPlayer = TTSPlayer.getInstance();
         ttsPlayer.init(this, readerController);
+
+        // todo
+//        if (flutterFragment == null) {
+//            flutterFragment = FlutterFragment
+//                    .withCachedEngine(FBReaderApplication.ENGINE_ID)
+//                    .build();
+//
+//            getSupportFragmentManager()
+//                    .beginTransaction()
+//                    .add(R.id.readerView, flutterFragment, "flutter_fragment")
+//                    .commit();
+//        }
     }
 
     /**

@@ -3,3 +3,8 @@ include ':superToasts'
 include ':code'
 include ':library'
 include ':fBReader'
+setBinding(new Binding([gradle: this]))
+evaluate(new File(
+        settingsDir.parentFile,
+        'FBReaderJ_AndroidStudio/flutter_lib/.android/include_flutter.groovy'
+))

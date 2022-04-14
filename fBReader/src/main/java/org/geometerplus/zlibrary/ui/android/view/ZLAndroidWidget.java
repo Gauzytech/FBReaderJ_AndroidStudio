@@ -77,7 +77,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     private final SystemInfo mySystemInfo;
     private Bitmap myFooterBitmap;
     /**
-     * 抗锯齿
+     * 绘制bitmap抗锯齿
      */
     private PaintFlagsDrawFilter paintFlagsDrawFilter = new PaintFlagsDrawFilter(0,
             Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);

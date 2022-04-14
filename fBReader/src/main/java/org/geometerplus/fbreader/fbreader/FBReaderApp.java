@@ -165,34 +165,34 @@ public final class FBReaderApp extends ZLApplication {
      */
     public void openBook(Book book, final Bookmark bookmark, Runnable postAction, Notifier notifier) {
         Timber.i("打开图书, %s, Thread = %s", book, Thread.currentThread().getName());
-        if (bookModel != null) {
-            if (book == null || bookmark == null && Collection.sameBook(book, bookModel.Book)) {
-                return;
-            }
-        }
-
-        if (book == null) {
-            book = getCurrentServerBook(notifier);
-            if (book == null) {
-                book = Collection.getRecentBook(0);
-            }
-            if (book == null || !BookUtil.fileByBook(book).exists()) {
-                book = Collection.getBookByFile(BookUtil.getHelpFile().getPath());
-            }
-            if (book == null) {
-                return;
-            }
-        }
-        final Book bookToOpen = book;
-        bookToOpen.addNewLabel(Book.READ_LABEL);
-        Collection.saveBook(bookToOpen);
-
-        final SynchronousExecutor executor = createExecutor("loadingBook");
-        executor.execute(new Runnable() {
-            public void run() {
-                openBookInternal(bookToOpen, bookmark, false);
-            }
-        }, postAction);
+//        if (bookModel != null) {
+//            if (book == null || bookmark == null && Collection.sameBook(book, bookModel.Book)) {
+//                return;
+//            }
+//        }
+//
+//        if (book == null) {
+//            book = getCurrentServerBook(notifier);
+//            if (book == null) {
+//                book = Collection.getRecentBook(0);
+//            }
+//            if (book == null || !BookUtil.fileByBook(book).exists()) {
+//                book = Collection.getBookByFile(BookUtil.getHelpFile().getPath());
+//            }
+//            if (book == null) {
+//                return;
+//            }
+//        }
+//        final Book bookToOpen = book;
+//        bookToOpen.addNewLabel(Book.READ_LABEL);
+//        Collection.saveBook(bookToOpen);
+//
+//        final SynchronousExecutor executor = createExecutor("loadingBook");
+//        executor.execute(new Runnable() {
+//            public void run() {
+//                openBookInternal(bookToOpen, bookmark, false);
+//            }
+//        }, postAction);
     }
 
     private void reloadBook() {
