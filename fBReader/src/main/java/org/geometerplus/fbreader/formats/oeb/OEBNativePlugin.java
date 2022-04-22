@@ -46,14 +46,14 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 	 */
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
-		Timber.v("ceshi123, 读取图书并创建model: \n" + model.toString());
+		Timber.v("ceshi123, 图书解析Java, 读取图书并创建model: \n%s", model.toString());
 		// 创建file对象:
 		// AndroidAssetsFile,
 		// ZLTarEntryFile,
 		// ZLZipEntryFile,
 		// ZLPhysicalFile
 		final ZLFile file = BookUtil.fileByBook(model.Book);
-		Timber.v("ceshi123,  创建bookFile: " + file.getClass().getSimpleName());
+		Timber.v("ceshi123, 图书解析Java, 创建bookFile: %s", file.getClass().getSimpleName());
 		file.setCached(true);
 		try {
 			// 调用cpp层进行解析, 最终解析的图书数据会全部保存到bookModel.myBookTextModel中
@@ -94,7 +94,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 	}
 
 	private ZLFile getOpfFile(ZLFile oebFile) throws BookReadingException {
-		Timber.v("ceshi123, 读取opf文件");
+		Timber.tag("图书解析Java").v("ceshi123, 读取opf文件");
 		if ("opf".equals(oebFile.getExtension())) {
 			return oebFile;
 		}

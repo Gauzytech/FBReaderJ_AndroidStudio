@@ -82,6 +82,7 @@ public final class BitmapManagerImpl implements BitmapManager {
      */
     @Override
     public Bitmap getBitmap(ZLView.PageIndex index, String from) {
+        Timber.v("渲染流程:Bitmap绘制, getBitmap, %s", from);
         for (int i = 0; i < CACHE_SIZE; ++i) {
             if (index == cachedPageIndexes[i]) {
 //                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());

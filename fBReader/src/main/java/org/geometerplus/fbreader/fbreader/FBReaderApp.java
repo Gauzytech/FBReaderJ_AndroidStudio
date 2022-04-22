@@ -19,10 +19,13 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import android.os.Looper;
+
 import java.util.*;
 
 import org.fbreader.util.ComparisonUtil;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.application.*;
 import org.geometerplus.zlibrary.core.drm.FileEncryptionInfo;
 import org.geometerplus.zlibrary.core.drm.EncryptionMethod;
@@ -41,6 +44,9 @@ import org.geometerplus.fbreader.util.*;
 
 import timber.log.Timber;
 
+/**
+ * 阅读界面管理类
+ */
 public final class FBReaderApp extends ZLApplication {
 
     public final MiscOptions MiscOptions = new MiscOptions();
@@ -48,7 +54,9 @@ public final class FBReaderApp extends ZLApplication {
     public final ViewOptions ViewOptions = new ViewOptions();
     public final PageTurningOptions PageTurningOptions = new PageTurningOptions();
     public final SyncOptions SyncOptions = new SyncOptions();
+    // 管理所有图书显示界面绘制数据的类
     public final FBView bookTextView;
+    // 管理所有图书显示界面脚注绘制数据的类
     public final FBView footnoteView;
     public final IBookCollection<Book> Collection;
     private final ZLKeyBindings myBindings = new ZLKeyBindings();
@@ -125,7 +133,7 @@ public final class FBReaderApp extends ZLApplication {
         bookTextView = new FBView(this);
         footnoteView = new FBView(this);
 
-        setView(bookTextView);
+        setView(bookTextView, "constructor");
     }
 
     public void setExternalFileOpener(ExternalFileOpener o) {
@@ -138,7 +146,7 @@ public final class FBReaderApp extends ZLApplication {
     }
 
     public void openHelpBook() {
-        openBook(Collection.getBookByFile(BookUtil.getHelpFile().getPath()), null, null, null);
+        openBook(Collection.getBookByFile(BookUtil.getHelpFile().getPath()), null, null, null, "openHelpBook");
     }
 
     public Book getCurrentServerBook(Notifier notifier) {
@@ -163,36 +171,39 @@ public final class FBReaderApp extends ZLApplication {
     /**
      * 打开图书
      */
-    public void openBook(Book book, final Bookmark bookmark, Runnable postAction, Notifier notifier) {
-        Timber.i("打开图书, %s, Thread = %s", book, Thread.currentThread().getName());
-//        if (bookModel != null) {
-//            if (book == null || bookmark == null && Collection.sameBook(book, bookModel.Book)) {
-//                return;
-//            }
-//        }
-//
-//        if (book == null) {
-//            book = getCurrentServerBook(notifier);
-//            if (book == null) {
-//                book = Collection.getRecentBook(0);
-//            }
-//            if (book == null || !BookUtil.fileByBook(book).exists()) {
-//                book = Collection.getBookByFile(BookUtil.getHelpFile().getPath());
-//            }
-//            if (book == null) {
-//                return;
-//            }
-//        }
-//        final Book bookToOpen = book;
-//        bookToOpen.addNewLabel(Book.READ_LABEL);
-//        Collection.saveBook(bookToOpen);
-//
-//        final SynchronousExecutor executor = createExecutor("loadingBook");
-//        executor.execute(new Runnable() {
-//            public void run() {
-//                openBookInternal(bookToOpen, bookmark, false);
-//            }
-//        }, postAction);
+    public void openBook(Book book, final Bookmark bookmark, Runnable postAction, Notifier notifier, String from) {
+        Timber.i("打开图书:渲染流程, %s, Thread = %s, from = %s", book, Thread.currentThread().getName(), from);
+        if (bookModel != null) {
+            if (book == null || bookmark == null && Collection.sameBook(book, bookModel.Book)) {
+                return;
+            }
+        }
+
+        if (book == null) {
+            book = getCurrentServerBook(notifier);
+            if (book == null) {
+                book = Collection.getRecentBook(0);
+            }
+            if (book == null || !BookUtil.fileByBook(book).exists()) {
+                book = Collection.getBookByFile(BookUtil.getHelpFile().getPath());
+            }
+            if (book == null) {
+                return;
+            }
+        }
+        final Book bookToOpen = book;
+        bookToOpen.addNewLabel(Book.READ_LABEL);
+        Collection.saveBook(bookToOpen);
+
+        // executor.execute会显示一个loadingDialog
+        final SynchronousExecutor executor = createExecutor("loadingBook");
+        executor.execute(new Runnable() {
+            public void run() {
+                Timber.d("打开图书, 开始打开图书, 当前线程 = %s",
+                        Thread.currentThread().getName());
+                openBookInternal(bookToOpen, bookmark, false);
+            }
+        }, postAction);
     }
 
     private void reloadBook() {
@@ -279,10 +290,10 @@ public final class FBReaderApp extends ZLApplication {
                         myJumpTimeStamp = new Date();
                     }
                     bookTextView.gotoPosition(label.ParagraphIndex, 0, 0);
-                    setView(bookTextView);
+                    setView(bookTextView, "tryOpenFootnote");
                 } else {
                     setFootnoteModel(label.ModelId);
-                    setView(footnoteView);
+                    setView(footnoteView, "tryOpenFootnote");
                     footnoteView.gotoPosition(label.ParagraphIndex, 0, 0);
                 }
                 getViewWidget().repaint("tryOpenFootnote");
@@ -292,6 +303,7 @@ public final class FBReaderApp extends ZLApplication {
     }
 
     public FBView getTextView() {
+        Timber.v("渲染流程, getTextView -> getCurrentView");
         return (FBView) getCurrentView();
     }
 
@@ -463,6 +475,7 @@ public final class FBReaderApp extends ZLApplication {
      * @param force    强制
      */
     private synchronized void openBookInternal(final Book book, Bookmark bookmark, boolean force) {
+        Timber.v("打开图书:渲染流程, --------------------------------------------------------openBookInternal 图书渲染入口----------------------------------------------------------");
         if (!force && bookModel != null && Collection.sameBook(book, bookModel.Book)) {
             if (bookmark != null) {
                 gotoBookmark(bookmark, false);
@@ -491,7 +504,7 @@ public final class FBReaderApp extends ZLApplication {
             processException(e);
             return;
         }
-        Timber.v("ceshi123, 成功获得图书解析plugin: " + plugin.name());
+        Timber.v("打开图书:渲染流程, 成功获得图书解析plugin: %s", plugin.name());
         // ExternalFormatPlugin: pdf, djvu, comic plugin
         if (plugin instanceof ExternalFormatPlugin) {
             externalBook = book;
@@ -514,7 +527,7 @@ public final class FBReaderApp extends ZLApplication {
             // 开始解析图书, 将所有图书内容存入bookModel中
             // bookModel.myBookTextModel里保存了所有章节渲染信息
             bookModel = BookModel.createModel(book, plugin);
-            Timber.v("渲染流程, 解析成功！----------------------------------------------------------------------接下来将开始渲染流程------------------------------------------------------------------------------");
+            Timber.v("打开图书:渲染流程, 解析成功！----------------------------------------------------------------------接下来将开始渲染流程------------------------------------------------------------------------------");
             // 保存图书基本信息
             Collection.saveBook(book);
             // 这一步干啥的????
@@ -528,7 +541,7 @@ public final class FBReaderApp extends ZLApplication {
             // 笔记
             setBookNoteHighlighting(bookTextView, null);
             if (bookmark == null) {
-                setView(bookTextView);
+                setView(bookTextView, "openBookInternal");
             } else {
                 gotoBookmark(bookmark, false);
             }
@@ -552,7 +565,7 @@ public final class FBReaderApp extends ZLApplication {
             processException(e);
         }
 
-        getViewWidget().reset();
+        getViewWidget().reset("openBookInternal");
         // 触发ZLAndroidWidget类的onDraw方法, 显示图书
         getViewWidget().repaint("openBookInternal");
 
@@ -598,7 +611,7 @@ public final class FBReaderApp extends ZLApplication {
     }
 
     public void showBookTextView() {
-        setView(bookTextView);
+        setView(bookTextView, "showBookTextView");
     }
 
     private void gotoBookmark(Bookmark bookmark, boolean exactly) {
@@ -612,7 +625,7 @@ public final class FBReaderApp extends ZLApplication {
                         new BookmarkHighlighting(bookTextView, Collection, bookmark)
                 );
             }
-            setView(bookTextView);
+            setView(bookTextView, "gotoBookmark");
         } else {
             setFootnoteModel(modelId);
             if (exactly) {
@@ -622,7 +635,7 @@ public final class FBReaderApp extends ZLApplication {
                         new BookmarkHighlighting(footnoteView, Collection, bookmark)
                 );
             }
-            setView(footnoteView);
+            setView(footnoteView, "gotoBookmark");
         }
         getViewWidget().repaint("gotoBookmark");
         storePosition();
@@ -632,7 +645,7 @@ public final class FBReaderApp extends ZLApplication {
         if (openOtherBook && SyncOptions.ChangeCurrentBook.getValue()) {
             final Book fromServer = getCurrentServerBook(notifier);
             if (fromServer != null && !Collection.sameBook(fromServer, Collection.getRecentBook(0))) {
-                openBook(fromServer, null, null, notifier);
+                openBook(fromServer, null, null, notifier, "useSyncInfo");
                 return;
             }
         }
@@ -687,7 +700,7 @@ public final class FBReaderApp extends ZLApplication {
                 runAction(ActionCode.SHOW_NETWORK_LIBRARY);
                 break;
             case previousBook:
-                openBook(Collection.getRecentBook(1), null, null, null);
+                openBook(Collection.getRecentBook(1), null, null, null, "runCancelAction");
                 break;
             case returnTo:
                 Collection.deleteBookmark(bookmark);
@@ -757,6 +770,7 @@ public final class FBReaderApp extends ZLApplication {
     }
 
     public void onBookUpdated(Book book) {
+        if (!DebugHelper.ENABLE_ON_BOOK_UPDATED) return;
         if (bookModel == null || bookModel.Book == null || !Collection.sameBook(bookModel.Book, book)) {
             return;
         }

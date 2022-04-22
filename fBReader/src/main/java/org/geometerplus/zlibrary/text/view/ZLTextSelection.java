@@ -250,13 +250,13 @@ class ZLTextSelection extends ZLTextHighlighting {
         if (myCursorInMovement == SelectionCursor.Which.Right) {
             if (hasPartAfterPage(page)) {
                 myView.turnPage(true, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
-                myView.Application.getViewWidget().reset();
+                myView.Application.getViewWidget().reset("expandTo");
                 myView.preparePaintInfo();
             }
         } else {
             if (hasPartBeforePage(page)) {
                 myView.turnPage(false, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
-                myView.Application.getViewWidget().reset();
+                myView.Application.getViewWidget().reset("expandTo");
                 myView.preparePaintInfo();
             }
         }
@@ -330,7 +330,7 @@ class ZLTextSelection extends ZLTextHighlighting {
             myView.turnPage(myScrollForward, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
             myView.preparePaintInfo();
             expandTo(myPage, myX, myY);
-            myView.Application.getViewWidget().reset();
+            myView.Application.getViewWidget().reset("Scroller.run");
             myView.Application.getViewWidget().repaint("Scroller.run");
         }
 

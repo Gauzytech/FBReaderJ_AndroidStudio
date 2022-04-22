@@ -43,7 +43,7 @@ class SwitchProfileAction extends FBAndroidAction {
             return;
         }
         Reader.ViewOptions.ColorProfileName.setValue(myProfileName);
-        Reader.getViewWidget().reset();
+        Reader.getViewWidget().reset("SwitchProfileAction.run");
         Reader.getViewWidget().repaint("SwitchProfileAction.run");
     }
 }

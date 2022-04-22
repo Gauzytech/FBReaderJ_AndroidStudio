@@ -297,6 +297,9 @@ public class BookCollectionShadow extends AbstractBookCollection<Book> implement
         });
     }
 
+    /**
+     * 通知libraryService把[book]保存
+     */
     public synchronized boolean saveBook(Book book) {
         if (myInterface == null) {
             return false;

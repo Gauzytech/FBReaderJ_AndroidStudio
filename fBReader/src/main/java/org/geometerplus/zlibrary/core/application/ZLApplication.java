@@ -41,7 +41,8 @@ public abstract class ZLApplication {
 
     public final SystemInfo SystemInfo;
 
-    private volatile ZLApplicationWindow myWindow;
+    private volatile ZLReaderWindow myWindowCallback;
+    // 这个是bookTextView 或者是footnoteView
     private volatile ZLView myView;
 
     private final HashMap<String, ZLAction> myIdToActionMap = new HashMap<>();
@@ -51,12 +52,13 @@ public abstract class ZLApplication {
         ourInstance = this;
     }
 
-    protected final void setView(ZLView view) {
+    protected final void setView(ZLView view, String from) {
+        Timber.v("渲染流程:启动, setView, %s", from);
         if (view != null) {
             this.myView = view;
             final ZLViewWidget widget = getViewWidget();
             if (widget != null) {
-                widget.reset();
+                widget.reset("ZLApplication.setView");
                 widget.repaint("ZLApplication.setView");
             }
             hideActivePopup();
@@ -67,29 +69,29 @@ public abstract class ZLApplication {
         return myView;
     }
 
-    public final void setWindow(ZLApplicationWindow window) {
-        myWindow = window;
+    public final void setZLReaderWindowCallback(ZLReaderWindow window) {
+        myWindowCallback = window;
     }
 
     public final void initWindow() {
-        setView(myView);
+        setView(myView,"initWindow");
     }
 
     protected void setTitle(String title) {
-        if (myWindow != null) {
-            myWindow.setWindowTitle(title);
+        if (myWindowCallback != null) {
+            myWindowCallback.setWindowTitle(title);
         }
     }
 
     protected void showErrorMessage(String resourceKey) {
-        if (myWindow != null) {
-            myWindow.showErrorMessage(resourceKey);
+        if (myWindowCallback != null) {
+            myWindowCallback.showErrorMessage(resourceKey);
         }
     }
 
     protected void showErrorMessage(String resourceKey, String parameter) {
-        if (myWindow != null) {
-            myWindow.showErrorMessage(resourceKey, parameter);
+        if (myWindowCallback != null) {
+            myWindowCallback.showErrorMessage(resourceKey, parameter);
         }
     }
 
@@ -110,26 +112,27 @@ public abstract class ZLApplication {
     };
 
     protected SynchronousExecutor createExecutor(String key) {
-        if (myWindow != null) {
-            return myWindow.createExecutor(key);
+        if (myWindowCallback != null) {
+            return myWindowCallback.createExecutor(key);
         } else {
             return myDummyExecutor;
         }
     }
 
     protected void processException(Exception e) {
-        if (myWindow != null) {
-            myWindow.processException(e);
+        if (myWindowCallback != null) {
+            myWindowCallback.processException(e);
         }
     }
 
     public final ZLViewWidget getViewWidget() {
-        return myWindow != null ? myWindow.getViewWidget() : null;
+        return myWindowCallback != null ? myWindowCallback.getViewWidget("setView") : null;
     }
 
     public final void onRepaintFinished() {
-        if (myWindow != null) {
-            myWindow.refresh();
+        Timber.v("渲染流程, onRepaintFinished");
+        if (myWindowCallback != null) {
+            myWindowCallback.refresh();
         }
         for (PopupPanel popup : popupPanels()) {
             popup.update();
@@ -195,8 +198,8 @@ public abstract class ZLApplication {
 
     public boolean closeWindow() {
         onWindowClosing();
-        if (myWindow != null) {
-            myWindow.close();
+        if (myWindowCallback != null) {
+            myWindowCallback.close();
         }
         return true;
     }
@@ -262,7 +265,7 @@ public abstract class ZLApplication {
     }
 
     public int getBatteryLevel() {
-        return (myWindow != null) ? myWindow.getBatteryLevel() : 0;
+        return (myWindowCallback != null) ? myWindowCallback.getBatteryLevel() : 0;
     }
 
     private volatile Timer myTimer;

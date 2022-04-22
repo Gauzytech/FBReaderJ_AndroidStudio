@@ -57,11 +57,9 @@ class DisplayBookPopupAction extends FBAndroidAction {
 			return;
 		}
 
-		BaseActivity.runOnUiThread(new Runnable() {
-			public void run() {
-				popup.dismiss();
-				Reader.openBook(book, null, null, null);
-			}
+		BaseActivity.runOnUiThread(() -> {
+			popup.dismiss();
+			Reader.openBook(book, null, null, null, "DisplayBookPopupAction");
 		});
 	}
 
@@ -83,7 +81,7 @@ class DisplayBookPopupAction extends FBAndroidAction {
 			return;
 		}
 
-		final View mainView = (View)BaseActivity.getViewWidget();
+		final View mainView = (View)BaseActivity.getViewWidget("DisplayBookPopupAction.run");
 		final View bookView = BaseActivity.getLayoutInflater().inflate(
 			ColorProfile.THEME_BLACK.equals(Reader.ViewOptions.ColorProfileName.getValue())
 				? R.layout.book_popup_night : R.layout.book_popup,

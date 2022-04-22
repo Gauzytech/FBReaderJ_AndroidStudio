@@ -114,7 +114,7 @@ final class NavigationPopup extends ZLApplication.PopupPanel {
 				} else {
 					view.gotoPage(page);
 				}
-				myFBReader.getViewWidget().reset();
+				myFBReader.getViewWidget().reset("NavigationPopUp.gotoPage");
 				myFBReader.getViewWidget().repaint("NavigationPopUp.gotoPage");
 			}
 
@@ -152,7 +152,7 @@ final class NavigationPopup extends ZLApplication.PopupPanel {
 				}
 				myStartPosition = null;
 				Application.hideActivePopup();
-				myFBReader.getViewWidget().reset();
+				myFBReader.getViewWidget().reset("btnOkOk.onClick");
 				myFBReader.getViewWidget().repaint("btnOkOk.onClick");
 			}
 		};

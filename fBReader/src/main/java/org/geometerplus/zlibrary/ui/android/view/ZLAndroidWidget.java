@@ -164,9 +164,10 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     private void onDrawInScrolling(Canvas canvas) {
+        Timber.v("渲染流程, onDrawInScrolling -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
 
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("onDrawInScrolling");
         final AnimationProvider.Mode oldMode = animator.getMode();
         animator.doStep();
         if (animator.inProgress()) {
@@ -190,20 +191,23 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                     view.onScrollingFinished(ZLView.PageIndex.CURRENT);
                     break;
             }
-            onDrawStatic(canvas);
+            onDrawStatic(canvas, "onDrawInScrolling");
         }
     }
 
     @Override
-    public void reset() {
-        Timber.v("渲染流程, 清空bitmap缓存");
+    public void reset(String from) {
+        Timber.v("打开图书:渲染流程, 清空bitmap缓存, %s", from);
         myBitmapManager.reset();
     }
 
     @Override
     public void repaint(String from) {
-        if (from.equals("Footer.run")) return;
-//        Timber.v("渲染流程:绘制, 刷新view %s", from);
+        // debug需求: 先把底部总页码渲染关掉
+        if (!DebugHelper.FOOTER_PAGE_COUNT_ENABLE && from.equals("Footer.run")) return;
+        if (!DebugHelper.ON_START_REPAINT && from.equals("onStart")) return;
+
+        Timber.v("渲染流程:绘制, 刷新view %s", from);
         // 不是每次都会执行onDraw()
         // 不执行原因
         // 1. 自定义的View所在的布局中,自定义View计算不出位置.
@@ -217,24 +221,29 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public void startManualScrolling(int x, int y, ZLView.Direction direction) {
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("startManualScrolling");
         animator.setup(direction, getWidth(), getMainAreaHeight(), myColorLevel);
         animator.startManualScrolling(x, y);
     }
 
     @Override
     public void scrollManuallyTo(int x, int y) {
+        Timber.v("渲染流程, scrollManuallyTo -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("scrollManuallyTo");
         if (view.canScroll(animator.getPageToScrollTo(x, y))) {
             animator.scrollTo(x, y);
             postInvalidate();
         }
-    }    @Override
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        getAnimationProvider().terminate();
+        Timber.v("渲染流程, 第一次启动 -> onSizeChanged, 之后会调用onLayout");
+        getAnimationProvider("onSizeChanged").terminate();
         if (myScreenIsTouched) {
+            Timber.v("渲染流程, onSizeChanged -> getCurrentView");
             final ZLView view = ZLApplication.Instance().getCurrentView();
             myScreenIsTouched = false;
             view.onScrollingFinished(ZLView.PageIndex.CURRENT);
@@ -243,11 +252,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public void startAnimatedScrolling(ZLView.PageIndex pageIndex, int x, int y, ZLView.Direction direction, int speed) {
+        Timber.v("渲染流程, startAnimatedScrolling -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
         if (pageIndex == ZLView.PageIndex.CURRENT || !view.canScroll(pageIndex)) {
             return;
         }
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("startAnimatedScrolling");
         animator.setup(direction, getWidth(), getMainAreaHeight(), myColorLevel);
         animator.startAnimatedScrolling(pageIndex, x, y, speed);
         if (animator.getMode().Auto) {
@@ -257,11 +267,12 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public void startAnimatedScrolling(ZLView.PageIndex pageIndex, ZLView.Direction direction, int speed) {
+        Timber.v("渲染流程, startAnimatedScrolling -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
         if (pageIndex == ZLView.PageIndex.CURRENT || !view.canScroll(pageIndex)) {
             return;
         }
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("startAnimatedScrolling");
         animator.setup(direction, getWidth(), getMainAreaHeight(), myColorLevel);
         animator.startAnimatedScrolling(pageIndex, null, null, speed);
         if (animator.getMode().Auto) {
@@ -271,8 +282,9 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public void startAnimatedScrolling(int x, int y, int speed) {
+        Timber.v("渲染流程, startAnimatedScrolling -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("startAnimatedScrolling");
         if (!view.canScroll(animator.getPageToScrollTo(x, y))) {
             animator.terminate();
             return;
@@ -281,7 +293,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         postInvalidate();
     }
 
-    private AnimationProvider getAnimationProvider() {
+    private AnimationProvider getAnimationProvider(String from) {
+        Timber.v("渲染流程, %s -> getAnimationProvider -> getCurrentView", from);
         final ZLView.Animation type = ZLApplication.Instance().getCurrentView().getAnimationType();
         if (myAnimationProvider == null || myAnimationType != type) {
             myAnimationType = type;
@@ -310,6 +323,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     }
 
     private int getMainAreaHeight() {
+        Timber.v("打开图书:渲染流程, getMainAreaHeight -> getCurrentView");
         final ZLView.FooterArea footer = ZLApplication.Instance().getCurrentView().getFooterArea();
         return footer != null ? getHeight() - footer.getHeight() : getHeight();
     }
@@ -320,11 +334,13 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     /**
      * 在Bitmap上绘制
+     * 创建一个空白的canvas, 将当前页的内容绘制在canvas上面
      *
      * @param bitmap Bitmap
      * @param index  页面索引
      */
     void drawOnBitmap(Bitmap bitmap, ZLView.PageIndex index) {
+        Timber.v("渲染流程, drawOnBitmap -> getCurrentView");
         final ZLView view = ZLApplication.Instance().getCurrentView();
         if (view == null) {
             return;
@@ -402,8 +418,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         postInvalidate();
     }
 
-    private void onDrawStatic(final Canvas canvas) {
-        Timber.v("渲染流程:绘制, ----------------------------- 非滚动绘制, isPreview = %s ----------------------------->", isPreview);
+    private void onDrawStatic(final Canvas canvas, String from) {
+        Timber.v("渲染流程:绘制, ----------------------------- 非滚动绘制, isPreview = %s ------------%s--------->", isPreview, from);
         // 点击屏幕, 缩略图有效果
         if (isPreview) {
             canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.PREV, "onDrawStatic.PREV"), -getWidth() - getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
@@ -418,6 +434,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             canvas.drawBitmap(myBitmapManager.getBitmap(ZLView.PageIndex.NEXT, "onDrawStatic.NEXT"), getWidth() + getWidth() * PreviewConfig.SCALE_MARGIN_VALUE, 0, myPaint);
         }
 
+        Timber.v("渲染流程, onDrawStatic -> getCurrentView.canMagnifier");
         if (ZLApplication.Instance().getCurrentView().canMagnifier()) {
             drawMagnifier(canvas, bitmap);
         }
@@ -503,9 +520,10 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         }
     }
 
-
     @Override
     protected void onDraw(final Canvas canvas) {
+        Timber.v("渲染流程, 绘制被触发");
+
         canvas.setDrawFilter(paintFlagsDrawFilter);
 
         // 画布缩放
@@ -521,17 +539,13 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
         myBitmapManager.setSize(getWidth(), getMainAreaHeight());
         // 判断程序是否处在翻页动画中
-        if (getAnimationProvider().inProgress()) {
+        if (getAnimationProvider("onDraw").inProgress()) {
             onDrawInScrolling(canvas);
         } else {
-            onDrawStatic(canvas);
+            onDrawStatic(canvas, "onDraw");
             ZLApplication.Instance().onRepaintFinished();
         }
     }
-
-
-
-
 
     /**
      * 垂直方向
@@ -602,7 +616,6 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         int y = (int) event.getY();
         mCurrentX = x;
         mCurrentY = y;
-
         final ZLView view = ZLApplication.Instance().getCurrentView();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -799,7 +812,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         if (!view.isScrollbarShown()) {
             return 0;
         }
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("computeVerticalScrollExtent");
         if (animator.inProgress()) {
             final int from = view.getScrollbarThumbLength(ZLView.PageIndex.CURRENT);
             final int to = view.getScrollbarThumbLength(animator.getPageToScrollTo());
@@ -816,7 +829,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         if (!view.isScrollbarShown()) {
             return 0;
         }
-        final AnimationProvider animator = getAnimationProvider();
+        final AnimationProvider animator = getAnimationProvider("computeVerticalScrollOffset");
         if (animator.inProgress()) {
             final int from = view.getScrollbarThumbPosition(ZLView.PageIndex.CURRENT);
             final int to = view.getScrollbarThumbPosition(animator.getPageToScrollTo());

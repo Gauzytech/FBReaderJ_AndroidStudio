@@ -491,7 +491,7 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 outlineRegion(region);
-                myReader.getViewWidget().reset();
+                myReader.getViewWidget().reset("doSelectRegion");
                 myReader.getViewWidget().repaint("doSelectRegion");
                 return true;
             }
@@ -556,7 +556,7 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            myReader.getViewWidget().reset();
+                            myReader.getViewWidget().reset("onFingerMoveAfterLongPress");
                             myReader.getViewWidget().repaint("onFingerMoveAfterLongPress");
                         }
                     }
@@ -584,7 +584,7 @@ public final class FBView extends ZLTextView {
         final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
         if (hyperlinkRegion != null) {
             outlineRegion(hyperlinkRegion);
-            myReader.getViewWidget().reset();
+            myReader.getViewWidget().reset("onFingerSingleTap");
             myReader.getViewWidget().repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             return;
@@ -599,7 +599,7 @@ public final class FBView extends ZLTextView {
         final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
         if (videoRegion != null) {
             outlineRegion(videoRegion);
-            myReader.getViewWidget().reset();
+            myReader.getViewWidget().reset("onFingerSingleTap");
             myReader.getViewWidget().repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
             return;

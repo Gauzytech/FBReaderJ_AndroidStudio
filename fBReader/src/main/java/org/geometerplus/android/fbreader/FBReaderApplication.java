@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import com.facebook.stetho.Stetho;
 import com.haowen.bugreport.CrashHandler;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidApplication;
 
 import io.flutter.embedding.engine.FlutterEngine;
@@ -60,7 +61,9 @@ public class FBReaderApplication extends ZLAndroidApplication {
         // Timber日志
         setDebug();
 
-        configFlutterEngine();
+        if (DebugHelper.ENABLE_FLUTTER) {
+            configFlutterEngine();
+        }
     }
 
     private void setDebug() {
@@ -74,7 +77,7 @@ public class FBReaderApplication extends ZLAndroidApplication {
 
     private void configFlutterEngine() {
         flutterEngine = new FlutterEngine(this);
-        flutterEngine.getNavigationChannel().setInitialRoute("/");
+//        flutterEngine.getNavigationChannel().setInitialRoute("/");
         flutterEngine.getDartExecutor().executeDartEntrypoint(
                 DartExecutor.DartEntrypoint.createDefault());
 

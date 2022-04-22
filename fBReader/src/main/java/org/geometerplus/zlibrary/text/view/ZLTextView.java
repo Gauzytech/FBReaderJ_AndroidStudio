@@ -110,13 +110,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 先将cursor定位到第一页
                 // 从cursorManager LRU中获得第一个解析缓存文件的cursor, 因为此时是cursorManager是空的, 所以缓存解析文件肯定包括了第一章解析内容
                 ZLTextParagraphCursor start = getParagraphCursor(0);
-                Timber.v("渲染流程, 初始化startCursor: %s", start.toString());
+                Timber.v("打开图书:渲染流程, 初始化startCursor: %s", start.toString());
                 // 重置currentPage的信息
                 myCurrentPage.moveStartCursor(start);
             }
         }
         // 重置所有缓存, 我们会使用BitmapManager缓存4个bitmap对象
-        Application.getViewWidget().reset();
+        Application.getViewWidget().reset("setTextModel");
     }
 
     protected abstract ExtensionElementManager getExtensionManager();
@@ -320,7 +320,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * 重绘
      */
     public void repaint(String from) {
-        Application.getViewWidget().reset();
+        Application.getViewWidget().reset(from);
         Application.getViewWidget().repaint(from);
     }
 
@@ -447,16 +447,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
             paintContext.clear(getBackgroundColor());
         }
 
-        if (myTextModel == null) {
-            Timber.v("渲染流程:Bitmap绘制, myTextModel不存在, 图书没解析, ignore");
-        } else {
-            Timber.v("渲染流程:Bitmap绘制, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
-        }
-
         // 还没有图书数据就不绘制
         if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
+            Timber.v("渲染流程:Bitmap绘制, myTextModel不存在, 图书没解析, paint结束");
             return;
         }
+
+        Timber.v("渲染流程:Bitmap绘制, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
 
         // 先根据pageIndex选择page
         ZLTextPage page;
@@ -1632,7 +1629,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
      */
     public final synchronized void gotoPosition(int paragraphIndex, int wordIndex, int charIndex) {
         if (myTextModel != null && myTextModel.getParagraphsNumber() > 0) {
-            Application.getViewWidget().reset();
+            Application.getViewWidget().reset("gotoPosition");
             myCurrentPage.moveStartCursor(paragraphIndex, wordIndex, charIndex);
             myPreviousPage.reset();
             myNextPage.reset();
@@ -1810,7 +1807,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public void clearCaches() {
         resetMetrics();
         rebuildPaintInfo();
-        Application.getViewWidget().reset();
+        Application.getViewWidget().reset("clearCaches");
         myCharWidth = -1;
     }
 
@@ -1929,7 +1926,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     public void hideOutline() {
         myShowOutline = false;
-        Application.getViewWidget().reset();
+        Application.getViewWidget().reset("hideOutline");
     }
 
     protected ZLTextHighlighting findHighlighting(int x, int y, int maxDistance) {

@@ -32,7 +32,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
@@ -49,7 +48,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -57,6 +55,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.android.fbreader.api.ApiListener;
 import org.geometerplus.android.fbreader.api.ApiServerImplementation;
 import org.geometerplus.android.fbreader.api.FBReaderIntents;
@@ -95,7 +94,7 @@ import org.geometerplus.fbreader.fbreader.options.ColorProfile;
 import org.geometerplus.fbreader.formats.ExternalFormatPlugin;
 import org.geometerplus.fbreader.formats.PluginCollection;
 import org.geometerplus.fbreader.tips.TipsManager;
-import org.geometerplus.zlibrary.core.application.ZLApplicationWindow;
+import org.geometerplus.zlibrary.core.application.ZLReaderWindow;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.image.ZLImage;
 import org.geometerplus.zlibrary.core.image.ZLImageProxy;
@@ -129,7 +128,7 @@ import timber.log.Timber;
 /**
  * 阅读主界面
  */
-public final class FBReader extends FBReaderMainActivity implements ZLApplicationWindow {
+public final class FBReader extends FBReaderMainActivity implements ZLReaderWindow {
 
     public static final int RESULT_DO_NOTHING = RESULT_FIRST_USER;
     public static final int RESULT_REPAINT = RESULT_FIRST_USER + 1;
@@ -301,10 +300,10 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         // 全屏
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // 阅读界面，这个界面是ZLAndroidWidget类
+        // 阅读界面
         setContentView(R.layout.main);
         // findViewById
-        bindViews();
+        setUpView();
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
 
         initListener();
@@ -312,19 +311,22 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         // 初始化阅读控制单例
         readerController = (FBReaderApp) FBReaderApp.Instance();
         if (readerController == null) {
-            readerController = new FBReaderApp(Paths.systemInfo(this), new BookCollectionShadow());
+            readerController = new FBReaderApp(Paths.systemInfo(this),
+                    new BookCollectionShadow());
         }
         getCollection().bindToService(this, null);
         myBook = null;
 
-        readerController.setWindow(this);
-        // ZLApplication类的子类FBReaderApp类中的iniWindow方法将负责建立子线程并在主线程显示进度条
+        // 注册阅读界面管理类的回调
+        readerController.setZLReaderWindowCallback(this);
+        // iniWindow方法将负责建立子线程并在主线程显示进度条
+        // 此时对myMainView重置
         readerController.initWindow();
 
         // 管理打开外部文件类
         readerController.setExternalFileOpener(new ExternalFileOpener(this));
 
-        /// 设置全屏
+        /// 设置是否隐藏状态栏
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 myShowStatusBarFlag ? 0 : WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -348,6 +350,32 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         // 添加阅读界面的事件
         setControllerAction();
 
+        // 获取包含图书信息的intent, 保存openBookIntent, 在onResume时候会调用
+        setUpOpenBookIntent();
+
+        // 初始化语音朗读
+        ttsPlayer = TTSPlayer.getInstance();
+        ttsPlayer.init(this, readerController);
+
+        // todo
+        if (DebugHelper.ENABLE_FLUTTER) {
+            if (flutterFragment == null) {
+                flutterFragment = FlutterFragment
+                        .withCachedEngine(FBReaderApplication.ENGINE_ID)
+                        .build();
+
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .add(R.id.readerView, flutterFragment, "flutter_fragment")
+                        .commit();
+            }
+        }
+    }
+
+    /**
+     * 赋值myOpenBookIntent, 在onResume时候会调用
+     */
+    private void setUpOpenBookIntent() {
         final Intent intent = getIntent();
         final String action = intent.getAction();
 
@@ -360,25 +388,9 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                 readerController.externalBook = null;
                 myOpenBookIntent = null;
                 getCollection().bindToService(this, () ->
-                        readerController.openBook(null, null, null, myNotifier));
+                        readerController.openBook(null, null, null, myNotifier, "FBReaderIntents.Action.PLUGIN_CRASH.equals(action)"));
             }
         }
-
-        // 初始化语音朗读
-        ttsPlayer = TTSPlayer.getInstance();
-        ttsPlayer.init(this, readerController);
-
-        // todo
-//        if (flutterFragment == null) {
-//            flutterFragment = FlutterFragment
-//                    .withCachedEngine(FBReaderApplication.ENGINE_ID)
-//                    .build();
-//
-//            getSupportFragmentManager()
-//                    .beginTransaction()
-//                    .add(R.id.readerView, flutterFragment, "flutter_fragment")
-//                    .commit();
-//        }
     }
 
     /**
@@ -433,7 +445,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
     /**
      * findViewByIds
      */
-    private void bindViews() {
+    private void setUpView() {
         myRootView = findViewById(R.id.root_view);
         myMainView = findViewById(R.id.main_view);
         ivPlayer = findViewById(R.id.ivPlay);
@@ -626,7 +638,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                 } else {
                     textView.gotoPage(page);
                 }
-                readerController.getViewWidget().reset();
+                readerController.getViewWidget().reset("gotoPage");
                 readerController.getViewWidget().repaint("gotoPage");
             }
         });
@@ -917,7 +929,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                     getPostponedInitAction().run();
                 }
             }.start();
-
+            Timber.v("渲染流程, onStart -> view.repaint");
             readerController.getViewWidget().repaint("onStart");
         });
 
@@ -1019,7 +1031,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
     public void hideDictionarySelection() {
         readerController.getTextView().hideOutline();
         readerController.getTextView().removeHighlightings(DictionaryHighlighting.class);
-        readerController.getViewWidget().reset();
+        readerController.getViewWidget().reset("hideDictionarySelection");
         readerController.getViewWidget().repaint("hideDictionarySelection");
     }
 
@@ -1139,7 +1151,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                 if (collection.sameBook(b, book)) {
                     b = collection.getRecentBook(1);
                 }
-                readerController.openBook(b, null, null, myNotifier);
+                readerController.openBook(b, null, null, myNotifier, "onNewIntent");
             });
         } else {
             super.onNewIntent(intent);
@@ -1160,11 +1172,13 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
         myStartTimer = true;
         Config.Instance().runOnConnect(() -> {
             SyncOperations.enableSync(FBReader.this, readerController.SyncOptions);
-
+            // 设置亮度
             final int brightnessLevel =
                     getZLibrary().ScreenBrightnessLevelOption.getValue();
             if (brightnessLevel != 0) {
-                getViewWidget().setScreenBrightness(brightnessLevel);
+                if (DebugHelper.ENABLE_SET_SCREEN_BRIGHTNESS) {
+                    getViewWidget("onResume.brightnessLevel").setScreenBrightness(brightnessLevel);
+                }
             } else {
                 setScreenBrightnessAuto();
             }
@@ -1173,6 +1187,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             }
 
             getCollection().bindToService(FBReader.this, () -> {
+                // 监听阅读设置改变
                 final BookModel model = readerController.bookModel;
                 if (model == null || model.Book == null) {
                     return;
@@ -1181,6 +1196,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             });
         });
 
+        // 监听电量变化
         registerReceiver(myBatteryInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         IsPaused = false;
         myResumeTimestamp = System.currentTimeMillis();
@@ -1189,10 +1205,12 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             OnResumeAction = null;
             action.run();
         }
-
+        // 监听同步
         registerReceiver(mySyncUpdateReceiver, new IntentFilter(FBReaderIntents.Event.SYNC_UPDATED));
 
-        SetScreenOrientationAction.setOrientation(this, getZLibrary().getOrientationOption().getValue());
+        if (DebugHelper.ENABLE_SET_ORIENTATION) {
+            SetScreenOrientationAction.setOrientation(this, getZLibrary().getOrientationOption().getValue());
+        }
         if (myCancelIntent != null) {
             final Intent intent = myCancelIntent;
             myCancelIntent = null;
@@ -1208,7 +1226,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
                     readerController.useSyncInfo(true, myNotifier));
         } else if (readerController.bookModel == null && readerController.externalBook != null) {
             getCollection().bindToService(this, () ->
-                    readerController.openBook(readerController.externalBook, null, null, myNotifier));
+                    readerController.openBook(readerController.externalBook, null, null, myNotifier, "onResume"));
         } else {
             getCollection().bindToService(this, () ->
                     readerController.useSyncInfo(true, myNotifier));
@@ -1233,7 +1251,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             }
         }
         if (myBook != null) {
-            Timber.i("打开图书流程, 当前图书对象 = " + myBook);
+            Timber.i("打开图书流程[onResume], 当前图书对象 = %s", myBook);
             ZLFile file = BookUtil.fileByBook(myBook);
             if (!file.exists()) {
                 if (file.getPhysicalFile() != null) {
@@ -1246,7 +1264,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             }
         }
         Config.Instance().runOnConnect(() -> {
-            readerController.openBook(myBook, bookmark, action, myNotifier);
+            readerController.openBook(myBook, bookmark, action, myNotifier, "Config.Instance().runOnConnect");
             AndroidFontUtil.clearFontCache();
         });
     }
@@ -1375,7 +1393,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
             public void run() {
                 final Book recent = collection.getRecentBook(0);
                 if (recent != null && !collection.sameBook(recent, book)) {
-                    readerController.openBook(recent, null, null, null);
+                    readerController.openBook(recent, null, null, null, "onPluginNotFound");
                 } else {
                     readerController.openHelpBook();
                 }
@@ -1569,7 +1587,8 @@ public final class FBReader extends FBReaderMainActivity implements ZLApplicatio
     }
 
     @Override
-    public ZLViewWidget getViewWidget() {
+    public ZLViewWidget getViewWidget(String from) {
+//        Timber.v("渲染流程, getViewWidget, %s", from);
         return myMainView;
     }
 

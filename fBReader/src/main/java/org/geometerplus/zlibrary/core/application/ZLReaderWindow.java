@@ -21,7 +21,7 @@ package org.geometerplus.zlibrary.core.application;
 
 import org.geometerplus.zlibrary.core.view.ZLViewWidget;
 
-public interface ZLApplicationWindow {
+public interface ZLReaderWindow {
 	void setWindowTitle(String title);
 	void showErrorMessage(String resourceKey);
 	void showErrorMessage(String resourceKey, String parameter);
@@ -30,7 +30,7 @@ public interface ZLApplicationWindow {
 
 	void refresh();
 
-	ZLViewWidget getViewWidget();
+	ZLViewWidget getViewWidget(String from);
 
 	void close();
 

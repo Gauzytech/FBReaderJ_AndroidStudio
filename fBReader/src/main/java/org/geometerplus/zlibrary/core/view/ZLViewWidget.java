@@ -27,7 +27,7 @@ public interface ZLViewWidget {
 	 * 重置缓存索引
 	 * @see BitmapManagerImpl
 	 */
-	void reset();
+	void reset(String from);
 	void repaint(String from);
 
 	void startManualScrolling(int x, int y, ZLView.Direction direction);
