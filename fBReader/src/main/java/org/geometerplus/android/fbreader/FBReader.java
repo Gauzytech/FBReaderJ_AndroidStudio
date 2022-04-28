@@ -41,6 +41,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
@@ -48,6 +49,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -111,6 +114,7 @@ import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageManager;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCallHandler;
 import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 
 import java.io.PrintWriter;
@@ -120,8 +124,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import io.flutter.embedding.android.FlutterFragment;
+import io.flutter.plugin.common.MethodChannel;
 import skin.support.SkinCompatManager;
 import timber.log.Timber;
 
@@ -226,7 +232,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
     private SeekBar bookProgress;
     private View slideMenu;
     private View viewBackground;
-    private View readerView;
+    private FrameLayout readerView;
     private View showSetMenu;
     private View fontChoice;
     private TabLayout tabLayout;
@@ -258,6 +264,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
     private TTSPlayer ttsPlayer;
 
     private FlutterFragment flutterFragment;
+    private FlutterCallHandler flutterCallHandler;
 
     public static void openBookActivity(Context context, Book book, Bookmark bookmark) {
         final Intent intent = defaultIntent(context);
@@ -357,8 +364,12 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
         ttsPlayer = TTSPlayer.getInstance();
         ttsPlayer.init(this, readerController);
 
-        // todo
+        // todo 设置flutter
         if (DebugHelper.ENABLE_FLUTTER) {
+            // 设置flutter和native通信
+            setFlutterCallHandler();
+
+            // 设置flutter阅读组件
             if (flutterFragment == null) {
                 flutterFragment = FlutterFragment
                         .withCachedEngine(FBReaderApplication.ENGINE_ID)
@@ -370,6 +381,10 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
                         .commit();
             }
         }
+    }
+
+    private void setFlutterCallHandler() {
+        flutterCallHandler = new FlutterCallHandler(((FBReaderApplication) getApplication()).getEngineMessenger());
     }
 
     /**
@@ -994,8 +1009,10 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
     @Override
     protected void onDestroy() {
+        readerView.removeAllViews();
         getCollection().unbind();
         unbindService(DataConnection);
+        readerController.onCleared();
         super.onDestroy();
     }
 
@@ -1665,6 +1682,13 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
     public FBReaderApp getReaderController() {
         return readerController;
+    }
+
+    @Override
+    public void invokeFlutterMethod(@NonNull String method, @Nullable Object arguments, @Nullable MethodChannel.Result callback) {
+        if (!DebugHelper.ENABLE_FLUTTER) return;
+        Objects.requireNonNull(flutterCallHandler, "FlutterCallHandler is null!");
+        runOnUiThread(() -> flutterCallHandler.invokeMethod(method, arguments, callback));
     }
 
     /**

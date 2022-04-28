@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui' as ui;
+
+import '../managers/BitmapManagerImpl.dart';
 
 class ReaderWidget extends StatefulWidget {
   // 放大镜的半径
@@ -7,14 +11,10 @@ class ReaderWidget extends StatefulWidget {
   static const double magnifierMargin = 144;
   // 放大倍数
   static const double factor = 1;
-  // 预加载线程: 暂时不实现
-  // public final ExecutorService prepareService = Executors.newSingleThreadExecutor();
+
   // 画笔
   Paint myPaint = Paint();
-  // 缓存图书内容图片的manager
-  // BitmapManagerImpl myBitmapManager = new BitmapManagerImpl(this);
-  // 系统信息
-  // SystemInfo mySystemInfo;
+
   // 页脚的bitmap
   // private Bitmap myFooterBitmap;
 
@@ -23,9 +23,69 @@ class ReaderWidget extends StatefulWidget {
 
   @override
   State<ReaderWidget> createState() => _ReaderWidgetState();
+
+  // ui.Image drawOnBitmap() {
+  //   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  //   Canvas canvas = Canvas(pictureRecorder);
+  //
+  //   canvas.drawImage(image, offset, paint);
+  //
+  //
+  // }
 }
 
 class _ReaderWidgetState extends State<ReaderWidget> {
+  // 缓存图书内容图片的manager
+  late BitmapManagerImpl myBitmapManager;
+
+  static const methodChannel = MethodChannel('com.flutter.guide.MethodChannel');
+  String _batteryLevel = 'Battery level: ';
+  String _calledFromNative = '';
+
+  // Flutter调用Native方法
+  // 方法通道的方法是异步的
+  Future<void> _getBatteryLevel() async {
+    String batteryLevel;
+    try {
+      final result = await methodChannel
+          .invokeMethod('getBatteryLevel', {'name': 'laomeng', 'age': 18});
+      batteryLevel = 'Battery level ${result['battery']}';
+    } on PlatformException catch (e) {
+      batteryLevel = 'Battery level unknown ${e.message}';
+    }
+
+    setState(() {
+      _batteryLevel = batteryLevel;
+    });
+  }
+
+  // Native调用Flutter方法
+  Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
+    switch (methodCall.method) {
+      case 'flutterMethod':
+        setState(() {
+          _calledFromNative = methodCall.arguments;
+        });
+        break;
+      case 'timer':
+        setState(() {
+          var _nativeData = methodCall.arguments['count'];
+          _calledFromNative = 'count = $_nativeData';
+        });
+        break;
+    }
+  }
+
+  void _addMethodFromNative() {
+    methodChannel.setMethodCallHandler(_addNativeMethod);
+  }
+
+  @override
+  void initState() {
+    _addMethodFromNative();
+    myBitmapManager = BitmapManagerImpl(readerWidget: widget);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +96,8 @@ class _ReaderWidgetState extends State<ReaderWidget> {
             Container(
               width: double.infinity,
               color: Colors.red.shade200,
-              child: const Text(
-                '顶部: 显示图书标题',
+              child: Text(
+                '顶部: 显示图书标题, $_calledFromNative',
               ),
             ),
             Expanded(
@@ -62,4 +122,5 @@ class _ReaderWidgetState extends State<ReaderWidget> {
       ),
     );
   }
+
 }

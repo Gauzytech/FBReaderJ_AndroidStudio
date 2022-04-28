@@ -30,6 +30,7 @@ import org.geometerplus.zlibrary.ui.android.library.ZLAndroidApplication;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterEngineCache;
 import io.flutter.embedding.engine.dart.DartExecutor;
+import io.flutter.plugin.common.BinaryMessenger;
 import skin.support.SkinCompatManager;
 import skin.support.app.SkinAppCompatViewInflater;
 import skin.support.app.SkinCardViewInflater;
@@ -83,5 +84,15 @@ public class FBReaderApplication extends ZLAndroidApplication {
 
         FlutterEngineCache.getInstance()
                 .put(ENGINE_ID, flutterEngine);
+    }
+
+    public BinaryMessenger getEngineMessenger() {
+        return flutterEngine.getDartExecutor().getBinaryMessenger();
+    }
+
+    @Override
+    public void onTerminate() {
+        flutterEngine.destroy();
+        super.onTerminate();
     }
 }

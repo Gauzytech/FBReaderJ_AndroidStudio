@@ -19,7 +19,12 @@
 
 package org.geometerplus.zlibrary.core.application;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.geometerplus.zlibrary.core.view.ZLViewWidget;
+
+import io.flutter.plugin.common.MethodChannel;
 
 public interface ZLReaderWindow {
 	void setWindowTitle(String title);
@@ -35,4 +40,6 @@ public interface ZLReaderWindow {
 	void close();
 
 	int getBatteryLevel();
+
+	void invokeFlutterMethod(@NonNull String method, @Nullable Object arguments, @Nullable MethodChannel.Result callback);
 }

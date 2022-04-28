@@ -4791,7 +4791,7 @@ internalEntityProcessor(XML_Parser parser,
 #endif /* XML_DTD */
   {
     processor = contentProcessor;
-    /* see externalEntityContentProcessor vs contentProcessor */
+    /* see externalEntityContentProcessor vs contentProcessorImpl */
     return doContent(parser, parentParser ? 1 : 0, encoding, s, end,
                      nextPtr, (XML_Bool)!ps_finalBuffer); 
   }  

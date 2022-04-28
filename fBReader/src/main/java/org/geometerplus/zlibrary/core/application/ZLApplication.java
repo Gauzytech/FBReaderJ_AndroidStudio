@@ -19,14 +19,21 @@
 
 package org.geometerplus.zlibrary.core.application;
 
-import java.util.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.fbreader.util.Boolean3;
-
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewWidget;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import io.flutter.plugin.common.MethodChannel;
 import timber.log.Timber;
 
 public abstract class ZLApplication {
@@ -129,8 +136,7 @@ public abstract class ZLApplication {
         return myWindowCallback != null ? myWindowCallback.getViewWidget("setView") : null;
     }
 
-    public final void onRepaintFinished() {
-        Timber.v("渲染流程, onRepaintFinished");
+    public void onRepaintFinished() {
         if (myWindowCallback != null) {
             myWindowCallback.refresh();
         }
@@ -332,6 +338,14 @@ public abstract class ZLApplication {
                 myTimerTasks.remove(runnable);
             }
             myTimerTaskPeriods.remove(runnable);
+        }
+    }
+
+    public abstract void onCleared();
+
+    public void invokeFlutterMethod(@NonNull String method, @Nullable Object arguments, @Nullable MethodChannel.Result callback) {
+        if (myWindowCallback != null) {
+            myWindowCallback.invokeFlutterMethod(method, arguments, callback);
         }
     }
 }

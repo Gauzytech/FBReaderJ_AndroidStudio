@@ -27,6 +27,7 @@ import org.geometerplus.android.fbreader.constant.PreviewConfig;
 import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.ui.android.view.animation.BitmapManager;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessor;
 
 import timber.log.Timber;
 

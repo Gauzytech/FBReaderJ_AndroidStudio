@@ -19,8 +19,6 @@
 
 package org.geometerplus.fbreader.fbreader;
 
-import android.os.Looper;
-
 import java.util.*;
 
 import org.fbreader.util.ComparisonUtil;
@@ -31,6 +29,7 @@ import org.geometerplus.zlibrary.core.drm.FileEncryptionInfo;
 import org.geometerplus.zlibrary.core.drm.EncryptionMethod;
 import org.geometerplus.zlibrary.core.util.*;
 
+import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.text.hyphenation.ZLTextHyphenator;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.view.*;
@@ -41,11 +40,12 @@ import org.geometerplus.fbreader.fbreader.options.*;
 import org.geometerplus.fbreader.formats.*;
 import org.geometerplus.fbreader.network.sync.SyncData;
 import org.geometerplus.fbreader.util.*;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessorImpl;
 
 import timber.log.Timber;
 
 /**
- * 阅读界面管理类
+ * 阅读界面管理类, readerController
  */
 public final class FBReaderApp extends ZLApplication {
 
@@ -71,6 +71,9 @@ public final class FBReaderApp extends ZLApplication {
     // 保存的阅读进度position
     private volatile ZLTextPosition myStoredPosition;
     private volatile Book myStoredPositionBook;
+
+    // 内容渲染presenter
+    public ContentProcessorImpl contentProcessorImpl;
 
     public FBReaderApp(SystemInfo systemInfo, final IBookCollection<Book> collection) {
         super(systemInfo);
@@ -134,6 +137,9 @@ public final class FBReaderApp extends ZLApplication {
         footnoteView = new FBView(this);
 
         setView(bookTextView, "constructor");
+
+        // 内容渲染presenter
+        contentProcessorImpl = new ContentProcessorImpl(this, systemInfo);
     }
 
     public void setExternalFileOpener(ExternalFileOpener o) {
@@ -224,6 +230,11 @@ public final class FBReaderApp extends ZLApplication {
 
     public void onWindowClosing() {
         storePosition();
+    }
+
+    @Override
+    public void onCleared() {
+        contentProcessorImpl = null;
     }
 
     public void storePosition() {
@@ -532,35 +543,41 @@ public final class FBReaderApp extends ZLApplication {
             Collection.saveBook(book);
             // 这一步干啥的????
             ZLTextHyphenator.Instance().load(book.getLanguage());
-            // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page
-            bookTextView.setTextModel(bookModel.getTextModel());
-            // 阅读进度跳转 todo
-            gotoStoredPosition();
-            // 书签
-            setBookMarkHighlighting(bookTextView, null);
-            // 笔记
-            setBookNoteHighlighting(bookTextView, null);
-            if (bookmark == null) {
-                setView(bookTextView, "openBookInternal");
+            // todo FLUTTER 将fbView赋值给ReaderWidget
+            if (DebugHelper.ENABLE_FLUTTER) {
+                invokeFlutterMethod("flutterMethod", "解析完成, 设置图书TextModel！", null);
+
             } else {
-                gotoBookmark(bookmark, false);
-            }
-
-            // 将图书添加到"最近阅读"
-            Collection.addToRecentlyOpened(book);
-
-            // 将author append到书名title后面
-            final StringBuilder title = new StringBuilder(book.getTitle());
-            if (!book.authors().isEmpty()) {
-                boolean first = true;
-                for (Author a : book.authors()) {
-                    title.append(first ? " (" : ", ");
-                    title.append(a.DisplayName);
-                    first = false;
+                // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page
+                bookTextView.setTextModel(bookModel.getTextModel());
+                // 阅读进度跳转 todo
+                gotoStoredPosition();
+                // 书签
+                setBookMarkHighlighting(bookTextView, null);
+                // 笔记
+                setBookNoteHighlighting(bookTextView, null);
+                if (bookmark == null) {
+                    setView(bookTextView, "openBookInternal");
+                } else {
+                    gotoBookmark(bookmark, false);
                 }
-                title.append(")");
+
+                // 将图书添加到"最近阅读"
+                Collection.addToRecentlyOpened(book);
+
+                // 将author append到书名title后面
+                final StringBuilder title = new StringBuilder(book.getTitle());
+                if (!book.authors().isEmpty()) {
+                    boolean first = true;
+                    for (Author a : book.authors()) {
+                        title.append(first ? " (" : ", ");
+                        title.append(a.DisplayName);
+                        first = false;
+                    }
+                    title.append(")");
+                }
+                setTitle(title.toString());
             }
-            setTitle(title.toString());
         } catch (BookReadingException e) {
             processException(e);
         }
@@ -787,6 +804,10 @@ public final class FBReaderApp extends ZLApplication {
             clearTextCaches();
             getViewWidget().repaint("onBookUpdated");
         }
+    }
+
+    public void cachePageBitmap(ZLViewEnums.PageIndex pageIndex) {
+        Objects.requireNonNull(getViewWidget()).cacheBitmap(pageIndex);
     }
 
     public interface ExternalFileOpener {

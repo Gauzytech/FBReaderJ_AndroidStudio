@@ -1,21 +1,24 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/i_bitmap_manager.dart';
 import 'package:flutter_lib/modal/PageIndex.dart';
+import 'package:flutter_lib/screen/ReaderWidget.dart';
 
 class BitmapManagerImpl extends IBitmapManager {
   /// 缓存Bitmap大小
   static const int cacheSize = 4;
-  List<Image?> myBitmaps = List.filled(cacheSize, null, growable: false);
+  List<ui.Image?> myBitmaps = List.filled(cacheSize, null, growable: false);
 
   // 缓存4个pageIndex
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
   List<PageIndex?> cachedPageIndexes =
       List.filled(cacheSize, null, growable: false);
-  int myWidth;
-  int myHeight;
+  late int myWidth;
+  late int myHeight;
+  StatefulWidget readerWidget;
 
-  BitmapManagerImpl({required this.myWidth, required this.myHeight});
+  BitmapManagerImpl({required this.readerWidget});
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
@@ -35,6 +38,30 @@ class BitmapManagerImpl extends IBitmapManager {
     }
   }
 
+  /// 获取阅读器内容Bitmap
+  ///
+  /// @param index 页索引
+  /// @return 阅读器内容Bitmap
+  @override
+  ui.Image getBitmap(PageIndex index, String from) {
+    for (int i = 0; i < cacheSize; ++i) {
+      if (index == cachedPageIndexes[i]) {
+//                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());
+        return myBitmaps[i]!;
+      }
+    }
+
+    // 如果没有找到缓存的Image， 开始画一个新的
+    final int iIndex = getInternalIndex(index);
+    cachedPageIndexes[iIndex] = index;
+
+    // if(myBitmaps[iIndex] == null) {
+    //   myBitmaps[iIndex] = readerWidget.drawOnBitmap();
+    // }
+
+    return myBitmaps[iIndex]!;
+  }
+
   @override
   void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {}
 
@@ -42,12 +69,6 @@ class BitmapManagerImpl extends IBitmapManager {
   void drawPreviewBitmap(
       Canvas canvas, int x, int y, PageIndex index, Paint paint) {
     // TODO: implement drawPreviewBitmap
-  }
-
-  @override
-  Image getBitmap(PageIndex index, String from) {
-    // TODO: implement getBitmap
-    throw UnimplementedError();
   }
 
   /// 获取一个内部索引位置，用于存储Bitmap（原则是：先寻找空的，再寻找非当前使用的）

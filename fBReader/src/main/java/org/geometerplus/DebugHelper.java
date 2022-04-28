@@ -10,9 +10,9 @@ import org.geometerplus.zlibrary.text.view.PaintStateEnum;
  * @Description FBReaderJ_AndroidStudio
  */
 public class DebugHelper {
-   public static boolean ENABLE_FLUTTER = true;
+   public static boolean ENABLE_FLUTTER = false;
    public static boolean FOOTER_PAGE_COUNT_ENABLE = false;
-   public static boolean PRELOAD_NEXT_PREV_PAGE_ENABLE = false;
+   public static boolean PRELOAD_NEXT_PREV_PAGE_ENABLE = true;
    public static boolean ON_START_REPAINT = true;
    public static boolean ENABLE_FBLoadingDialog = false;
    public static boolean ENABLE_SET_SCREEN_BRIGHTNESS = true;

@@ -111,7 +111,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
          */
         final int TopMargin;
 
-        Geometry(int screenWidth, int screenHeight, int width, int height, int leftMargin, int topMargin) {
+        public Geometry(int screenWidth, int screenHeight, int width, int height, int leftMargin, int topMargin) {
             ScreenSize = new Size(screenWidth, screenHeight);
             AreaSize = new Size(width, height);
             LeftMargin = leftMargin;
