@@ -22,10 +22,12 @@ package org.geometerplus.android.fbreader;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.app.SkinAppCompatDelegateImpl;
 
+import android.os.Bundle;
 import android.view.WindowManager;
 
 import com.github.johnpersano.supertoasts.SuperActivityToast;
@@ -37,6 +39,8 @@ import org.geometerplus.zlibrary.core.options.ZLStringOption;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidApplication;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
+
+import timber.log.Timber;
 
 public abstract class FBReaderMainActivity extends AppCompatActivity {
 
@@ -124,5 +128,42 @@ public abstract class FBReaderMainActivity extends AppCompatActivity {
     @Override
     public AppCompatDelegate getDelegate() {
         return SkinAppCompatDelegateImpl.get(this, this);
+    }
+
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Timber.v("lifeCycle, onCreate");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Timber.v("lifeCycle, onStart");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Timber.v("lifeCycle, onResume");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Timber.v("lifeCycle, onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Timber.v("lifeCycle, onStop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Timber.v("lifeCycle, onDestroy");
     }
 }

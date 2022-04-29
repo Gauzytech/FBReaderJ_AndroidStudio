@@ -366,6 +366,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
         // todo 设置flutter
         if (DebugHelper.ENABLE_FLUTTER) {
+            myMainView.setVisibility(View.GONE);
             // 设置flutter和native通信
             setFlutterCallHandler();
 
@@ -1009,10 +1010,10 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
     @Override
     protected void onDestroy() {
-        readerView.removeAllViews();
+//        readerView.removeAllViews();
         getCollection().unbind();
         unbindService(DataConnection);
-        readerController.onCleared();
+//        readerController.onCleared();
         super.onDestroy();
     }
 
