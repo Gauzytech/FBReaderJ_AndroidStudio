@@ -169,7 +169,6 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         final AnimationProvider.Mode oldMode = animator.getMode();
         animator.doStep();
         if (animator.inProgress()) {
-//            Timber.v("渲染流程:绘制, 绘制动画");
             animator.draw(canvas);
             if (animator.getMode().Auto) {
                 postInvalidate();

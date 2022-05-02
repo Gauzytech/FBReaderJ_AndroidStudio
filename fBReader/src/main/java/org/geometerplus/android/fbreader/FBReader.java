@@ -114,7 +114,7 @@ import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageManager;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCallHandler;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterBridge;
 import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 
 import java.io.PrintWriter;
@@ -263,8 +263,9 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
      */
     private TTSPlayer ttsPlayer;
 
+    // flutter相关内容
     private FlutterFragment flutterFragment;
-    private FlutterCallHandler flutterCallHandler;
+    private FlutterBridge flutterBridge;
 
     public static void openBookActivity(Context context, Book book, Bookmark bookmark) {
         final Intent intent = defaultIntent(context);
@@ -368,7 +369,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
         if (DebugHelper.ENABLE_FLUTTER) {
             myMainView.setVisibility(View.GONE);
             // 设置flutter和native通信
-            setFlutterCallHandler();
+            setFlutterBridge();
 
             // 设置flutter阅读组件
             if (flutterFragment == null) {
@@ -384,8 +385,8 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
         }
     }
 
-    private void setFlutterCallHandler() {
-        flutterCallHandler = new FlutterCallHandler(((FBReaderApplication) getApplication()).getEngineMessenger());
+    private void setFlutterBridge() {
+        flutterBridge = new FlutterBridge(this, readerController, ((FBReaderApplication) getApplication()).getEngineMessenger());
     }
 
     /**
@@ -1688,8 +1689,8 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
     @Override
     public void invokeFlutterMethod(@NonNull String method, @Nullable Object arguments, @Nullable MethodChannel.Result callback) {
         if (!DebugHelper.ENABLE_FLUTTER) return;
-        Objects.requireNonNull(flutterCallHandler, "FlutterCallHandler is null!");
-        runOnUiThread(() -> flutterCallHandler.invokeMethod(method, arguments, callback));
+        Objects.requireNonNull(flutterBridge, "flutterBridge is null!");
+        runOnUiThread(() -> flutterBridge.invokeMethod(method, arguments, callback));
     }
 
     /**

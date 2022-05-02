@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import android.graphics.Bitmap;
+
 import org.geometerplus.zlibrary.ui.android.view.BitmapManagerImpl;
 
 public interface ZLViewWidget {

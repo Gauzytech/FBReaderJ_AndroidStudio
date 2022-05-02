@@ -70,6 +70,23 @@ public interface ZLViewEnums {
                     return null;
             }
         }
+
+        public static PageIndex getPageIndex(int index) {
+            switch (index) {
+                case 0:
+                    return PREV_2;
+                case 1:
+                    return PREV;
+                case 2:
+                    return CURRENT;
+                case 3:
+                    return NEXT;
+                case 4:
+                    return NEXT_2;
+                default:
+                    return null;
+            }
+        }
     }
 
     /**

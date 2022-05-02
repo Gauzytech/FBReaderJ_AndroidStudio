@@ -19,6 +19,8 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import android.graphics.Bitmap;
+
 import java.util.*;
 
 import org.fbreader.util.ComparisonUtil;
@@ -545,7 +547,11 @@ public final class FBReaderApp extends ZLApplication {
             ZLTextHyphenator.Instance().load(book.getLanguage());
             // todo FLUTTER 将fbView赋值给ReaderWidget
             if (DebugHelper.ENABLE_FLUTTER) {
-                invokeFlutterMethod("flutterMethod", "解析完成, 设置图书TextModel！", null);
+                // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page
+                bookTextView.setTextModel(bookModel.getTextModel());
+
+                Timber.v("flutter内容绘制流程, 请求render_page, ");
+                invokeFlutterMethod("render_page", "解析完成, 渲染第一个bitmap！", null);
 
             } else {
                 // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page

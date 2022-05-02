@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20'
         // classpath 'com.haowen.huge:huge-plugin:1.0.0'
     }
 }

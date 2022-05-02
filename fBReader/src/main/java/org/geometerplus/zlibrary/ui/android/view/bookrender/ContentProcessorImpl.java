@@ -8,10 +8,15 @@ import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.ui.android.view.BitmapManagerImpl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.flutter.plugin.common.MethodChannel;
 import timber.log.Timber;
 
 /**
@@ -39,6 +44,13 @@ public class ContentProcessorImpl implements ContentProcessor {
     @Override
     public void drawOnBitmap(Bitmap bitmap, ZLView.PageIndex index, int width, int height, int verticalScrollbarWidth) {
         bookPageProvider.drawOnBitmap(targetContent(), bitmap, index, width, height, getMainAreaHeight(height), verticalScrollbarWidth);
+    }
+
+    @Override
+    public byte[] drawOnBitmapFlutter(ZLView.PageIndex index, int width, int height, int verticalScrollbarWidth) {
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        drawOnBitmap(bitmap, ZLViewEnums.PageIndex.PREV, width, height, 0);
+        return BitmapUtilsKt.toByteArray(bitmap);
     }
 
     @Override
@@ -181,6 +193,25 @@ public class ContentProcessorImpl implements ContentProcessor {
             fbReaderApp.cachePageBitmap(ZLViewEnums.PageIndex.PREV);
             bookPageProvider.preparePage(targetContent(), ZLViewEnums.PageIndex.NEXT, width, height, getMainAreaHeight(height), verticalScrollbarWidth);
             fbReaderApp.cachePageBitmap(ZLViewEnums.PageIndex.NEXT);
+        });
+    }
+
+    @Override
+    public void prepareAdjacentPage(int width, int height, int verticalScrollbarWidth, boolean updatePrevPage, boolean updateNextPage, MethodChannel.Result result) {
+        prepareService.execute(() -> {
+            Timber.v("flutter内容绘制流程, 准备相邻页面, %s", Thread.currentThread().getName());
+            bookPageProvider.preparePage(targetContent(), ZLViewEnums.PageIndex.PREV, width, height, getMainAreaHeight(height), verticalScrollbarWidth);
+            Map<String, Object> map = new HashMap<>();
+            if (updatePrevPage) {
+                byte[] array = drawOnBitmapFlutter(ZLViewEnums.PageIndex.PREV, width, height, 0);
+                map.put("prev", array);
+            }
+            bookPageProvider.preparePage(targetContent(), ZLViewEnums.PageIndex.NEXT, width, height, getMainAreaHeight(height), verticalScrollbarWidth);
+            if (updateNextPage) {
+                byte[] array = drawOnBitmapFlutter(ZLViewEnums.PageIndex.NEXT, width, height, 0);
+                map.put("next", array);
+            }
+            result.success(map);
         });
     }
 }

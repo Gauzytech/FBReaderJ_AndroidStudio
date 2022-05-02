@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 
+import io.flutter.plugin.common.MethodChannel;
+
 /**
  * @Package org.geometerplus.zlibrary.ui.android.view.bookrender
  * @FileName ContentProcessor
@@ -16,7 +18,11 @@ public interface ContentProcessor {
 
     void drawOnBitmap(Bitmap bitmap, ZLView.PageIndex index, int width, int height, int verticalScrollbarWidth);
 
+    public byte[] drawOnBitmapFlutter(ZLView.PageIndex index, int width, int height, int verticalScrollbarWidth);
+
     void prepareAdjacentPage(int width, int height, int verticalScrollbarWidth);
+
+    void prepareAdjacentPage(int width, int height, int verticalScrollbarWidth, boolean updatePrevPage, boolean updateNextPage, MethodChannel.Result result);
 
     void onScrollingFinished(ZLViewEnums.PageIndex index);
 

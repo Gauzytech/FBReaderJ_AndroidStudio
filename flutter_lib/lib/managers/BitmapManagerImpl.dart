@@ -8,7 +8,7 @@ import 'package:flutter_lib/screen/ReaderWidget.dart';
 class BitmapManagerImpl extends IBitmapManager {
   /// 缓存Bitmap大小
   static const int cacheSize = 4;
-  List<ui.Image?> myBitmaps = List.filled(cacheSize, null, growable: false);
+  final List<ui.Image?> _imageCache = List.filled(cacheSize, null, growable: false);
 
   // 缓存4个pageIndex
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
@@ -16,9 +16,9 @@ class BitmapManagerImpl extends IBitmapManager {
       List.filled(cacheSize, null, growable: false);
   late int myWidth;
   late int myHeight;
-  StatefulWidget readerWidget;
+  ReaderWidgetState readerWidgetState;
 
-  BitmapManagerImpl({required this.readerWidget});
+  BitmapManagerImpl({required this.readerWidgetState});
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
@@ -28,13 +28,16 @@ class BitmapManagerImpl extends IBitmapManager {
     if (myWidth != width || myHeight != height) {
       myWidth = width;
       myHeight = height;
-      for (int i = 0; i < cacheSize; ++i) {
-        myBitmaps[i] = null;
-        cachedPageIndexes[i] = null;
-      }
-      // System.gc();
-      // System.gc();
-      // System.gc();
+      clear();
+    }
+  }
+
+  @override
+  void clear() {
+    for (int i = 0; i < cacheSize; ++i) {
+      _imageCache[i]?.dispose();
+      _imageCache[i] = null;
+      cachedPageIndexes[i] = null;
     }
   }
 
@@ -43,27 +46,36 @@ class BitmapManagerImpl extends IBitmapManager {
   /// @param index 页索引
   /// @return 阅读器内容Bitmap
   @override
-  ui.Image getBitmap(PageIndex index, String from) {
+  ui.Image? getBitmap(PageIndex index) {
     for (int i = 0; i < cacheSize; ++i) {
       if (index == cachedPageIndexes[i]) {
-//                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());
-        return myBitmaps[i]!;
+        return _imageCache[i]!;
       }
     }
-
-    // 如果没有找到缓存的Image， 开始画一个新的
-    final int iIndex = getInternalIndex(index);
-    cachedPageIndexes[iIndex] = index;
-
-    // if(myBitmaps[iIndex] == null) {
-    //   myBitmaps[iIndex] = readerWidget.drawOnBitmap();
-    // }
-
-    return myBitmaps[iIndex]!;
+    return null;
   }
 
   @override
-  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {}
+  int? findInternalCacheIndex(PageIndex index) {
+    final int internalCacheIndex = getInternalIndex(index);
+    // 找到内部index先把位置占住
+    cachedPageIndexes[internalCacheIndex] = index;
+
+    if(_imageCache[internalCacheIndex] == null) {
+      print("flutter内容绘制流程, 没有找到缓存的image, 请求原生绘制, $internalCacheIndex");
+      return internalCacheIndex;
+    }
+    return null;
+  }
+
+  void cacheBitmap(PageIndex index, int internalCacheIndex, ui.Image image) {
+    _imageCache[internalCacheIndex] = image;
+  }
+
+  @override
+  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {
+
+  }
 
   @override
   void drawPreviewBitmap(
@@ -112,5 +124,16 @@ class BitmapManagerImpl extends IBitmapManager {
           ? cachedPageIndexes[i]!.getPrevious()
           : cachedPageIndexes[i]!.getNext();
     }
+  }
+
+  int debugSlotOccupied() {
+    int space = 0;
+    for (var element in _imageCache) {
+      if(element != null) {
+        space++;
+      }
+    }
+
+    return space;
   }
 }
