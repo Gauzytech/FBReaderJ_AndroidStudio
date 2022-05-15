@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter_lib/modal/PageIndex.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 
 class IBitmapManager {
   ui.Image? getBitmap(PageIndex index) {

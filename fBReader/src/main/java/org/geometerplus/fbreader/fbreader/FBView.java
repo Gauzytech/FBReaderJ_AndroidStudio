@@ -710,7 +710,7 @@ public final class FBView extends ZLTextView {
         return new FixedTextSnippet(start, end, traverser.getText());
     }
 
-    private abstract class Footer implements FooterArea {
+    public abstract class Footer implements FooterArea {
         protected ArrayList<TOCTree> myTOCMarks;
         private Runnable UpdateTask = new Runnable() {
             public void run() {

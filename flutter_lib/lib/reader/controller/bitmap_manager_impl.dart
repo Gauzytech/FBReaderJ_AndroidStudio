@@ -2,8 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/i_bitmap_manager.dart';
-import 'package:flutter_lib/modal/PageIndex.dart';
-import 'package:flutter_lib/screen/ReaderWidget.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 
 class BitmapManagerImpl extends IBitmapManager {
   /// 缓存Bitmap大小
@@ -16,9 +15,6 @@ class BitmapManagerImpl extends IBitmapManager {
       List.filled(cacheSize, null, growable: false);
   late int myWidth;
   late int myHeight;
-  ReaderWidgetState readerWidgetState;
-
-  BitmapManagerImpl({required this.readerWidgetState});
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
@@ -56,20 +52,21 @@ class BitmapManagerImpl extends IBitmapManager {
   }
 
   @override
-  int? findInternalCacheIndex(PageIndex index) {
-    final int internalCacheIndex = getInternalIndex(index);
+  int? findInternalCacheIndex(PageIndex pageIndex) {
+    final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
-    cachedPageIndexes[internalCacheIndex] = index;
+    cachedPageIndexes[internalCacheIndex] = pageIndex;
 
     if(_imageCache[internalCacheIndex] == null) {
-      print("flutter内容绘制流程, 没有找到缓存的image, 请求原生绘制, $internalCacheIndex");
+      print("flutter内容绘制流程, 没有找到缓存的image, 请求原生绘制, 缓存idx = $internalCacheIndex");
       return internalCacheIndex;
     }
     return null;
   }
 
-  void cacheBitmap(PageIndex index, int internalCacheIndex, ui.Image image) {
+  void cacheBitmap(int internalCacheIndex, ui.Image image) {
     _imageCache[internalCacheIndex] = image;
+    print("flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}]");
   }
 
   @override

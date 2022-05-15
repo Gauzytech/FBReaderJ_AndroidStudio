@@ -1,5 +1,5 @@
-import '../modal/Direction.dart';
-import '../modal/PageIndex.dart';
+import '../modal/direction.dart';
+import '../modal/page_index.dart';
 
 class IReaderWidget {
   /// 重置缓存索引

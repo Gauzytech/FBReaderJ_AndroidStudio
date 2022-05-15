@@ -48,7 +48,7 @@ class FlutterBridge(
             val width = requireNotNull(call.argument<Double>("width")).toInt()
             val height = requireNotNull(call.argument<Double>("height")).toInt()
             val pageIndex = PageIndex.getPageIndex(index)
-            Timber.v("flutter内容绘制流程 收到了 pageIndex = $pageIndex, width = $width, height = $height")
+            Timber.v("flutter内容绘制流程 开始绘制: $pageIndex, [$width, $height]")
 
             // 绘制内容的bitmap
             val bytes = readerController.contentProcessorImpl.drawOnBitmapFlutter(
@@ -57,7 +57,6 @@ class FlutterBridge(
                 height,
                 0
             )
-            result.success(bytes)
 
             if (DebugHelper.SAVE_BITMAP) {
                 val targetPath = "${context.cacheDir}/images/"
