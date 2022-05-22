@@ -150,54 +150,56 @@ class SlidePageAnimation extends BaseAnimationPage {
   }
 
   void drawBottomPage(Canvas canvas) {
-    double actualOffset = currentMoveDy < 0
-        ? -((currentMoveDy).abs() % currentSize.height)
-        : (currentMoveDy) % currentSize.height;
-
-    canvas.save();
-    if (actualOffset < 0) {
-      if (readerViewModel.getNextPage()?.pagePicture != null) {
-        canvas.translate(0, actualOffset + currentSize.height);
-        canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
-      } else {
-        if (!isCanGoNext()) {
-          dy = 0;
-          actualOffset = 0;
-          currentMoveDy = 0;
-
-          if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
-          }
-        }
-      }
-    } else if (actualOffset > 0) {
-      if (readerViewModel.getPrePage()?.pagePicture != null) {
-        canvas.translate(0, actualOffset - currentSize.height);
-        canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-      } else {
-        if (!isCanGoPre()) {
-          dy = 0;
-          lastIndex = 0;
-          actualOffset = 0;
-          currentMoveDy = 0;
-
-          if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
-          }
-        }
-      }
-    }
-
-    canvas.restore();
-    canvas.save();
-
-    // todo
+    // double actualOffset = currentMoveDy < 0
+    //     ? -((currentMoveDy).abs() % currentSize.height)
+    //     : (currentMoveDy) % currentSize.height;
+    //
+    // canvas.save();
+    // if (actualOffset < 0) {
+    //   if (readerViewModel.getNextPage() != null) {
+    //     canvas.translate(0, actualOffset + currentSize.height);
+    //     // canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
+    //     canvas.drawImage(readerViewModel.getNextPage()!, Offset.zero, Paint());
+    //   } else {
+    //     if (!isCanGoNext()) {
+    //       dy = 0;
+    //       actualOffset = 0;
+    //       currentMoveDy = 0;
+    //
+    //       if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
+    //         _currentAnimationController!.stop();
+    //       }
+    //     }
+    //   }
+    // } else if (actualOffset > 0) {
+    //   if (readerViewModel.getPrePage() != null) {
+    //     canvas.translate(0, actualOffset - currentSize.height);
+    //     // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
+    //     canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
+    //   } else {
+    //     if (!isCanGoPre()) {
+    //       dy = 0;
+    //       lastIndex = 0;
+    //       actualOffset = 0;
+    //       currentMoveDy = 0;
+    //
+    //       if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
+    //         _currentAnimationController!.stop();
+    //       }
+    //     }
+    //   }
+    // }
+    //
+    // canvas.restore();
+    // canvas.save();
+    //
+    // // todo
     // if (readerViewModel.getCurrentPage().pagePicture != null) {
     //   canvas.translate(0, actualOffset);
     //   canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
     // }
-
-    canvas.restore();
+    //
+    // canvas.restore();
   }
 
   void drawStatic(Canvas canvas) {}

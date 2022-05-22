@@ -23,13 +23,11 @@ class ReaderContentHandler {
     methodChannel.setMethodCallHandler(_addNativeMethod);
   }
 
-  ui.Image? getPage(PageIndex index) {
+  ImageSrc getPage(PageIndex index) {
     return _bitmapManager.getBitmap(index);
   }
 
   void refreshContent() {
-    print(
-        'flutter内容绘制流程, widget not null, ${readerBookContentViewState.contentKey.currentContext != null}');
     readerBookContentViewState.viewModel?.notify();
     readerBookContentViewState.contentKey.currentContext
         ?.findRenderObject()
@@ -39,11 +37,11 @@ class ReaderContentHandler {
   // Native调用Flutter方法
   Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
     switch (methodCall.method) {
-      case 'render_page':
+      case 'init_render':
         // 渲染第一页
         currentPageIndex = PageIndex.current;
-        ui.Image? image = getPage(currentPageIndex);
-        if(image != null) {
+        ImageSrc imageSrc = getPage(currentPageIndex);
+        if(imageSrc.img != null) {
           refreshContent();
         } else {
           buildPage(currentPageIndex);
@@ -55,18 +53,21 @@ class ReaderContentHandler {
   /// 通知native创建新内容image
   void buildPage(PageIndex pageIndex) {
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
-    int? internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
-    if (internalIdx != null) {
-      drawOnBitmap(internalIdx, PageIndex.current);
-    }
+    int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
+    drawOnBitmap(internalIdx, pageIndex, true, true);
+  }
+
+  Future<ui.Image?> buildPageOnly(PageIndex pageIndex) async {
+    // 如果没有找到缓存的Image, 回调native, 通知画一个新的
+    int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
+    return await drawOnBitmap(internalIdx, pageIndex, false, false);
   }
 
   // Flutter调用Native方法
   // 方法通道的方法是异步的
-  Future<void> drawOnBitmap(int internalCacheIndex, PageIndex pageIndex) async {
+  Future<ui.Image?> drawOnBitmap(int internalCacheIndex, PageIndex pageIndex, bool notify, bool prepareAdjacent) async {
     try {
-      final ratio =
-          MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
+      final ratio = MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
 
       print("flutter内容绘制流程, render_page, "
           "ratio = ${MediaQuery.of(readerBookContentViewState.context).devicePixelRatio}, "
@@ -95,30 +96,31 @@ class ReaderContentHandler {
       // 原生那边绘制完了, 就缓存
       _bitmapManager.cacheBitmap(internalCacheIndex, image);
 
-      refreshContent();
+      if(notify) {
+        refreshContent();
+      }
 
-      // 准备相邻的前, 后页面
-      _prepareAdjacentPage(widthPx, heightPx);
+      if(prepareAdjacent) {
+        // 准备相邻的前, 后页面
+        _prepareAdjacentPage(widthPx, heightPx);
+      }
+
+      return image;
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
+
+    return null;
   }
 
   // Flutter调用Native方法
   // 方法通道的方法是异步的
   Future<void> _prepareAdjacentPage(double widthPx, double heightPx) async {
-    ui.Image? prevImage = getPage(PageIndex.prev);
-    ui.Image? nextImage = getPage(PageIndex.next);
+    ImageSrc prevImage = getPage(PageIndex.prev);
+    ImageSrc nextImage = getPage(PageIndex.next);
 
-    int? prevIdx;
-    int? nextIdx;
-    if (prevImage == null) {
-      prevIdx = _bitmapManager.findInternalCacheIndex(PageIndex.prev);
-    }
-
-    if (nextImage == null) {
-      nextIdx = _bitmapManager.findInternalCacheIndex(PageIndex.next);
-    }
+    int? prevIdx = prevImage.img == null ? _bitmapManager.findInternalCacheIndex(PageIndex.prev) : null;
+    int? nextIdx = nextImage.img == null ? _bitmapManager.findInternalCacheIndex(PageIndex.next) : null;
 
     print("flutter内容绘制流程, 准备相邻页面${prevImage == null}, ${nextImage == null}");
     Map<Object?, Object?> result =
@@ -139,7 +141,7 @@ class ReaderContentHandler {
       _bitmapManager.cacheBitmap(prevIdx, image);
     }
 
-    final next = result['prev'];
+    final next = result['next'];
     if (nextIdx != null && next != null) {
       next as Uint8List;
       print("flutter内容绘制流程, 收到nextPage ${next.length}, 插入$nextIdx");
@@ -150,11 +152,11 @@ class ReaderContentHandler {
     }
 
     print(
-        "flutter内容绘制流程, 准备完成, 可用cache: ${_bitmapManager.debugSlotOccupied()}");
+        "flutter内容绘制流程, 准备完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
   }
 
   List<double> getContentSize() {
-    final pageImage = getPage(currentPageIndex);
+    final pageImage = getPage(currentPageIndex).img;
     if (pageImage == null) {
       return [0, 0];
     }

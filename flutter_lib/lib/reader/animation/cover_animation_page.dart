@@ -29,9 +29,9 @@ class CoverPageAnimation extends BaseAnimationPage {
   @override
   Animation<Offset>? getCancelAnimation(
       AnimationController controller, GlobalKey canvasKey) {
-    if ((!isTurnNext && !isCanGoPre()) || (isTurnNext && !isCanGoNext())) {
-      return null;
-    }
+    // if ((!isTurnNext && !isCanGoPre()) || (isTurnNext && !isCanGoNext())) {
+    //   return null;
+    // }
 
     if (currentAnimation == null) {
       buildCurrentAnimation(controller, canvasKey);
@@ -52,9 +52,9 @@ class CoverPageAnimation extends BaseAnimationPage {
   @override
   Animation<Offset>? getConfirmAnimation(
       AnimationController controller, GlobalKey canvasKey) {
-    if ((!isTurnNext && !isCanGoPre()) || (isTurnNext && !isCanGoNext())) {
-      return null;
-    }
+    // if ((!isTurnNext && !isCanGoPre()) || (isTurnNext && !isCanGoNext())) {
+    //   return null;
+    // }
 
     if (currentAnimation == null) {
       buildCurrentAnimation(controller, canvasKey);
@@ -68,6 +68,7 @@ class CoverPageAnimation extends BaseAnimationPage {
           case AnimationStatus.dismissed:
             break;
           case AnimationStatus.completed:
+            print('flutter动画流程, 动画执行完毕, 去下一页或者上一页');
             if (animationType == ANIMATION_TYPE.TYPE_CONFIRM) {
               if (isTurnNext) {
                 readerViewModel.nextPage();
@@ -85,8 +86,7 @@ class CoverPageAnimation extends BaseAnimationPage {
       currentAnimation?.addStatusListener(statusListener!);
     }
 
-    if (statusListener != null &&
-        !(controller as AnimationControllerWithListenerNumber)
+    if (statusListener != null && !(controller as AnimationControllerWithListenerNumber)
             .statusListeners
             .contains(statusListener)) {
       currentAnimation?.addStatusListener(statusListener!);
@@ -114,11 +114,14 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
+    print("flutter内容绘制流程, onDraw，animation start = $isStartAnimation, [${mTouch.dx}, ${mTouch.dy}]");
     if (isStartAnimation && (mTouch.dx != 0 || mTouch.dy != 0)) {
+      print("flutter内容绘制流程, 覆盖动画，draw animation");
       drawBottomPage(canvas);
       drawCurrentShadow(canvas);
       drawTopPage(canvas);
     } else {
+      print("flutter内容绘制流程, 覆盖动画，drawStatic");
       drawStatic(canvas);
     }
 
@@ -127,9 +130,7 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onTouchEvent(TouchEvent event) {
-    if (event.touchPos != null) {
-      mTouch = event.touchPos;
-    }
+    mTouch = event.touchPos;
 
     switch (event.action) {
       case TouchEvent.ACTION_DOWN:
@@ -144,6 +145,7 @@ class CoverPageAnimation extends BaseAnimationPage {
           isTurnNext = mTouch.dx - mStartPoint.dx < 0;
         }
 
+        /// 上一页, 或者下一页
         if ((!isTurnNext && isCanGoPre()) || (isTurnNext && isCanGoNext())) {
           isStartAnimation = true;
         }
@@ -154,44 +156,68 @@ class CoverPageAnimation extends BaseAnimationPage {
   }
 
   void drawStatic(Canvas canvas) {
-    print("flutter内容绘制流程, 覆盖动画，drawStatic");
     // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
     ui.Image? page = readerViewModel.getCurrentPage();
+    print('drawStatic - > pageIdx = ${readerViewModel.getIdx()}');
     if(page != null) {
       canvas.drawImage(page, Offset.zero, Paint());
     }
   }
 
   void drawBottomPage(Canvas canvas) {
-    // canvas.save();
-    // if (isTurnNext) {
-    //   canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
-    // } else {
-    //   canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-    // }
-    // canvas.restore();
+    canvas.save();
+    if (isTurnNext) {
+      // canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
+      if(readerViewModel.getNextPage() != null) {
+        print('flutter内容绘制流程, drawBottomPage -> getNextPage');
+        canvas.drawImage(readerViewModel.getNextPage()!, Offset.zero, Paint());
+      }
+    } else {
+      // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
+      if(readerViewModel.getCurrentPage() != null) {
+        print('flutter内容绘制流程, drawBottomPage -> getCurrentPage');
+        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+      }
+    }
+    canvas.restore();
   }
 
   void drawTopPage(Canvas canvas) {
-    // canvas.save();
-    // if (coverDirection == ORIENTATION_HORIZONTAL) {
-    //   if (isTurnNext) {
-    //     canvas.translate(mTouch.dx - mStartPoint.dx, 0);
-    //     canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-    //   } else {
-    //     canvas.translate((mTouch.dx - mStartPoint.dx) - currentSize.width, 0);
-    //     canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-    //   }
-    // } else {
-    //   if (isTurnNext) {
-    //     canvas.translate(0, mTouch.dy - mStartPoint.dy);
-    //     canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-    //   } else {
-    //     canvas.translate(0, (mTouch.dy - mStartPoint.dy) - currentSize.height);
-    //     canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-    //   }
-    // }
-    // canvas.restore();
+    canvas.save();
+    if (coverDirection == ORIENTATION_HORIZONTAL) {
+      if (isTurnNext) {
+        canvas.translate(mTouch.dx - mStartPoint.dx, 0);
+        // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
+        if(readerViewModel.getCurrentPage() != null) {
+          print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
+          canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+        }
+      } else {
+        canvas.translate((mTouch.dx - mStartPoint.dx) - currentSize.width, 0);
+        // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
+        if(readerViewModel.getPrePage() != null) {
+          print('flutter内容绘制流程, drawTopPage -> getPrePage');
+          canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
+        }
+      }
+    } else {
+      if (isTurnNext) {
+        canvas.translate(0, mTouch.dy - mStartPoint.dy);
+        // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
+        if(readerViewModel.getCurrentPage() != null) {
+          print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
+          canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+        }
+      } else {
+        canvas.translate(0, (mTouch.dy - mStartPoint.dy) - currentSize.height);
+        // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
+        if(readerViewModel.getCurrentPage() != null) {
+          print('flutter内容绘制流程, drawTopPage -> getPrePage');
+          canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
+        }
+      }
+    }
+    canvas.restore();
   }
 
   void drawCurrentShadow(Canvas canvas) {
@@ -232,7 +258,7 @@ class CoverPageAnimation extends BaseAnimationPage {
       shadowGradient = const LinearGradient(
         begin: Alignment.topRight,
         colors: [
-          Color(0xAA000000),
+          Color(0xAACE2020),
           Colors.transparent,
         ],
       );

@@ -36,4 +36,28 @@ class TouchEvent<T> {
     event._touchDetail = _touchDetail;
     return event;
   }
+
+  void setTouchDetail(T detail) {
+    _touchDetail = detail;
+  }
+
+  @override
+  String toString() {
+    String? result;
+    switch(action) {
+      case ACTION_DOWN:
+        result = 'action = down, touchPos = $touchPos';
+        break;
+      case ACTION_MOVE:
+        result = 'action = move, touchPos = $touchPos';
+        break;
+      case ACTION_UP:
+        result = 'action = up, touchPos = $touchPos';
+        break;
+      case ACTION_CANCEL:
+        result = 'action = cancel, touchPos = $touchPos';
+    }
+
+    return result ?? 'touchPos = $touchPos';
+  }
 }

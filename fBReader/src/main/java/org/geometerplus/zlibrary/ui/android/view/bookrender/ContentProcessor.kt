@@ -1,7 +1,6 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender
 
 import android.graphics.Bitmap
-import io.flutter.plugin.common.MethodChannel
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 
@@ -35,7 +34,7 @@ interface ContentProcessor {
         verticalScrollbarWidth: Int,
         updatePrevPage: Boolean,
         updateNextPage: Boolean,
-        result: MethodChannel.Result
+        resultCallBack: FlutterBridge.ResultCallBack,
     )
 
     fun onScrollingFinished(index: PageIndex)

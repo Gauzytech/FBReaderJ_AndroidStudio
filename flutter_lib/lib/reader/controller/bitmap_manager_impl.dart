@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/i_bitmap_manager.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 
+/// Bitmap管理（绘制后的图）的实现
 class BitmapManagerImpl extends IBitmapManager {
   /// 缓存Bitmap大小
   static const int cacheSize = 4;
@@ -42,31 +43,35 @@ class BitmapManagerImpl extends IBitmapManager {
   /// @param index 页索引
   /// @return 阅读器内容Bitmap
   @override
-  ui.Image? getBitmap(PageIndex index) {
+  ImageSrc getBitmap(PageIndex index) {
     for (int i = 0; i < cacheSize; ++i) {
-      if (index == cachedPageIndexes[i]) {
-        return _imageCache[i]!;
+      if (cachedPageIndexes[i] == index) {
+        ui.Image? image = _imageCache[i];
+        return ImageSrc(img: image, processing: image == null);
       }
     }
-    return null;
+    return ImageSrc(img: null, processing: false);
   }
 
   @override
-  int? findInternalCacheIndex(PageIndex pageIndex) {
+  int findInternalCacheIndex(PageIndex pageIndex) {
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
     cachedPageIndexes[internalCacheIndex] = pageIndex;
 
     if(_imageCache[internalCacheIndex] == null) {
-      print("flutter内容绘制流程, 没有找到缓存的image, 请求原生绘制, 缓存idx = $internalCacheIndex");
+      return internalCacheIndex;
+    } else {
+      // 如果已经存在一个image, 直接清掉
+      _imageCache[internalCacheIndex]!.dispose();
+      _imageCache[internalCacheIndex] = null;
       return internalCacheIndex;
     }
-    return null;
   }
 
   void cacheBitmap(int internalCacheIndex, ui.Image image) {
+    print("flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}], idx = $internalCacheIndex");
     _imageCache[internalCacheIndex] = image;
-    print("flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}]");
   }
 
   @override
@@ -122,15 +127,10 @@ class BitmapManagerImpl extends IBitmapManager {
           : cachedPageIndexes[i]!.getNext();
     }
   }
+}
 
-  int debugSlotOccupied() {
-    int space = 0;
-    for (var element in _imageCache) {
-      if(element != null) {
-        space++;
-      }
-    }
-
-    return space;
-  }
+class ImageSrc {
+  ui.Image? img;
+  bool processing;
+  ImageSrc({required this.img, required this.processing});
 }

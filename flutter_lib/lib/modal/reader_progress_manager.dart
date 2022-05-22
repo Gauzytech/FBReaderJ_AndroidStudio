@@ -8,15 +8,15 @@ class ReaderProgressManager {
   ReaderProgressManager({required this.viewModel});
 
   ReaderProgressStateEnum getCurrentProgressState() {
-    if (viewModel.getCurrentPage() == null) {
-      currentState = ReaderProgressStateEnum.STATE_LOADING;
-    } else if (!viewModel.isCanGoNext()) {
-      currentState = ReaderProgressStateEnum.STATE_NO_NEXT;
-    } else if (!viewModel.isCanGoPre()) {
-      currentState = ReaderProgressStateEnum.STATE_NO_PRE;
-    } else {
-      currentState = ReaderProgressStateEnum.STATE_NORMAL;
-    }
+    // if (viewModel.getCurrentPage() == null) {
+    //   currentState = ReaderProgressStateEnum.STATE_LOADING;
+    // } else if (!viewModel.isCanGoNext()) {
+    //   currentState = ReaderProgressStateEnum.STATE_NO_NEXT;
+    // } else if (!viewModel.isCanGoPre()) {
+    //   currentState = ReaderProgressStateEnum.STATE_NO_PRE;
+    // } else {
+    //   currentState = ReaderProgressStateEnum.STATE_NORMAL;
+    // }
     return currentState;
   }
 
@@ -327,18 +327,18 @@ class ReaderProgressManager {
   //     }
   //   }
   // }
-  //
-  // /// page 页数不足，或者是page最后一页，但不是最后一个chapter，或者是page最后一页，也是最后一个chapter，但不是最后一个volume
-  // bool isCanGoNext() {
-  //   ReaderContentDataValue currentDataValue =
-  //   readerViewModel.getCurrentContentDataValue();
-  //
-  //   return (currentDataValue.currentPageIndex + 1 <
-  //       currentDataValue.chapterContentConfigs.length) ||
-  //       (isHasNextChapter() &&
-  //           readerViewModel.getNextPage().pagePicture != null);
-  // }
-  //
+
+  /// page 页数不足，或者是page最后一页，但不是最后一个chapter，或者是page最后一页，也是最后一个chapter，但不是最后一个volume
+  bool isCanGoNext() {
+    // ReaderContentDataValue currentDataValue = readerViewModel.getCurrentContentDataValue();
+    //
+    // return (currentDataValue.currentPageIndex + 1 <
+    //     currentDataValue.chapterContentConfigs.length) ||
+    //     (isHasNextChapter() &&
+    //         viewModel.getNextPage().pagePicture != null);
+    return viewModel.getNextPage() != null;
+  }
+
   // bool isHasNextPage() {
   //   ReaderContentDataValue currentDataValue =
   //   readerViewModel.getCurrentContentDataValue();
@@ -355,19 +355,22 @@ class ReaderProgressManager {
   //       readerViewModel.getCatalog().chapters.length;
   // }
   //
-  // bool isCanGoPre() {
-  //   return (readerViewModel.getCurrentContentDataValue().currentPageIndex >
-  //       0) ||
-  //       (isHasPreChapter() && readerViewModel.getPrePage().pagePicture != null);
-  // }
-  //
-  // bool isHasPrePage() {
-  //   return readerViewModel.getCurrentContentDataValue().currentPageIndex > 0;
-  // }
-  //
-  // bool isHasPreChapter() {
-  //   return readerViewModel.getCurrentContentDataValue().chapterIndex > 0;
-  // }
+  bool isCanGoPre() {
+    // return (readerViewModel.getCurrentContentDataValue().currentPageIndex >
+    //     0) ||
+    //     (isHasPreChapter() && viewModel.getPrePage().pagePicture != null);
+    return viewModel.getPrePage()!= null;
+  }
+
+  bool isHasPrePage() {
+    // return readerViewModel.getCurrentContentDataValue().currentPageIndex > 0;
+    return true;
+  }
+
+  bool isHasPreChapter() {
+    // return readerViewModel.getCurrentContentDataValue().chapterIndex > 0;
+    return true;
+  }
 
   void clear() {
 

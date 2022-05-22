@@ -25,6 +25,9 @@ import java.io.FileOutputStream
  * @Author Created by fengchengding
  * @Description FBReaderJ_AndroidStudio
  */
+
+private const val TAG = "flutter_bridge"
+
 class FlutterBridge(
     private val context: Context,
     private val readerController: FBReaderApp,
@@ -40,7 +43,7 @@ class FlutterBridge(
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        Timber.v("flutter内容绘制流程, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
+        Timber.v("$TAG, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
 
         if (call.method == "draw_on_bitmap") {
             // 获取Flutter传递的参数
@@ -48,7 +51,7 @@ class FlutterBridge(
             val width = requireNotNull(call.argument<Double>("width")).toInt()
             val height = requireNotNull(call.argument<Double>("height")).toInt()
             val pageIndex = PageIndex.getPageIndex(index)
-            Timber.v("flutter内容绘制流程 开始绘制: $pageIndex, [$width, $height]")
+            Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
 
             // 绘制内容的bitmap
             val bytes = readerController.contentProcessorImpl.drawOnBitmapFlutter(
@@ -59,19 +62,7 @@ class FlutterBridge(
             )
 
             if (DebugHelper.SAVE_BITMAP) {
-                val targetPath = "${context.cacheDir}/images/"
-                val parent = File(targetPath)
-                if (!parent.exists()) {
-                    parent.mkdirs()
-                }
-                Timber.v("flutter内容绘制流程, save path $targetPath")
-                val saveFile = File(targetPath, "图书内容bitmap")
-                val ops = FileOutputStream(saveFile)
-                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, ops)
-                ops.flush()
-                ops.close()
-                Timber.v("flutter内容绘制流程, save success!")
+                debugSave(bytes, "图书内容bitmap_current")
             } else {
                 result.success(bytes)
             }
@@ -80,13 +71,15 @@ class FlutterBridge(
             val height = requireNotNull(call.argument<Double>("height")).toInt()
             val prev = requireNotNull(call.argument<Boolean>("update_prev_page_cache"))
             val next = requireNotNull(call.argument<Boolean>("update_next_page_cache"))
+            Timber.v("$TAG, 收到了: [$prev, $next]")
+
             readerController.contentProcessorImpl.prepareAdjacentPage(
-                width,
-                height,
-                0,
-                prev,
-                next,
-                result
+                width, height, 0, prev, next,
+                object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        result.success(data)
+                    }
+                }
             )
         }
     }
@@ -103,5 +96,25 @@ class FlutterBridge(
         val baos = ByteArrayOutputStream()
         val isSuccess = bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
         result.success(if (isSuccess) baos.toByteArray() else "")
+    }
+
+    private fun debugSave(bytes: ByteArray, name: String) {
+        val targetPath = "${context.cacheDir}/images/"
+        val parent = File(targetPath)
+        if (!parent.exists()) {
+            parent.mkdirs()
+        }
+        Timber.v("$TAG, save path $targetPath")
+        val saveFile = File(targetPath, name)
+        val ops = FileOutputStream(saveFile)
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, ops)
+        ops.flush()
+        ops.close()
+        Timber.v("flutter_bridge, save success!")
+    }
+
+    interface ResultCallBack {
+        fun onComplete(data: Any)
     }
 }

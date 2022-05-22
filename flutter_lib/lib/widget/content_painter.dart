@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../reader/controller/reader_page_manager.dart';
@@ -14,22 +12,18 @@ class ContentPainter extends CustomPainter {
   //   ..style = PaintingStyle.stroke // 样式
   //   ..blendMode = BlendMode.colorDodge; // 模式
 
+  // final ui.Image? _image;
+
   ReaderPageManager pageManager;
   TouchEvent? currentTouchData;
   int currentPageIndex = 0;
   int currentChapterId = 0;
 
-
-  // final ui.Image? _image;
-
-  ContentPainter(this.pageManager, {Key? key}) {
-    print("flutter内容绘制流程, 初始化painter");
-  }
+  ContentPainter(this.pageManager, {Key? key});
 
   @override
-  Future paint(Canvas canvas, Size size) async{
+  Future paint(Canvas canvas, Size size) async {
     // TODO: implement paint
-    print("flutter内容绘制流程, paint");
 
     // if (_image != null) {
 //      canvas.drawImageRect(_image, Offset(0.0, 0.0) & Size(_image.width.toDouble(), _image.height.toDouble()), Offset(0.0, 0.0) & Size(200, 200), _paint);
@@ -38,14 +32,17 @@ class ContentPainter extends CustomPainter {
     //   print("flutter内容绘制流程, _image draw finish");
     // }
 
-    print("flutter内容绘制流程, 绘制目标pageIdx: ${pageManager.getPageIndex()}");
     pageManager.onPageDraw(canvas);
   }
 
+  ///是否需要重绘
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    // TODO: implement shouldRepaint
-    ///是否需要重绘
-    return true;
+    return pageManager.shouldRepaint(oldDelegate, this);
+  }
+
+  void setCurrentTouchEvent(TouchEvent event) {
+    currentTouchData = event;
+    pageManager.setCurrentTouchEvent(currentTouchData!);
   }
 }

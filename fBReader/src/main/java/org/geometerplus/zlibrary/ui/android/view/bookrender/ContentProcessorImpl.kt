@@ -43,13 +43,13 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     }
 
     override fun drawOnBitmapFlutter(
-        index: PageIndex,
+        pageIndex: PageIndex,
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int
     ): ByteArray {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        drawOnBitmap(bitmap, PageIndex.PREV, width, height, 0)
+        drawOnBitmap(bitmap, pageIndex, width, height, 0)
         return bitmap.toByteArray()
     }
 
@@ -159,7 +159,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     }
 
     override fun prepareAdjacentPage(width: Int, height: Int, verticalScrollbarWidth: Int) {
+        Timber.v("渲染相邻页面, ------------------- 开始 -------------------")
         prepareService.execute {
+            // 子线程绘制相邻页面
             bookPageProvider.preparePage(
                 targetContentView,
                 PageIndex.PREV,
@@ -187,7 +189,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         verticalScrollbarWidth: Int,
         updatePrevPage: Boolean,
         updateNextPage: Boolean,
-        result: MethodChannel.Result
+        resultCallBack: FlutterBridge.ResultCallBack
     ) {
         prepareService.execute {
             Timber.v("flutter内容绘制流程, 准备相邻页面, %s", Thread.currentThread().name)
@@ -201,8 +203,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
             )
             val map: MutableMap<String, Any> = HashMap()
             if (updatePrevPage) {
-                val array = drawOnBitmapFlutter(PageIndex.PREV, width, height, 0)
-                map["prev"] = array
+                map["prev"] = drawOnBitmapFlutter(PageIndex.PREV, width, height, 0)
             }
             bookPageProvider.preparePage(
                 targetContentView,
@@ -213,11 +214,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updateNextPage) {
-                val array = drawOnBitmapFlutter(PageIndex.NEXT, width, height, 0)
-                map["next"] = array
+                map["next"] = drawOnBitmapFlutter(PageIndex.NEXT, width, height, 0)
             }
-            result.success(map)
+            resultCallBack.onComplete(map)
         }
     }
-
 }

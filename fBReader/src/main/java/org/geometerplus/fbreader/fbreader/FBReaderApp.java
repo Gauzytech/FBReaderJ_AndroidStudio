@@ -19,6 +19,8 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import static org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CMD_INIT_RENDER;
+
 import android.graphics.Bitmap;
 
 import java.util.*;
@@ -550,8 +552,8 @@ public final class FBReaderApp extends ZLApplication {
                 // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page
                 bookTextView.setTextModel(bookModel.getTextModel());
 
-                Timber.v("flutter内容绘制流程, 请求render_page, ");
-                invokeFlutterMethod("render_page", "解析完成, 渲染第一个bitmap！", null);
+                Timber.v("flutter内容绘制流程, 请求%s", CMD_INIT_RENDER);
+                invokeFlutterMethod(CMD_INIT_RENDER, "解析完成, 渲染第一个bitmap！", null);
 
             } else {
                 // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page

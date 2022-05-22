@@ -25,10 +25,6 @@ abstract class BaseAnimationPage {
 
   BaseAnimationPage({required this.readerViewModel, required this.animationController});
 
-  PageIndex getPageIndex() {
-    return readerViewModel.getIdx();
-  }
-
   void setSize(Size size) {
     currentSize = size;
 //    mTouch=Offset(currentSize.width, currentSize.height);

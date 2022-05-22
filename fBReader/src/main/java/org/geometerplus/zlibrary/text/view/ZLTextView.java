@@ -433,7 +433,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
     @Override
     public synchronized void preparePage(ZLPaintContext context, PageIndex pageIndex) {
         setContext(context);
-        preparePaintInfo(getPage(pageIndex), "preparePage");
+        ZLTextPage page = getPage(pageIndex);
+        Timber.v("渲染相邻页面1, %s: %s, %s", pageIndex.name(), page.startCursor, page.endCursor);
+        preparePaintInfo(page, "preparePage");
     }
 
     @Override
@@ -485,7 +487,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 从定位指定段落后得到的ZLTextPage类中取出
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
+        Timber.v("绘制页面[%s], %s", pageIndex, DebugHelper.getPatinStateStr(page.paintState));
         preparePaintInfo(page, "paint." + pageIndex.name());
+
+        Timber.v("绘制页面[%s]: \n%s, \n%s", pageIndex, page.startCursor, page.endCursor);
 
         if (page.startCursor.isNull() || page.endCursor.isNull()) {
             return;

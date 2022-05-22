@@ -15,7 +15,7 @@ class ReaderPageManager {
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
 
   late BaseAnimationPage currentAnimationPage;
-  late RenderState currentState;
+  RenderState? currentState;
   TouchEvent? currentTouchData;
 
   GlobalKey canvasKey;
@@ -47,8 +47,9 @@ class ReaderPageManager {
     /// 用户抬起手指后，是否需要执行动画
     if (event.action == TouchEvent.ACTION_UP ||
         event.action == TouchEvent.ACTION_CANCEL) {
+      print('flutter动画流程, 抬起手指动画: $event');
       switch (currentAnimationType) {
-        case TYPE_ANIMATION_SIMULATION_TURN:
+        // case TYPE_ANIMATION_SIMULATION_TURN:
         case TYPE_ANIMATION_COVER_TURN:
           if (currentAnimationPage.isCancelArea()) {
             startCancelAnimation();
@@ -63,6 +64,7 @@ class ReaderPageManager {
           break;
       }
     } else {
+      print('flutter动画流程, 手指正在触摸的动画, onTouchEvent: $event');
       currentTouchData = event;
       currentAnimationPage.onTouchEvent(event);
     }
@@ -74,10 +76,6 @@ class ReaderPageManager {
 
   void onPageDraw(Canvas canvas) {
     currentAnimationPage.onDraw(canvas);
-  }
-
-  PageIndex getPageIndex() {
-    return currentAnimationPage.readerViewModel.getIdx();
   }
 
   void _setCurrentAnimation(int animationType, ReaderViewModel viewModel) {
