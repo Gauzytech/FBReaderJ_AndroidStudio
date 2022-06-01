@@ -22,6 +22,8 @@ package org.geometerplus.zlibrary.ui.android.view.animation;
 import org.geometerplus.android.fbreader.constant.PreviewConfig;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 
+import timber.log.Timber;
+
 abstract class SimpleAnimationProvider extends AnimationProvider {
 
     private boolean isPreview;
@@ -110,6 +112,7 @@ abstract class SimpleAnimationProvider extends AnimationProvider {
         } else {
             bound = 0;
         }
+        Timber.v("翻页动画, mySpeed = %s, bound = %d, scrollingShift = %s", mySpeed, bound, getScrollingShift());
         if (mySpeed > 0) {
             if (getScrollingShift() >= bound) {
                 if (myDirection.IsHorizontal) {
@@ -119,6 +122,8 @@ abstract class SimpleAnimationProvider extends AnimationProvider {
                 }
                 terminate();
                 return;
+            } else {
+                Timber.v("翻页动画, 回弹, mStartX = %s, myEndX = %s", myStartX, myEndX);
             }
         } else {
             if (getScrollingShift() <= -bound) {
@@ -129,6 +134,8 @@ abstract class SimpleAnimationProvider extends AnimationProvider {
                 }
                 terminate();
                 return;
+            } else {
+                Timber.v("翻页动画, 回弹");
             }
         }
         mySpeed *= mySpeedFactor;

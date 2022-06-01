@@ -32,6 +32,7 @@ class ContentPainter extends CustomPainter {
     //   print("flutter内容绘制流程, _image draw finish");
     // }
 
+    pageManager.setPageSize(size);
     pageManager.onPageDraw(canvas);
   }
 

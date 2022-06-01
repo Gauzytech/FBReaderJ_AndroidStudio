@@ -1,4 +1,5 @@
 
+import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 
 class ReaderProgressManager {
@@ -20,38 +21,38 @@ class ReaderProgressManager {
     return currentState;
   }
 
-  // Future<bool> nextPage() async {
-  //   if (currentState == ReaderProgressStateEnum.STATE_NO_NEXT) {
-  //     return false;
-  //   }
-  //
-  //   ReaderContentDataValue currentDataValue =
-  //   readerViewModel.getCurrentContentDataValue();
-  //   if (currentDataValue.currentPageIndex <
-  //       currentDataValue.chapterContentConfigs.length - 1) {
-  //     goToNextPage();
-  //   } else {
-  //     goToNextChapter(false);
-  //   }
-  //
-  //   return true;
-  // }
-  //
-  // Future<bool> prePage() async {
-  //   if (currentState == ReaderProgressStateEnum.STATE_NO_PRE) {
-  //     return false;
-  //   }
-  //
-  //   ReaderContentDataValue currentDataValue =
-  //   readerViewModel.getCurrentContentDataValue();
-  //   if (currentDataValue.currentPageIndex > 0) {
-  //     goToPrePage();
-  //   } else {
-  //     goToPreChapter(false);
-  //   }
-  //
-  //   return true;
-  // }
+  Future<bool> nextPage() async {
+    if (currentState == ReaderProgressStateEnum.STATE_NO_NEXT) {
+      return false;
+    }
+
+    // ReaderContentDataValue currentDataValue =
+    // readerViewModel.getCurrentContentDataValue();
+    // if (currentDataValue.currentPageIndex <
+    //     currentDataValue.chapterContentConfigs.length - 1) {
+      goToNextPage();
+    // } else {
+    //   goToNextChapter(false);
+    // }
+
+    return true;
+  }
+
+  Future<bool> prePage() async {
+    if (currentState == ReaderProgressStateEnum.STATE_NO_PRE) {
+      return false;
+    }
+
+    // ReaderContentDataValue currentDataValue =
+    // readerViewModel.getCurrentContentDataValue();
+    // if (currentDataValue.currentPageIndex > 0) {
+      goToPrePage();
+    // } else {
+    //   goToPreChapter(false);
+    // }
+
+    return true;
+  }
   //
   // Future<bool> goToTargetPage(int index) async {
   //   ReaderContentDataValue currentDataValue =
@@ -114,22 +115,24 @@ class ReaderProgressManager {
   //   return true;
   // }
   //
-  // void goToNextPage() async {
-  //   readerViewModel.getCurrentContentDataValue().currentPageIndex++;
-  //
-  //   if (!isHasNextPage() && !isHasNextChapter()) {
-  //     /// 如果当前章没有下一张
-  //     currentState = ReaderProgressStateEnum.STATE_NO_NEXT;
-  //   } else {
-  //     if (readerViewModel.getNextPage() == null) {
-  //       currentState = ReaderProgressStateEnum.STATE_LOADING;
-  //     } else {
-  //       currentState = ReaderProgressStateEnum.STATE_NORMAL;
-  //     }
-  //   }
-  //
-  //   checkPageCache();
-  // }
+  void goToNextPage() async {
+    // readerViewModel.getCurrentContentDataValue().currentPageIndex++;
+
+    // if (!isHasNextPage() && !isHasNextChapter()) {
+    //   /// 如果当前章没有下一张
+    //   currentState = ReaderProgressStateEnum.STATE_NO_NEXT;
+    // } else {
+    //   if (readerViewModel.getNextPage() == null) {
+    //     currentState = ReaderProgressStateEnum.STATE_LOADING;
+    //   } else {
+    //     currentState = ReaderProgressStateEnum.STATE_NORMAL;
+    //   }
+    // }
+
+    checkPageCache();
+
+    viewModel.shift(true);
+  }
   //
   // Future<bool> goToNextChapter(bool resetIndex) async {
   //   if (!isHasNextChapter()) {
@@ -185,22 +188,23 @@ class ReaderProgressManager {
   //   return true;
   // }
   //
-  // void goToPrePage() async {
-  //   readerViewModel.getCurrentContentDataValue().currentPageIndex--;
-  //
-  //   if (!isHasPrePage() && !isHasPreChapter()) {
-  //     /// 如果当前章没有上一张
-  //     currentState = ReaderProgressStateEnum.STATE_NO_PRE;
-  //   } else {
-  //     if (readerViewModel.getPrePage() == null) {
-  //       currentState = ReaderProgressStateEnum.STATE_LOADING;
-  //     } else {
-  //       currentState = ReaderProgressStateEnum.STATE_NORMAL;
-  //     }
-  //   }
-  //
-  //   checkPageCache();
-  // }
+  void goToPrePage() async {
+    // readerViewModel.getCurrentContentDataValue().currentPageIndex--;
+    //
+    // if (!isHasPrePage() && !isHasPreChapter()) {
+    //   /// 如果当前章没有上一张
+    //   currentState = ReaderProgressStateEnum.STATE_NO_PRE;
+    // } else {
+    //   if (readerViewModel.getPrePage() == null) {
+    //     currentState = ReaderProgressStateEnum.STATE_LOADING;
+    //   } else {
+    //     currentState = ReaderProgressStateEnum.STATE_NORMAL;
+    //   }
+    // }
+
+    checkPageCache();
+    viewModel.shift(false);
+  }
   //
   // Future<bool> goToPreChapter(bool resetIndex) async {
   //   if (!isHasPreChapter()) {
@@ -304,29 +308,29 @@ class ReaderProgressManager {
   //   }
   // }
   //
-  // void checkPageCache() {
-  //   ReaderContentDataValue currentDataValue =
-  //   readerViewModel.getCurrentContentDataValue();
-  //   NovelBookChapter catalogData = readerViewModel.getCatalog();
-  //
-  //   if (currentDataValue != null && (currentDataValue.chapterIndex != -1)) {
-  //     if (currentDataValue.chapterContentConfigs == null ||
-  //         currentDataValue.chapterContentConfigs.length == 0) {
-  //       currentDataValue.chapterCanvasDataMap.clear();
-  //
-  //       readerViewModel.requestNewContent(
-  //           catalogData.chapters[currentDataValue.chapterIndex]
-  //             ..novelId = catalogData.book);
-  //     } else if (currentDataValue.chapterCanvasDataMap.length !=
-  //         currentDataValue.chapterContentConfigs.length) {
-  //       readerViewModel.loadReaderContentDataValue(
-  //           currentDataValue.chapterContentConfigs,
-  //           currentDataValue,
-  //           true,
-  //           false);
-  //     }
-  //   }
-  // }
+  void checkPageCache() {
+    // ReaderContentDataValue currentDataValue =
+    // readerViewModel.getCurrentContentDataValue();
+    // NovelBookChapter catalogData = readerViewModel.getCatalog();
+    //
+    // if (currentDataValue != null && (currentDataValue.chapterIndex != -1)) {
+    //   if (currentDataValue.chapterContentConfigs == null ||
+    //       currentDataValue.chapterContentConfigs.length == 0) {
+    //     currentDataValue.chapterCanvasDataMap.clear();
+    //
+    //     readerViewModel.requestNewContent(
+    //         catalogData.chapters[currentDataValue.chapterIndex]
+    //           ..novelId = catalogData.book);
+    //   } else if (currentDataValue.chapterCanvasDataMap.length !=
+    //       currentDataValue.chapterContentConfigs.length) {
+    //     readerViewModel.loadReaderContentDataValue(
+    //         currentDataValue.chapterContentConfigs,
+    //         currentDataValue,
+    //         true,
+    //         false);
+    //   }
+    // }
+  }
 
   /// page 页数不足，或者是page最后一页，但不是最后一个chapter，或者是page最后一页，也是最后一个chapter，但不是最后一个volume
   bool isCanGoNext() {

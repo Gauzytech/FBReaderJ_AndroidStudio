@@ -95,11 +95,11 @@ class ReaderViewModel extends BaseViewModel {
   // }
 
   void nextPage() async {
-    // _progressManager.nextPage();
+    _progressManager.nextPage();
   }
 
   void prePage() async {
-    // _progressManager.prePage();
+    _progressManager.prePage();
   }
 
   /// --------------------------- 展示相关部分 ---------------------------------
@@ -162,7 +162,14 @@ class ReaderViewModel extends BaseViewModel {
   ui.Image? getNextPage() {
     // 查看下一页image是否存在
     final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
-    ImageSrc? nextPageImage = handler.getPage(PageIndex.prev);
+    ImageSrc? nextPageImage = handler.getPage(PageIndex.next);
+    return nextPageImage.img;
+  }
+
+  ui.Image? getNextOrPrevPageDebug(bool forward) {
+    // 查看下一页image是否存在
+    final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
+    ImageSrc? nextPageImage = handler.getPage(handler.getPageIndex(forward));
     return nextPageImage.img;
   }
 
@@ -199,5 +206,10 @@ class ReaderViewModel extends BaseViewModel {
     _readerContentHandler?.clear();
     _configModel.clear();
     _progressManager.clear();
+  }
+
+  /// forward 'true' goNext, 'false' goPrev
+  void shift(bool forward) {
+    _readerContentHandler?.shift(forward);
   }
 }

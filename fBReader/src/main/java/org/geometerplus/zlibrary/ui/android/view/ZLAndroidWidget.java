@@ -166,6 +166,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         Timber.v("渲染流程, onDrawInScrolling -> getCurrentView");
 
         final AnimationProvider animator = getAnimationProvider("onDrawInScrolling");
+        Timber.v("翻页动画, %s", animator.getClass().getSimpleName());
         final AnimationProvider.Mode oldMode = animator.getMode();
         animator.doStep();
         if (animator.inProgress()) {

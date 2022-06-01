@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/page_index.dart';
+
 import '../../modal/view_model_reader.dart';
 import '../../utils/screen_util.dart';
 import '../controller/touch_event.dart';
@@ -8,6 +8,7 @@ enum ANIMATION_TYPE { TYPE_CONFIRM, TYPE_CANCEL, TYPE_FILING }
 
 abstract class BaseAnimationPage {
   Offset mTouch = const Offset(0, 0);
+  Offset mTouchBeta = const Offset(0, 0);
 
   AnimationController animationController;
 
@@ -27,7 +28,7 @@ abstract class BaseAnimationPage {
 
   void setSize(Size size) {
     currentSize = size;
-//    mTouch=Offset(currentSize.width, currentSize.height);
+    // mTouch = Offset(currentSize.width, currentSize.height);
   }
 
 //   void setContentViewModel(ReaderViewModel viewModel) {

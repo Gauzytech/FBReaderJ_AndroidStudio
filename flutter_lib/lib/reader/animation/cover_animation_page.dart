@@ -68,11 +68,12 @@ class CoverPageAnimation extends BaseAnimationPage {
           case AnimationStatus.dismissed:
             break;
           case AnimationStatus.completed:
-            print('flutter动画流程, 动画执行完毕, 去下一页或者上一页');
             if (animationType == ANIMATION_TYPE.TYPE_CONFIRM) {
               if (isTurnNext) {
+                print('flutter动画流程, 动画执行完毕, 去下一页');
                 readerViewModel.nextPage();
               } else {
+                print('flutter动画流程, 动画执行完毕, 去上一页');
                 readerViewModel.prePage();
               }
               canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
@@ -114,9 +115,8 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
-    print("flutter内容绘制流程, onDraw，animation start = $isStartAnimation, [${mTouch.dx}, ${mTouch.dy}]");
     if (isStartAnimation && (mTouch.dx != 0 || mTouch.dy != 0)) {
-      print("flutter内容绘制流程, 覆盖动画，draw animation");
+      print("flutter内容绘制流程, 覆盖动画，draw animation, mTouch = $mTouch");
       drawBottomPage(canvas);
       drawCurrentShadow(canvas);
       drawTopPage(canvas);
@@ -158,7 +158,6 @@ class CoverPageAnimation extends BaseAnimationPage {
   void drawStatic(Canvas canvas) {
     // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
     ui.Image? page = readerViewModel.getCurrentPage();
-    print('drawStatic - > pageIdx = ${readerViewModel.getIdx()}');
     if(page != null) {
       canvas.drawImage(page, Offset.zero, Paint());
     }
@@ -185,36 +184,30 @@ class CoverPageAnimation extends BaseAnimationPage {
   void drawTopPage(Canvas canvas) {
     canvas.save();
     if (coverDirection == ORIENTATION_HORIZONTAL) {
+      // 水平方向
       if (isTurnNext) {
         canvas.translate(mTouch.dx - mStartPoint.dx, 0);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-        if(readerViewModel.getCurrentPage() != null) {
-          print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
-          canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
-        }
+        print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
+        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
       } else {
         canvas.translate((mTouch.dx - mStartPoint.dx) - currentSize.width, 0);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-        if(readerViewModel.getPrePage() != null) {
-          print('flutter内容绘制流程, drawTopPage -> getPrePage');
-          canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
-        }
+        print('flutter内容绘制流程, drawTopPage -> getPrePage');
+        canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
       }
     } else {
+      // 竖直方向
       if (isTurnNext) {
         canvas.translate(0, mTouch.dy - mStartPoint.dy);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-        if(readerViewModel.getCurrentPage() != null) {
-          print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
-          canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
-        }
+        print('flutter内容绘制流程, nxt, drawTopPage -> getCurrentPage, ${mTouch.dy - mStartPoint.dy}');
+        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
       } else {
         canvas.translate(0, (mTouch.dy - mStartPoint.dy) - currentSize.height);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-        if(readerViewModel.getCurrentPage() != null) {
-          print('flutter内容绘制流程, drawTopPage -> getPrePage');
-          canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
-        }
+        print('flutter内容绘制流程, pre, drawTopPage -> getPrePage, ${mTouch.dy - mStartPoint.dy}');
+        canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
       }
     }
     canvas.restore();
@@ -258,10 +251,11 @@ class CoverPageAnimation extends BaseAnimationPage {
       shadowGradient = const LinearGradient(
         begin: Alignment.topRight,
         colors: [
-          Color(0xAACE2020),
+          Color(0xAA000000),
           Colors.transparent,
         ],
       );
+
       if (isTurnNext) {
         Rect rect = Rect.fromLTRB(
             0,

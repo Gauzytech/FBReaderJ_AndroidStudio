@@ -164,6 +164,52 @@ class ReaderContentHandler {
     return [pageImage.width.toDouble(), pageImage.height.toDouble()];
   }
 
+  void shift(bool forward) {
+    // _bitmapManager.shift(pageIndex == PageIndex.next);
+
+    if(forward) {
+      if(currentPageIndex == PageIndex.current) {
+        currentPageIndex = PageIndex.next;
+      } else if(currentPageIndex == PageIndex.prev){
+        currentPageIndex = PageIndex.current;
+      } else if(currentPageIndex == PageIndex.next){
+        currentPageIndex = PageIndex.prev;
+      }
+    } else {
+      if(currentPageIndex == PageIndex.current) {
+        currentPageIndex = PageIndex.prev;
+      } else if(currentPageIndex == PageIndex.prev){
+        currentPageIndex = PageIndex.next;
+      } else if(currentPageIndex == PageIndex.next){
+        currentPageIndex = PageIndex.current;
+      }
+    }
+  }
+
+  PageIndex getPageIndex(bool forward) {
+    // _bitmapManager.shift(pageIndex == PageIndex.next);
+
+    if(forward) {
+      if(currentPageIndex == PageIndex.current) {
+        return PageIndex.next;
+      } else if(currentPageIndex == PageIndex.prev){
+        return PageIndex.current;
+      } else if(currentPageIndex == PageIndex.next){
+        return PageIndex.prev;
+      }
+    } else {
+      if(currentPageIndex == PageIndex.current) {
+        return PageIndex.prev;
+      } else if(currentPageIndex == PageIndex.prev){
+        return PageIndex.next;
+      } else if(currentPageIndex == PageIndex.next){
+        return PageIndex.current;
+      }
+    }
+
+    return PageIndex.current;
+  }
+
   void clear() {
     _bitmapManager.clear();
   }

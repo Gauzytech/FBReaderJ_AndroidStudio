@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import timber.log.Timber;
+
 public final class FBView extends ZLTextView {
 
     public static final int SCROLLBAR_SHOW_AS_FOOTER = 3;
@@ -390,6 +392,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerRelease(int x, int y) {
+        Timber.v("翻页动画, onFingerRelease, [%s, %s]", x, y);
         mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {

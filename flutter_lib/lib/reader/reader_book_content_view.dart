@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
@@ -49,6 +50,7 @@ class ReaderBookContentViewState
     extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
   final _methodChannel = const MethodChannel('com.flutter.book.reader');
+
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
   final GlobalKey footerKey = GlobalKey();
@@ -65,7 +67,8 @@ class ReaderBookContentViewState
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
-    _readerContentHandler = ReaderContentHandler(methodChannel: _methodChannel, readerBookContentViewState: this);
+    _readerContentHandler = ReaderContentHandler(
+        methodChannel: _methodChannel, readerBookContentViewState: this);
   }
 
   @override
@@ -73,13 +76,14 @@ class ReaderBookContentViewState
     ReaderViewModel readerViewModel = ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
 
     switch (readerViewModel.getConfigData().currentAnimationMode) {
-      // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
+    // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
       case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
         animationController = AnimationControllerWithListenerNumber(
           vsync: this,
         );
         break;
       case ReaderPageManager.TYPE_ANIMATION_SLIDE_TURN:
+      case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
         animationController = AnimationControllerWithListenerNumber.unbounded(
           vsync: this,
         );
@@ -87,10 +91,14 @@ class ReaderBookContentViewState
     }
 
     if (animationController != null) {
+      readerViewModel.getConfigData().currentAnimationMode =
+          ReaderPageManager.TYPE_ANIMATION_PAGE_TURN;
+
       pageManager = ReaderPageManager(
           canvasKey: contentKey,
           animationController: animationController!,
-          currentAnimationType: readerViewModel.getConfigData().currentAnimationMode,
+          currentAnimationType:
+              readerViewModel.getConfigData().currentAnimationMode,
           viewModel: readerViewModel);
       readerViewModel.setContentHandler(_readerContentHandler);
       _contentPainter = ContentPainter(pageManager);
@@ -119,10 +127,10 @@ class ReaderBookContentViewState
               child: RawGestureDetector(
                 gestures: <Type, GestureRecognizerFactory>{
                   PagePanGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<
-                      PagePanGestureRecognizer>(
-                        () => PagePanGestureRecognizer(false),
-                        (PagePanGestureRecognizer recognizer) {
+                      GestureRecognizerFactoryWithHandlers<
+                          PagePanGestureRecognizer>(
+                    () => PagePanGestureRecognizer(false),
+                    (PagePanGestureRecognizer recognizer) {
                       recognizer.setMenuOpen(false);
                       recognizer.onDown = (detail) {
                         print(
@@ -145,6 +153,17 @@ class ReaderBookContentViewState
                       };
                     },
                   ),
+                  LongPressGestureRecognizer:
+                      GestureRecognizerFactoryWithHandlers<
+                          LongPressGestureRecognizer>(
+                    () => LongPressGestureRecognizer(),
+                    (LongPressGestureRecognizer recognizer) {
+                      recognizer.onLongPress = () {
+                        print(
+                            "flutter动画流程, ------------------长按事件------------------>>>>>>>>>");
+                      };
+                    },
+                  )
                 },
                 child: CustomPaint(
                   key: contentKey,
@@ -200,7 +219,7 @@ class ReaderBookContentViewState
         currentTouchEvent = TouchEvent(
             action: TouchEvent.ACTION_DOWN, touchPos: detail.localPosition);
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
-        contentKey.currentContext?.findRenderObject()!.markNeedsPaint();
+        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
     }
   }
@@ -215,7 +234,7 @@ class ReaderBookContentViewState
         currentTouchEvent = TouchEvent(
             action: TouchEvent.ACTION_MOVE, touchPos: detail.localPosition);
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
-        contentKey.currentContext!.findRenderObject()!.markNeedsPaint();
+        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
     }
   }
@@ -226,13 +245,14 @@ class ReaderBookContentViewState
         currentTouchEvent.touchPos != Offset.zero) {
       // 检查上一页/下一页是否存在
       if (await readerViewModel.isPageReady()) {
-        print('flutter动画流程, 相邻页面存在, 继续执行事件');
+        print(
+            'flutter动画流程, 相邻页面存在, 继续执行事件, last position: ${currentTouchEvent.touchPos}');
         currentTouchEvent = TouchEvent<DragEndDetails>(
             action: TouchEvent.ACTION_UP, touchPos: Offset.zero);
         currentTouchEvent.setTouchDetail(detail);
 
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
-        contentKey.currentContext!.findRenderObject()!.markNeedsPaint();
+        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
     }
   }

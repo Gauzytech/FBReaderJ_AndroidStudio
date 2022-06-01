@@ -27,6 +27,8 @@ import android.graphics.Paint;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.ui.android.view.ViewUtil;
 
+import timber.log.Timber;
+
 public final class PreviewShiftAnimationProvider extends SimpleAnimationProvider {
     private final Paint myPaint = new Paint();
 
@@ -42,6 +44,7 @@ public final class PreviewShiftAnimationProvider extends SimpleAnimationProvider
     protected void drawInternal(Canvas canvas) {
         if (myDirection.IsHorizontal) {
             final int dX = myEndX - myStartX;
+            Timber.v("翻页动画, myStartX = %s, myEndX = %s", myStartX, myEndX);
             if (isPreview()) {
                 drawBitmapFrom(canvas, dX, 0, myPaint);
             } else {

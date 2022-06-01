@@ -16,7 +16,7 @@ import 'base_animation_page.dart';
 class SlidePageAnimation extends BaseAnimationPage {
   late ClampingScrollPhysics physics;
 
-  Offset mStartPoint = const Offset(0, 0);
+  Offset mStartPoint = Offset.zero;
   double mStartDy = 0;
   double currentMoveDy = 0;
 
@@ -48,7 +48,7 @@ class SlidePageAnimation extends BaseAnimationPage {
   void _setContentViewModel(ReaderViewModel viewModel) {
     // super.setContentViewModel(viewModel);
     viewModel.registerContentOperateCallback((operate) {
-      mStartPoint = const Offset(0, 0);
+      mStartPoint = Offset.zero;
       mStartDy = 0;
       dy = 0;
       lastIndex = 0;
@@ -150,56 +150,65 @@ class SlidePageAnimation extends BaseAnimationPage {
   }
 
   void drawBottomPage(Canvas canvas) {
-    // double actualOffset = currentMoveDy < 0
-    //     ? -((currentMoveDy).abs() % currentSize.height)
-    //     : (currentMoveDy) % currentSize.height;
-    //
-    // canvas.save();
-    // if (actualOffset < 0) {
-    //   if (readerViewModel.getNextPage() != null) {
-    //     canvas.translate(0, actualOffset + currentSize.height);
-    //     // canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
-    //     canvas.drawImage(readerViewModel.getNextPage()!, Offset.zero, Paint());
-    //   } else {
-    //     if (!isCanGoNext()) {
-    //       dy = 0;
-    //       actualOffset = 0;
-    //       currentMoveDy = 0;
-    //
-    //       if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
-    //         _currentAnimationController!.stop();
-    //       }
-    //     }
-    //   }
-    // } else if (actualOffset > 0) {
-    //   if (readerViewModel.getPrePage() != null) {
-    //     canvas.translate(0, actualOffset - currentSize.height);
-    //     // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-    //     canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
-    //   } else {
-    //     if (!isCanGoPre()) {
-    //       dy = 0;
-    //       lastIndex = 0;
-    //       actualOffset = 0;
-    //       currentMoveDy = 0;
-    //
-    //       if (_currentAnimationController != null && !_currentAnimationController!.isCompleted) {
-    //         _currentAnimationController!.stop();
-    //       }
-    //     }
-    //   }
-    // }
-    //
-    // canvas.restore();
-    // canvas.save();
-    //
-    // // todo
+    double actualOffset = currentMoveDy < 0
+        ? -((currentMoveDy).abs() % currentSize.height)
+        : (currentMoveDy) % currentSize.height;
+
+    canvas.save();
+    if (actualOffset < 0) {
+      if (readerViewModel.getNextOrPrevPageDebug(true) != null) {
+        canvas.translate(0, actualOffset + currentSize.height);
+        // canvas.drawPicture(readerViewModel.getNextPage().pagePicture);
+        canvas.drawImage(readerViewModel.getNextOrPrevPageDebug(true)!,
+            Offset.zero, Paint());
+        print("flutter动画流程, 滚动翻页, $actualOffset, draw下一页");
+      } else {
+        if (!isCanGoNext()) {
+          dy = 0;
+          actualOffset = 0;
+          currentMoveDy = 0;
+
+          if (_currentAnimationController != null &&
+              !_currentAnimationController!.isCompleted) {
+            _currentAnimationController!.stop();
+          }
+        }
+      }
+    } else if (actualOffset > 0) {
+      if (readerViewModel.getPrePage() != null) {
+        canvas.translate(0, actualOffset - currentSize.height);
+        // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
+        canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
+        print("flutter动画流程, 滚动翻页, $actualOffset, draw上一页");
+      } else {
+        if (!isCanGoPre()) {
+          dy = 0;
+          lastIndex = 0;
+          actualOffset = 0;
+          currentMoveDy = 0;
+
+          if (_currentAnimationController != null &&
+              !_currentAnimationController!.isCompleted) {
+            _currentAnimationController!.stop();
+          }
+        }
+      }
+    }
+
+    canvas.restore();
+    canvas.save();
+
     // if (readerViewModel.getCurrentPage().pagePicture != null) {
     //   canvas.translate(0, actualOffset);
     //   canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
     // }
-    //
-    // canvas.restore();
+
+    if (readerViewModel.getCurrentPage() != null) {
+      canvas.translate(0, actualOffset);
+      canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+    }
+
+    canvas.restore();
   }
 
   void drawStatic(Canvas canvas) {}

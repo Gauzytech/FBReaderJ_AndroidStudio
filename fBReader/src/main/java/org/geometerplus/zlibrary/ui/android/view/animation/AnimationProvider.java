@@ -8,6 +8,8 @@ import android.graphics.*;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 
+import timber.log.Timber;
+
 /**
  * 动画提供者
  */
@@ -144,7 +146,7 @@ public abstract class AnimationProvider {
         if (getPageToScrollTo(x, y) == ZLViewEnums.PageIndex.CURRENT) {
             return;
         }
-
+        Timber.v("翻页动画， before: speed = %s, myStartX = %s, myEndX = %s", mySpeed, myStartX, myEndX);
         final int dpi = ZLibrary.Instance().getDisplayDPI();
         // 滑动距离
         final int diff = myDirection.IsHorizontal ? x - myStartX : y - myStartY;
@@ -154,6 +156,7 @@ public abstract class AnimationProvider {
         // 根据距离判断是否向前翻页
         boolean forward = Math.abs(diff) > Math.min(minDiff, dpi / 2);
         myMode = forward ? Mode.AnimatedScrollingForward : Mode.AnimatedScrollingBackward;
+        Timber.v("翻页动画, diff = %s, minDiff = %s, myMode = %s", diff, minDiff, myMode);
 
         // 速度
         float velocity = 15;
@@ -194,6 +197,7 @@ public abstract class AnimationProvider {
                 mySpeed = forward ? velocity : -velocity;
                 break;
         }
+        Timber.v("翻页动画， after: speed = %s, myStartX = %s, myEndX = %s", mySpeed, myStartX, myEndX);
 
         startAnimatedScrollingInternal(speed);
     }

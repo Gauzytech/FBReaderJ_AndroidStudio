@@ -9,6 +9,7 @@ class TouchEvent<T> {
   static const int ACTION_MOVE = 1;
   static const int ACTION_UP = 2;
   static const int ACTION_CANCEL = 3;
+  static const int ACTION_FLING_RELEASED = 4;
 
   int action;
   T? _touchDetail;

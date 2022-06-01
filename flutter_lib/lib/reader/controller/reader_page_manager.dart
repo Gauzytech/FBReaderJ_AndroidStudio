@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
+import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
 
 import '../../widget/content_painter.dart';
@@ -13,6 +13,7 @@ class ReaderPageManager {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
+  static const TYPE_ANIMATION_PAGE_TURN = 4;
 
   late BaseAnimationPage currentAnimationPage;
   RenderState? currentState;
@@ -33,14 +34,13 @@ class ReaderPageManager {
   }
 
   void setCurrentTouchEvent(TouchEvent event) {
+    print('flutter横向翻页， 中断动画');
     /// 如果正在执行动画，判断是否需要中止动画
     if (currentState == RenderState.ANIMATING) {
       if (currentAnimationPage.isShouldAnimatingInterrupt()) {
         if (event.action == TouchEvent.ACTION_DOWN) {
           interruptCancelAnimation();
         }
-      } else {
-        return;
       }
     }
 
@@ -59,6 +59,11 @@ class ReaderPageManager {
           break;
         case TYPE_ANIMATION_SLIDE_TURN:
           startFlingAnimation(event.touchDetail);
+          break;
+        case TYPE_ANIMATION_PAGE_TURN:
+          // startFlingAnimation(event.touchDetail);
+          // todo
+          startFlingAnim(event);
           break;
         default:
           break;
@@ -85,12 +90,17 @@ class ReaderPageManager {
       //   currentAnimationPage = SimulationTurnPageAnimation();
       //   break;
       case TYPE_ANIMATION_COVER_TURN:
-        currentAnimationPage =
-            CoverPageAnimation(readerViewModel: viewModel, animationController: animationController);
+        currentAnimationPage = CoverPageAnimation(
+            readerViewModel: viewModel,
+            animationController: animationController);
         break;
       case TYPE_ANIMATION_SLIDE_TURN:
         currentAnimationPage =
             SlidePageAnimation(viewModel, animationController);
+        break;
+      case TYPE_ANIMATION_PAGE_TURN:
+        currentAnimationPage =
+            PageTurnAnimation(viewModel, animationController);
         break;
       default:
         break;
@@ -168,6 +178,21 @@ class ReaderPageManager {
     }
   }
 
+  void startFlingAnim(TouchEvent event) {
+    if (event.touchDetail == null) return;
+
+    Simulation? simulation = (currentAnimationPage as PageTurnAnimation)
+        .getFlingSpringSimulation(animationController, event.touchDetail!);
+
+    if (animationController.isCompleted) {
+      animationController.reset();
+    }
+
+    if (simulation != null) {
+      animationController.animateWith(simulation);
+    }
+  }
+
   void startFlingAnimation(DragEndDetails? details) {
     if (details == null) return;
 
@@ -184,11 +209,12 @@ class ReaderPageManager {
   }
 
   void interruptCancelAnimation() {
+    print('flutter横向翻页, 中断动画');
     if (!animationController.isCompleted) {
       animationController.stop();
       currentState = RenderState.IDLE;
-      TouchEvent event = TouchEvent(
-          action: TouchEvent.ACTION_UP, touchPos: const Offset(0, 0));
+      TouchEvent event =
+          TouchEvent(action: TouchEvent.ACTION_UP, touchPos: Offset.zero);
       currentAnimationPage.onTouchEvent(event);
       currentTouchData = event.copy();
     }
@@ -204,25 +230,34 @@ class ReaderPageManager {
   }
 
   void _setAnimationController(AnimationController animationController) {
-    animationController.duration = const Duration(milliseconds: 300);
     // this.animationController = animationController;
+    animationController.duration = const Duration(milliseconds: 300);
 
-    if (TYPE_ANIMATION_SLIDE_TURN == currentAnimationType) {
+    if (currentAnimationType == TYPE_ANIMATION_SLIDE_TURN ||
+        currentAnimationType == TYPE_ANIMATION_PAGE_TURN) {
       animationController
         ..addListener(() {
           currentState = RenderState.ANIMATING;
           canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
           if (!animationController.value.isInfinite &&
               !animationController.value.isNaN) {
+            print(
+                'flutter横向翻页1, anim value update: ${animationController.value}');
             currentAnimationPage.onTouchEvent(
-              TouchEvent(
-                action: TouchEvent.ACTION_MOVE,
-                touchPos: Offset(0, animationController.value),
-              ),
+              currentAnimationType == TYPE_ANIMATION_SLIDE_TURN
+                  ? TouchEvent(
+                      action: TouchEvent.ACTION_MOVE,
+                      touchPos: Offset(0, animationController.value),
+                    )
+                  : TouchEvent(
+                      action: TouchEvent.ACTION_FLING_RELEASED,
+                      touchPos: Offset(animationController.value, 0),
+                    ),
             );
           }
         })
         ..addStatusListener((status) {
+          print('flutter横向翻页惯性, anim status update: ${status.name}');
           switch (status) {
             case AnimationStatus.dismissed:
               break;
@@ -231,7 +266,7 @@ class ReaderPageManager {
               currentState = RenderState.IDLE;
               TouchEvent event = TouchEvent(
                 action: TouchEvent.ACTION_UP,
-                touchPos: const Offset(0, 0),
+                touchPos: Offset.zero,
               );
               currentAnimationPage.onTouchEvent(event);
               currentTouchData = event.copy();
