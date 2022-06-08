@@ -54,7 +54,9 @@ class FlutterBridge(
             Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
 
             // 绘制内容的bitmap
-            val bytes = readerController.contentProcessorImpl.drawOnBitmapFlutter(
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            readerController.contentProcessorImpl.drawOnBitmap(
+                bitmap,
                 pageIndex,
                 width,
                 height,
@@ -62,9 +64,9 @@ class FlutterBridge(
             )
 
             if (DebugHelper.SAVE_BITMAP) {
-                debugSave(bytes, "图书内容bitmap_current")
+                debugSave(bitmap.toByteArray(), "图书内容bitmap_current")
             } else {
-                result.success(bytes)
+                result.success(bitmap.toByteArray())
             }
         } else if (call.method == "prepare_page") {
             val width = requireNotNull(call.argument<Double>("width")).toInt()
@@ -81,6 +83,11 @@ class FlutterBridge(
                     }
                 }
             )
+        } else if (call.method == "can_scroll") {
+            val index = requireNotNull(call.argument<Int>("page_index"))
+            val pageIndex = PageIndex.getPageIndex(index)
+            val canScroll = readerController.contentProcessorImpl.canScroll(pageIndex)
+            result.success(canScroll)
         }
     }
 

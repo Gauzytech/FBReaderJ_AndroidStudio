@@ -1,7 +1,6 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender
 
 import android.graphics.Bitmap
-import io.flutter.plugin.common.MethodChannel
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
@@ -43,13 +42,13 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     }
 
     override fun drawOnBitmapFlutter(
-        pageIndex: PageIndex,
+        index: PageIndex,
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int
     ): ByteArray {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        drawOnBitmap(bitmap, pageIndex, width, height, 0)
+        drawOnBitmap(bitmap, index, width, height, 0)
         return bitmap.toByteArray()
     }
 
@@ -159,9 +158,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     }
 
     override fun prepareAdjacentPage(width: Int, height: Int, verticalScrollbarWidth: Int) {
-        Timber.v("渲染相邻页面, ------------------- 开始 -------------------")
         prepareService.execute {
             // 子线程绘制相邻页面
+            Timber.v("渲染流程[相邻页面], ------------------- 准备prev开始 -------------------")
             bookPageProvider.preparePage(
                 targetContentView,
                 PageIndex.PREV,
@@ -170,7 +169,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 getMainAreaHeight(height),
                 verticalScrollbarWidth
             )
+            Timber.v("渲染流程[相邻页面], ------------------- 准备prev结束 -------------------")
             fbReaderApp.cachePageBitmap(PageIndex.PREV)
+            Timber.v("渲染流程[相邻页面], ------------------- 准备next开始 -------------------")
             bookPageProvider.preparePage(
                 targetContentView,
                 PageIndex.NEXT,
@@ -179,6 +180,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 getMainAreaHeight(height),
                 verticalScrollbarWidth
             )
+            Timber.v("渲染流程[相邻页面], ------------------- 准备next结束 -------------------")
             fbReaderApp.cachePageBitmap(PageIndex.NEXT)
         }
     }
@@ -193,6 +195,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ) {
         prepareService.execute {
             Timber.v("flutter内容绘制流程, 准备相邻页面, %s", Thread.currentThread().name)
+            val map: MutableMap<String, Any> = HashMap()
             bookPageProvider.preparePage(
                 targetContentView,
                 PageIndex.PREV,
@@ -201,9 +204,10 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 getMainAreaHeight(height),
                 verticalScrollbarWidth
             )
-            val map: MutableMap<String, Any> = HashMap()
             if (updatePrevPage) {
-                map["prev"] = drawOnBitmapFlutter(PageIndex.PREV, width, height, 0)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+                drawOnBitmap(bitmap, PageIndex.PREV, width, height, 0)
+                map["prev"] = bitmap.toByteArray()
             }
             bookPageProvider.preparePage(
                 targetContentView,
@@ -214,7 +218,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updateNextPage) {
-                map["next"] = drawOnBitmapFlutter(PageIndex.NEXT, width, height, 0)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+                drawOnBitmap(bitmap, PageIndex.NEXT, width, height, 0)
+                map["next"] = bitmap.toByteArray()
             }
             resultCallBack.onComplete(map)
         }

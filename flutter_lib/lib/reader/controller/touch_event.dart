@@ -13,10 +13,10 @@ class TouchEvent<T> {
 
   int action;
   T? _touchDetail;
-  Offset touchPos =
+  Offset touchPosition =
       Offset(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
 
-  TouchEvent({required this.action, required this.touchPos});
+  TouchEvent({required this.action, required this.touchPosition});
 
   DragEndDetails? get touchDetail => _touchDetail is DragEndDetails ? _touchDetail as DragEndDetails : null;
 
@@ -26,14 +26,14 @@ class TouchEvent<T> {
       return false;
     }
 
-    return (action == other.action) && (touchPos == other.touchPos);
+    return (action == other.action) && (touchPosition == other.touchPosition);
   }
 
   @override
   int get hashCode => super.hashCode;
 
   TouchEvent copy() {
-    TouchEvent event = TouchEvent(action: action, touchPos: touchPos);
+    TouchEvent event = TouchEvent(action: action, touchPosition: touchPosition);
     event._touchDetail = _touchDetail;
     return event;
   }
@@ -47,18 +47,18 @@ class TouchEvent<T> {
     String? result;
     switch(action) {
       case ACTION_DOWN:
-        result = 'action = down, touchPos = $touchPos';
+        result = 'action = down, touchPosition = $touchPosition';
         break;
       case ACTION_MOVE:
-        result = 'action = move, touchPos = $touchPos';
+        result = 'action = move, touchPosition = $touchPosition';
         break;
       case ACTION_UP:
-        result = 'action = up, touchPos = $touchPos';
+        result = 'action = up, touchPosition = $touchPosition';
         break;
       case ACTION_CANCEL:
-        result = 'action = cancel, touchPos = $touchPos';
+        result = 'action = cancel, touchPosition = $touchPosition';
     }
 
-    return result ?? 'touchPos = $touchPos';
+    return result ?? 'touchPosition = $touchPosition';
   }
 }

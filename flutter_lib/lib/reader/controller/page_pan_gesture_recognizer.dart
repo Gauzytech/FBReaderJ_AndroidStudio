@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 
 class PagePanGestureRecognizer extends PanGestureRecognizer {
-  bool isMenuOpen;
+  bool isMenuOpen = false;
 
-  PagePanGestureRecognizer(this.isMenuOpen);
+  PagePanGestureRecognizer();
 
   void setMenuOpen(bool isOpen) {
     isMenuOpen = isOpen;

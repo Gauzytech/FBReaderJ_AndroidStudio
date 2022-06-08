@@ -130,11 +130,11 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onTouchEvent(TouchEvent event) {
-    mTouch = event.touchPos;
+    mTouch = event.touchPosition;
 
     switch (event.action) {
       case TouchEvent.ACTION_DOWN:
-        mStartPoint = event.touchPos;
+        mStartPoint = event.touchPosition;
         break;
       case TouchEvent.ACTION_MOVE:
       case TouchEvent.ACTION_UP:
@@ -307,5 +307,10 @@ class CoverPageAnimation extends BaseAnimationPage {
     currentAnimationTween = Tween(begin: Offset.zero, end: Offset.zero);
 
     currentAnimation = currentAnimationTween.animate(controller);
+  }
+
+  @override
+  bool isForward(TouchEvent event) {
+    return false;
   }
 }

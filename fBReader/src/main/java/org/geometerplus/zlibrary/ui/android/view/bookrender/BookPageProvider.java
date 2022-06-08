@@ -41,8 +41,6 @@ public class BookPageProvider {
     * @param index  页面索引
     */
    public void drawOnBitmap(ZLView view, Bitmap bitmap, ZLView.PageIndex index, int width, int height, int mainAreaHeight, int verticalScrollbarWidth) {
-      Timber.v("渲染流程, drawOnBitmap -> getCurrentView");
-
       final ZLAndroidPaintContext context = new ZLAndroidPaintContext(
               mySystemInfo,
               // 以bitmap类为参数创建一个Canvas类

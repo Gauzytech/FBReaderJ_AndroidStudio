@@ -44,10 +44,13 @@ import org.geometerplus.zlibrary.ui.android.util.ZLAndroidColorUtil;
 
 import java.util.List;
 
+import timber.log.Timber;
+
 /**
  * Android画笔上下文（绘制相关）
  */
 public final class ZLAndroidPaintContext extends ZLPaintContext {
+    private final String TAG = "[PaintContext], 画笔context [" + hashCode() + "]";
 
     /**
      * 字体抗锯齿
@@ -161,6 +164,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void clear(ZLFile wallpaperFile, FillMode mode) {
+        Timber.v("%s, clear", TAG);
         if (!wallpaperFile.equals(ourWallpaperFile) || mode != ourFillMode) {
             ourWallpaperFile = wallpaperFile;
             ourFillMode = mode;
@@ -275,6 +279,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void clear(ZLColor color) {
+        Timber.v("%s, clear", TAG);
         myBackgroundColor = color;
         myFillPaint.setColor(ZLAndroidColorUtil.rgb(color));
         myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, myFillPaint);
@@ -282,10 +287,12 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public ZLColor getBackgroundColor() {
+        Timber.v("%s, getBackgroundColor", TAG);
         return myBackgroundColor;
     }
 
     public void fillPolygon(int[] xs, int[] ys) {
+        Timber.v("%s, fillPolygon", TAG);
         final Path path = new Path();
         final int last = xs.length - 1;
         path.moveTo(xs[last], ys[last]);
@@ -296,6 +303,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     public void drawPolygonalLine(int[] xs, int[] ys) {
+        Timber.v("%s, drawPolygonalLine", TAG);
         final Path path = new Path();
         final int last = xs.length - 1;
         path.moveTo(xs[last], ys[last]);
@@ -306,6 +314,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     public void drawOutline(int[] xs, int[] ys) {
+        Timber.v("%s, drawOutline", TAG);
         final int last = xs.length - 1;
         int xStart = (xs[0] + xs[last]) / 2;
         int yStart = (ys[0] + ys[last]) / 2;
@@ -340,6 +349,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     protected void setFontInternal(List<FontEntry> entries, int size, boolean bold, boolean italic, boolean underline, boolean strikeThrought) {
+        Timber.v("%s, setFontInternal", TAG);
         Typeface typeface = null;
         for (FontEntry e : entries) {
             typeface = AndroidFontUtil.typeface(getSystemInfo(), e, bold, italic);
@@ -355,6 +365,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setTextColor(ZLColor color) {
+        Timber.v("%s, setTextColor", TAG);
         if (color != null) {
             myTextPaint.setColor(ZLAndroidColorUtil.rgb(color));
         }
@@ -362,6 +373,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setLineColor(ZLColor color) {
+        Timber.v("%s, setLineColor", TAG);
         if (color != null) {
             myLinePaint.setColor(ZLAndroidColorUtil.rgb(color));
             myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(color));
@@ -370,26 +382,31 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setLineWidth(int width) {
+        Timber.v("%s, setLineWidth", TAG);
         myLinePaint.setStrokeWidth(width);
     }
 
     @Override
     public void setFillColor(ZLColor color, int alpha) {
+        Timber.v("%s, setFillColor", TAG);
         if (color != null) {
             myFillPaint.setColor(ZLAndroidColorUtil.rgba(color, alpha));
         }
     }
 
     public int getWidth() {
+        Timber.v("%s, getWidth", TAG);
         return myGeometry.AreaSize.Width - myScrollbarWidth;
     }
 
     public int getHeight() {
+        Timber.v("%s, getHeight", TAG);
         return myGeometry.AreaSize.Height;
     }
 
     @Override
     public int getStringWidth(char[] string, int offset, int length) {
+        Timber.v("%s, getStringWidth", TAG);
         boolean containsSoftHyphen = false;
         for (int i = offset; i < offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
@@ -414,6 +431,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public int getExtraStringWidth(char[] string, int offset, int length) {
+        Timber.v("%s, getExtraStringWidth", TAG);
         boolean containsSoftHyphen = false;
         for (int i = offset; i < offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
@@ -438,11 +456,13 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     protected int getSpaceWidthInternal() {
+        Timber.v("%s, getSpaceWidthInternal", TAG);
         return (int) (myTextPaint.measureText(" ", 0, 1) + 0.5f);
     }
 
     @Override
     protected int getCharHeightInternal(char chr) {
+        Timber.v("%s, getCharHeightInternal", TAG);
         final Rect r = new Rect();
         final char[] txt = new char[]{chr};
         myTextPaint.getTextBounds(txt, 0, 1, r);
@@ -451,16 +471,19 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     protected int getStringHeightInternal() {
+        Timber.v("%s, getStringHeightInternal", TAG);
         return (int) (myTextPaint.getTextSize() + 0.5f);
     }
 
     @Override
     protected int getDescentInternal() {
+        Timber.v("%s, getDescentInternal", TAG);
         return (int) (myTextPaint.descent() + 0.5f);
     }
 
     @Override
     public void drawString(int x, int y, char[] string, int offset, int length) {
+        Timber.v("%s, drawString", TAG);
         boolean containsSoftHyphen = false;
         for (int i = offset; i < offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
@@ -485,6 +508,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public Size imageSize(ZLImageData imageData, Size maxSize, ScalingType scaling) {
+        Timber.v("%s, imageSize", TAG);
         final Bitmap bitmap = ((ZLAndroidImageData) imageData).getBitmap(maxSize, scaling);
         return (bitmap != null && !bitmap.isRecycled())
                 ? new Size(bitmap.getWidth(), bitmap.getHeight()) : null;
@@ -492,6 +516,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void drawImage(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
+        Timber.v("%s, drawImage", TAG);
         final Bitmap bitmap = ((ZLAndroidImageData) imageData).getBitmap(maxSize, scaling);
         if (bitmap != null && !bitmap.isRecycled()) {
             switch (adjustingMode) {
@@ -511,6 +536,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void drawLine(int x0, int y0, int x1, int y1) {
+        Timber.v("%s, drawLine", TAG);
         final Canvas canvas = myCanvas;
         final Paint paint = myLinePaint;
         paint.setAntiAlias(false);
@@ -522,6 +548,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void fillRectangle(int x0, int y0, int x1, int y1) {
+        Timber.v("%s, fillRectangle", TAG);
         if (x1 < x0) {
             int swap = x1;
             x1 = x0;
@@ -537,21 +564,25 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void drawHeader(int x, int y, String title) {
+        Timber.v("%s, drawHeader", TAG);
         myCanvas.drawText(title, x, y, myExtraPaint);
     }
 
     @Override
     public void drawFooter(int x, int y, String progress) {
+        Timber.v("%s, drawFooter", TAG);
         myCanvas.drawText(progress, x, y, myExtraPaint);
     }
 
     @Override
     public void fillCircle(int x, int y, int radius) {
+        Timber.v("%s, fillCircle", TAG);
         myCanvas.drawCircle(x, y, radius, myFillPaint);
     }
 
     @Override
     public void drawBookMark(int x0, int y0, int x1, int y1) {
+        Timber.v("%s, drawBookMark", TAG);
         myPath.reset();
         myPath.moveTo(x0, y0);
         myPath.lineTo(x1, y0);
@@ -564,6 +595,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setExtraFoot(int textSize, ZLColor color) {
+        Timber.v("%s, setExtraFoot", TAG);
         myExtraPaint.setTextSize(textSize);
         myExtraPaint.setARGB(255, color.Red, color.Green, color.Blue);
     }

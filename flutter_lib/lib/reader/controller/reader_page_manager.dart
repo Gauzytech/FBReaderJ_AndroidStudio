@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
@@ -33,6 +34,23 @@ class ReaderPageManager {
     _setAnimationController(animationController);
   }
 
+  bool isAnimationInProgress() {
+    return currentState == RenderState.ANIMATING;
+  }
+
+  Future<bool> canScroll(TouchEvent event) async {
+    // todo 请求native查看是否可以滑动, 参考native canScroll方法
+    if(currentAnimationPage.isForward(event)) {
+      bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
+      print("flutter动画流程, next canScroll: $canScroll");
+      return canScroll && await currentAnimationPage.readerViewModel.getNextPageAsync() != null;
+    } else {
+      bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
+      print("flutter动画流程, prev canScroll: $canScroll");
+      return canScroll && await currentAnimationPage.readerViewModel.getPrevPageAsync() != null;
+    }
+  }
+
   void setCurrentTouchEvent(TouchEvent event) {
     print('flutter横向翻页， 中断动画');
     /// 如果正在执行动画，判断是否需要中止动画
@@ -61,9 +79,7 @@ class ReaderPageManager {
           startFlingAnimation(event.touchDetail);
           break;
         case TYPE_ANIMATION_PAGE_TURN:
-          // startFlingAnimation(event.touchDetail);
-          // todo
-          startFlingAnim(event);
+          startSpringAnimation(event);
           break;
         default:
           break;
@@ -147,7 +163,7 @@ class ReaderPageManager {
           currentState = RenderState.ANIMATING;
           canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
           currentAnimationPage.onTouchEvent(TouchEvent(
-              action: TouchEvent.ACTION_MOVE, touchPos: animation.value));
+              action: TouchEvent.ACTION_MOVE, touchPosition: animation.value));
         })
         ..addStatusListener((status) {
           switch (status) {
@@ -157,7 +173,7 @@ class ReaderPageManager {
               currentState = RenderState.IDLE;
               TouchEvent event = TouchEvent(
                 action: TouchEvent.ACTION_UP,
-                touchPos: const Offset(0, 0),
+                touchPosition: const Offset(0, 0),
               );
               currentAnimationPage.onTouchEvent(event);
               currentTouchData = event.copy();
@@ -178,7 +194,7 @@ class ReaderPageManager {
     }
   }
 
-  void startFlingAnim(TouchEvent event) {
+  void startSpringAnimation(TouchEvent event) {
     if (event.touchDetail == null) return;
 
     Simulation? simulation = (currentAnimationPage as PageTurnAnimation)
@@ -188,9 +204,7 @@ class ReaderPageManager {
       animationController.reset();
     }
 
-    if (simulation != null) {
-      animationController.animateWith(simulation);
-    }
+    animationController.animateWith(simulation);
   }
 
   void startFlingAnimation(DragEndDetails? details) {
@@ -214,7 +228,7 @@ class ReaderPageManager {
       animationController.stop();
       currentState = RenderState.IDLE;
       TouchEvent event =
-          TouchEvent(action: TouchEvent.ACTION_UP, touchPos: Offset.zero);
+          TouchEvent(action: TouchEvent.ACTION_UP, touchPosition: Offset.zero);
       currentAnimationPage.onTouchEvent(event);
       currentTouchData = event.copy();
     }
@@ -247,11 +261,11 @@ class ReaderPageManager {
               currentAnimationType == TYPE_ANIMATION_SLIDE_TURN
                   ? TouchEvent(
                       action: TouchEvent.ACTION_MOVE,
-                      touchPos: Offset(0, animationController.value),
+                      touchPosition: Offset(0, animationController.value),
                     )
                   : TouchEvent(
                       action: TouchEvent.ACTION_FLING_RELEASED,
-                      touchPos: Offset(animationController.value, 0),
+                      touchPosition: Offset(animationController.value, 0),
                     ),
             );
           }
@@ -266,7 +280,7 @@ class ReaderPageManager {
               currentState = RenderState.IDLE;
               TouchEvent event = TouchEvent(
                 action: TouchEvent.ACTION_UP,
-                touchPos: Offset.zero,
+                touchPosition: Offset.zero,
               );
               currentAnimationPage.onTouchEvent(event);
               currentTouchData = event.copy();

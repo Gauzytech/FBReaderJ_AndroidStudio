@@ -68,4 +68,6 @@ abstract class BaseAnimationPage {
 
   Simulation? getFlingAnimationSimulation(
       AnimationController controller, DragEndDetails details);
+
+  bool isForward(TouchEvent event);
 }

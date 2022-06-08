@@ -59,7 +59,7 @@ class ReaderBookContentViewState
 
   late ReaderPageManager pageManager;
   TouchEvent currentTouchEvent =
-      TouchEvent(action: TouchEvent.ACTION_UP, touchPos: Offset.zero);
+      TouchEvent(action: TouchEvent.ACTION_UP, touchPosition: Offset.zero);
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
@@ -129,24 +129,24 @@ class ReaderBookContentViewState
                   PagePanGestureRecognizer:
                       GestureRecognizerFactoryWithHandlers<
                           PagePanGestureRecognizer>(
-                    () => PagePanGestureRecognizer(false),
+                    () => PagePanGestureRecognizer(),
                     (PagePanGestureRecognizer recognizer) {
                       recognizer.setMenuOpen(false);
                       recognizer.onDown = (detail) {
                         print(
-                            "flutter动画流程, ------------------触摸事件[onDown], $detail------------------>>>>>>>>");
+                            "flutter动画流程, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
                         onDownEvent(detail, readerViewModel);
                       };
                       recognizer.onUpdate = (detail) {
                         print(
-                            "flutter动画流程, ------------------触摸事件[onUpdate], $detail------------------>>>>>>>>>");
+                            "flutter动画流程, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onUpdateEvent(detail, readerViewModel);
                         }
                       };
                       recognizer.onEnd = (detail) {
                         print(
-                            "flutter动画流程, ------------------触摸事件[onEnd], $detail------------------>>>>>>>>>");
+                            "flutter动画流程, ------------------触摸事件[onEnd], $detail, $currentTouchEvent------------------>>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onEndEvent(detail, readerViewModel);
                         }
@@ -211,28 +211,25 @@ class ReaderBookContentViewState
 
   Future<void> onDownEvent(
       DragDownDetails detail, ReaderViewModel readerViewModel) async {
+    // 如果动画正在进行, 直接忽略event
     if (currentTouchEvent.action != TouchEvent.ACTION_DOWN ||
-        currentTouchEvent.touchPos != detail.localPosition) {
-      // 检查上一页/下一页是否存在
-      if (await readerViewModel.isPageReady()) {
-        print('flutter动画流程, 相邻页面存在, 继续执行事件');
+        currentTouchEvent.touchPosition != detail.localPosition) {
         currentTouchEvent = TouchEvent(
-            action: TouchEvent.ACTION_DOWN, touchPos: detail.localPosition);
+            action: TouchEvent.ACTION_DOWN, touchPosition: detail.localPosition);
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
-      }
     }
   }
 
   Future<void> onUpdateEvent(
       DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
     if (currentTouchEvent.action != TouchEvent.ACTION_MOVE ||
-        currentTouchEvent.touchPos != detail.localPosition) {
+        currentTouchEvent.touchPosition != detail.localPosition) {
+      currentTouchEvent = TouchEvent(
+          action: TouchEvent.ACTION_MOVE, touchPosition: detail.localPosition);
       // 检查上一页/下一页是否存在
-      if (await readerViewModel.isPageReady()) {
+      if (await pageManager.canScroll(currentTouchEvent)) {
         print('flutter动画流程, 相邻页面存在, 继续执行事件');
-        currentTouchEvent = TouchEvent(
-            action: TouchEvent.ACTION_MOVE, touchPos: detail.localPosition);
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
@@ -242,15 +239,11 @@ class ReaderBookContentViewState
   Future<void> onEndEvent(
       DragEndDetails detail, ReaderViewModel readerViewModel) async {
     if (currentTouchEvent.action != TouchEvent.ACTION_UP ||
-        currentTouchEvent.touchPos != Offset.zero) {
-      // 检查上一页/下一页是否存在
-      if (await readerViewModel.isPageReady()) {
-        print(
-            'flutter动画流程, 相邻页面存在, 继续执行事件, last position: ${currentTouchEvent.touchPos}');
-        currentTouchEvent = TouchEvent<DragEndDetails>(
-            action: TouchEvent.ACTION_UP, touchPos: Offset.zero);
-        currentTouchEvent.setTouchDetail(detail);
-
+        currentTouchEvent.touchPosition != Offset.zero) {
+      currentTouchEvent = TouchEvent<DragEndDetails>(
+          action: TouchEvent.ACTION_UP, touchPosition: currentTouchEvent.touchPosition);
+      currentTouchEvent.setTouchDetail(detail);
+      if(await pageManager.canScroll(currentTouchEvent)) {
         _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }

@@ -333,7 +333,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
      * @param index  页面索引
      */
     void drawOnBitmap(Bitmap bitmap, ZLView.PageIndex index) {
-        Timber.v("渲染流程, drawOnBitmap -> getCurrentView");
+        Timber.v("渲染流程, drawOnBitmap, 在Bitmap上绘制");
         contentProcessor.drawOnBitmap(bitmap, index, getWidth(), getHeight(), getVerticalScrollbarWidth());
     }
 
@@ -428,7 +428,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
      */
     @Override
     public void cacheBitmap(ZLViewEnums.PageIndex pageIndex) {
-        myBitmapManager.getBitmap(pageIndex, "preparePage");
+        myBitmapManager.getBitmap(pageIndex, "准备相邻页面 -> cachePageBitmap -> cacheBitmap");
     }
 
     /**
@@ -666,6 +666,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                             if (Math.abs(myPressedX - x) < Math.abs(myPressedY - y) || isMoveVertical) {
                                 onMoveVertical(mStartRawY, (int) event.getRawY());
                             } else {
+                                Timber.v("native横向翻页动画, onFingerMove");
                                 contentProcessor.onFingerMove(x, y);
                             }
                         }

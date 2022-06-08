@@ -95,7 +95,7 @@ class SlidePageAnimation extends BaseAnimationPage {
     switch (event.action) {
       case TouchEvent.ACTION_DOWN:
         if (!dy.isNaN && !dy.isInfinite) {
-          mStartPoint = event.touchPos;
+          mStartPoint = event.touchPosition;
           mStartDy = currentMoveDy;
           dy = 0;
         }
@@ -103,7 +103,7 @@ class SlidePageAnimation extends BaseAnimationPage {
         break;
       case TouchEvent.ACTION_MOVE:
         if (!mTouch.dy.isInfinite && !mStartPoint.dy.isInfinite) {
-          double tempDy = event.touchPos.dy - mStartPoint.dy;
+          double tempDy = event.touchPosition.dy - mStartPoint.dy;
           if (!currentSize.height.isInfinite &&
               currentSize.height != 0 &&
               !dy.isInfinite &&
@@ -126,7 +126,7 @@ class SlidePageAnimation extends BaseAnimationPage {
               }
             }
 
-            mTouch = event.touchPos;
+            mTouch = event.touchPosition;
             dy = mTouch.dy - mStartPoint.dy;
             isTurnToNext = mTouch.dy - mStartPoint.dy < 0;
             lastIndex = currentIndex;
@@ -221,5 +221,10 @@ class SlidePageAnimation extends BaseAnimationPage {
   @override
   bool isConfirmArea() {
     return false;
+  }
+
+  @override
+  bool isForward(TouchEvent event) {
+    return event.touchPosition.dy - mStartPoint.dy < 0;
   }
 }

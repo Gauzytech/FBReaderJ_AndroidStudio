@@ -434,12 +434,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public synchronized void preparePage(ZLPaintContext context, PageIndex pageIndex) {
         setContext(context);
         ZLTextPage page = getPage(pageIndex);
-        Timber.v("渲染相邻页面1, %s: %s, %s", pageIndex.name(), page.startCursor, page.endCursor);
+        Timber.v("渲染流程[preparePage], %s: %s, %s, %s", pageIndex.name(), page.startCursor, page.endCursor, DebugHelper.getPatinStateStr(page.paintState));
         preparePaintInfo(page, "preparePage");
     }
 
     @Override
     public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
+        Timber.v("渲染流程:Bitmap绘制, ================================ 开始paint: %s================================", pageIndex.name());
         setContext(paintContext);
         // 绘制背景
         final ZLFile wallpaper = getWallpaperFile();
@@ -487,16 +488,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 从定位指定段落后得到的ZLTextPage类中取出
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
-        Timber.v("绘制页面[%s], %s", pageIndex, DebugHelper.getPatinStateStr(page.paintState));
         preparePaintInfo(page, "paint." + pageIndex.name());
-
-        Timber.v("绘制页面[%s]: \n%s, \n%s", pageIndex, page.startCursor, page.endCursor);
 
         if (page.startCursor.isNull() || page.endCursor.isNull()) {
             return;
         }
 
-        Timber.v("渲染流程:Bitmap绘制, <----------------------------- %s lineInfos.size = %d -----------------------------", pageIndex.name(), page.lineInfos.size());
+        Timber.v("渲染流程:Bitmap绘制[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.lineInfos.size());
         /*
          * 内容 + 高亮
          */
@@ -592,6 +590,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (!bookMarkList.isEmpty()) {
             paintContext.drawBookMark(getContextWidth() - 100, 0, getContextWidth() - 60, 90);
         }
+        Timber.v("渲染流程:Bitmap绘制, ================================ %s paint完成 ================================", pageIndex.name());
     }
 
     @Override
@@ -1679,6 +1678,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     );
         }
 
+        // 设置图书内容绘制区域跨高
         page.setSize(getTextColumnWidth(), getTextAreaHeight(), isTwoColumnView(), page == myPreviousPage);
 
         if (page.isClearPaintState() || page.paintState == PaintStateEnum.READY) {
@@ -1699,8 +1699,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case PaintStateEnum.TO_SCROLL_FORWARD:
                 // 滑动到下一页
                 if (!page.endCursor.isEndOfText()) {
-                    // 起始游标
+                    // 新建一个起始游标
                     final ZLTextWordCursor startCursor = new ZLTextWordCursor();
+                    // 1. 根据滑动类型设置startCursor数据
                     switch (myScrollingMode) {
                         case ScrollingMode.NO_OVERLAPPING:
                             break;
@@ -1718,10 +1719,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             break;
                     }
 
+                    // 2. 获得目标line
                     if (!startCursor.isNull() && startCursor.samePositionAs(page.startCursor)) {
                         page.findLineFromStart(startCursor, 1);
                     }
 
+                    // 3. 根据startCursor进行分页
                     if (!startCursor.isNull()) {
                         final ZLTextWordCursor endCursor = new ZLTextWordCursor();
                         buildInfos(page, startCursor, endCursor, from);
@@ -1737,6 +1740,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
                 break;
             case PaintStateEnum.TO_SCROLL_BACKWARD:
+                // 滑动到上一页
                 if (!page.startCursor.isStartOfText()) {
                     switch (myScrollingMode) {
                         case ScrollingMode.NO_OVERLAPPING:
@@ -1775,11 +1779,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
                 break;
             case PaintStateEnum.START_IS_KNOWN:
+                // 开始cursor已经知道, 从前往后渲染
                 if (!page.startCursor.isNull()) {
                     buildInfos(page, page.startCursor, page.endCursor, from);
                 }
                 break;
             case PaintStateEnum.END_IS_KNOWN:
+                // 结束cursor已经知道,
                 if (!page.endCursor.isNull()) {
                     // TODO findStartOfPreviousPage()无法判断从前往后无法判断后面的page是否需要留白
                     //  最后会导致从后往前，从前往后效果不一样. 所以我们永远需要从前往后进行分页操作:
@@ -1792,7 +1798,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 break;
         }
         if (from.contains("paint")) {
-            Timber.v("渲染流程:lineInfo[%s], buildInfos for para [%s, %s]", DebugHelper.getPatinStateStr(page.paintState), page.startCursor.getParagraphIndex(), page.endCursor.getParagraphIndex());
+            Timber.v("渲染流程:lineInfo[%s], 分页完成 for [%s, %s]",
+                    DebugHelper.getPatinStateStr(page.paintState),
+                    page.startCursor.getParagraphIndex(),
+                    page.endCursor.getParagraphIndex());
         }
 
         page.paintState = PaintStateEnum.READY;

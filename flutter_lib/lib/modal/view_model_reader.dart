@@ -200,16 +200,24 @@ class ReaderViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  /* ------------------------------------------ 翻页时, 需要进行的操作 --------------------------------------------------- */
+  /// forward 'true' goNext, 'false' goPrev
+  void shift(bool forward) {
+    _readerContentHandler?.shift(forward);
+  }
+
+  /// 判断是否可以进入上一页/下一页
+  Future<bool> canScroll(PageIndex pageIndex) async {
+    final handler = ArgumentError.checkNotNull(
+        _readerContentHandler, '_readerContentHandler');
+    return await handler.canScroll(pageIndex);
+  }
+
   @override
   void dispose() {
     super.dispose();
     _readerContentHandler?.clear();
     _configModel.clear();
     _progressManager.clear();
-  }
-
-  /// forward 'true' goNext, 'false' goPrev
-  void shift(bool forward) {
-    _readerContentHandler?.shift(forward);
   }
 }

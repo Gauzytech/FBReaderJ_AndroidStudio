@@ -82,18 +82,22 @@ public final class BitmapManagerImpl implements BitmapManager {
      */
     @Override
     public Bitmap getBitmap(ZLView.PageIndex index, String from) {
-        Timber.v("渲染流程:Bitmap绘制, getBitmap, %s", from);
+        Timber.v("渲染流程:Bitmap绘制, getBitmap[%s], %s", index.name(), from);
+        // 先判断对应pageIndex的bitmap是否已经缓存过了
         for (int i = 0; i < CACHE_SIZE; ++i) {
             if (index == cachedPageIndexes[i]) {
 //                Timber.v("渲染流程:Bitmap绘制, %s 存在缓存, 直接返回", index.name());
                 return myBitmaps[i];
             }
         }
+
+        // 如果bitmap没有被缓存过， 找一个slot
         final int iIndex = getInternalIndex(index);
         cachedPageIndexes[iIndex] = index;
 
-        // 如果该位置的Bitmap为null就创建一个
+        // 在slot上为null就创建一个空白的bitmap
         if (myBitmaps[iIndex] == null) {
+            Timber.v("渲染流程:Bitmap绘制, %s 没有缓存bitmap, 创建新的, %s", index.name(), from);
             try {
                 // 新建一个bitmap类，相当于新建一个新的画布
                 myBitmaps[iIndex] = Bitmap.createBitmap(myWidth, myHeight, Bitmap.Config.RGB_565);
@@ -104,8 +108,8 @@ public final class BitmapManagerImpl implements BitmapManager {
                 myBitmaps[iIndex] = Bitmap.createBitmap(myWidth, myHeight, Bitmap.Config.RGB_565);
             }
         }
-        Timber.v("渲染流程:Bitmap绘制, %s 没有缓存, 创建新的, %s", index.name(), from);
-        // 绘制出Bitmap
+
+        // 在空白bitmap上进行绘制
         myWidget.drawOnBitmap(myBitmaps[iIndex], index);
         return myBitmaps[iIndex];
     }
@@ -155,7 +159,9 @@ public final class BitmapManagerImpl implements BitmapManager {
         }
         // 如果没有，找一个不是当前的位置
         for (int i = 0; i < CACHE_SIZE; ++i) {
-            if (cachedPageIndexes[i] != ZLView.PageIndex.CURRENT && cachedPageIndexes[i] != ZLView.PageIndex.PREV && cachedPageIndexes[i] != ZLView.PageIndex.NEXT) {
+            if (cachedPageIndexes[i] != ZLView.PageIndex.CURRENT &&
+                    cachedPageIndexes[i] != ZLView.PageIndex.PREV &&
+                    cachedPageIndexes[i] != ZLView.PageIndex.NEXT) {
                 return i;
             }
         }

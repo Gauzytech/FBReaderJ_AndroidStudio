@@ -34,11 +34,11 @@ class ReaderContentHandler {
         ?.markNeedsPaint();
   }
 
-  // Native调用Flutter方法
+  /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
   Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
     switch (methodCall.method) {
       case 'init_render':
-        // 渲染第一页
+        // 本地数据全部解析完毕后，会执行init_render方法开始渲染图书第一页
         currentPageIndex = PageIndex.current;
         ImageSrc imageSrc = getPage(currentPageIndex);
         if(imageSrc.img != null) {
@@ -63,8 +63,9 @@ class ReaderContentHandler {
     return await drawOnBitmap(internalIdx, pageIndex, false, false);
   }
 
-  // Flutter调用Native方法
+  /* ---------------------------------------- Flutter调用Native方法 ----------------------------------------------*/
   // 方法通道的方法是异步的
+  /// 通知native绘制当前页img
   Future<ui.Image?> drawOnBitmap(int internalCacheIndex, PageIndex pageIndex, bool notify, bool prepareAdjacent) async {
     try {
       final ratio = MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
@@ -113,8 +114,7 @@ class ReaderContentHandler {
     return null;
   }
 
-  // Flutter调用Native方法
-  // 方法通道的方法是异步的
+  /// 到达当前页页之后, 事先缓存2页：上一页/下一页
   Future<void> _prepareAdjacentPage(double widthPx, double heightPx) async {
     ImageSrc prevImage = getPage(PageIndex.prev);
     ImageSrc nextImage = getPage(PageIndex.next);
@@ -212,5 +212,12 @@ class ReaderContentHandler {
 
   void clear() {
     _bitmapManager.clear();
+  }
+
+  Future<bool> canScroll(PageIndex pageIndex) async {
+    return await methodChannel.invokeMethod(
+      'can_scroll',
+      {'page_index': pageIndex.index},
+    );
   }
 }
