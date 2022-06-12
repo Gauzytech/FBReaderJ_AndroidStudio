@@ -8,5 +8,5 @@ package org.geometerplus.zlibrary.ui.android.view.bookrender
  * @Description FBReaderJ_AndroidStudio
  */
 object FlutterCommand {
-    const val CMD_INIT_RENDER = "init_render"
+    const val CMD_INIT_RENDER = "init_load"
 }

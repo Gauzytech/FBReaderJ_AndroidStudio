@@ -51,15 +51,11 @@ class ReaderViewModel extends BaseViewModel {
     return size;
   }
 
-  PageIndex getIdx() {
-    return _readerContentHandler!.currentPageIndex;
-  }
-
   ui.Image? getCurrentPage() {
     final handler = ArgumentError.checkNotNull(
         _readerContentHandler, '_readerContentHandler');
     // 从缓存中获得page image
-    ImageSrc page = handler.getPage(handler.currentPageIndex);
+    ImageSrc page = handler.getPage(PageIndex.current);
     // 如果没有找到缓存的image, 回调native, 通知画一个新的
     if (page.img == null) {
       handler.buildPage(PageIndex.current);
@@ -68,12 +64,6 @@ class ReaderViewModel extends BaseViewModel {
   }
 
   /// ------------------------- 进度相关部分 -----------------------------------
-  Future<bool> isPageReady() async {
-     bool prevReady = await getPrevPageAsync() != null;
-     bool nextReady = await getNextPageAsync() != null;
-     return prevReady && nextReady;
-  }
-
   bool isCanGoNext() {
     return _progressManager.isCanGoNext();
   }
@@ -94,7 +84,7 @@ class ReaderViewModel extends BaseViewModel {
   //   return _progressManager.isHasPreChapter();
   // }
 
-  void nextPage() async {
+  void nextPage() {
     _progressManager.nextPage();
   }
 
@@ -171,6 +161,12 @@ class ReaderViewModel extends BaseViewModel {
     final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
     ImageSrc? nextPageImage = handler.getPage(handler.getPageIndex(forward));
     return nextPageImage.img;
+  }
+
+  ui.Image? getPage(PageIndex pageIndex) {
+    final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
+    ImageSrc? imageSrc = handler.getPage(pageIndex);
+    return imageSrc.img;
   }
 
   /// 菜单栏相关

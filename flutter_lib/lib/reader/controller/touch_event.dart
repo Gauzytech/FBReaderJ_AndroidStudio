@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter_lib/modal/animation_type.dart';
 
 import '../../utils/screen_util.dart';
 
@@ -17,6 +18,14 @@ class TouchEvent<T> {
       Offset(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
 
   TouchEvent({required this.action, required this.touchPosition});
+
+  TouchEvent.fromOnDown(this.action, this.touchPosition);
+
+  TouchEvent.fromOnUpdate(this.action, this.touchPosition);
+
+  TouchEvent.fromOnEnd(this.action, this.touchPosition, DragEndDetails details) {
+    _touchDetail = details as T;
+  }
 
   DragEndDetails? get touchDetail => _touchDetail is DragEndDetails ? _touchDetail as DragEndDetails : null;
 

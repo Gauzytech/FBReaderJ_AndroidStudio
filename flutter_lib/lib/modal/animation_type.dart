@@ -1,5 +1,5 @@
 /// 动画
-enum Animation {
+enum AnimationType {
   none,
   curl,
   slide,
@@ -7,4 +7,9 @@ enum Animation {
   shift,
   previewNone,
   previewShift
+}
+
+enum AnimationDirection {
+  forward,
+  backward
 }

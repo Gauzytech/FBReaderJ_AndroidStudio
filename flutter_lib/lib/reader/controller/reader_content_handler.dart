@@ -16,7 +16,7 @@ class ReaderContentHandler {
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
 
-  PageIndex currentPageIndex = PageIndex.prev_2;
+  // PageIndex currentPageIndex = PageIndex.prev_2;
 
   ReaderContentHandler(
       {required this.methodChannel, required this.readerBookContentViewState}) {
@@ -37,14 +37,13 @@ class ReaderContentHandler {
   /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
   Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
     switch (methodCall.method) {
-      case 'init_render':
-        // 本地数据全部解析完毕后，会执行init_render方法开始渲染图书第一页
-        currentPageIndex = PageIndex.current;
-        ImageSrc imageSrc = getPage(currentPageIndex);
+      case 'init_load':
+        // 本地数据全部解析完毕后，会执行init_load方法开始渲染图书第一页
+        ImageSrc imageSrc = getPage(PageIndex.current);
         if(imageSrc.img != null) {
           refreshContent();
         } else {
-          buildPage(currentPageIndex);
+          buildPage(PageIndex.current);
         }
         break;
     }
@@ -90,19 +89,22 @@ class ReaderContentHandler {
         },
       );
 
+      // 将imageBytes转成img
       ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
       ui.FrameInfo fi = await codec.getNextFrame();
       final image = fi.image;
 
-      // 原生那边绘制完了, 就缓存
+      // _bitmapManager缓存img
+      _bitmapManager.setSize(image.width, image.height);
       _bitmapManager.cacheBitmap(internalCacheIndex, image);
 
+      // 刷新custom painter
       if(notify) {
         refreshContent();
       }
 
+      // 准备相邻的前, 后页面
       if(prepareAdjacent) {
-        // 准备相邻的前, 后页面
         _prepareAdjacentPage(widthPx, heightPx);
       }
 
@@ -156,56 +158,51 @@ class ReaderContentHandler {
   }
 
   List<double> getContentSize() {
-    final pageImage = getPage(currentPageIndex).img;
-    if (pageImage == null) {
-      return [0, 0];
-    }
-
-    return [pageImage.width.toDouble(), pageImage.height.toDouble()];
+    return _bitmapManager.getContentSize();
   }
 
   void shift(bool forward) {
-    // _bitmapManager.shift(pageIndex == PageIndex.next);
+    _bitmapManager.shift(forward);
 
-    if(forward) {
-      if(currentPageIndex == PageIndex.current) {
-        currentPageIndex = PageIndex.next;
-      } else if(currentPageIndex == PageIndex.prev){
-        currentPageIndex = PageIndex.current;
-      } else if(currentPageIndex == PageIndex.next){
-        currentPageIndex = PageIndex.prev;
-      }
-    } else {
-      if(currentPageIndex == PageIndex.current) {
-        currentPageIndex = PageIndex.prev;
-      } else if(currentPageIndex == PageIndex.prev){
-        currentPageIndex = PageIndex.next;
-      } else if(currentPageIndex == PageIndex.next){
-        currentPageIndex = PageIndex.current;
-      }
-    }
+    // if(forward) {
+    //   if(currentPageIndex == PageIndex.current) {
+    //     currentPageIndex = PageIndex.next;
+    //   } else if(currentPageIndex == PageIndex.prev){
+    //     currentPageIndex = PageIndex.current;
+    //   } else if(currentPageIndex == PageIndex.next){
+    //     currentPageIndex = PageIndex.prev;
+    //   }
+    // } else {
+    //   if(currentPageIndex == PageIndex.current) {
+    //     currentPageIndex = PageIndex.prev;
+    //   } else if(currentPageIndex == PageIndex.prev){
+    //     currentPageIndex = PageIndex.next;
+    //   } else if(currentPageIndex == PageIndex.next){
+    //     currentPageIndex = PageIndex.current;
+    //   }
+    // }
   }
 
   PageIndex getPageIndex(bool forward) {
     // _bitmapManager.shift(pageIndex == PageIndex.next);
 
-    if(forward) {
-      if(currentPageIndex == PageIndex.current) {
-        return PageIndex.next;
-      } else if(currentPageIndex == PageIndex.prev){
-        return PageIndex.current;
-      } else if(currentPageIndex == PageIndex.next){
-        return PageIndex.prev;
-      }
-    } else {
-      if(currentPageIndex == PageIndex.current) {
-        return PageIndex.prev;
-      } else if(currentPageIndex == PageIndex.prev){
-        return PageIndex.next;
-      } else if(currentPageIndex == PageIndex.next){
-        return PageIndex.current;
-      }
-    }
+    // if(forward) {
+    //   if(currentPageIndex == PageIndex.current) {
+    //     return PageIndex.next;
+    //   } else if(currentPageIndex == PageIndex.prev){
+    //     return PageIndex.current;
+    //   } else if(currentPageIndex == PageIndex.next){
+    //     return PageIndex.prev;
+    //   }
+    // } else {
+    //   if(currentPageIndex == PageIndex.current) {
+    //     return PageIndex.prev;
+    //   } else if(currentPageIndex == PageIndex.prev){
+    //     return PageIndex.next;
+    //   } else if(currentPageIndex == PageIndex.next){
+    //     return PageIndex.current;
+    //   }
+    // }
 
     return PageIndex.current;
   }

@@ -14,18 +14,18 @@ class BitmapManagerImpl extends IBitmapManager {
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
   List<PageIndex?> cachedPageIndexes =
       List.filled(cacheSize, null, growable: false);
-  late int myWidth;
-  late int myHeight;
+  int contentWidth = 0;
+  int contentHeight = 0;
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
   /// @param w 宽
   /// @param h 高
   void setSize(int width, int height) {
-    if (myWidth != width || myHeight != height) {
-      myWidth = width;
-      myHeight = height;
-      clear();
+    if (contentWidth != width || contentHeight != height) {
+      contentWidth = width;
+      contentHeight = height;
+      // clear();
     }
   }
 
@@ -119,13 +119,19 @@ class BitmapManagerImpl extends IBitmapManager {
   /// @param forward 是否向前
   void shift(bool forward) {
     for (int i = 0; i < cacheSize; ++i) {
-      if (cachedPageIndexes[i] != null) {
+      if (cachedPageIndexes[i] == null) {
         continue;
       }
-      cachedPageIndexes[i] = forward
-          ? cachedPageIndexes[i]!.getPrevious()
-          : cachedPageIndexes[i]!.getNext();
+      if(forward) {
+        cachedPageIndexes[i] = cachedPageIndexes[i]!.getPrevious();
+      } else {
+        cachedPageIndexes[i] = cachedPageIndexes[i]!.getNext();
+      }
     }
+  }
+
+  List<double> getContentSize() {
+    return [contentWidth.toDouble(), contentHeight.toDouble()];
   }
 }
 

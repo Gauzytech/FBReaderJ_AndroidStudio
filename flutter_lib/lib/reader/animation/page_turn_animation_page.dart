@@ -1,7 +1,8 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 
 import '../controller/touch_event.dart';
@@ -150,7 +151,72 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
-    drawBottomPage(canvas);
+    // currentMoveDy负数: 往右滚动, 正数: 往左滚动
+    double actualOffsetX = currentMoveDx < 0
+        ? -((currentMoveDx).abs() % currentSize.width)
+        : (currentMoveDx) % currentSize.width;
+    canvas.save();
+    if (actualOffsetX < 0) {
+      // 绘制下一页
+      // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
+      ui.Image? nextPage = readerViewModel.getPage(PageIndex.next);
+      if (nextPage != null) {
+        // readerViewModel.shift(true);
+        canvas.translate(actualOffsetX + currentSize.width, 0);
+        canvas.drawImage(nextPage, Offset.zero, _paint);
+        print(
+            "flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw下一页");
+      } else {
+        if (!isCanGoNext()) {
+          dx = 0;
+          actualOffsetX = 0;
+          currentMoveDx = 0;
+
+          if (_currentAnimationController != null &&
+              !_currentAnimationController!.isCompleted) {
+            _currentAnimationController!.stop();
+          }
+        }
+      }
+    } else if (actualOffsetX > 0) {
+      // 绘制上一页
+      // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
+      ui.Image? prevPage = readerViewModel.getPage(PageIndex.prev);
+      if (prevPage != null) {
+        // readerViewModel.shift(false);
+        canvas.translate(actualOffsetX - currentSize.width, 0);
+        canvas.drawImage(prevPage, Offset.zero, _paint);
+        print(
+            "flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw上一页");
+      } else {
+        if (!isCanGoPre()) {
+          dx = 0;
+          lastIndexBeta = 0;
+          actualOffsetX = 0;
+          currentMoveDx = 0;
+
+          if (_currentAnimationController != null &&
+              !_currentAnimationController!.isCompleted) {
+            _currentAnimationController!.stop();
+          }
+        }
+      }
+    }
+
+    canvas.restore();
+    canvas.save();
+    ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
+    if (currentPage != null) {
+      canvas.translate(actualOffsetX, 0);
+      canvas.drawImage(currentPage, Offset.zero, Paint());
+      // 翻页完成了, 进行img shift操作
+      if (actualOffsetX == 0 &&
+          _currentAnimationController?.isCompleted == true) {
+        print(
+            'flutter横向翻页[页面切换], 翻页完成: $actualOffsetX, ${_currentAnimationController?.isCompleted}');
+      }
+    }
+    canvas.restore();
   }
 
   @override
@@ -175,11 +241,11 @@ class PageTurnAnimation extends BaseAnimationPage {
         handleEvent(event);
         break;
       case TouchEvent.ACTION_FLING_RELEASED:
-        print('flutter横向翻页惯性, fling released, $event');
+        print('flutter横向翻页1, FLING released, $event');
         handleEvent(event);
         break;
       case TouchEvent.ACTION_UP:
-        print('flutter惯性计算, 动画执行完毕');
+        print('flutter横向翻页[页面切换], 动画执行完毕');
         // eventStartPointBeta = Offset.zero;
         // mStartDx = 0;
         // dx = 0;
@@ -197,60 +263,6 @@ class PageTurnAnimation extends BaseAnimationPage {
   @override
   bool isShouldAnimatingInterrupt() {
     return true;
-  }
-
-  void drawBottomPage(Canvas canvas) {
-    // currentMoveDy负数: 往右滚动, 正数: 往左滚动
-    double actualOffsetX = currentMoveDx < 0
-        ? -((currentMoveDx).abs() % currentSize.width)
-        : (currentMoveDx) % currentSize.width;
-    canvas.save();
-    if (actualOffsetX < 0) {
-      // 绘制下一页
-      if (readerViewModel.getNextOrPrevPageDebug(true) != null) {
-        canvas.translate(actualOffsetX + currentSize.width, 0);
-        canvas.drawImage(readerViewModel.getNextOrPrevPageDebug(true)!, Offset.zero, _paint);
-        print("flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw下一页");
-      } else {
-        if (!isCanGoNext()) {
-          dx = 0;
-          actualOffsetX = 0;
-          currentMoveDx = 0;
-
-          if (_currentAnimationController != null &&
-              !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
-          }
-        }
-      }
-    } else if (actualOffsetX > 0) {
-      // 绘制上一页
-      if (readerViewModel.getNextOrPrevPageDebug(false) != null) {
-        canvas.translate(actualOffsetX - currentSize.width, 0);
-        canvas.drawImage(readerViewModel.getNextOrPrevPageDebug(false)!, Offset.zero, _paint);
-        print("flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw上一页");
-      } else {
-        if (!isCanGoPre()) {
-          dx = 0;
-          lastIndexBeta = 0;
-          actualOffsetX = 0;
-          currentMoveDx = 0;
-
-          if (_currentAnimationController != null &&
-              !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
-          }
-        }
-      }
-    }
-
-    canvas.restore();
-    canvas.save();
-    if (readerViewModel.getCurrentPage() != null) {
-      canvas.translate(actualOffsetX, 0);
-      canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
-    }
-    canvas.restore();
   }
 
   void drawStatic(Canvas canvas) {}
@@ -343,8 +355,8 @@ class PageTurnAnimation extends BaseAnimationPage {
   /// 使用当前触摸event坐标与down event坐标比较, 负数为下一页, 正数为上一页
   @override
   bool isForward(TouchEvent event) {
-    print("翻页检查, start: ${eventStartPointBeta.dx}, $event");
     double moveDistanceX = event.touchPosition.dx - eventStartPointBeta.dx;
+    print("flutter动画流程, 翻页检查, start: ${eventStartPointBeta.dx}, $event, moveDistanceX = $moveDistanceX");
     return moveDistanceX < 0;
   }
 }

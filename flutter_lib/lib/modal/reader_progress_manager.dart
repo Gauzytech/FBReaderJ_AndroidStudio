@@ -21,7 +21,7 @@ class ReaderProgressManager {
     return currentState;
   }
 
-  Future<bool> nextPage() async {
+  bool nextPage() {
     if (currentState == ReaderProgressStateEnum.STATE_NO_NEXT) {
       return false;
     }
@@ -332,7 +332,8 @@ class ReaderProgressManager {
     // }
   }
 
-  /// page 页数不足，或者是page最后一页，但不是最后一个chapter，或者是page最后一页，也是最后一个chapter，但不是最后一个volume
+  /// page 页数不足，或者是page最后一页，但不是最后一个chapter
+  /// 或者是page最后一页，也是最后一个chapter，但不是最后一个volume
   bool isCanGoNext() {
     // ReaderContentDataValue currentDataValue = readerViewModel.getCurrentContentDataValue();
     //

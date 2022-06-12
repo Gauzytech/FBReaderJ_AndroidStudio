@@ -179,6 +179,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             Timber.v("渲染流程:绘制, call onDrawStatic");
             switch (oldMode) {
                 case AnimatedScrollingForward: {
+                    // progress直接记录在textPage上, 所以这里我们直接说需要上一页/下一页就行了
                     final ZLView.PageIndex index = animator.getPageToScrollTo();
                     myBitmapManager.shift(index == ZLView.PageIndex.NEXT);
                     contentProcessor.onScrollingFinished(index);

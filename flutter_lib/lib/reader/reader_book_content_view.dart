@@ -58,8 +58,6 @@ class ReaderBookContentViewState
   ContentPainter? _contentPainter;
 
   late ReaderPageManager pageManager;
-  TouchEvent currentTouchEvent =
-      TouchEvent(action: TouchEvent.ACTION_UP, touchPosition: Offset.zero);
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
@@ -146,7 +144,7 @@ class ReaderBookContentViewState
                       };
                       recognizer.onEnd = (detail) {
                         print(
-                            "flutter动画流程, ------------------触摸事件[onEnd], $detail, $currentTouchEvent------------------>>>>>>>>>");
+                            "flutter动画流程, ------------------触摸事件[onEnd], $detail ------------------>>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onEndEvent(detail, readerViewModel);
                         }
@@ -209,28 +207,36 @@ class ReaderBookContentViewState
     super.dispose();
   }
 
-  Future<void> onDownEvent(
-      DragDownDetails detail, ReaderViewModel readerViewModel) async {
+  void onDownEvent(DragDownDetails detail, ReaderViewModel readerViewModel) {
     // 如果动画正在进行, 直接忽略event
-    if (currentTouchEvent.action != TouchEvent.ACTION_DOWN ||
-        currentTouchEvent.touchPosition != detail.localPosition) {
-        currentTouchEvent = TouchEvent(
-            action: TouchEvent.ACTION_DOWN, touchPosition: detail.localPosition);
-        _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
-        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+    if (!_contentPainter!
+        .isDuplicateEvent(TouchEvent.ACTION_DOWN, detail.localPosition)) {
+      _contentPainter?.setCurrentTouchEvent(
+        TouchEvent.fromOnDown(
+          TouchEvent.ACTION_DOWN,
+          detail.localPosition,
+        ),
+      );
+      _contentPainter
+          ?.startCurrentTouchEvent(_contentPainter!.currentTouchData!);
+      contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
     }
   }
 
   Future<void> onUpdateEvent(
       DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
-    if (currentTouchEvent.action != TouchEvent.ACTION_MOVE ||
-        currentTouchEvent.touchPosition != detail.localPosition) {
-      currentTouchEvent = TouchEvent(
-          action: TouchEvent.ACTION_MOVE, touchPosition: detail.localPosition);
+    if (!_contentPainter!.isDuplicateEvent(
+      TouchEvent.ACTION_MOVE,
+      detail.localPosition,
+    )) {
+      TouchEvent event = TouchEvent.fromOnUpdate(
+        TouchEvent.ACTION_MOVE,
+        detail.localPosition,
+      );
+      _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
-      if (await pageManager.canScroll(currentTouchEvent)) {
-        print('flutter动画流程, 相邻页面存在, 继续执行事件');
-        _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
+      if (await pageManager.canScroll(event)) {
+        _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
     }
@@ -238,13 +244,19 @@ class ReaderBookContentViewState
 
   Future<void> onEndEvent(
       DragEndDetails detail, ReaderViewModel readerViewModel) async {
-    if (currentTouchEvent.action != TouchEvent.ACTION_UP ||
-        currentTouchEvent.touchPosition != Offset.zero) {
-      currentTouchEvent = TouchEvent<DragEndDetails>(
-          action: TouchEvent.ACTION_UP, touchPosition: currentTouchEvent.touchPosition);
-      currentTouchEvent.setTouchDetail(detail);
-      if(await pageManager.canScroll(currentTouchEvent)) {
-        _contentPainter?.setCurrentTouchEvent(currentTouchEvent);
+    if (!_contentPainter!.isDuplicateEvent(
+      TouchEvent.ACTION_UP,
+      _contentPainter!.lastTouchPosition(),
+    )) {
+      TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
+        TouchEvent.ACTION_UP,
+        _contentPainter!.lastTouchPosition(),
+        detail,
+      );
+      _contentPainter?.setCurrentTouchEvent(event);
+      // 检查上一页/下一页是否存在
+      if (await pageManager.canScroll(event)) {
+        _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
     }

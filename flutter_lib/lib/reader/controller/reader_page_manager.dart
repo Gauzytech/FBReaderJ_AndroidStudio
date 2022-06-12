@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_lib/modal/animation_type.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
@@ -39,20 +40,18 @@ class ReaderPageManager {
   }
 
   Future<bool> canScroll(TouchEvent event) async {
-    // todo 请求native查看是否可以滑动, 参考native canScroll方法
     if(currentAnimationPage.isForward(event)) {
       bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
-      print("flutter动画流程, next canScroll: $canScroll");
+      print("flutter动画流程, $event, next canScroll: $canScroll");
       return canScroll && await currentAnimationPage.readerViewModel.getNextPageAsync() != null;
     } else {
       bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
-      print("flutter动画流程, prev canScroll: $canScroll");
+      print("flutter动画流程, $event, prev canScroll: $canScroll");
       return canScroll && await currentAnimationPage.readerViewModel.getPrevPageAsync() != null;
     }
   }
 
   void setCurrentTouchEvent(TouchEvent event) {
-    print('flutter横向翻页， 中断动画');
     /// 如果正在执行动画，判断是否需要中止动画
     if (currentState == RenderState.ANIMATING) {
       if (currentAnimationPage.isShouldAnimatingInterrupt()) {
@@ -65,7 +64,7 @@ class ReaderPageManager {
     /// 用户抬起手指后，是否需要执行动画
     if (event.action == TouchEvent.ACTION_UP ||
         event.action == TouchEvent.ACTION_CANCEL) {
-      print('flutter动画流程, 抬起手指动画: $event');
+      print('flutter动画流程, 手指离开屏幕: $event');
       switch (currentAnimationType) {
         // case TYPE_ANIMATION_SIMULATION_TURN:
         case TYPE_ANIMATION_COVER_TURN:
@@ -85,7 +84,7 @@ class ReaderPageManager {
           break;
       }
     } else {
-      print('flutter动画流程, 手指正在触摸的动画, onTouchEvent: $event');
+      print('flutter动画流程, 手指未离开屏幕, onTouchEvent: $event');
       currentTouchData = event;
       currentAnimationPage.onTouchEvent(event);
     }
@@ -223,7 +222,7 @@ class ReaderPageManager {
   }
 
   void interruptCancelAnimation() {
-    print('flutter横向翻页, 中断动画');
+    print('flutter动画流程, 中断当前惯性动画');
     if (!animationController.isCompleted) {
       animationController.stop();
       currentState = RenderState.IDLE;
@@ -252,6 +251,7 @@ class ReaderPageManager {
       animationController
         ..addListener(() {
           currentState = RenderState.ANIMATING;
+          // 通知custom painter刷新
           canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
           if (!animationController.value.isInfinite &&
               !animationController.value.isNaN) {

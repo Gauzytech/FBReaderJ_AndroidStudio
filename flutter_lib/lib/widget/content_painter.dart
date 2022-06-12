@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/modal/animation_type.dart';
 
 import '../reader/controller/reader_page_manager.dart';
 import '../reader/controller/touch_event.dart';
@@ -42,8 +43,30 @@ class ContentPainter extends CustomPainter {
     return pageManager.shouldRepaint(oldDelegate, this);
   }
 
+  /// 缓存触摸事件判断滑动方向
+  /// 注意多线程全局变量问题
   void setCurrentTouchEvent(TouchEvent event) {
     currentTouchData = event;
-    pageManager.setCurrentTouchEvent(currentTouchData!);
+  }
+
+  /// 将重绘数据给painter canvas
+  void startCurrentTouchEvent(TouchEvent event) {
+    pageManager.setCurrentTouchEvent(event);
+  }
+
+  bool isDuplicateEvent(int eventAction, Offset touchPosition) {
+    if (currentTouchData == null) return false;
+
+    if (eventAction == TouchEvent.ACTION_DOWN ||
+        eventAction == TouchEvent.ACTION_MOVE) {
+      return currentTouchData!.action == eventAction &&
+          currentTouchData!.touchPosition == touchPosition;
+    } else {
+      return currentTouchData!.action == TouchEvent.ACTION_UP;
+    }
+  }
+
+  Offset lastTouchPosition() {
+    return currentTouchData?.touchPosition ?? Offset.zero;
   }
 }
