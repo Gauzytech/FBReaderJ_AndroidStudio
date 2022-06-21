@@ -43,11 +43,21 @@ class ReaderPageManager {
     if(currentAnimationPage.isForward(event)) {
       bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
       print("flutter动画流程, $event, next canScroll: $canScroll");
-      return canScroll && await currentAnimationPage.readerViewModel.getNextPageAsync() != null;
+      // 判断下一页是否存在
+      bool nextExist = currentAnimationPage.readerViewModel.pageExist(PageIndex.next);
+      if(!nextExist) {
+        currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.next);
+      }
+      return canScroll && nextExist;
     } else {
       bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
       print("flutter动画流程, $event, prev canScroll: $canScroll");
-      return canScroll && await currentAnimationPage.readerViewModel.getPrevPageAsync() != null;
+      // 判断上一页是否存在
+      bool prevExist = currentAnimationPage.readerViewModel.pageExist(PageIndex.prev);
+      if(!prevExist) {
+        currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.prev);
+      }
+      return canScroll && prevExist;
     }
   }
 
@@ -64,7 +74,7 @@ class ReaderPageManager {
     /// 用户抬起手指后，是否需要执行动画
     if (event.action == TouchEvent.ACTION_UP ||
         event.action == TouchEvent.ACTION_CANCEL) {
-      print('flutter动画流程, 手指离开屏幕: $event');
+      print('flutter动画流程:触摸事件, 手指离开屏幕: $event');
       switch (currentAnimationType) {
         // case TYPE_ANIMATION_SIMULATION_TURN:
         case TYPE_ANIMATION_COVER_TURN:
@@ -84,7 +94,7 @@ class ReaderPageManager {
           break;
       }
     } else {
-      print('flutter动画流程, 手指未离开屏幕, onTouchEvent: $event');
+      print('flutter动画流程:触摸事件, 手指未离开屏幕, onTouchEvent: $event');
       currentTouchData = event;
       currentAnimationPage.onTouchEvent(event);
     }

@@ -131,20 +131,17 @@ class ReaderBookContentViewState
                     (PagePanGestureRecognizer recognizer) {
                       recognizer.setMenuOpen(false);
                       recognizer.onDown = (detail) {
-                        print(
-                            "flutter动画流程, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
+                        print("flutter动画流程:触摸事件, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
                         onDownEvent(detail, readerViewModel);
                       };
                       recognizer.onUpdate = (detail) {
-                        print(
-                            "flutter动画流程, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>>");
+                        print("flutter动画流程:触摸事件, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onUpdateEvent(detail, readerViewModel);
                         }
                       };
                       recognizer.onEnd = (detail) {
-                        print(
-                            "flutter动画流程, ------------------触摸事件[onEnd], $detail ------------------>>>>>>>>>");
+                        print("flutter动画流程:触摸事件, ------------------触摸事件[onEnd], $detail ------------------>>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onEndEvent(detail, readerViewModel);
                         }
@@ -157,8 +154,7 @@ class ReaderBookContentViewState
                     () => LongPressGestureRecognizer(),
                     (LongPressGestureRecognizer recognizer) {
                       recognizer.onLongPress = () {
-                        print(
-                            "flutter动画流程, ------------------长按事件------------------>>>>>>>>>");
+                        print("flutter动画流程:触摸事件, ------------------长按事件------------------>>>>>>>>>");
                       };
                     },
                   )
@@ -238,6 +234,8 @@ class ReaderBookContentViewState
       if (await pageManager.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+      } else {
+        print('flutter动画流程:触摸事件, 忽略$event');
       }
     }
   }
@@ -258,6 +256,8 @@ class ReaderBookContentViewState
       if (await pageManager.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+      } else {
+        print('flutter动画流程:触摸事件, 忽略$event');
       }
     }
   }

@@ -163,24 +163,6 @@ class ReaderContentHandler {
 
   void shift(bool forward) {
     _bitmapManager.shift(forward);
-
-    // if(forward) {
-    //   if(currentPageIndex == PageIndex.current) {
-    //     currentPageIndex = PageIndex.next;
-    //   } else if(currentPageIndex == PageIndex.prev){
-    //     currentPageIndex = PageIndex.current;
-    //   } else if(currentPageIndex == PageIndex.next){
-    //     currentPageIndex = PageIndex.prev;
-    //   }
-    // } else {
-    //   if(currentPageIndex == PageIndex.current) {
-    //     currentPageIndex = PageIndex.prev;
-    //   } else if(currentPageIndex == PageIndex.prev){
-    //     currentPageIndex = PageIndex.next;
-    //   } else if(currentPageIndex == PageIndex.next){
-    //     currentPageIndex = PageIndex.current;
-    //   }
-    // }
   }
 
   PageIndex getPageIndex(bool forward) {

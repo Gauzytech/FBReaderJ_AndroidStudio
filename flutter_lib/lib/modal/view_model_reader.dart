@@ -51,11 +51,11 @@ class ReaderViewModel extends BaseViewModel {
     return size;
   }
 
-  ui.Image? getCurrentPage() {
+  ui.Image? getOrBuildPage(PageIndex index) {
     final handler = ArgumentError.checkNotNull(
         _readerContentHandler, '_readerContentHandler');
     // 从缓存中获得page image
-    ImageSrc page = handler.getPage(PageIndex.current);
+    ImageSrc page = handler.getPage(index);
     // 如果没有找到缓存的image, 回调native, 通知画一个新的
     if (page.img == null) {
       handler.buildPage(PageIndex.current);
@@ -88,8 +88,12 @@ class ReaderViewModel extends BaseViewModel {
     _progressManager.nextPage();
   }
 
-  void prePage() async {
+  void prePage() {
     _progressManager.prePage();
+  }
+
+  void navigatePage(PageIndex pageIndex) {
+    _progressManager.navigatePage(pageIndex);
   }
 
   /// --------------------------- 展示相关部分 ---------------------------------
@@ -134,6 +138,21 @@ class ReaderViewModel extends BaseViewModel {
     return prevPageImage.img;
   }
 
+  void buildPageAsync(PageIndex index) {
+    // 创建上一页/下一页image
+    final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
+    ImageSrc? imageSrc = handler.getPage(index);
+    if (imageSrc.img == null) {
+      // 如果没有通知过native绘制
+      if (!imageSrc.processing) {
+        print('flutter动画, ----------------未找到next pageImage, 通知native进行绘制');
+        handler.buildPageOnly(index);
+      } else {
+        print('flutter动画, ----------------已经通知了native, 不用重新绘制');
+      }
+    }
+  }
+
   Future<ui.Image?> getNextPageAsync() async {
     // 查看下一页image是否存在
     final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
@@ -165,8 +184,14 @@ class ReaderViewModel extends BaseViewModel {
 
   ui.Image? getPage(PageIndex pageIndex) {
     final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
-    ImageSrc? imageSrc = handler.getPage(pageIndex);
+    ImageSrc imageSrc = handler.getPage(pageIndex);
     return imageSrc.img;
+  }
+
+  bool pageExist(PageIndex pageIndex) {
+    final handler = ArgumentError.checkNotNull(_readerContentHandler, '_readerContentHandler');
+    ImageSrc imageSrc = handler.getPage(pageIndex);
+    return imageSrc.img != null;
   }
 
   /// 菜单栏相关

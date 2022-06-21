@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 
 import '../controller/touch_event.dart';
@@ -203,9 +204,9 @@ class SlidePageAnimation extends BaseAnimationPage {
     //   canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
     // }
 
-    if (readerViewModel.getCurrentPage() != null) {
+    if (readerViewModel.getOrBuildPage(PageIndex.current) != null) {
       canvas.translate(0, actualOffset);
-      canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+      canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
     }
 
     canvas.restore();

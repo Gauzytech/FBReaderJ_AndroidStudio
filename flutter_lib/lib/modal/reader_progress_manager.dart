@@ -380,6 +380,10 @@ class ReaderProgressManager {
   void clear() {
 
   }
+
+  void navigatePage(PageIndex pageIndex) {
+    viewModel.shift(true);
+  }
 }
 
 enum ReaderProgressStateEnum {

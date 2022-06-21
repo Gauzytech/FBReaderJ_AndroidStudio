@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/base_animation_page.dart';
 import 'package:flutter_lib/reader/animation/controller_animation_with_listener_number.dart';
@@ -157,7 +158,7 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   void drawStatic(Canvas canvas) {
     // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-    ui.Image? page = readerViewModel.getCurrentPage();
+    ui.Image? page = readerViewModel.getOrBuildPage(PageIndex.current);
     if(page != null) {
       canvas.drawImage(page, Offset.zero, Paint());
     }
@@ -173,9 +174,9 @@ class CoverPageAnimation extends BaseAnimationPage {
       }
     } else {
       // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-      if(readerViewModel.getCurrentPage() != null) {
+      if(readerViewModel.getOrBuildPage(PageIndex.current) != null) {
         print('flutter内容绘制流程, drawBottomPage -> getCurrentPage');
-        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+        canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
       }
     }
     canvas.restore();
@@ -189,7 +190,7 @@ class CoverPageAnimation extends BaseAnimationPage {
         canvas.translate(mTouch.dx - mStartPoint.dx, 0);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
         print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
-        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+        canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
       } else {
         canvas.translate((mTouch.dx - mStartPoint.dx) - currentSize.width, 0);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
@@ -202,7 +203,7 @@ class CoverPageAnimation extends BaseAnimationPage {
         canvas.translate(0, mTouch.dy - mStartPoint.dy);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
         print('flutter内容绘制流程, nxt, drawTopPage -> getCurrentPage, ${mTouch.dy - mStartPoint.dy}');
-        canvas.drawImage(readerViewModel.getCurrentPage()!, Offset.zero, Paint());
+        canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
       } else {
         canvas.translate(0, (mTouch.dy - mStartPoint.dy) - currentSize.height);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);

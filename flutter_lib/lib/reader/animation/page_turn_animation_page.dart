@@ -21,7 +21,7 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   // late ClampingScrollPhysics physics;
 
-  // Offset eventStartPoint = Offset.zero;
+  Offset eventStartPoint = Offset.zero;
 
   /// 本次触摸事件Y轴上开始的滑动距离:
   /// 1. 在moveDown事件, 会将currentMoveDy赋值给本变量,
@@ -36,20 +36,17 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   /// 上次滑动的index
   /// 负数是下一页, 正数是上一页
-  // int lastIndex = 0;
+  int lastIndex = 0;
 
   /// 翻到下一页
-  // bool isTurnToNext = true;
+  bool isTurnToNext = true;
 
   AnimationController? _currentAnimationController;
 
   /// beta
-  Offset eventStartPointBeta = Offset.zero;
   double mStartDx = 0;
   double currentMoveDx = 0;
   double dx = 0;
-  int lastIndexBeta = 0;
-  bool isTurnToNextBeta = true;
 
   // todo 这两个参数干啥的？
   late Tween<Offset> currentAnimationTween;
@@ -69,10 +66,10 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   void _setContentViewModel(ReaderViewModel viewModel) {
     viewModel.registerContentOperateCallback((operate) {
-      eventStartPointBeta = Offset.zero;
+      eventStartPoint = Offset.zero;
       mStartDx = 0;
       dx = 0;
-      lastIndexBeta = 0;
+      lastIndex = 0;
       currentMoveDx = 0;
     });
   }
@@ -110,29 +107,29 @@ class PageTurnAnimation extends BaseAnimationPage {
       AnimationController controller, DragEndDetails details) {
 
     // 1. 计算 动画到下一页, 还是回弹回到down时候的坐标
-    final double moveDistance = mTouchBeta.dx - eventStartPointBeta.dx;
+    final double moveDistance = mTouchBeta.dx - eventStartPoint.dx;
     double velocity = details.velocity.pixelsPerSecond.dx;
     bool animationForward =
         moveDistance.abs() > minDiff() || velocity.abs() >= velocityThreshHold;
 
-    double moveDistanceX = mTouchBeta.dx - eventStartPointBeta.dx;
+    double moveDistanceX = mTouchBeta.dx - eventStartPoint.dx;
     bool turnNextPage = moveDistanceX < 0;
     double destDx = 0;
     // 2. 计算 下一页的坐标
     if (animationForward) {
       // 继续向前, 到下一页或者上一页
       if (turnNextPage) {
-        destDx = eventStartPointBeta.dx - currentSize.width;
+        destDx = eventStartPoint.dx - currentSize.width;
       } else {
-        destDx = eventStartPointBeta.dx + currentSize.width;
+        destDx = eventStartPoint.dx + currentSize.width;
       }
     } else {
       // 回弹
-      destDx = eventStartPointBeta.dx;
+      destDx = eventStartPoint.dx;
     }
 
     print('flutter惯性计算, velocity = $velocity, '
-        'path: ${mTouchBeta.dx} -> ${eventStartPointBeta.dx} '
+        'path: ${mTouchBeta.dx} -> ${eventStartPoint.dx} '
         'destDx = $destDx, animComplete: ${_currentAnimationController?.isAnimating}');
 
     ScrollSpringSimulation simulation = ScrollSpringSimulation(
@@ -191,7 +188,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       } else {
         if (!isCanGoPre()) {
           dx = 0;
-          lastIndexBeta = 0;
+          lastIndex = 0;
           actualOffsetX = 0;
           currentMoveDx = 0;
 
@@ -209,12 +206,6 @@ class PageTurnAnimation extends BaseAnimationPage {
     if (currentPage != null) {
       canvas.translate(actualOffsetX, 0);
       canvas.drawImage(currentPage, Offset.zero, Paint());
-      // 翻页完成了, 进行img shift操作
-      if (actualOffsetX == 0 &&
-          _currentAnimationController?.isCompleted == true) {
-        print(
-            'flutter横向翻页[页面切换], 翻页完成: $actualOffsetX, ${_currentAnimationController?.isCompleted}');
-      }
     }
     canvas.restore();
   }
@@ -229,23 +220,25 @@ class PageTurnAnimation extends BaseAnimationPage {
       case TouchEvent.ACTION_DOWN:
         // 手指按下, 保存起点
         if (!dx.isNaN && !dx.isInfinite) {
-          print("flutter横向翻页1, down: ${event.touchPosition}, isAnimating = ${animationController.isAnimating}");
-          eventStartPointBeta = event.touchPosition;
+          print(
+              "flutter动画流程:横向翻页, down: ${event.touchPosition}, isAnimating = ${animationController.isAnimating}");
+          eventStartPoint = event.touchPosition;
           mStartDx = currentMoveDx;
           dx = 0;
         }
 
         break;
       case TouchEvent.ACTION_MOVE:
-        print("flutter横向翻页1, ACTION_MOVE eventX: ${event.touchPosition.dx}");
+        print(
+            "flutter动画流程:横向翻页, ACTION_MOVE eventX: ${event.touchPosition.dx}");
         handleEvent(event);
         break;
       case TouchEvent.ACTION_FLING_RELEASED:
-        print('flutter横向翻页1, FLING released, $event');
+        print('flutter动画流程:横向翻页, FLING released, $event');
         handleEvent(event);
         break;
       case TouchEvent.ACTION_UP:
-        print('flutter横向翻页[页面切换], 动画执行完毕');
+        print('flutter动画流程:横向翻页/页面切换, ACTION_UP, 动画执行完毕');
         // eventStartPointBeta = Offset.zero;
         // mStartDx = 0;
         // dx = 0;
@@ -290,9 +283,9 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   void handleEvent(TouchEvent event) {
-    if (!mTouchBeta.dx.isInfinite && !eventStartPointBeta.dx.isInfinite) {
+    if (!mTouchBeta.dx.isInfinite && !eventStartPoint.dx.isInfinite) {
       // 本次滑动偏移量，其实就是dy
-      double moveDistanceX = event.touchPosition.dx - eventStartPointBeta.dx;
+      double moveDistanceX = event.touchPosition.dx - eventStartPoint.dx;
       if (!currentSize.width.isInfinite &&
           currentSize.width != 0 &&
           !dx.isInfinite &&
@@ -300,25 +293,28 @@ class PageTurnAnimation extends BaseAnimationPage {
         // 总滚动距离 / 可渲染内容container高度 = 当前页面index
         // ~/是除法, 但返回整数
         int currentIndex = (moveDistanceX + mStartDx) ~/ currentSize.width;
-        print(
-            "flutter横向翻页1, eventX: ${event.touchPosition.dx}, startPointX: ${eventStartPointBeta.dx}, "
-                "currentIdx = $currentIndex. mStartDx = $mStartDx");
-        if (lastIndexBeta != currentIndex) {
-          if (currentIndex < lastIndexBeta) {
-            print('flutter横向翻页, 下一页');
-            if (isCanGoNext()) {
-              readerViewModel.nextPage();
-            } else {
-              return;
-            }
-          } else if (currentIndex + 1 > lastIndexBeta) {
-            print('flutter横向翻页, 上一页');
-
-            if (isCanGoPre()) {
-              readerViewModel.prePage();
-            } else {
-              return;
-            }
+        // print(
+        //     "flutter动画流程[横向翻页], eventX: ${event.touchPosition.dx}, startPointX: ${eventStartPoint.dx}, "
+        //     "currentIdx = $currentIndex. mStartDx = $mStartDx");
+        if (lastIndex != currentIndex) {
+          if (currentIndex < lastIndex) {
+            print('flutter动画流程:页面切换, 下一页');
+            // 翻页完成了, 进行img shift操作
+            // if (isCanGoNext()) {
+            //   readerViewModel.nextPage();
+            // } else {
+            //   return;
+            // }
+            readerViewModel.navigatePage(PageIndex.next);
+          } else if (currentIndex + 1 > lastIndex) {
+            print('flutter动画流程:页面切换, 上一页');
+            // 翻页完成了, 进行img shift操作
+            // if (isCanGoPre()) {
+            //   readerViewModel.prePage();
+            // } else {
+            //   return;
+            // }
+            readerViewModel.navigatePage(PageIndex.prev);
           }
         }
 
@@ -342,8 +338,8 @@ class PageTurnAnimation extends BaseAnimationPage {
         mTouchBeta = event.touchPosition;
         // 保存当前滑动偏移量
         dx = moveDistanceX;
-        isTurnToNextBeta = moveDistanceX < 0;
-        lastIndexBeta = currentIndex;
+        isTurnToNext = moveDistanceX < 0;
+        lastIndex = currentIndex;
         // 更新currentMoveDx, drawBottomPage时候使用
         if (!dx.isInfinite && !currentMoveDx.isInfinite) {
           currentMoveDx = mStartDx + dx;
@@ -355,8 +351,6 @@ class PageTurnAnimation extends BaseAnimationPage {
   /// 使用当前触摸event坐标与down event坐标比较, 负数为下一页, 正数为上一页
   @override
   bool isForward(TouchEvent event) {
-    double moveDistanceX = event.touchPosition.dx - eventStartPointBeta.dx;
-    print("flutter动画流程, 翻页检查, start: ${eventStartPointBeta.dx}, $event, moveDistanceX = $moveDistanceX");
-    return moveDistanceX < 0;
+    return event.touchPosition.dx - eventStartPoint.dx < 0;
   }
 }
