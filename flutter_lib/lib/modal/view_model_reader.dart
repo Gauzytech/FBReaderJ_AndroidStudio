@@ -92,7 +92,7 @@ class ReaderViewModel extends BaseViewModel {
     _progressManager.prePage();
   }
 
-  void navigatePage(PageIndex pageIndex) {
+  void shiftPage(PageIndex pageIndex) {
     _progressManager.navigatePage(pageIndex);
   }
 
@@ -232,6 +232,10 @@ class ReaderViewModel extends BaseViewModel {
     final handler = ArgumentError.checkNotNull(
         _readerContentHandler, '_readerContentHandler');
     return await handler.canScroll(pageIndex);
+  }
+
+  void onScrollingFinished(PageIndex pageIndex) {
+    _readerContentHandler?.onScrollingFinished(pageIndex);
   }
 
   @override

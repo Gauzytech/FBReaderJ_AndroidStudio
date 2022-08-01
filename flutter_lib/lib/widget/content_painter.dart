@@ -50,19 +50,21 @@ class ContentPainter extends CustomPainter {
   }
 
   /// 将重绘数据给painter canvas
-  void startCurrentTouchEvent(TouchEvent event) {
-    pageManager.setCurrentTouchEvent(event);
+  bool startCurrentTouchEvent(TouchEvent event) {
+    return pageManager.setCurrentTouchEvent(event);
   }
 
   bool isDuplicateEvent(int eventAction, Offset touchPosition) {
     if (currentTouchData == null) return false;
 
-    if (eventAction == TouchEvent.ACTION_DOWN ||
+    if (eventAction == TouchEvent.ACTION_DRAG_START ||
         eventAction == TouchEvent.ACTION_MOVE) {
       return currentTouchData!.action == eventAction &&
           currentTouchData!.touchPosition == touchPosition;
     } else {
-      return currentTouchData!.action == TouchEvent.ACTION_UP;
+      return currentTouchData!.action == TouchEvent.ACTION_DRAG_END ||
+          // 如果之前事件是down, 中间没有move事件，证明这只是个点击操作, 而不是fling
+          currentTouchData!.action == TouchEvent.ACTION_DRAG_START;
     }
   }
 

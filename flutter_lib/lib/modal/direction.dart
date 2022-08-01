@@ -1,9 +1,9 @@
 /// 翻页方向
 enum Direction {
-  leftToRight,
-  rightToLeft,
+  leftToRight, // 上一页
+  rightToLeft, // 下一页
   up,
-  down
+  down,
 }
 
 extension DirectionExtension on Direction {

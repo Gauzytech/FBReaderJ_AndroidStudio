@@ -595,6 +595,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     @Override
     public synchronized void onScrollingFinished(PageIndex pageIndex) {
+        Timber.v("渲染流程:Bitmap绘制, onScrollingFinished: %s", pageIndex.name());
         switch (pageIndex) {
             case CURRENT:
                 break;

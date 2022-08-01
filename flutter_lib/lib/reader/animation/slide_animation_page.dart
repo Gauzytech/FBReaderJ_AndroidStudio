@@ -74,7 +74,7 @@ class SlidePageAnimation extends BaseAnimationPage {
       AnimationController controller, DragEndDetails details) {
     ClampingScrollSimulation simulation;
     simulation = ClampingScrollSimulation(
-      position: mTouch.dy,
+      position: getCachedTouchData().dy,
       velocity: details.velocity.pixelsPerSecond.dy,
       tolerance: Tolerance.defaultTolerance,
     );
@@ -94,7 +94,7 @@ class SlidePageAnimation extends BaseAnimationPage {
     // }
 
     switch (event.action) {
-      case TouchEvent.ACTION_DOWN:
+      case TouchEvent.ACTION_DRAG_START:
         if (!dy.isNaN && !dy.isInfinite) {
           mStartPoint = event.touchPosition;
           mStartDy = currentMoveDy;
@@ -103,7 +103,7 @@ class SlidePageAnimation extends BaseAnimationPage {
 
         break;
       case TouchEvent.ACTION_MOVE:
-        if (!mTouch.dy.isInfinite && !mStartPoint.dy.isInfinite) {
+        if (!getCachedTouchData().dy.isInfinite && !mStartPoint.dy.isInfinite) {
           double tempDy = event.touchPosition.dy - mStartPoint.dy;
           if (!currentSize.height.isInfinite &&
               currentSize.height != 0 &&
@@ -127,9 +127,9 @@ class SlidePageAnimation extends BaseAnimationPage {
               }
             }
 
-            mTouch = event.touchPosition;
-            dy = mTouch.dy - mStartPoint.dy;
-            isTurnToNext = mTouch.dy - mStartPoint.dy < 0;
+            cacheCurrentTouchData(event.touchPosition);
+            dy = getCachedTouchData().dy - mStartPoint.dy;
+            isTurnToNext = getCachedTouchData().dy - mStartPoint.dy < 0;
             lastIndex = currentIndex;
             if (!dy.isInfinite && !currentMoveDy.isInfinite) {
               currentMoveDy = mStartDy + dy;
@@ -137,7 +137,7 @@ class SlidePageAnimation extends BaseAnimationPage {
           }
         }
         break;
-      case TouchEvent.ACTION_UP:
+      case TouchEvent.ACTION_DRAG_END:
       case TouchEvent.ACTION_CANCEL:
         break;
       default:
@@ -146,7 +146,7 @@ class SlidePageAnimation extends BaseAnimationPage {
   }
 
   @override
-  bool isShouldAnimatingInterrupt() {
+  bool shouldCancelAnimation() {
     return true;
   }
 

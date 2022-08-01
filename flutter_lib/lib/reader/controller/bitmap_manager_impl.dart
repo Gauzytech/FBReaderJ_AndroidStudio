@@ -117,6 +117,14 @@ class BitmapManagerImpl extends IBitmapManager {
   /// 位移操作（所有索引位移至下一状态）
   ///
   /// @param forward 是否向前
+  /// 
+  /// current, prev, next, null
+  ///
+  /// shift forward
+  /// prev, prev2, current, null
+  ///
+  /// shift backward
+  /// next, current, next2, null
   void shift(bool forward) {
     for (int i = 0; i < cacheSize; ++i) {
       if (cachedPageIndexes[i] == null) {

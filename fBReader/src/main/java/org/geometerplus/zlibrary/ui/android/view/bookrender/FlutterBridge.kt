@@ -44,50 +44,58 @@ class FlutterBridge(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Timber.v("$TAG, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
+        when(call.method) {
+            "draw_on_bitmap" -> {
+                // 获取Flutter传递的参数
+                val index = requireNotNull(call.argument<Int>("page_index"))
+                val width = requireNotNull(call.argument<Double>("width")).toInt()
+                val height = requireNotNull(call.argument<Double>("height")).toInt()
+                val pageIndex = PageIndex.getPageIndex(index)
+                Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
 
-        if (call.method == "draw_on_bitmap") {
-            // 获取Flutter传递的参数
-            val index = requireNotNull(call.argument<Int>("page_index"))
-            val width = requireNotNull(call.argument<Double>("width")).toInt()
-            val height = requireNotNull(call.argument<Double>("height")).toInt()
-            val pageIndex = PageIndex.getPageIndex(index)
-            Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
+                // 绘制内容的bitmap
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+                readerController.contentProcessorImpl.drawOnBitmap(
+                    bitmap,
+                    pageIndex,
+                    width,
+                    height,
+                    0
+                )
 
-            // 绘制内容的bitmap
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-            readerController.contentProcessorImpl.drawOnBitmap(
-                bitmap,
-                pageIndex,
-                width,
-                height,
-                0
-            )
-
-            if (DebugHelper.SAVE_BITMAP) {
-                debugSave(bitmap.toByteArray(), "图书内容bitmap_current")
-            } else {
-                result.success(bitmap.toByteArray())
-            }
-        } else if (call.method == "prepare_page") {
-            val width = requireNotNull(call.argument<Double>("width")).toInt()
-            val height = requireNotNull(call.argument<Double>("height")).toInt()
-            val prev = requireNotNull(call.argument<Boolean>("update_prev_page_cache"))
-            val next = requireNotNull(call.argument<Boolean>("update_next_page_cache"))
-            Timber.v("$TAG, 收到了: [$prev, $next]")
-
-            readerController.contentProcessorImpl.prepareAdjacentPage(
-                width, height, 0, prev, next,
-                object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        result.success(data)
-                    }
+                if (DebugHelper.SAVE_BITMAP) {
+                    debugSave(bitmap.toByteArray(), "图书内容bitmap_current")
+                } else {
+                    result.success(bitmap.toByteArray())
                 }
-            )
-        } else if (call.method == "can_scroll") {
-            val index = requireNotNull(call.argument<Int>("page_index"))
-            val pageIndex = PageIndex.getPageIndex(index)
-            val canScroll = readerController.contentProcessorImpl.canScroll(pageIndex)
-            result.success(canScroll)
+            }
+            "prepare_page" -> {
+                val width = requireNotNull(call.argument<Double>("width")).toInt()
+                val height = requireNotNull(call.argument<Double>("height")).toInt()
+                val prev = requireNotNull(call.argument<Boolean>("update_prev_page_cache"))
+                val next = requireNotNull(call.argument<Boolean>("update_next_page_cache"))
+                Timber.v("$TAG, 收到了: [$prev, $next]")
+
+                readerController.contentProcessorImpl.prepareAdjacentPage(
+                    width, height, 0, prev, next,
+                    object : ResultCallBack {
+                        override fun onComplete(data: Any) {
+                            result.success(data)
+                        }
+                    }
+                )
+            }
+            "can_scroll" -> {
+                val index = requireNotNull(call.argument<Int>("page_index"))
+                val pageIndex = PageIndex.getPageIndex(index)
+                val canScroll = readerController.contentProcessorImpl.canScroll(pageIndex)
+                result.success(canScroll)
+            }
+            "on_scrolling_finished" -> {
+                val index = requireNotNull(call.argument<Int>("page_index"))
+                val pageIndex = PageIndex.getPageIndex(index)
+                readerController.contentProcessorImpl.onScrollingFinished(pageIndex)
+            }
         }
     }
 

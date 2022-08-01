@@ -3,8 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter_lib/modal/page_index.dart';
+import 'package:flutter_lib/modal/pair.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/reader/animation/model/animation_data.dart';
+import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 
+import '../../modal/view_model_reader.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
 
@@ -19,20 +23,15 @@ import 'base_animation_page.dart';
 class PageTurnAnimation extends BaseAnimationPage {
   static const velocityThreshHold = 200;
 
-  // late ClampingScrollPhysics physics;
-
   Offset eventStartPoint = Offset.zero;
 
   /// 本次触摸事件Y轴上开始的滑动距离:
   /// 1. 在moveDown事件, 会将currentMoveDy赋值给本变量,
   /// 2. currentMoveDy是用户一直滑动到现在的总滑动距离
-  // double mStartDy = 0;
+  double mStartDx = 0;
 
   ///记录总滚动距离, eg: 用户手指一直滑
-  // double currentMoveDy = 0;
-
-  /// 本次touch事件滑动偏移量
-  // double dy = 0;
+  double currentMoveDx = 0;
 
   /// 上次滑动的index
   /// 负数是下一页, 正数是上一页
@@ -43,14 +42,10 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   AnimationController? _currentAnimationController;
 
-  /// beta
-  double mStartDx = 0;
-  double currentMoveDx = 0;
-  double dx = 0;
-
   // todo 这两个参数干啥的？
   late Tween<Offset> currentAnimationTween;
   late Animation<Offset> currentAnimation;
+  AnimationData? progressAnimation;
 
   final Paint _paint = Paint();
 
@@ -60,7 +55,6 @@ class PageTurnAnimation extends BaseAnimationPage {
   ) : super(
             readerViewModel: viewModel,
             animationController: animationController) {
-    // physics = const ClampingScrollPhysics();
     _setContentViewModel(viewModel);
   }
 
@@ -68,7 +62,6 @@ class PageTurnAnimation extends BaseAnimationPage {
     viewModel.registerContentOperateCallback((operate) {
       eventStartPoint = Offset.zero;
       mStartDx = 0;
-      dx = 0;
       lastIndex = 0;
       currentMoveDx = 0;
     });
@@ -91,59 +84,141 @@ class PageTurnAnimation extends BaseAnimationPage {
   @override
   Simulation getFlingAnimationSimulation(
       AnimationController controller, DragEndDetails details) {
-    ClampingScrollSimulation simulation;
+    // 1. 计算 动画到下一页, 还是回弹回到down时候的坐标
+    double velocity = details.velocity.pixelsPerSecond.dx;
+    double startDx = getCachedTouchData().dx;
 
-    // 惯性动画模拟器
-    simulation = ClampingScrollSimulation(
-      position: mTouchBeta.dx,
-      velocity: details.velocity.pixelsPerSecond.dx,
-      tolerance: Tolerance.defaultTolerance,
+    Pair direction = getAnimationDirection(eventStartPoint.dx, velocity);
+    bool animateToNewPage = direction.left;
+    bool turnNextPage = direction.right;
+    double endDx = 0;
+
+    // 2. 计算 下一页的坐标
+    if (animateToNewPage) {
+      // 继续向前, 到下一页或者上一页
+      if (turnNextPage) {
+        // 下一页(负数), 从down坐标开始往左平移一个屏幕的距离
+        endDx = eventStartPoint.dx - currentSize.width;
+      } else {
+        // 上一页(正数), 从down坐标开始往右平移一个屏幕的距离
+        endDx = eventStartPoint.dx + currentSize.width;
+      }
+      print('flutter动画流程:getFlingSpringSimulation, 前进');
+    } else {
+      // 回弹
+      endDx = eventStartPoint.dx;
+      print('flutter动画流程:getFlingSpringSimulation, 回弹');
+    }
+
+    print(
+        'flutter动画流程:getFlingSpringSimulation current = ${getCachedTouchData()}, '
+        'path: ${eventStartPoint.dx} -> $endDx, currentMoveDx = $currentMoveDx, startX = $mStartDx');
+
+    // 2. 创建惯性动画
+    ScrollSpringSimulation simulation =
+        buildSpringSimulation(getCachedTouchData().dx, endDx, velocity);
+    // 3. 保存正在进行的弹簧惯性动画
+    progressAnimation = AnimationData(
+      start: startDx,
+      end: endDx,
+      velocity: velocity,
+      springRange: SpringAnimationRange(
+        startPageMoveDx: getPageMoveDx(getMoveDistance(eventStartPoint.dx)),
+        endPageMoveDx: getPageMoveDx(getMoveDistance(endDx)),
+        direction: getSpringDirection(animateToNewPage, turnNextPage),
+      ),
     );
     _currentAnimationController = controller;
     return simulation;
   }
 
-  Simulation getFlingSpringSimulation(
-      AnimationController controller, DragEndDetails details) {
+  SpringDirection getSpringDirection(bool animateToNewPage, bool turnNextPage) {
+    if (animateToNewPage) {
+      return turnNextPage
+          ? SpringDirection.rightToLeftNext
+          : SpringDirection.leftToRightPrev;
+    } else {
+      return SpringDirection.none;
+    }
+  }
 
-    // 1. 计算 动画到下一页, 还是回弹回到down时候的坐标
-    final double moveDistance = mTouchBeta.dx - eventStartPoint.dx;
-    double velocity = details.velocity.pixelsPerSecond.dx;
+  Simulation resumeFlingAnimationSimulation() {
+    // 已知: 中断动画range, 起点 -> 终点
+    // resume计算终点的规则:
+    // 判断当前cacheTouchPoint靠近起点还是终点, 向最靠近的点animate
+
+    // todo 根据距离判断 使用spring模拟还是直接更新坐标
+    // if (progressAnimation != null) {
+    //   // 如果四舍五入当前坐标并对比target坐标.
+    //   double? result = progressAnimation!.applyRoundIfClose(pageMoveDx);
+    //   if (result != null) {
+    //     // 已经足够接近, 直接使用target坐标, 并且强制停止动画
+    //     // 在onDraw通知动画notifier重置移动数据
+    //     currentMoveDx = result;
+    //     if (animationController.isAnimating) {
+    //       animationController.stop();
+    //     }
+    //   } else {
+    //     currentMoveDx = pageMoveDx;
+    //   }
+    // } else {
+    //   currentMoveDx = pageMoveDx;
+    // }
+
+    final _progressAnimation =
+        ArgumentError.checkNotNull(progressAnimation, 'progressAnimation');
+    double startDx = getCachedTouchData().dx;
+    double distanceToStart =
+        (startDx - _progressAnimation.springRange.startPageMoveDx).abs();
+    double distanceToEnd =
+        (startDx - _progressAnimation.springRange.startPageMoveDx).abs();
+    double targetMoveDx;
+    if (distanceToStart < distanceToEnd) {
+      targetMoveDx = _progressAnimation.springRange.startPageMoveDx;
+      print('flutter动画流程:getFlingSpringSimulation, 回弹');
+    } else {
+      targetMoveDx = _progressAnimation.springRange.endPageMoveDx;
+      print('flutter动画流程:getFlingSpringSimulation, 前进');
+    }
+    double endDx = targetMoveDx - mStartDx + eventStartPoint.dx;
+
+    print(
+        'flutter动画流程:getFlingSpringSimulation, current = ${getCachedTouchData()}, '
+        'path: ${eventStartPoint.dx} -> $endDx, currentMoveDx = $currentMoveDx, startX = $mStartDx');
+
+    // 2. 创建惯性动画
+    ScrollSpringSimulation simulation =
+        buildSpringSimulation(startDx, endDx, progressAnimation!.velocity);
+    // 3. 保存正在进行的弹簧惯性动画
+    progressAnimation = progressAnimation!.copy(startDx, endDx);
+    return simulation;
+  }
+
+  /// 判断动画方向，上/下一页或者回弹
+  Pair getAnimationDirection(double downEventDx, double velocity) {
+    final double moveDistance = getCachedTouchData().dx - downEventDx;
+    // 通过最短移动距离和手指滑过的速度判断是上/下一页还是回弹
     bool animationForward =
         moveDistance.abs() > minDiff() || velocity.abs() >= velocityThreshHold;
-
-    double moveDistanceX = mTouchBeta.dx - eventStartPoint.dx;
+    // 负数: 用户左滑, 向左移动一屏距离，进入下一页
+    double moveDistanceX = getCachedTouchData().dx - downEventDx;
     bool turnNextPage = moveDistanceX < 0;
-    double destDx = 0;
-    // 2. 计算 下一页的坐标
-    if (animationForward) {
-      // 继续向前, 到下一页或者上一页
-      if (turnNextPage) {
-        destDx = eventStartPoint.dx - currentSize.width;
-      } else {
-        destDx = eventStartPoint.dx + currentSize.width;
-      }
-    } else {
-      // 回弹
-      destDx = eventStartPoint.dx;
-    }
+    return Pair(animationForward, turnNextPage);
+  }
 
-    print('flutter惯性计算, velocity = $velocity, '
-        'path: ${mTouchBeta.dx} -> ${eventStartPoint.dx} '
-        'destDx = $destDx, animComplete: ${_currentAnimationController?.isAnimating}');
-
-    ScrollSpringSimulation simulation = ScrollSpringSimulation(
+  /// 创建惯性动画
+  ScrollSpringSimulation buildSpringSimulation(
+      double start, double end, double velocity) {
+    return ScrollSpringSimulation(
       const SpringDescription(
-        mass: 50, //质量
+        mass: 75, //质量
         stiffness: 10, //硬度
         damping: 0.75, //阻尼系数
       ),
-      mTouchBeta.dx,
-      destDx,
+      start,
+      end,
       velocity,
     );
-    _currentAnimationController = controller;
-    return simulation;
   }
 
   @override
@@ -161,17 +236,21 @@ class PageTurnAnimation extends BaseAnimationPage {
         // readerViewModel.shift(true);
         canvas.translate(actualOffsetX + currentSize.width, 0);
         canvas.drawImage(nextPage, Offset.zero, _paint);
-        print(
-            "flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw下一页");
+        print('flutter动画流程:onDraw下一页, '
+            'actualOffsetX = $actualOffsetX, '
+            'currentMoveDx = $currentMoveDx, '
+            'translate = ${actualOffsetX - currentSize.width}');
       } else {
+        print('flutter动画流程:onDraw[无nextPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'currentMoveDx = $currentMoveDx');
         if (!isCanGoNext()) {
-          dx = 0;
+          lastIndex = 0;
           actualOffsetX = 0;
           currentMoveDx = 0;
 
-          if (_currentAnimationController != null &&
-              !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
+          if (_currentAnimationController?.isCompleted == false) {
+            _currentAnimationController?.stop();
           }
         }
       }
@@ -183,21 +262,28 @@ class PageTurnAnimation extends BaseAnimationPage {
         // readerViewModel.shift(false);
         canvas.translate(actualOffsetX - currentSize.width, 0);
         canvas.drawImage(prevPage, Offset.zero, _paint);
-        print(
-            "flutter横向翻页2, actualOffsetX = $actualOffsetX, currentMoveDx = $currentMoveDx, draw上一页");
+        print('flutter动画流程:onDraw上一页, '
+            'actualOffsetX = $actualOffsetX, '
+            'currentMoveDx = $currentMoveDx, '
+            'translate = ${actualOffsetX - currentSize.width}');
       } else {
+        print('flutter动画流程:onDraw[无prevPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'currentMoveDx = $currentMoveDx');
         if (!isCanGoPre()) {
-          dx = 0;
           lastIndex = 0;
           actualOffsetX = 0;
           currentMoveDx = 0;
 
-          if (_currentAnimationController != null &&
-              !_currentAnimationController!.isCompleted) {
-            _currentAnimationController!.stop();
+          if (_currentAnimationController?.isCompleted == false) {
+            _currentAnimationController?.stop();
           }
         }
       }
+    } else {
+      print('flutter动画流程:onDraw[不绘制上下页], '
+          'actualOffsetX = $actualOffsetX, '
+          'currentMoveDx = $currentMoveDx, 只绘制current');
     }
 
     canvas.restore();
@@ -205,45 +291,39 @@ class PageTurnAnimation extends BaseAnimationPage {
     ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
     if (currentPage != null) {
       canvas.translate(actualOffsetX, 0);
-      canvas.drawImage(currentPage, Offset.zero, Paint());
+      canvas.drawImage(currentPage, Offset.zero, _paint);
     }
     canvas.restore();
   }
 
   @override
   void onTouchEvent(TouchEvent event) {
-    // if (event.touchPos == null) {
-    //   return;
-    // }
-
     switch (event.action) {
-      case TouchEvent.ACTION_DOWN:
+      case TouchEvent.ACTION_DRAG_START:
         // 手指按下, 保存起点
-        if (!dx.isNaN && !dx.isInfinite) {
-          print(
-              "flutter动画流程:横向翻页, down: ${event.touchPosition}, isAnimating = ${animationController.isAnimating}");
+        if (!mStartDx.isNaN && !mStartDx.isInfinite) {
+          print('flutter动画流程:onTouchEvent${event.touchPoint}, 保存dragStart的坐标, '
+              'mStartDx = $currentMoveDx');
           eventStartPoint = event.touchPosition;
           mStartDx = currentMoveDx;
-          dx = 0;
         }
-
         break;
       case TouchEvent.ACTION_MOVE:
-        print(
-            "flutter动画流程:横向翻页, ACTION_MOVE eventX: ${event.touchPosition.dx}");
-        handleEvent(event);
-        break;
       case TouchEvent.ACTION_FLING_RELEASED:
-        print('flutter动画流程:横向翻页, FLING released, $event');
+        print(
+            'flutter动画流程:onTouchEvent${event.touchPoint}, ${event.actionName}, eventStart = $eventStartPoint');
         handleEvent(event);
         break;
-      case TouchEvent.ACTION_UP:
-        print('flutter动画流程:横向翻页/页面切换, ACTION_UP, 动画执行完毕');
-        // eventStartPointBeta = Offset.zero;
-        // mStartDx = 0;
-        // dx = 0;
-        // lastIndexBeta = 0;
-        // currentMoveDx = 0;
+      case TouchEvent.ACTION_DRAG_END:
+        break;
+      case TouchEvent.ACTION_ANIMATION_DONE:
+        print(
+            'flutter动画流程:onTouchEvent${event.touchPoint}, ANIMATION_DONE, 动画执行完毕, 清理坐标数据');
+        // 动画执行完毕，清除进行中的动画数据
+        progressAnimation = null;
+        mStartDx = 0;
+        lastIndex = 0;
+        currentMoveDx = 0;
         break;
       case TouchEvent.ACTION_CANCEL:
         // 这里不会执行, 见setCurrentTouchEvent
@@ -254,7 +334,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   @override
-  bool isShouldAnimatingInterrupt() {
+  bool shouldCancelAnimation() {
     return true;
   }
 
@@ -283,74 +363,90 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   void handleEvent(TouchEvent event) {
-    if (!mTouchBeta.dx.isInfinite && !eventStartPoint.dx.isInfinite) {
+    if (!getCachedTouchData().dx.isInfinite && !eventStartPoint.dx.isInfinite) {
       // 本次滑动偏移量，其实就是dy
-      double moveDistanceX = event.touchPosition.dx - eventStartPoint.dx;
+      double moveDistanceX = getMoveDistance(event.touchPosition.dx);
+      // 如果是中断动画, 判断是否越界了
+      if (progressAnimation != null) {
+        double targetCurrentMoveDx = getPageMoveDx(moveDistanceX);
+        if (!progressAnimation!.springRange.isWithinRange(targetCurrentMoveDx)) {
+          return;
+        }
+      }
+
       if (!currentSize.width.isInfinite &&
           currentSize.width != 0 &&
-          !dx.isInfinite &&
           !currentMoveDx.isInfinite) {
         // 总滚动距离 / 可渲染内容container高度 = 当前页面index
         // ~/是除法, 但返回整数
         int currentIndex = (moveDistanceX + mStartDx) ~/ currentSize.width;
-        // print(
-        //     "flutter动画流程[横向翻页], eventX: ${event.touchPosition.dx}, startPointX: ${eventStartPoint.dx}, "
-        //     "currentIdx = $currentIndex. mStartDx = $mStartDx");
         if (lastIndex != currentIndex) {
           if (currentIndex < lastIndex) {
-            print('flutter动画流程:页面切换, 下一页');
+            print('flutter动画流程:handleEvent[${event.actionName}], '
+                '$currentIndex vs. $lastIndex,'
+                'shift下一页');
             // 翻页完成了, 进行img shift操作
             // if (isCanGoNext()) {
             //   readerViewModel.nextPage();
             // } else {
             //   return;
             // }
-            readerViewModel.navigatePage(PageIndex.next);
+            readerViewModel.shiftPage(PageIndex.next);
+            readerViewModel.onScrollingFinished(PageIndex.next);
           } else if (currentIndex + 1 > lastIndex) {
-            print('flutter动画流程:页面切换, 上一页');
+            print('flutter动画流程:handleEvent[${event.actionName}], '
+                '$currentIndex vs. $lastIndex, '
+                'shift上一页');
             // 翻页完成了, 进行img shift操作
             // if (isCanGoPre()) {
             //   readerViewModel.prePage();
             // } else {
             //   return;
             // }
-            readerViewModel.navigatePage(PageIndex.prev);
+            readerViewModel.shiftPage(PageIndex.prev);
+            readerViewModel.onScrollingFinished(PageIndex.prev);
+          } else {
+            print('flutter动画流程:handleEvent[${event.actionName}], 不操作');
           }
         }
 
-        // if (moveDistanceX < 0 && moveDistanceX.abs() >= currentSize.width) {
-        //   print('flutter横向翻页2, 切换到下一页');
-        //   if (isCanGoNext()) {
-        //     readerViewModel.nextPage();
-        //   } else {
-        //     return;
-        //   }
-        // } else if (moveDistanceX > 0 && moveDistanceX.abs() >= currentSize.width) {
-        //   print('flutter横向翻页2, 切换到上一页');
-        //   if (isCanGoPre()) {
-        //     readerViewModel.prePage();
-        //   } else {
-        //     return;
-        //   }
-        // }
-
         // 保存当前触摸的坐标, 接下来onDraw会用到
-        mTouchBeta = event.touchPosition;
-        // 保存当前滑动偏移量
-        dx = moveDistanceX;
+        cacheCurrentTouchData(event.touchPosition);
         isTurnToNext = moveDistanceX < 0;
         lastIndex = currentIndex;
         // 更新currentMoveDx, drawBottomPage时候使用
-        if (!dx.isInfinite && !currentMoveDx.isInfinite) {
-          currentMoveDx = mStartDx + dx;
+        if (!moveDistanceX.isInfinite && !currentMoveDx.isInfinite) {
+          currentMoveDx = getPageMoveDx(moveDistanceX);
+          print('flutter动画流程:handleEvent[${event.actionName}], '
+              '本次事件偏移量currentMoveDx = $currentMoveDx, ${progressAnimation?.springRange}');
         }
       }
     }
+  }
+
+  double getMoveDistance(double eventDx) {
+    return eventDx - eventStartPoint.dx;
+  }
+
+  double getPageMoveDx(double moveDistance) {
+    return mStartDx + moveDistance;
   }
 
   /// 使用当前触摸event坐标与down event坐标比较, 负数为下一页, 正数为上一页
   @override
   bool isForward(TouchEvent event) {
     return event.touchPosition.dx - eventStartPoint.dx < 0;
+  }
+
+  @override
+  bool isAnimationCloseToEnd() {
+    final _progressAnimation =
+        ArgumentError.checkNotNull(progressAnimation, 'progressAnimation');
+    print(
+        'flutter动画流程:pause, ${currentMoveDx.roundToDouble()}, vs. ${_progressAnimation.springRange}');
+    return currentMoveDx.roundToDouble() ==
+            _progressAnimation.springRange.startPageMoveDx ||
+        currentMoveDx.roundToDouble() ==
+            _progressAnimation.springRange.endPageMoveDx;
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/gestures.dart';
 
-class PagePanGestureRecognizer extends PanGestureRecognizer {
+/// Recognizes movement both horizontally and vertically.
+class PagePanDragRecognizer extends PanGestureRecognizer {
   bool isMenuOpen = false;
 
-  PagePanGestureRecognizer();
+  PagePanDragRecognizer();
 
   void setMenuOpen(bool isOpen) {
     isMenuOpen = isOpen;

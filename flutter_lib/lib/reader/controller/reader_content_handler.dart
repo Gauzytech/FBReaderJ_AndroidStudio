@@ -199,4 +199,11 @@ class ReaderContentHandler {
       {'page_index': pageIndex.index},
     );
   }
+
+  void onScrollingFinished(PageIndex pageIndex) {
+    methodChannel.invokeMethod(
+      'on_scrolling_finished',
+      {'page_index': pageIndex.index},
+    );
+  }
 }

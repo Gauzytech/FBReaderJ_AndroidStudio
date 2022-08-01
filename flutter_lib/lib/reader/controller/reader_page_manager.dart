@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_lib/modal/animation_type.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/reader/animation/callback/animation_notifier.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
@@ -11,7 +11,7 @@ import '../animation/base_animation_page.dart';
 import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
-class ReaderPageManager {
+class ReaderPageManager implements AnimationNotifier {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
@@ -39,42 +39,87 @@ class ReaderPageManager {
     return currentState == RenderState.ANIMATING;
   }
 
+  bool isAnimationPaused() {
+    return currentState == RenderState.ANIMATION_PAUSED;
+  }
+
   Future<bool> canScroll(TouchEvent event) async {
-    if(currentAnimationPage.isForward(event)) {
-      bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
-      print("flutter动画流程, $event, next canScroll: $canScroll");
+    // 中断动画时发生的event
+    if (isAnimationPaused()) {
+      return true;
+    }
+
+    if (currentAnimationPage.isForward(event)) {
+      bool canScroll =
+          await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
       // 判断下一页是否存在
-      bool nextExist = currentAnimationPage.readerViewModel.pageExist(PageIndex.next);
-      if(!nextExist) {
+      bool nextExist =
+          currentAnimationPage.readerViewModel.pageExist(PageIndex.next);
+      print(
+          "flutter动画流程:canScroll${event.touchPoint}, next canScroll: $canScroll, pageExist: $nextExist");
+      if (!nextExist) {
         currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.next);
       }
       return canScroll && nextExist;
     } else {
-      bool canScroll = await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
-      print("flutter动画流程, $event, prev canScroll: $canScroll");
+      bool canScroll =
+          await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
       // 判断上一页是否存在
-      bool prevExist = currentAnimationPage.readerViewModel.pageExist(PageIndex.prev);
-      if(!prevExist) {
+      bool prevExist =
+          currentAnimationPage.readerViewModel.pageExist(PageIndex.prev);
+      print(
+          "flutter动画流程:canScroll${event.touchPoint}, prev canScroll: $canScroll, pageExist: $prevExist");
+      if (!prevExist) {
         currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.prev);
       }
       return canScroll && prevExist;
     }
   }
 
-  void setCurrentTouchEvent(TouchEvent event) {
+  bool setCurrentTouchEvent(TouchEvent event) {
     /// 如果正在执行动画，判断是否需要中止动画
-    if (currentState == RenderState.ANIMATING) {
-      if (currentAnimationPage.isShouldAnimatingInterrupt()) {
-        if (event.action == TouchEvent.ACTION_DOWN) {
-          interruptCancelAnimation();
+    switch (currentAnimationType) {
+      case TYPE_ANIMATION_PAGE_TURN:
+        if (isAnimationInProgress()) {
+          if (event.action == TouchEvent.ACTION_DRAG_START) {
+            // 手指按下并开始移动
+            print('flutter动画流程:中断动画${event.touchPoint}, ${event.actionName}');
+            _pauseAnimation(event);
+            _startTouchEvent(event);
+          }
+          return false;
+        } else if (isAnimationPaused()) {
+          if (event.action == TouchEvent.ACTION_DRAG_END) {
+            print('flutter动画流程:恢复动画${event.touchPoint}, ${event.actionName}');
+            // 重新计算回弹spring动画
+            _resumeAnimation();
+            return false;
+          } else {
+            // 手指移动事件
+            _startTouchEvent(event);
+          }
+        } else {
+          _startTouchEvent(event);
         }
-      }
+        break;
+      default:
+        if (currentState == RenderState.ANIMATING) {
+          if (currentAnimationPage.shouldCancelAnimation()) {
+            if (event.action == TouchEvent.ACTION_DRAG_START) {
+              cancelAnimation();
+            }
+          }
+        }
+        _startTouchEvent(event);
     }
+    return true;
+  }
 
+  void _startTouchEvent(TouchEvent event) {
     /// 用户抬起手指后，是否需要执行动画
-    if (event.action == TouchEvent.ACTION_UP ||
+    if (event.action == TouchEvent.ACTION_DRAG_END ||
         event.action == TouchEvent.ACTION_CANCEL) {
-      print('flutter动画流程:触摸事件, 手指离开屏幕: $event');
+      print('flutter动画流程:setCurrentTouchEvent${event.touchPoint}');
       switch (currentAnimationType) {
         // case TYPE_ANIMATION_SIMULATION_TURN:
         case TYPE_ANIMATION_COVER_TURN:
@@ -85,16 +130,14 @@ class ReaderPageManager {
           }
           break;
         case TYPE_ANIMATION_SLIDE_TURN:
-          startFlingAnimation(event.touchDetail);
-          break;
         case TYPE_ANIMATION_PAGE_TURN:
-          startSpringAnimation(event);
+          startFlingAnimation(event.touchDetail);
           break;
         default:
           break;
       }
     } else {
-      print('flutter动画流程:触摸事件, 手指未离开屏幕, onTouchEvent: $event');
+      print('flutter动画流程:setCurrentTouchEvent${event.touchPoint}');
       currentTouchData = event;
       currentAnimationPage.onTouchEvent(event);
     }
@@ -126,6 +169,7 @@ class ReaderPageManager {
       case TYPE_ANIMATION_PAGE_TURN:
         currentAnimationPage =
             PageTurnAnimation(viewModel, animationController);
+        currentAnimationPage.setAnimationNotifier(this);
         break;
       default:
         break;
@@ -181,7 +225,7 @@ class ReaderPageManager {
             case AnimationStatus.completed:
               currentState = RenderState.IDLE;
               TouchEvent event = TouchEvent(
-                action: TouchEvent.ACTION_UP,
+                action: TouchEvent.ACTION_DRAG_END,
                 touchPosition: const Offset(0, 0),
               );
               currentAnimationPage.onTouchEvent(event);
@@ -192,7 +236,6 @@ class ReaderPageManager {
             case AnimationStatus.forward:
             case AnimationStatus.reverse:
               currentState = RenderState.ANIMATING;
-
               break;
           }
         });
@@ -201,19 +244,6 @@ class ReaderPageManager {
     if (animationController.isCompleted) {
       animationController.reset();
     }
-  }
-
-  void startSpringAnimation(TouchEvent event) {
-    if (event.touchDetail == null) return;
-
-    Simulation? simulation = (currentAnimationPage as PageTurnAnimation)
-        .getFlingSpringSimulation(animationController, event.touchDetail!);
-
-    if (animationController.isCompleted) {
-      animationController.reset();
-    }
-
-    animationController.animateWith(simulation);
   }
 
   void startFlingAnimation(DragEndDetails? details) {
@@ -226,25 +256,50 @@ class ReaderPageManager {
       animationController.reset();
     }
 
-    if(simulation != null) {
+    if (simulation != null) {
       animationController.animateWith(simulation);
     }
   }
 
-  void interruptCancelAnimation() {
-    print('flutter动画流程, 中断当前惯性动画');
+  void cancelAnimation() {
+    print('flutter动画流程:cancelAnimation, 中断当前惯性动画');
     if (!animationController.isCompleted) {
       animationController.stop();
       currentState = RenderState.IDLE;
-      TouchEvent event =
-          TouchEvent(action: TouchEvent.ACTION_UP, touchPosition: Offset.zero);
+      TouchEvent event = TouchEvent(
+          action: TouchEvent.ACTION_DRAG_END, touchPosition: Offset.zero);
       currentAnimationPage.onTouchEvent(event);
       currentTouchData = event.copy();
     }
   }
 
-  bool shouldRepaint(CustomPainter oldDelegate, ContentPainter currentDelegate) {
-    if (currentState == RenderState.ANIMATING || currentTouchData?.action == TouchEvent.ACTION_DOWN) {
+  void _pauseAnimation(TouchEvent event) {
+    if (!animationController.isCompleted) {
+      print('flutter动画流程:_pauseAnimation, pause当前惯性动画');
+      animationController.stop();
+      currentState = RenderState.ANIMATION_PAUSED;
+
+      // todo 不仅通知动画完成, 还要额外手动处理, handleEvent中的page shift操作
+      // if(currentAnimationPage.isAnimationCloseToEnd()) {
+      //   onAnimationComplete();
+      // } else {
+      //   currentState = RenderState.ANIMATION_PAUSED;
+      // }
+    }
+  }
+
+  void _resumeAnimation() {
+    print('flutter动画流程:_resumeAnimation, resume当前惯性动画');
+    currentState = RenderState.ANIMATING;
+    Simulation simulation = (currentAnimationPage as PageTurnAnimation)
+        .resumeFlingAnimationSimulation();
+    animationController.animateWith(simulation);
+  }
+
+  bool shouldRepaint(
+      CustomPainter oldDelegate, ContentPainter currentDelegate) {
+    if (currentState == RenderState.ANIMATING ||
+        currentTouchData?.action == TouchEvent.ACTION_DRAG_START) {
       return true;
     }
 
@@ -253,8 +308,6 @@ class ReaderPageManager {
   }
 
   void _setAnimationController(AnimationController animationController) {
-    // this.animationController = animationController;
-    animationController.duration = const Duration(milliseconds: 300);
 
     if (currentAnimationType == TYPE_ANIMATION_SLIDE_TURN ||
         currentAnimationType == TYPE_ANIMATION_PAGE_TURN) {
@@ -265,8 +318,6 @@ class ReaderPageManager {
           canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
           if (!animationController.value.isInfinite &&
               !animationController.value.isNaN) {
-            print(
-                'flutter横向翻页1, anim value update: ${animationController.value}');
             currentAnimationPage.onTouchEvent(
               currentAnimationType == TYPE_ANIMATION_SLIDE_TURN
                   ? TouchEvent(
@@ -281,19 +332,13 @@ class ReaderPageManager {
           }
         })
         ..addStatusListener((status) {
-          print('flutter横向翻页惯性, anim status update: ${status.name}');
+          print('flutter动画流程:动画监听, anim status update: ${status.name}');
           switch (status) {
             case AnimationStatus.dismissed:
               break;
 
             case AnimationStatus.completed:
-              currentState = RenderState.IDLE;
-              TouchEvent event = TouchEvent(
-                action: TouchEvent.ACTION_UP,
-                touchPosition: Offset.zero,
-              );
-              currentAnimationPage.onTouchEvent(event);
-              currentTouchData = event.copy();
+              onAnimationComplete();
               break;
 
             case AnimationStatus.forward:
@@ -305,4 +350,14 @@ class ReaderPageManager {
     }
   }
 
+  @override
+  void onAnimationComplete() {
+    currentState = RenderState.IDLE;
+    TouchEvent event = TouchEvent(
+      action: TouchEvent.ACTION_ANIMATION_DONE,
+      touchPosition: Offset.zero,
+    );
+    currentAnimationPage.onTouchEvent(event);
+    currentTouchData = event.copy();
+  }
 }

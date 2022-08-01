@@ -184,6 +184,11 @@ public final class BitmapManagerImpl implements BitmapManager {
      * @param forward 是否向前
      */
     void shift(boolean forward) {
+        if (forward) {
+            Timber.v("渲染流程:Bitmap绘制, 所有缓存前进一页");
+        } else  {
+            Timber.v("渲染流程:Bitmap绘制, 所有缓存后退一页");
+        }
         for (int i = 0; i < CACHE_SIZE; ++i) {
             if (cachedPageIndexes[i] == null) {
                 continue;

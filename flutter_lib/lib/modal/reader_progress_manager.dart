@@ -382,7 +382,7 @@ class ReaderProgressManager {
   }
 
   void navigatePage(PageIndex pageIndex) {
-    viewModel.shift(true);
+    viewModel.shift(pageIndex == PageIndex.next);
   }
 }
 

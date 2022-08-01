@@ -39,8 +39,8 @@ class CoverPageAnimation extends BaseAnimationPage {
     }
 
     currentAnimationTween.begin = (coverDirection == ORIENTATION_HORIZONTAL)
-        ? Offset(mTouch.dx, 0)
-        : Offset(0, mTouch.dy);
+        ? Offset(getCachedTouchData().dx, 0)
+        : Offset(0, getCachedTouchData().dy);
     currentAnimationTween.end = (coverDirection == ORIENTATION_HORIZONTAL)
         ? Offset(mStartPoint.dx, 0)
         : Offset(0, mStartPoint.dy);
@@ -95,8 +95,8 @@ class CoverPageAnimation extends BaseAnimationPage {
     }
 
     currentAnimationTween.begin = (coverDirection == ORIENTATION_HORIZONTAL)
-        ? Offset(mTouch.dx, 0)
-        : Offset(0, mTouch.dy);
+        ? Offset(getCachedTouchData().dx, 0)
+        : Offset(0, getCachedTouchData().dy);
     currentAnimationTween.end = (coverDirection == ORIENTATION_HORIZONTAL)
         ? Offset(
             isTurnNext
@@ -116,8 +116,8 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
-    if (isStartAnimation && (mTouch.dx != 0 || mTouch.dy != 0)) {
-      print("flutter内容绘制流程, 覆盖动画，draw animation, mTouch = $mTouch");
+    if (isStartAnimation && (getCachedTouchData().dx != 0 || getCachedTouchData().dy != 0)) {
+      print("flutter内容绘制流程, 覆盖动画，draw animation, mTouch = ${getCachedTouchData()}");
       drawBottomPage(canvas);
       drawCurrentShadow(canvas);
       drawTopPage(canvas);
@@ -131,19 +131,19 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   @override
   void onTouchEvent(TouchEvent event) {
-    mTouch = event.touchPosition;
+    cacheCurrentTouchData(event.touchPosition);
 
     switch (event.action) {
-      case TouchEvent.ACTION_DOWN:
+      case TouchEvent.ACTION_DRAG_START:
         mStartPoint = event.touchPosition;
         break;
       case TouchEvent.ACTION_MOVE:
-      case TouchEvent.ACTION_UP:
+      case TouchEvent.ACTION_DRAG_END:
       case TouchEvent.ACTION_CANCEL:
         if (coverDirection == ORIENTATION_VERTICAL) {
-          isTurnNext = mTouch.dy - mStartPoint.dy < 0;
+          isTurnNext = getCachedTouchData().dy - mStartPoint.dy < 0;
         } else {
-          isTurnNext = mTouch.dx - mStartPoint.dx < 0;
+          isTurnNext = getCachedTouchData().dx - mStartPoint.dx < 0;
         }
 
         /// 上一页, 或者下一页
@@ -187,12 +187,12 @@ class CoverPageAnimation extends BaseAnimationPage {
     if (coverDirection == ORIENTATION_HORIZONTAL) {
       // 水平方向
       if (isTurnNext) {
-        canvas.translate(mTouch.dx - mStartPoint.dx, 0);
+        canvas.translate(getCachedTouchData().dx - mStartPoint.dx, 0);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
         print('flutter内容绘制流程, drawTopPage -> getCurrentPage');
         canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
       } else {
-        canvas.translate((mTouch.dx - mStartPoint.dx) - currentSize.width, 0);
+        canvas.translate((getCachedTouchData().dx - mStartPoint.dx) - currentSize.width, 0);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
         print('flutter内容绘制流程, drawTopPage -> getPrePage');
         canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
@@ -200,14 +200,14 @@ class CoverPageAnimation extends BaseAnimationPage {
     } else {
       // 竖直方向
       if (isTurnNext) {
-        canvas.translate(0, mTouch.dy - mStartPoint.dy);
+        canvas.translate(0, getCachedTouchData().dy - mStartPoint.dy);
         // canvas.drawPicture(readerViewModel.getCurrentPage().pagePicture);
-        print('flutter内容绘制流程, nxt, drawTopPage -> getCurrentPage, ${mTouch.dy - mStartPoint.dy}');
+        print('flutter内容绘制流程, nxt, drawTopPage -> getCurrentPage, ${getCachedTouchData().dy - mStartPoint.dy}');
         canvas.drawImage(readerViewModel.getPage(PageIndex.current)!, Offset.zero, Paint());
       } else {
-        canvas.translate(0, (mTouch.dy - mStartPoint.dy) - currentSize.height);
+        canvas.translate(0, (getCachedTouchData().dy - mStartPoint.dy) - currentSize.height);
         // canvas.drawPicture(readerViewModel.getPrePage().pagePicture);
-        print('flutter内容绘制流程, pre, drawTopPage -> getPrePage, ${mTouch.dy - mStartPoint.dy}');
+        print('flutter内容绘制流程, pre, drawTopPage -> getPrePage, ${getCachedTouchData().dy - mStartPoint.dy}');
         canvas.drawImage(readerViewModel.getPrePage()!, Offset.zero, Paint());
       }
     }
@@ -228,9 +228,9 @@ class CoverPageAnimation extends BaseAnimationPage {
       );
       if (isTurnNext) {
         Rect rect = Rect.fromLTRB(
-            currentSize.width + mTouch.dx - mStartPoint.dx,
+            currentSize.width + getCachedTouchData().dx - mStartPoint.dx,
             0,
-            currentSize.width + mTouch.dx - mStartPoint.dx + 20,
+            currentSize.width + getCachedTouchData().dx - mStartPoint.dx + 20,
             currentSize.height);
         var shadowPaint = Paint()
           ..isAntiAlias = false
@@ -239,8 +239,8 @@ class CoverPageAnimation extends BaseAnimationPage {
 
         canvas.drawRect(rect, shadowPaint);
       } else {
-        Rect rect = Rect.fromLTRB((mTouch.dx - mStartPoint.dx), 0,
-            (mTouch.dx - mStartPoint.dx) + 20, currentSize.height);
+        Rect rect = Rect.fromLTRB((getCachedTouchData().dx - mStartPoint.dx), 0,
+            (getCachedTouchData().dx - mStartPoint.dx) + 20, currentSize.height);
         var shadowPaint = Paint()
           ..isAntiAlias = false
           ..style = PaintingStyle.fill //填充
@@ -260,9 +260,9 @@ class CoverPageAnimation extends BaseAnimationPage {
       if (isTurnNext) {
         Rect rect = Rect.fromLTRB(
             0,
-            currentSize.height - (mStartPoint.dy - mTouch.dy),
+            currentSize.height - (mStartPoint.dy - getCachedTouchData().dy),
             currentSize.width,
-            currentSize.height - (mStartPoint.dy - mTouch.dy) + 20);
+            currentSize.height - (mStartPoint.dy - getCachedTouchData().dy) + 20);
         var shadowPaint = Paint()
           ..isAntiAlias = false
           ..style = PaintingStyle.fill //填充
@@ -270,8 +270,8 @@ class CoverPageAnimation extends BaseAnimationPage {
 
         canvas.drawRect(rect, shadowPaint);
       } else {
-        Rect rect = Rect.fromLTRB(0, -(mStartPoint.dy - mTouch.dy),
-            currentSize.width, -(mStartPoint.dy - mTouch.dy) + 20);
+        Rect rect = Rect.fromLTRB(0, -(mStartPoint.dy - getCachedTouchData().dy),
+            currentSize.width, -(mStartPoint.dy - getCachedTouchData().dy) + 20);
         var shadowPaint = Paint()
           ..isAntiAlias = false
           ..style = PaintingStyle.fill //填充
@@ -293,15 +293,15 @@ class CoverPageAnimation extends BaseAnimationPage {
   @override
   bool isCancelArea() {
     return coverDirection == ORIENTATION_HORIZONTAL
-        ? (mTouch.dx - mStartPoint.dx).abs() < (currentSize.width / 4)
-        : (mTouch.dy - mStartPoint.dy).abs() < (currentSize.height / 4);
+        ? (getCachedTouchData().dx - mStartPoint.dx).abs() < (currentSize.width / 4)
+        : (getCachedTouchData().dy - mStartPoint.dy).abs() < (currentSize.height / 4);
   }
 
   @override
   bool isConfirmArea() {
     return coverDirection == ORIENTATION_HORIZONTAL
-        ? (mTouch.dx - mStartPoint.dx).abs() > (currentSize.width / 4)
-        : (mTouch.dy - mStartPoint.dy).abs() > (currentSize.height / 4);
+        ? (getCachedTouchData().dx - mStartPoint.dx).abs() > (currentSize.width / 4)
+        : (getCachedTouchData().dy - mStartPoint.dy).abs() > (currentSize.height / 4);
   }
 
   void buildCurrentAnimation(AnimationController controller, GlobalKey canvasKey) {

@@ -77,12 +77,14 @@ class ReaderBookContentViewState
     // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
       case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
         animationController = AnimationControllerWithListenerNumber(
+          duration: const Duration(milliseconds: 300),
           vsync: this,
         );
         break;
       case ReaderPageManager.TYPE_ANIMATION_SLIDE_TURN:
       case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
         animationController = AnimationControllerWithListenerNumber.unbounded(
+          duration: const Duration(milliseconds: 150),
           vsync: this,
         );
         break;
@@ -124,26 +126,38 @@ class ReaderBookContentViewState
               height: contentSize[1],
               child: RawGestureDetector(
                 gestures: <Type, GestureRecognizerFactory>{
-                  PagePanGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                          PagePanGestureRecognizer>(
-                    () => PagePanGestureRecognizer(),
-                    (PagePanGestureRecognizer recognizer) {
+                  PagePanDragRecognizer: GestureRecognizerFactoryWithHandlers<
+                      PagePanDragRecognizer>(
+                    () => PagePanDragRecognizer(),
+                    (PagePanDragRecognizer recognizer) {
                       recognizer.setMenuOpen(false);
-                      recognizer.onDown = (detail) {
-                        print("flutter动画流程:触摸事件, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
-                        onDownEvent(detail, readerViewModel);
+                      // recognizer.onDown = (detail) {
+                      //   print(
+                      //       "flutter动画流程:recognizer, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
+                      //   onDownEvent(detail, readerViewModel);
+                      // };
+                      recognizer.onStart = (detail) {
+                        print(
+                            "flutter动画流程:recognizer, ------------------触摸事件[onStart], ${detail.localPosition}------------------>>>>>>>>");
+                        onDragStart(detail, readerViewModel);
                       };
                       recognizer.onUpdate = (detail) {
-                        print("flutter动画流程:触摸事件, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>>");
+                        print(
+                            "flutter动画流程:recognizer, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onUpdateEvent(detail, readerViewModel);
+                        } else {
+                          print(
+                              'flutter动画流程:recognizer, [onUpdate]忽略${detail.localPosition}');
                         }
                       };
                       recognizer.onEnd = (detail) {
-                        print("flutter动画流程:触摸事件, ------------------触摸事件[onEnd], $detail ------------------>>>>>>>>>");
+                        print(
+                            "flutter动画流程:recognizer, ------------------触摸事件[onEnd], $detail------------------>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onEndEvent(detail, readerViewModel);
+                        } else {
+                          print('flutter动画流程:recognizer, [onEnd]忽略$detail');
                         }
                       };
                     },
@@ -203,13 +217,15 @@ class ReaderBookContentViewState
     super.dispose();
   }
 
-  void onDownEvent(DragDownDetails detail, ReaderViewModel readerViewModel) {
+  void onDownEvent(DragDownDetails detail, ReaderViewModel readerViewModel) {}
+
+  void onDragStart(DragStartDetails detail, ReaderViewModel readerViewModel) {
     // 如果动画正在进行, 直接忽略event
     if (!_contentPainter!
-        .isDuplicateEvent(TouchEvent.ACTION_DOWN, detail.localPosition)) {
+        .isDuplicateEvent(TouchEvent.ACTION_DRAG_START, detail.localPosition)) {
       _contentPainter?.setCurrentTouchEvent(
         TouchEvent.fromOnDown(
-          TouchEvent.ACTION_DOWN,
+          TouchEvent.ACTION_DRAG_START,
           detail.localPosition,
         ),
       );
@@ -232,10 +248,11 @@ class ReaderBookContentViewState
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
       if (await pageManager.canScroll(event)) {
-        _contentPainter?.startCurrentTouchEvent(event);
-        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
-      } else {
-        print('flutter动画流程:触摸事件, 忽略$event');
+        if (_contentPainter?.startCurrentTouchEvent(event) == true) {
+          contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        } else {
+          print('flutter动画流程:忽略onUpdate: ${detail.localPosition}');
+        }
       }
     }
   }
@@ -243,11 +260,11 @@ class ReaderBookContentViewState
   Future<void> onEndEvent(
       DragEndDetails detail, ReaderViewModel readerViewModel) async {
     if (!_contentPainter!.isDuplicateEvent(
-      TouchEvent.ACTION_UP,
+      TouchEvent.ACTION_DRAG_END,
       _contentPainter!.lastTouchPosition(),
     )) {
       TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
-        TouchEvent.ACTION_UP,
+        TouchEvent.ACTION_DRAG_END,
         _contentPainter!.lastTouchPosition(),
         detail,
       );
@@ -256,8 +273,6 @@ class ReaderBookContentViewState
       if (await pageManager.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
-      } else {
-        print('flutter动画流程:触摸事件, 忽略$event');
       }
     }
   }

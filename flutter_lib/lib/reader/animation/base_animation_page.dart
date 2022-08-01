@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/reader/animation/callback/animation_notifier.dart';
+import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
 
 import '../../modal/view_model_reader.dart';
 import '../../utils/screen_util.dart';
@@ -7,10 +9,10 @@ import '../controller/touch_event.dart';
 enum ANIMATION_TYPE { TYPE_CONFIRM, TYPE_CANCEL, TYPE_FILING }
 
 abstract class BaseAnimationPage {
-  Offset mTouch = const Offset(0, 0);
-  Offset mTouchBeta = const Offset(0, 0);
+  Offset _mTouch = const Offset(0, 0);
 
   AnimationController animationController;
+  AnimationNotifier? notifier;
 
   Size currentSize =
       Size(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
@@ -44,7 +46,7 @@ abstract class BaseAnimationPage {
   //   animationController = controller;
   // }
 
-  bool isShouldAnimatingInterrupt() {
+  bool shouldCancelAnimation() {
     return false;
   }
 
@@ -70,4 +72,21 @@ abstract class BaseAnimationPage {
       AnimationController controller, DragEndDetails details);
 
   bool isForward(TouchEvent event);
+
+  void cacheCurrentTouchData(Offset touchData) {
+    print('flutter动画流程:cacheCurrentTouchData, $touchData');
+    _mTouch = Offset(touchData.dx, touchData.dy);
+  }
+
+  Offset getCachedTouchData() {
+    return _mTouch;
+  }
+
+  void setAnimationNotifier(AnimationNotifier animationNotifier) {
+    notifier = animationNotifier;
+  }
+
+  bool isAnimationCloseToEnd() {
+    return false;
+  }
 }
