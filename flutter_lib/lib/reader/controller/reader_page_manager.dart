@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
-import 'package:flutter_lib/reader/animation/callback/animation_notifier.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
@@ -11,7 +10,7 @@ import '../animation/base_animation_page.dart';
 import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
-class ReaderPageManager implements AnimationNotifier {
+class ReaderPageManager {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
@@ -169,7 +168,6 @@ class ReaderPageManager implements AnimationNotifier {
       case TYPE_ANIMATION_PAGE_TURN:
         currentAnimationPage =
             PageTurnAnimation(viewModel, animationController);
-        currentAnimationPage.setAnimationNotifier(this);
         break;
       default:
         break;
@@ -278,13 +276,6 @@ class ReaderPageManager implements AnimationNotifier {
       print('flutter动画流程:_pauseAnimation, pause当前惯性动画');
       animationController.stop();
       currentState = RenderState.ANIMATION_PAUSED;
-
-      // todo 不仅通知动画完成, 还要额外手动处理, handleEvent中的page shift操作
-      // if(currentAnimationPage.isAnimationCloseToEnd()) {
-      //   onAnimationComplete();
-      // } else {
-      //   currentState = RenderState.ANIMATION_PAUSED;
-      // }
     }
   }
 
@@ -340,7 +331,6 @@ class ReaderPageManager implements AnimationNotifier {
             case AnimationStatus.completed:
               onAnimationComplete();
               break;
-
             case AnimationStatus.forward:
             case AnimationStatus.reverse:
               currentState = RenderState.ANIMATING;
@@ -350,7 +340,6 @@ class ReaderPageManager implements AnimationNotifier {
     }
   }
 
-  @override
   void onAnimationComplete() {
     currentState = RenderState.IDLE;
     TouchEvent event = TouchEvent(

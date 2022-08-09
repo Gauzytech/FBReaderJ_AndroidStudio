@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/reader/animation/callback/animation_notifier.dart';
 import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
 
 import '../../modal/view_model_reader.dart';
@@ -12,7 +11,6 @@ abstract class BaseAnimationPage {
   Offset _mTouch = const Offset(0, 0);
 
   AnimationController animationController;
-  AnimationNotifier? notifier;
 
   Size currentSize =
       Size(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
@@ -80,10 +78,6 @@ abstract class BaseAnimationPage {
 
   Offset getCachedTouchData() {
     return _mTouch;
-  }
-
-  void setAnimationNotifier(AnimationNotifier animationNotifier) {
-    notifier = animationNotifier;
   }
 
   bool isAnimationCloseToEnd() {

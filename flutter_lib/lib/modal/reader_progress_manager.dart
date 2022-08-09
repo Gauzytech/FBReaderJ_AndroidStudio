@@ -21,7 +21,7 @@ class ReaderProgressManager {
     return currentState;
   }
 
-  bool nextPage() {
+  Future<bool> nextPage() async {
     if (currentState == ReaderProgressStateEnum.STATE_NO_NEXT) {
       return false;
     }

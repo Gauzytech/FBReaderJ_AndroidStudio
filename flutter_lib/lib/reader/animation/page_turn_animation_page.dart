@@ -147,24 +147,6 @@ class PageTurnAnimation extends BaseAnimationPage {
     // resume计算终点的规则:
     // 判断当前cacheTouchPoint靠近起点还是终点, 向最靠近的点animate
 
-    // todo 根据距离判断 使用spring模拟还是直接更新坐标
-    // if (progressAnimation != null) {
-    //   // 如果四舍五入当前坐标并对比target坐标.
-    //   double? result = progressAnimation!.applyRoundIfClose(pageMoveDx);
-    //   if (result != null) {
-    //     // 已经足够接近, 直接使用target坐标, 并且强制停止动画
-    //     // 在onDraw通知动画notifier重置移动数据
-    //     currentMoveDx = result;
-    //     if (animationController.isAnimating) {
-    //       animationController.stop();
-    //     }
-    //   } else {
-    //     currentMoveDx = pageMoveDx;
-    //   }
-    // } else {
-    //   currentMoveDx = pageMoveDx;
-    // }
-
     final _progressAnimation =
         ArgumentError.checkNotNull(progressAnimation, 'progressAnimation');
     double startDx = getCachedTouchData().dx;

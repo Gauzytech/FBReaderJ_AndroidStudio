@@ -51,12 +51,14 @@ class ReaderContentHandler {
 
   /// 通知native创建新内容image
   void buildPage(PageIndex pageIndex) {
+    print('flutter内容绘制流程, buildPage $pageIndex');
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     drawOnBitmap(internalIdx, pageIndex, true, true);
   }
 
   Future<ui.Image?> buildPageOnly(PageIndex pageIndex) async {
+    print('flutter内容绘制流程, buildPageOnly');
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     return await drawOnBitmap(internalIdx, pageIndex, false, false);
@@ -166,26 +168,6 @@ class ReaderContentHandler {
   }
 
   PageIndex getPageIndex(bool forward) {
-    // _bitmapManager.shift(pageIndex == PageIndex.next);
-
-    // if(forward) {
-    //   if(currentPageIndex == PageIndex.current) {
-    //     return PageIndex.next;
-    //   } else if(currentPageIndex == PageIndex.prev){
-    //     return PageIndex.current;
-    //   } else if(currentPageIndex == PageIndex.next){
-    //     return PageIndex.prev;
-    //   }
-    // } else {
-    //   if(currentPageIndex == PageIndex.current) {
-    //     return PageIndex.prev;
-    //   } else if(currentPageIndex == PageIndex.prev){
-    //     return PageIndex.next;
-    //   } else if(currentPageIndex == PageIndex.next){
-    //     return PageIndex.current;
-    //   }
-    // }
-
     return PageIndex.current;
   }
 

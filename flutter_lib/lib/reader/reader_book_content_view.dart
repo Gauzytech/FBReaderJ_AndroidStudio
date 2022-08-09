@@ -137,23 +137,19 @@ class ReaderBookContentViewState
                       //   onDownEvent(detail, readerViewModel);
                       // };
                       recognizer.onStart = (detail) {
-                        print(
-                            "flutter动画流程:recognizer, ------------------触摸事件[onStart], ${detail.localPosition}------------------>>>>>>>>");
+                        print("flutter动画流程:recognizer, ------------------触摸事件[onStart], ${detail.localPosition}------------------>>>>>>>>");
                         onDragStart(detail, readerViewModel);
                       };
                       recognizer.onUpdate = (detail) {
-                        print(
-                            "flutter动画流程:recognizer, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>");
+                        print("flutter动画流程:recognizer, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onUpdateEvent(detail, readerViewModel);
                         } else {
-                          print(
-                              'flutter动画流程:recognizer, [onUpdate]忽略${detail.localPosition}');
+                          print('flutter动画流程:recognizer, [onUpdate]忽略${detail.localPosition}');
                         }
                       };
                       recognizer.onEnd = (detail) {
-                        print(
-                            "flutter动画流程:recognizer, ------------------触摸事件[onEnd], $detail------------------>>>>>>>>");
+                        print("flutter动画流程:recognizer, ------------------触摸事件[onEnd], $detail------------------>>>>>>>>");
                         if (!readerViewModel.getMenuOpenState()) {
                           onEndEvent(detail, readerViewModel);
                         } else {
