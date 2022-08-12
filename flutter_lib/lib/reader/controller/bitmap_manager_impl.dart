@@ -53,6 +53,8 @@ class BitmapManagerImpl extends IBitmapManager {
     return ImageSrc(img: null, processing: false);
   }
 
+  /// 调用方法会先在cachedPageIndexes将缓存page index占住，
+  /// 但是_imageCache中的image可能还是null
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
     final int internalCacheIndex = getInternalIndex(pageIndex);
@@ -146,5 +148,10 @@ class BitmapManagerImpl extends IBitmapManager {
 class ImageSrc {
   ui.Image? img;
   bool processing;
+
   ImageSrc({required this.img, required this.processing});
+
+  bool shouldDrawImage() {
+    return img == null && !processing;
+  }
 }

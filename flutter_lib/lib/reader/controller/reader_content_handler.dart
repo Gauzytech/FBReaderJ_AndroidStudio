@@ -123,36 +123,43 @@ class ReaderContentHandler {
     ImageSrc prevImage = getPage(PageIndex.prev);
     ImageSrc nextImage = getPage(PageIndex.next);
 
-    int? prevIdx = prevImage.img == null ? _bitmapManager.findInternalCacheIndex(PageIndex.prev) : null;
-    int? nextIdx = nextImage.img == null ? _bitmapManager.findInternalCacheIndex(PageIndex.next) : null;
+    int? prevIdx = prevImage.shouldDrawImage()
+        ? _bitmapManager.findInternalCacheIndex(PageIndex.prev)
+        : null;
+    int? nextIdx = nextImage.shouldDrawImage()
+        ? _bitmapManager.findInternalCacheIndex(PageIndex.next)
+        : null;
 
-    print("flutter内容绘制流程, 准备相邻页面${prevImage == null}, ${nextImage == null}");
-    Map<Object?, Object?> result =
-        await methodChannel.invokeMethod("prepare_page", {
-      'width': widthPx,
-      'height': heightPx,
-      'update_prev_page_cache': prevIdx != null,
-      'update_next_page_cache': nextIdx != null,
-    });
+    if(prevIdx != null || nextIdx != null) {
+      print("flutter内容绘制流程, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
+      Map<Object?, Object?> result =
+      await methodChannel.invokeMethod("prepare_page", {
+        'width': widthPx,
+        'height': heightPx,
+        'update_prev_page_cache': prevIdx != null,
+        'update_next_page_cache': nextIdx != null,
+      });
 
-    final prev = result['prev'];
-    if (prevIdx != null && prev != null) {
-      prev as Uint8List;
-      print("flutter内容绘制流程, 收到prevPage ${prev.length}, 插入$prevIdx");
-      ui.Codec codec = await ui.instantiateImageCodec(prev);
-      ui.FrameInfo fi = await codec.getNextFrame();
-      final image = fi.image;
-      _bitmapManager.cacheBitmap(prevIdx, image);
-    }
+      final prev = result['prev'];
+      if (prevIdx != null && prev != null) {
+        prev as Uint8List;
+        print("flutter内容绘制流程, 收到prevPage ${prev.length}, 插入$prevIdx");
+        ui.Codec codec = await ui.instantiateImageCodec(prev);
+        ui.FrameInfo fi = await codec.getNextFrame();
+        final image = fi.image;
+        _bitmapManager.cacheBitmap(prevIdx, image);
+      }
 
-    final next = result['next'];
-    if (nextIdx != null && next != null) {
-      next as Uint8List;
-      print("flutter内容绘制流程, 收到nextPage ${next.length}, 插入$nextIdx");
-      ui.Codec codec = await ui.instantiateImageCodec(next);
-      ui.FrameInfo fi = await codec.getNextFrame();
-      final image = fi.image;
-      _bitmapManager.cacheBitmap(nextIdx, image);
+      final next = result['next'];
+      if (nextIdx != null && next != null) {
+        next as Uint8List;
+        print("flutter内容绘制流程, 收到nextPage ${next.length}, 插入$nextIdx");
+        ui.Codec codec = await ui.instantiateImageCodec(next);
+        ui.FrameInfo fi = await codec.getNextFrame();
+        final image = fi.image;
+        _bitmapManager.cacheBitmap(nextIdx, image);
+      }
+
     }
 
     print(
