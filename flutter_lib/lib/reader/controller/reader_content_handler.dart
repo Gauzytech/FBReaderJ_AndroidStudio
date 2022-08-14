@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
+import 'package:flutter_lib/modal/pair.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
 
@@ -58,7 +59,7 @@ class ReaderContentHandler {
   }
 
   Future<ui.Image?> buildPageOnly(PageIndex pageIndex) async {
-    print('flutter内容绘制流程, buildPageOnly');
+    print('flutter内容绘制流程, buildPageOnly, $pageIndex');
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     return await drawOnBitmap(internalIdx, pageIndex, false, false);
@@ -69,25 +70,15 @@ class ReaderContentHandler {
   /// 通知native绘制当前页img
   Future<ui.Image?> drawOnBitmap(int internalCacheIndex, PageIndex pageIndex, bool notify, bool prepareAdjacent) async {
     try {
-      final ratio = MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
+      final metrics = _getBitmapDrawAreaMetrics();
 
-      print("flutter内容绘制流程, render_page, "
-          "ratio = ${MediaQuery.of(readerBookContentViewState.context).devicePixelRatio}, "
-          "windowSize = ${ui.window.physicalSize},"
-          "footerHeight = ${readerBookContentViewState.footerKey.currentContext?.size?.height},");
-
-      // 屏幕宽度
-      double widthPx = ui.window.physicalSize.width;
-      // 屏幕高度 - footer高度
-      double heightPx = ui.window.physicalSize.height -
-          readerBookContentViewState.footerKey.currentContext!.size!.height *
-              ratio;
+      // 调用native方法，将绘制当前page
       Uint8List imageBytes = await methodChannel.invokeMethod(
         'draw_on_bitmap',
         {
           'page_index': pageIndex.index,
-          'width': widthPx,
-          'height': heightPx,
+          'width': metrics.left,
+          'height': metrics.right,
         },
       );
 
@@ -105,11 +96,6 @@ class ReaderContentHandler {
         refreshContent();
       }
 
-      // 准备相邻的前, 后页面
-      if(prepareAdjacent) {
-        _prepareAdjacentPage(widthPx, heightPx);
-      }
-
       return image;
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
@@ -119,7 +105,9 @@ class ReaderContentHandler {
   }
 
   /// 到达当前页页之后, 事先缓存2页：上一页/下一页
-  Future<void> _prepareAdjacentPage(double widthPx, double heightPx) async {
+  Future<void> preloadAdjacentPages() async {
+    final metrics = _getBitmapDrawAreaMetrics();
+
     ImageSrc prevImage = getPage(PageIndex.prev);
     ImageSrc nextImage = getPage(PageIndex.next);
 
@@ -130,12 +118,13 @@ class ReaderContentHandler {
         ? _bitmapManager.findInternalCacheIndex(PageIndex.next)
         : null;
 
+    print("flutter动画流程:preloadAdjacentPage, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
+    print("flutter内容绘制流程, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
     if(prevIdx != null || nextIdx != null) {
-      print("flutter内容绘制流程, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
       Map<Object?, Object?> result =
       await methodChannel.invokeMethod("prepare_page", {
-        'width': widthPx,
-        'height': heightPx,
+        'width': metrics.left,
+        'height': metrics.right,
         'update_prev_page_cache': prevIdx != null,
         'update_next_page_cache': nextIdx != null,
       });
@@ -143,7 +132,7 @@ class ReaderContentHandler {
       final prev = result['prev'];
       if (prevIdx != null && prev != null) {
         prev as Uint8List;
-        print("flutter内容绘制流程, 收到prevPage ${prev.length}, 插入$prevIdx");
+        print("flutter内容绘制流程, 收到prevPage ${prev.length}");
         ui.Codec codec = await ui.instantiateImageCodec(prev);
         ui.FrameInfo fi = await codec.getNextFrame();
         final image = fi.image;
@@ -153,17 +142,18 @@ class ReaderContentHandler {
       final next = result['next'];
       if (nextIdx != null && next != null) {
         next as Uint8List;
-        print("flutter内容绘制流程, 收到nextPage ${next.length}, 插入$nextIdx");
+        print("flutter内容绘制流程, 收到nextPage ${next.length}");
         ui.Codec codec = await ui.instantiateImageCodec(next);
         ui.FrameInfo fi = await codec.getNextFrame();
         final image = fi.image;
         _bitmapManager.cacheBitmap(nextIdx, image);
       }
-
     }
 
     print(
-        "flutter内容绘制流程, 准备完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
+        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
+    print(
+        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
   }
 
   List<double> getContentSize() {
@@ -182,6 +172,7 @@ class ReaderContentHandler {
     _bitmapManager.clear();
   }
 
+  /// 判断是否可以滚动到上一页/下一页
   Future<bool> canScroll(PageIndex pageIndex) async {
     return await methodChannel.invokeMethod(
       'can_scroll',
@@ -194,5 +185,23 @@ class ReaderContentHandler {
       'on_scrolling_finished',
       {'page_index': pageIndex.index},
     );
+  }
+
+  /// 获得需要绘制图片区域的跨高.
+  /// returns [Pair] of [widthPx, heightPx].
+  Pair _getBitmapDrawAreaMetrics() {
+    final ratio = MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
+    print("flutter内容绘制流程, render_page, "
+        "ratio = ${MediaQuery.of(readerBookContentViewState.context).devicePixelRatio}, "
+        "windowSize = ${ui.window.physicalSize},"
+        "footerHeight = ${readerBookContentViewState.footerKey.currentContext?.size?.height},");
+
+    // 屏幕宽度
+    double widthPx = ui.window.physicalSize.width;
+    // 屏幕高度 - footer高度
+    double heightPx = ui.window.physicalSize.height -
+        readerBookContentViewState.footerKey.currentContext!.size!.height *
+            ratio;
+    return Pair(widthPx, heightPx);
   }
 }

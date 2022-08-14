@@ -266,6 +266,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       print('flutter动画流程:onDraw[不绘制上下页], '
           'actualOffsetX = $actualOffsetX, '
           'currentMoveDx = $currentMoveDx, 只绘制current');
+      readerViewModel.preloadAdjacentPage();
     }
 
     canvas.restore();

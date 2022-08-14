@@ -238,6 +238,11 @@ class ReaderViewModel extends BaseViewModel {
     _readerContentHandler?.onScrollingFinished(pageIndex);
   }
 
+  /// 预加载相邻页面
+  void preloadAdjacentPage() {
+    _readerContentHandler?.preloadAdjacentPages();
+  }
+
   @override
   void dispose() {
     super.dispose();

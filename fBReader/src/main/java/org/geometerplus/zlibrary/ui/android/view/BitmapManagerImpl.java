@@ -196,4 +196,17 @@ public final class BitmapManagerImpl implements BitmapManager {
             cachedPageIndexes[i] = forward ? cachedPageIndexes[i].getPrevious() : cachedPageIndexes[i].getNext();
         }
     }
+
+    String cachedIndexString() {
+        StringBuilder sb = new StringBuilder();
+        for (ZLViewEnums.PageIndex index : cachedPageIndexes) {
+            if (index == null) {
+                sb.append("null");
+            } else {
+                sb.append(index.name());
+            }
+            sb.append(",");
+        }
+        return sb.toString();
+    }
 }

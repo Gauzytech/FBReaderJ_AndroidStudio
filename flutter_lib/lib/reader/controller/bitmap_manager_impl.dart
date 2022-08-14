@@ -19,8 +19,8 @@ class BitmapManagerImpl extends IBitmapManager {
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
-  /// @param w 宽
-  /// @param h 高
+  /// @param width 宽
+  /// @param height 高
   void setSize(int width, int height) {
     if (contentWidth != width || contentHeight != height) {
       contentWidth = width;
@@ -57,6 +57,7 @@ class BitmapManagerImpl extends IBitmapManager {
   /// 但是_imageCache中的image可能还是null
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
+    print("flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $cachedPageIndexes");
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
     cachedPageIndexes[internalCacheIndex] = pageIndex;

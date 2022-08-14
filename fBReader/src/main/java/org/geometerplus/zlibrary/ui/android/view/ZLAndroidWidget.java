@@ -414,7 +414,8 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             drawMagnifier(canvas, bitmap);
         }
 
-        if (DebugHelper.PRELOAD_NEXT_PREV_PAGE_ENABLE) {
+        if (DebugHelper.ENABLE_PRELOAD_ADJACENT_PAGE) {
+            Timber.v("渲染流程[相邻页面], %s", myBitmapManager.cachedIndexString());
             post(() -> contentProcessor.prepareAdjacentPage(
                     getWidth(),
                     getHeight(),
@@ -430,6 +431,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     @Override
     public void cacheBitmap(ZLViewEnums.PageIndex pageIndex) {
         myBitmapManager.getBitmap(pageIndex, "准备相邻页面 -> cachePageBitmap -> cacheBitmap");
+        Timber.v("渲染流程[相邻页面], %s", myBitmapManager.cachedIndexString());
     }
 
     /**

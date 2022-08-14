@@ -27,7 +27,6 @@ abstract class BaseStatefulViewState<T extends BaseStatefulView,
     viewModel = buildViewModel(context);
 
     if (isBindViewModel()) {
-      print('flutter内容绘制流程, bindVM -> onBuildView');
       return ChangeNotifierProvider<M>(
         create: (ctx) {
           loadData(ctx, viewModel);
@@ -46,7 +45,6 @@ abstract class BaseStatefulViewState<T extends BaseStatefulView,
         }),
       );
     } else {
-      print('flutter内容绘制流程, not bindVM -> onBuildView');
       loadData(context, viewModel);
       return onBuildView(context, viewModel);
     }
