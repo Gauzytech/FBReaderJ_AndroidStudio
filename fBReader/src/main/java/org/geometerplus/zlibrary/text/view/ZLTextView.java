@@ -56,7 +56,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private static final char[] ourDefaultLetters = "System developers have used modeling languages for decades to specify, visualize, construct, and document systems. The Unified Modeling Language (UML) is one of those languages. UML makes it possible for team members to collaborate by providing a common language that applies to a multitude of different systems. Essentially, it enables you to communicate solutions in a consistent, tool-supported language.".toCharArray();
     private static final char[] SPACE = new char[]{' '};
     private final HashMap<ZLTextLineInfo, ZLTextLineInfo> myLineInfoCache = new HashMap<ZLTextLineInfo, ZLTextLineInfo>();
-    private final ZLTextSelection mySelection = new ZLTextSelection(this);
+    public final ZLTextSelection mySelection = new ZLTextSelection(this);
     private final Set<ZLTextHighlighting> myHighlightingList = Collections.synchronizedSet(new TreeSet<>());
     private final Set<ZLTextHighlighting> myBookMarkList = Collections.synchronizedSet(new TreeSet<>());
     private final char[] myLettersBuffer = new char[512];
@@ -349,16 +349,28 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
     }
 
-    protected void moveSelectionCursorTo(SelectionCursor.Which which, int x, int y) {
+    protected void moveSelectionCursorTo(SelectionCursor.Which which, int x, int y, String from) {
+        Timber.v("长按选中流程[%s], moveSelectionCursorTo: %s", from, getSelectionDebug());
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         mySelection.setCursorInMovement(which, x, y);
         mySelection.expandTo(myCurrentPage, x, y);
         repaint("moveSelectionCursorTo");
     }
 
+    protected void moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y) {
+        Timber.v("长按选中流程, %s", getSelectionDebug());
+        y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
+        mySelection.setCursorInMovement(which, x, y);
+        mySelection.expandTo(myCurrentPage, x, y);
+    }
+
     protected void releaseSelectionCursor() {
         mySelection.stop();
         repaint("releaseSelectionCursor");
+    }
+
+    protected void releaseSelectionCursorFlutter() {
+        mySelection.stop();
     }
 
     protected SelectionCursor.Which getSelectionCursorInMovement() {
@@ -525,13 +537,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 笔记效果: 计算需要高亮的文字
         // 长按选中效果见findHighlightingList()
-        final List<ZLTextHighlighting> highlightingList = findHighlightingList(page);
+        final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
 
         for (ZLTextHighlighting h : highlightingList) {
             int mode = Hull.DrawMode.None;
 
             final ZLColor bgColor = h.getBackgroundColor();
             if (bgColor != null) {
+                Timber.v("长按选中流程[绘制],  绘制fill");
                 paintContext.setFillColor(bgColor);
                 mode |= Hull.DrawMode.Fill;
             }
@@ -563,7 +576,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 绘制outline ????没发现效果
         final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
+        Timber.v("长按选中流程, 当前outline = %s", outlinedElementRegion);
         if (outlinedElementRegion != null && myShowOutline) {
+            Timber.v("长按选中流程[绘制],  绘制outline");
             paintContext.setLineColor(getSelectionBackgroundColor());
             outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
         }
@@ -575,6 +590,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 左上角标题效果: 绘制头部（章节标题）
         paintContext.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
         paintContext.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
+
         // 右下角总页码效果: 绘制底部（总页码）
         // TODO: 总页码计算不准确
         if (DebugHelper.FOOTER_PAGE_COUNT_ENABLE) {
@@ -960,7 +976,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         preparePaintInfo();
     }
 
-    private List<ZLTextHighlighting> findHighlightingList(ZLTextPage page) {
+    /** 长按选中效果 */
+    private List<ZLTextHighlighting> findHighlightingList(ZLTextPage page, String from) {
+        Timber.v("长按选中流程: 匹配选中区域, %s, %s", from, getSelectionDebug());
         final LinkedList<ZLTextHighlighting> highlightingList = new LinkedList<>();
         // 长按选中高亮效果
         if (mySelection.intersects(page)) {
@@ -1931,6 +1949,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final void outlineRegion(ZLTextRegion region) {
+        Timber.v("长按选中流程, 设置当前outline: %s", region);
         outlineRegion(region != null ? region.getSoul() : null);
     }
 
@@ -1978,17 +1997,34 @@ public abstract class ZLTextView extends ZLTextViewBase {
 	}
 */
 
-    protected boolean initSelection(int x, int y) {
+    protected void setSelectedRegion(ZLTextRegion region) {
+        mySelection.start(region);
+    }
+    /**
+     * 在这里设定选中的区域, 选定的文字区域一般在触摸坐标的上一行
+     */
+    protected boolean setSelectionRegionWithTextSize(int x, int y) {
+        // 在这里初始化选中的区域,
+        Timber.v("长按选中流程, y = %d, fontSize = %s", y, getTextStyleCollection().getBaseStyle().getFontSize());
+        // y坐标减去字体高度，因为选中区域永远在触摸坐标的上面
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
-        if (!mySelection.start(x, y)) {
-            return false;
-        }
-        repaint("initSelection");
-        return true;
+        Timber.v("长按选中流程, y = %s", y);
+        return mySelection.start(x, y);
     }
 
+//    protected boolean drawSelection(int x, int y) {
+//        // 在这里初始化选中的区域,
+//        y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
+//        if (!mySelection.start(x, y)) {
+//            return false;
+//        }
+//        Timber.v("长按选中流程, 设置选中区域: %s", getSelectionDebug());
+//        repaint("drawSelection");
+//        return true;
+//    }
+
     public void clearSelection() {
-        if (mySelection.clear()) {
+        if (mySelection.clear() && !DebugHelper.ENABLE_FLUTTER) {
             repaint("clearSelection");
         }
     }
@@ -2104,5 +2140,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         public int Height;
         public int TopMargin;
         public int BottomMargin;
+    }
+
+    public String getSelectionDebug() {
+        return mySelection.getStartPosition() + " " + mySelection.getEndPosition();
     }
 }

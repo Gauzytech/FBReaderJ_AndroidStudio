@@ -8,23 +8,24 @@ import 'package:flutter_lib/modal/page_index.dart';
 class BitmapManagerImpl extends IBitmapManager {
   /// 缓存Bitmap大小
   static const int cacheSize = 4;
-  final List<ui.Image?> _imageCache = List.filled(cacheSize, null, growable: false);
+  final List<ui.Image?> _imageCache =
+      List.filled(cacheSize, null, growable: false);
 
   // 缓存4个pageIndex
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
-  List<PageIndex?> cachedPageIndexes =
+  List<PageIndex?> pageIndexeCache =
       List.filled(cacheSize, null, growable: false);
-  int contentWidth = 0;
-  int contentHeight = 0;
+  int _contentWidth = 0;
+  int _contentHeight = 0;
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
   /// @param width 宽
   /// @param height 高
   void setSize(int width, int height) {
-    if (contentWidth != width || contentHeight != height) {
-      contentWidth = width;
-      contentHeight = height;
+    if (_contentWidth != width || _contentHeight != height) {
+      _contentWidth = width;
+      _contentHeight = height;
       // clear();
     }
   }
@@ -34,7 +35,7 @@ class BitmapManagerImpl extends IBitmapManager {
     for (int i = 0; i < cacheSize; ++i) {
       _imageCache[i]?.dispose();
       _imageCache[i] = null;
-      cachedPageIndexes[i] = null;
+      pageIndexeCache[i] = null;
     }
   }
 
@@ -45,7 +46,7 @@ class BitmapManagerImpl extends IBitmapManager {
   @override
   ImageSrc getBitmap(PageIndex index) {
     for (int i = 0; i < cacheSize; ++i) {
-      if (cachedPageIndexes[i] == index) {
+      if (pageIndexeCache[i] == index) {
         ui.Image? image = _imageCache[i];
         return ImageSrc(img: image, processing: image == null);
       }
@@ -57,12 +58,13 @@ class BitmapManagerImpl extends IBitmapManager {
   /// 但是_imageCache中的image可能还是null
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
-    print("flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $cachedPageIndexes");
+    print(
+        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $pageIndexeCache");
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
-    cachedPageIndexes[internalCacheIndex] = pageIndex;
+    pageIndexeCache[internalCacheIndex] = pageIndex;
 
-    if(_imageCache[internalCacheIndex] == null) {
+    if (_imageCache[internalCacheIndex] == null) {
       return internalCacheIndex;
     } else {
       // 如果已经存在一个image, 直接清掉
@@ -73,14 +75,24 @@ class BitmapManagerImpl extends IBitmapManager {
   }
 
   void cacheBitmap(int internalCacheIndex, ui.Image image) {
-    print("flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}], idx = $internalCacheIndex");
+    print(
+        "flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}], idx = $internalCacheIndex");
     _imageCache[internalCacheIndex] = image;
   }
 
-  @override
-  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {
-
+  void replaceBitmapCache(PageIndex index, ui.Image image) {
+    print(
+        "flutter内容绘制流程, replaceBitmapCache [${image.width}, ${image.height}], PageIndex = $index");
+    for (int i = 0; i < pageIndexeCache.length; i++) {
+      if (pageIndexeCache[i] == index) {
+        _imageCache[i] = image;
+        break;
+      }
+    }
   }
+
+  @override
+  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {}
 
   @override
   void drawPreviewBitmap(
@@ -94,15 +106,15 @@ class BitmapManagerImpl extends IBitmapManager {
   int getInternalIndex(PageIndex index) {
     // 寻找没有存储内容的位置
     for (int i = 0; i < cacheSize; ++i) {
-      if (cachedPageIndexes[i] == null) {
+      if (pageIndexeCache[i] == null) {
         return i;
       }
     }
     // 如果没有，找一个不是当前的位置
     for (int i = 0; i < cacheSize; ++i) {
-      if (cachedPageIndexes[i] != PageIndex.current &&
-          cachedPageIndexes[i] != PageIndex.prev &&
-          cachedPageIndexes[i] != PageIndex.next) {
+      if (pageIndexeCache[i] != PageIndex.current &&
+          pageIndexeCache[i] != PageIndex.prev &&
+          pageIndexeCache[i] != PageIndex.next) {
         return i;
       }
     }
@@ -113,7 +125,7 @@ class BitmapManagerImpl extends IBitmapManager {
   /// TODO: 需要精确rest（避免不必要的缓存失效）
   void reset() {
     for (int i = 0; i < cacheSize; ++i) {
-      cachedPageIndexes[i] = null;
+      pageIndexeCache[i] = null;
     }
   }
 
@@ -130,19 +142,19 @@ class BitmapManagerImpl extends IBitmapManager {
   /// next, current, next2, null
   void shift(bool forward) {
     for (int i = 0; i < cacheSize; ++i) {
-      if (cachedPageIndexes[i] == null) {
+      if (pageIndexeCache[i] == null) {
         continue;
       }
-      if(forward) {
-        cachedPageIndexes[i] = cachedPageIndexes[i]!.getPrevious();
+      if (forward) {
+        pageIndexeCache[i] = pageIndexeCache[i]!.getPrevious();
       } else {
-        cachedPageIndexes[i] = cachedPageIndexes[i]!.getNext();
+        pageIndexeCache[i] = pageIndexeCache[i]!.getNext();
       }
     }
   }
 
   List<double> getContentSize() {
-    return [contentWidth.toDouble(), contentHeight.toDouble()];
+    return [_contentWidth.toDouble(), _contentHeight.toDouble()];
   }
 }
 

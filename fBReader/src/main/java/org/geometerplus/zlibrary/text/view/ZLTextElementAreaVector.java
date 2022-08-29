@@ -21,10 +21,15 @@ package org.geometerplus.zlibrary.text.view;
 
 import java.util.*;
 
+import timber.log.Timber;
+
+/**
+ * 用于保存本页所有文字/图片等元素的分布情况
+ */
 final class ZLTextElementAreaVector {
 	private final List<ZLTextElementArea> myAreas =
-		Collections.synchronizedList(new ArrayList<ZLTextElementArea>());
-	private final List<ZLTextRegion> myElementRegions = new ArrayList<ZLTextRegion>();
+		Collections.synchronizedList(new ArrayList<>());
+	private final List<ZLTextRegion> myElementRegions = new ArrayList<>();
 	private ZLTextRegion myCurrentElementRegion;
 
 	void clear() {
@@ -41,7 +46,7 @@ final class ZLTextElementAreaVector {
 
 	public List<ZLTextElementArea> areas() {
 		synchronized (myAreas) {
-			return new ArrayList<ZLTextElementArea>(myAreas);
+			return new ArrayList<>(myAreas);
 		}
 	}
 
@@ -153,6 +158,9 @@ final class ZLTextElementAreaVector {
 		return null;
 	}
 
+	/**
+	 * 通过[x, y]的坐标计算触摸点所在是内容文字第几行
+	 */
 	ZLTextRegion findRegion(int x, int y, int maxDistance, ZLTextRegion.Filter filter) {
 		ZLTextRegion bestRegion = null;
 		int distance = maxDistance + 1;

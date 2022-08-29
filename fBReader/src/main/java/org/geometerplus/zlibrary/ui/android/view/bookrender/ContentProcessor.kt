@@ -60,14 +60,19 @@ interface ContentProcessor {
      * @return 是否水平方向
      */
     val isHorizontal: Boolean
-    fun onFingerLongPress(x: Int, y: Int): Boolean
-    fun onFingerSingleTap(x: Int, y: Int)
+
+    /** 点击事件 */
+    fun onFingerSingleTap(x: Int, y: Int, paintListener: PaintListener?)
     fun onFingerPress(x: Int, y: Int)
     fun onFingerMove(x: Int, y: Int)
     fun onFingerDoubleTap(x: Int, y: Int)
     fun onFingerEventCancelled()
-    fun onFingerReleaseAfterLongPress(x: Int, y: Int)
-    fun onFingerMoveAfterLongPress(x: Int, y: Int)
+    /** 长按事件 */
+    fun onFingerLongPress(x: Int, y: Int, paintListener: PaintListener?): Boolean
+    /** 长按移动事件 */
+    fun onFingerMoveAfterLongPress(x: Int, y: Int, paintListener: PaintListener?)
+    /** 长按完成事件 */
+    fun onFingerReleaseAfterLongPress(x: Int, y: Int, paintListener: PaintListener?)
 
     /**
      * 是否双击支持

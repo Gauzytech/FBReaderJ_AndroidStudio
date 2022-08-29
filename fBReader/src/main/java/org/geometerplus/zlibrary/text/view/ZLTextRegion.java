@@ -19,9 +19,13 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+
 import java.util.*;
 
 import org.geometerplus.zlibrary.core.view.Hull;
+
+import timber.log.Timber;
 
 public final class ZLTextRegion {
 	public static abstract class Soul implements Comparable<Soul> {
@@ -94,24 +98,41 @@ public final class ZLTextRegion {
 			}
 			return 0;
 		}
+
+		@NonNull
+		@Override
+		public String toString() {
+			return "ParagraphIndex= " + ParagraphIndex +
+					", StartElementIndex= " + StartElementIndex +
+					", EndElementIndex= " + EndElementIndex;
+		}
 	}
 
-	public static interface Filter {
+	public interface Filter {
 		boolean accepts(ZLTextRegion region);
 	}
 
+	/**
+	 * 选中区域无过滤规则
+	 */
 	public static Filter AnyRegionFilter = new Filter() {
 		public boolean accepts(ZLTextRegion region) {
 			return true;
 		}
 	};
 
+	/**
+	 * 选中区域过滤规则必须为超链接
+	 */
 	public static Filter HyperlinkFilter = new Filter() {
 		public boolean accepts(ZLTextRegion region) {
 			return region.getSoul() instanceof ZLTextHyperlinkRegionSoul;
 		}
 	};
 
+	/**
+	 * 选中区域过滤规则必须为video
+	 */
 	public static Filter VideoFilter = new Filter() {
 		public boolean accepts(ZLTextRegion region) {
 			return region.getSoul() instanceof ZLTextVideoRegionSoul;
@@ -309,5 +330,11 @@ public final class ZLTextRegion {
 			}
 		}
 		return true;
+	}
+
+	@NonNull
+	@Override
+	public String toString() {
+		return "mySoul: { " + mySoul + " }";
 	}
 }

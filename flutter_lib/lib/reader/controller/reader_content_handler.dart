@@ -151,9 +151,9 @@ class ReaderContentHandler {
     }
 
     print(
-        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
+        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.pageIndexeCache}");
     print(
-        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.cachedPageIndexes}");
+        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.pageIndexeCache}");
   }
 
   List<double> getContentSize() {
@@ -187,10 +187,35 @@ class ReaderContentHandler {
     );
   }
 
+  Future<void> callNativeMethod(String name, int x, int y) async {
+    List<double> imageSize = getContentSize();
+    Uint8List imageBytes = await methodChannel.invokeMethod(
+      name,
+      {
+        'touch_x': x,
+        'touch_y': y,
+        'width': imageSize[0],
+        'height': imageSize[1]
+      },
+    );
+
+    // 将imageBytes转成img
+    ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    final image = fi.image;
+
+    // _bitmapManager缓存img
+    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
+
+    // 刷新custom painter
+    refreshContent();
+  }
+
   /// 获得需要绘制图片区域的跨高.
   /// returns [Pair] of [widthPx, heightPx].
   Pair _getBitmapDrawAreaMetrics() {
-    final ratio = MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
+    final ratio =
+        MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
     print("flutter内容绘制流程, render_page, "
         "ratio = ${MediaQuery.of(readerBookContentViewState.context).devicePixelRatio}, "
         "windowSize = ${ui.window.physicalSize},"

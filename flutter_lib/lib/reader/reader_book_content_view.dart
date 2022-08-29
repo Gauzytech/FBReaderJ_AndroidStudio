@@ -163,11 +163,50 @@ class ReaderBookContentViewState
                           LongPressGestureRecognizer>(
                     () => LongPressGestureRecognizer(),
                     (LongPressGestureRecognizer recognizer) {
-                      recognizer.onLongPress = () {
-                        print("flutter动画流程:触摸事件, ------------------长按事件------------------>>>>>>>>>");
+                      recognizer.onLongPressStart = (detail) {
+                        Offset position = detail.localPosition;
+                        if (_contentPainter
+                                ?.isDuplicateLongPressOffset(position) ==
+                            false) {
+                          _contentPainter?.setLongPressOffset(position);
+                          _readerContentHandler.callNativeMethod('long_press_start',
+                              position.dx.toInt(), position.dy.toInt());
+                        }
+                        print(
+                            "flutter动画流程:触摸事件, ------------------长按事件开始----$position-------------->>>>>>>>>");
+                      };
+                      recognizer.onLongPressMoveUpdate = (detail) {
+                        Offset position = detail.localPosition;
+                        if (_contentPainter
+                                ?.isDuplicateLongPressOffset(position) ==
+                            false) {
+                          _contentPainter?.setLongPressOffset(position);
+                          _readerContentHandler.callNativeMethod('long_press_update',
+                              position.dx.toInt(), position.dy.toInt());
+                        }
+                        print(
+                            "flutter动画流程:触摸事件, ------------------长按事件移动----$position-------------->>>>>>>>>");
+                      };
+                      recognizer.onLongPressUp = () {
+                        _contentPainter?.setLongPressOffset(null);
+                        _readerContentHandler.callNativeMethod(
+                            'long_press_end', 0, 0);
+                        print(
+                            "flutter动画流程:触摸事件, ------------------长按事件结束------------------>>>>>>>>>");
                       };
                     },
-                  )
+                  ),
+                  TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+                          TapGestureRecognizer>(() => TapGestureRecognizer(),
+                      (TapGestureRecognizer recognizer) {
+                    recognizer.onTapUp = (detail) {
+                      Offset position = detail.localPosition;
+                      print(
+                          "flutter动画流程:触摸事件, ------------------onTapUp $position------------------>>>>>>>>>");
+                      _readerContentHandler.callNativeMethod('on_tap_up',
+                          position.dx.toInt(), position.dy.toInt());
+                    };
+                  })
                 },
                 child: CustomPaint(
                   key: contentKey,
@@ -200,11 +239,6 @@ class ReaderBookContentViewState
   void refreshContentPainter() {
     print('flutter内容绘制流程, refreshContentPainter, ${contentKey.currentContext != null}');
     contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
   }
 
   @override

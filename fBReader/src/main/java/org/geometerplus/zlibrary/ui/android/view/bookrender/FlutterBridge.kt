@@ -3,8 +3,6 @@ package org.geometerplus.zlibrary.ui.android.view.bookrender
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Handler
-import android.os.Looper
 import androidx.annotation.MainThread
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -27,16 +25,23 @@ import java.io.FileOutputStream
  */
 
 private const val TAG = "flutter_bridge"
+private const val DRAW_ON_BITMAP = "draw_on_bitmap"
+private const val PREPARE_PAGE = "prepare_page"
+private const val CAN_SCROLL = "can_scroll"
+private const val ON_SCROLLING_FINISHED = "on_scrolling_finished"
+private const val LONG_PRESS_START = "long_press_start"
+private const val LONG_PRESS_MOVE = "long_press_update"
+private const val LONG_PRESS_END = "long_press_end"
+private const val ON_TAP_UP = "on_tap_up"
 
 class FlutterBridge(
     private val context: Context,
-    private val readerController: FBReaderApp,
+    readerController: FBReaderApp,
     messenger: BinaryMessenger
-) :
-    MethodCallHandler {
+) : MethodCallHandler {
 
     private var channel: MethodChannel = MethodChannel(messenger, "com.flutter.book.reader")
-    private val mainHandler: Handler = Handler(Looper.getMainLooper())
+    private val contentProcessor = readerController.contentProcessor
 
     init {
         channel.setMethodCallHandler(this)
@@ -44,39 +49,32 @@ class FlutterBridge(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Timber.v("$TAG, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
-        when(call.method) {
-            "draw_on_bitmap" -> {
+        when (call.method) {
+            DRAW_ON_BITMAP -> {
                 // 获取Flutter传递的参数
-                val index = requireNotNull(call.argument<Int>("page_index"))
-                val width = requireNotNull(call.argument<Double>("width")).toInt()
-                val height = requireNotNull(call.argument<Double>("height")).toInt()
+                val index = call.argument<Int>("page_index")!!
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
                 val pageIndex = PageIndex.getPageIndex(index)
                 Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
 
                 // 绘制内容的bitmap
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-                readerController.contentProcessorImpl.drawOnBitmap(
-                    bitmap,
-                    pageIndex,
-                    width,
-                    height,
-                    0
-                )
-
+                val bitmap = drawBitmap(pageIndex, width, height)
+                // 回调结果
                 if (DebugHelper.SAVE_BITMAP) {
                     debugSave(bitmap.toByteArray(), "图书内容bitmap_current")
                 } else {
                     result.success(bitmap.toByteArray())
                 }
             }
-            "prepare_page" -> {
-                val width = requireNotNull(call.argument<Double>("width")).toInt()
-                val height = requireNotNull(call.argument<Double>("height")).toInt()
-                val prev = requireNotNull(call.argument<Boolean>("update_prev_page_cache"))
-                val next = requireNotNull(call.argument<Boolean>("update_next_page_cache"))
+            PREPARE_PAGE -> {
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                val prev = call.argument<Boolean>("update_prev_page_cache")!!
+                val next = call.argument<Boolean>("update_next_page_cache")!!
                 Timber.v("$TAG, 收到了: [$prev, $next]")
 
-                readerController.contentProcessorImpl.prepareAdjacentPage(
+                contentProcessor.prepareAdjacentPage(
                     width, height, 0, prev, next,
                     object : ResultCallBack {
                         override fun onComplete(data: Any) {
@@ -85,16 +83,77 @@ class FlutterBridge(
                     }
                 )
             }
-            "can_scroll" -> {
-                val index = requireNotNull(call.argument<Int>("page_index"))
+            CAN_SCROLL -> {
+                val index = call.argument<Int>("page_index")!!
                 val pageIndex = PageIndex.getPageIndex(index)
-                val canScroll = readerController.contentProcessorImpl.canScroll(pageIndex)
+                val canScroll = contentProcessor.canScroll(pageIndex)
                 result.success(canScroll)
             }
-            "on_scrolling_finished" -> {
-                val index = requireNotNull(call.argument<Int>("page_index"))
+            ON_SCROLLING_FINISHED -> {
+                val index = call.argument<Int>("page_index")!!
                 val pageIndex = PageIndex.getPageIndex(index)
-                readerController.contentProcessorImpl.onScrollingFinished(pageIndex)
+                contentProcessor.onScrollingFinished(pageIndex)
+            }
+            LONG_PRESS_START -> {
+                val dx = call.argument<Int>("touch_x")!!.toInt()
+                val dy = call.argument<Int>("touch_y")!!.toInt()
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                Timber.v("flutter长按事件, 长按开始: [$dx, $dy], [$width, $height]")
+                contentProcessor.onFingerLongPress(dx, dy, object : PaintListener {
+                    override fun repaint() {
+                        Timber.v("flutter长按事件, 长按开始, 需要repaint")
+                        // 绘制内容的bitmap
+                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
+                        // 回调结果
+                        result.success(bitmap.toByteArray())
+                    }
+                })
+            }
+            LONG_PRESS_MOVE -> {
+                val dx = call.argument<Int>("touch_x")!!.toInt()
+                val dy = call.argument<Int>("touch_y")!!.toInt()
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                Timber.v("flutter长按事件, 长按移动: [$dx, $dy], [$width, $height]")
+                contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : PaintListener {
+                    override fun repaint() {
+                        Timber.v("flutter长按事件, 长按移动, 需要repaint")
+                        // 绘制内容的bitmap
+                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
+                        // 回调结果
+                        result.success(bitmap.toByteArray())
+                    }
+                })
+            }
+            LONG_PRESS_END -> {
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                Timber.v("flutter长按事件, 长按结束 [$width, $height]")
+                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : PaintListener {
+                    override fun repaint() {
+                        Timber.v("flutter长按事件, 长按结束, 需要repaint")
+                        // 绘制内容的bitmap
+                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
+                        // 回调结果
+                        result.success(bitmap.toByteArray())
+                    }
+                })
+            }
+            ON_TAP_UP -> {
+                val dx = call.argument<Int>("touch_x")!!.toInt()
+                val dy = call.argument<Int>("touch_y")!!.toInt()
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                contentProcessor.onFingerSingleTap(dx, dy, object : PaintListener {
+                    override fun repaint() {
+                        Timber.v("flutter长按事件, 点击, 需要repaint")
+                        // 绘制内容的bitmap
+                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
+                        // 回调结果
+                        result.success(bitmap.toByteArray())
+                    }
+                })
             }
         }
     }
@@ -102,6 +161,19 @@ class FlutterBridge(
     @MainThread
     fun invokeMethod(method: String, arguments: Any?, callback: MethodChannel.Result?) {
         channel.invokeMethod(method, arguments, callback)
+    }
+
+    private fun drawBitmap(pageInt: PageIndex, width: Int, height: Int): Bitmap {
+        // 绘制内容的bitmap
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        contentProcessor.drawOnBitmap(
+            bitmap,
+            pageInt,
+            width,
+            height,
+            0
+        )
+        return bitmap
     }
 
     private fun getTestNativeImage(result: MethodChannel.Result) {

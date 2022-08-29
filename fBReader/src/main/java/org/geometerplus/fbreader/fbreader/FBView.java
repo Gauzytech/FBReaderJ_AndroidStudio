@@ -19,6 +19,7 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.bookmodel.FBHyperlinkType;
 import org.geometerplus.fbreader.bookmodel.TOCTree;
@@ -50,6 +51,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.PaintListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,8 +60,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import kotlin.Pair;
 import timber.log.Timber;
 
+/**
+ * 继承关系
+ * FBView -> ZLTextView -> ZLTextViewBase -> ZLView -> ZLViewEnums
+ */
 public final class FBView extends ZLTextView {
 
     public static final int SCROLLBAR_SHOW_AS_FOOTER = 3;
@@ -73,9 +80,7 @@ public final class FBView extends ZLTextView {
 
     private TapZoneMap myZoneMap;
     private Footer myFooter;
-    /**
-     * 是否显示放大镜
-     */
+    // 是否显示放大镜
     private boolean mCanMagnifier = false;
 
     FBView(FBReaderApp reader) {
@@ -102,9 +107,13 @@ public final class FBView extends ZLTextView {
 
     @Override
     protected void releaseSelectionCursor() {
-        super.releaseSelectionCursor();
-        if (getCountOfSelectedWords() > 0) {
-            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+        if (DebugHelper.ENABLE_FLUTTER) {
+            super.releaseSelectionCursorFlutter();
+        } else {
+            super.releaseSelectionCursor();
+            if (getCountOfSelectedWords() > 0) {
+                myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+            }
         }
     }
 
@@ -342,7 +351,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = findSelectionCursor(x, y, maxDist * maxDist);
         if (cursor != null) {
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
-            moveSelectionCursorTo(cursor, x, y);
+            moveSelectionCursorTo(cursor, x, y, "onFingerPress");
             return;
         }
 
@@ -356,11 +365,13 @@ public final class FBView extends ZLTextView {
         }
 
         // 开启手动滑动模式
+        // 长按之后，向下拖动，页面滚动的效果
         startManualScrolling(x, y);
     }
 
     /**
      * 开启手动滑动模式
+     * 长按之后，向下拖动，页面滚动的效果
      *
      * @param x x坐标
      * @param y y坐标
@@ -420,7 +431,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             mCanMagnifier = true;
-            moveSelectionCursorTo(cursor, x, y);
+            moveSelectionCursorTo(cursor, x, y, "onFingerMove");
             return;
         }
 
@@ -450,8 +461,8 @@ public final class FBView extends ZLTextView {
 
     @Override
     public boolean onFingerLongPress(int x, int y) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         myReader.runAction(ActionCode.HIDE_TOAST);
-
         // 预览模式不处理
         if (isPreview()) {
             return true;
@@ -463,9 +474,13 @@ public final class FBView extends ZLTextView {
             return true;
         }
 
-        mCanMagnifier = true;
+//        mCanMagnifier = true;
 
-        final ZLTextRegion region = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
+        // 获取字体大小, 然后计算y，定位到触摸位置的上一行
+        int countY = y - getTextStyleCollection().getBaseStyle().getFontSize() / 2;
+        // 搜索查看上一行内容区域是否存在
+        final ZLTextRegion region = findRegion(x, countY, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
+        Timber.v("长按选中流程, 寻找选中区域结束: %s", region);
         if (region != null) {
             final ZLTextRegion.Soul soul = region.getSoul();
             boolean doSelectRegion = false;
@@ -473,10 +488,23 @@ public final class FBView extends ZLTextView {
                 switch (myReader.MiscOptions.WordTappingAction.getValue()) {
                     case startSelecting:
                         myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
-                        initSelection(x, y);
+                        // 将触摸x, y坐标与当前字体大小一起重新计算, 并设定选择区域
+                        // 这个是原来的方法，会多一次findRegion的运算, 效率低
+//                        boolean regionSet = setSelectionRegionWithTextSize(x, y);
+//                        if (regionSet) {
+//                            // 找到了触摸坐标的对应内容，触发重绘
+//                            repaint("drawSelection");
+//                        }
+
+                        // 改进的方法，因为将字体大小, 触摸区域的计算搬到了471行，减少了一次findRegion的计算
+                        setSelectedRegion(region);
+
                         final SelectionCursor.Which cursor = findSelectionCursor(x, y);
                         if (cursor != null) {
-                            moveSelectionCursorTo(cursor, x, y);
+                            Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
+                            moveSelectionCursorTo(cursor, x, y, "onFingerLongPress");
+                        } else {
+                            repaint("setSelectedRegion");
                         }
                         return true;
                     case selectSingleWord:
@@ -494,8 +522,8 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 outlineRegion(region);
-                myReader.getViewWidget().reset("doSelectRegion");
-                myReader.getViewWidget().repaint("doSelectRegion");
+                Timber.v("长按选中流程, draw outline");
+                repaint("doSelectRegion");
                 return true;
             }
         }
@@ -504,6 +532,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerReleaseAfterLongPress(int x, int y) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
@@ -540,9 +569,10 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerMoveAfterLongPress(int x, int y) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            moveSelectionCursorTo(cursor, x, y);
+            moveSelectionCursorTo(cursor, x, y, "onFingerMoveAfterLongPress");
             return;
         }
 
@@ -559,8 +589,7 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            myReader.getViewWidget().reset("onFingerMoveAfterLongPress");
-                            myReader.getViewWidget().repaint("onFingerMoveAfterLongPress");
+                            repaint("onFingerMoveAfterLongPress");
                         }
                     }
                 }
@@ -570,7 +599,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerSingleTap(int x, int y) {
-
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
         if (isPreview()) {
             myReader.runAction(ActionCode.SHOW_MENU, x, y);
@@ -587,8 +616,7 @@ public final class FBView extends ZLTextView {
         final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
         if (hyperlinkRegion != null) {
             outlineRegion(hyperlinkRegion);
-            myReader.getViewWidget().reset("onFingerSingleTap");
-            myReader.getViewWidget().repaint("onFingerSingleTap");
+            repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             return;
         }
@@ -602,8 +630,7 @@ public final class FBView extends ZLTextView {
         final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
         if (videoRegion != null) {
             outlineRegion(videoRegion);
-            myReader.getViewWidget().reset("onFingerSingleTap");
-            myReader.getViewWidget().repaint("onFingerSingleTap");
+            repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
             return;
         }
@@ -626,6 +653,7 @@ public final class FBView extends ZLTextView {
     }
 
     private void onFingerSingleTapLastResort(int x, int y) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         myReader.runAction(getZoneMap().getActionByCoordinates(
                 x, y, getContextWidth(), getContextHeight(),
                 isDoubleTapSupported() ? TapZoneMap.Tap.singleNotDoubleTap : TapZoneMap.Tap.singleTap
@@ -961,5 +989,202 @@ public final class FBView extends ZLTextView {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean onFingerLongPressFlutter(int x, int y, PaintListener paintListener) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+//        myReader.runAction(ActionCode.HIDE_TOAST);
+        // 预览模式不处理
+//        if (isPreview()) {
+//            return true;
+//        }
+
+        // 如果有选中， 隐藏选中动作弹框
+//        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+//            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+//            return true;
+//        }
+
+//        mCanMagnifier = true;
+
+        // 获取字体大小, 然后计算y，定位到触摸位置的上一行
+        int countY = y - getTextStyleCollection().getBaseStyle().getFontSize() / 2;
+        // 搜索查看上一行内容区域是否存在
+        final ZLTextRegion region = findRegion(x, countY, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
+        Timber.v("长按选中流程, 寻找选中区域结束: %s", region);
+        if (region != null) {
+            final ZLTextRegion.Soul soul = region.getSoul();
+            boolean doSelectRegion = false;
+            if (soul instanceof ZLTextWordRegionSoul) {
+                switch (myReader.MiscOptions.WordTappingAction.getValue()) {
+                    case startSelecting:
+//                        myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+
+                        // 改进的方法，因为将字体大小, 触摸区域的计算搬到了471行，减少了一次findRegion的计算
+                        setSelectedRegion(region);
+
+                        final SelectionCursor.Which cursor = findSelectionCursor(x, y);
+                        if (cursor != null) {
+                            Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
+                            moveSelectionCursorToFlutter(cursor, x, y);
+                        }
+                        paintListener.repaint();
+                        return true;
+                    case selectSingleWord:
+                    case openDictionary:
+                        doSelectRegion = true;
+                        break;
+                }
+            } else if (soul instanceof ZLTextImageRegionSoul) {
+                doSelectRegion =
+                        myReader.ImageOptions.TapAction.getValue() !=
+                                ImageOptions.TapActionEnum.doNothing;
+            } else if (soul instanceof ZLTextHyperlinkRegionSoul) {
+                doSelectRegion = true;
+            }
+
+            if (doSelectRegion) {
+                super.outlineRegion(region);
+                paintListener.repaint();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void onFingerMoveAfterLongPressFlutter(int x, int y, PaintListener paintListener) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        final SelectionCursor.Which cursor = getSelectionCursorInMovement();
+        if (cursor != null) {
+            moveSelectionCursorToFlutter(cursor, x, y);
+            paintListener.repaint();
+            return;
+        }
+
+        ZLTextRegion region = getOutlinedRegion();
+        if (region != null) {
+            ZLTextRegion.Soul soul = region.getSoul();
+            if (soul instanceof ZLTextHyperlinkRegionSoul ||
+                    soul instanceof ZLTextWordRegionSoul) {
+                if (myReader.MiscOptions.WordTappingAction.getValue() !=
+                        MiscOptions.WordTappingActionEnum.doNothing) {
+                    region = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
+                    if (region != null) {
+                        soul = region.getSoul();
+                        if (soul instanceof ZLTextHyperlinkRegionSoul
+                                || soul instanceof ZLTextWordRegionSoul) {
+                            outlineRegion(region);
+                            paintListener.repaint();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onFingerReleaseAfterLongPressFlutter(int x, int y, PaintListener paintListener) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+//        mCanMagnifier = false;
+        final SelectionCursor.Which cursor = getSelectionCursorInMovement();
+        if (cursor != null) {
+            releaseSelectionCursor();
+            paintListener.repaint();
+            return;
+        }
+
+        // 如果有选中， 显示选中动作弹框
+//        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+//            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+//            return;
+//        }
+
+        final ZLTextRegion region = getOutlinedRegion();
+        if (region != null) {
+            final ZLTextRegion.Soul soul = region.getSoul();
+
+            boolean doRunAction = false;
+            if (soul instanceof ZLTextWordRegionSoul) {
+                doRunAction =
+                        myReader.MiscOptions.WordTappingAction.getValue() ==
+                                MiscOptions.WordTappingActionEnum.openDictionary;
+            } else if (soul instanceof ZLTextImageRegionSoul) {
+                doRunAction =
+                        myReader.ImageOptions.TapAction.getValue() ==
+                                ImageOptions.TapActionEnum.openImageView;
+            }
+
+            // todo
+//            if (doRunAction) {
+//                myReader.runAction(ActionCode.PROCESS_HYPERLINK);
+//            }
+        }
+    }
+
+    @Override
+    public void onFingerSingleTapFlutter(int x, int y, PaintListener paintListener) {
+        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        // 预览模式的情况下，点击为打开菜单
+//        if (isPreview()) {
+//            myReader.runAction(ActionCode.SHOW_MENU, x, y);
+//            return;
+//        }
+
+        // 如果有选中，
+        // 1. 清除选中，
+        // 2. 隐藏选中动作弹框 todo 实现flutter弹窗
+        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+            myReader.runAction(ActionCode.SELECTION_CLEAR);
+            paintListener.repaint();
+//            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+            return;
+        }
+
+        final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
+        if (hyperlinkRegion != null) {
+            outlineRegion(hyperlinkRegion);
+//            repaint("onFingerSingleTap");
+            paintListener.repaint();
+            // todo
+//            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
+            return;
+        }
+
+        // todo
+//        final ZLTextRegion bookRegion = findRegion(x, y, 0, ZLTextRegion.ExtensionFilter);
+//        if (bookRegion != null) {
+//            myReader.runAction(ActionCode.DISPLAY_BOOK_POPUP, bookRegion);
+//            return;
+//        }
+
+        final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
+        if (videoRegion != null) {
+            outlineRegion(videoRegion);
+//            repaint("onFingerSingleTap");
+            paintListener.repaint();
+            // todo
+//            myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
+            return;
+        }
+
+        // todo
+//        final ZLTextHighlighting highlighting = findHighlighting(x, y, maxSelectionDistance());
+//        if (highlighting instanceof BookmarkHighlighting) {
+//            myReader.runAction(
+//                    ActionCode.SELECTION_BOOKMARK,
+//                    ((BookmarkHighlighting) highlighting).Bookmark
+//            );
+//            return;
+//        }
+
+        // todo
+//        if (myReader.isActionEnabled(ActionCode.HIDE_TOAST)) {
+//            myReader.runAction(ActionCode.HIDE_TOAST);
+//            return;
+//        }
+
+        onFingerSingleTapLastResort(x, y);
     }
 }

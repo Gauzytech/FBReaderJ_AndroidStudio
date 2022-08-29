@@ -19,9 +19,14 @@
 
 package org.geometerplus.zlibrary.core.view;
 
-import java.util.*;
-
 import android.graphics.Rect;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+
+import timber.log.Timber;
 
 public final class HorizontalConvexHull implements Hull {
 
@@ -200,11 +205,21 @@ public final class HorizontalConvexHull implements Hull {
                 ys[count++] = yy;
             }
 
+            StringBuilder xsSb = new StringBuilder();
+            StringBuilder ysSb = new StringBuilder();
+            for (int cord : xs) {
+                xsSb.append(cord + ",");
+            }
+            for (int cord : ys) {
+                ysSb.append(cord + ",");
+            }
             // 绘制选中区域
             if ((mode & DrawMode.Fill) == DrawMode.Fill) {
+                Timber.v("长按流程[绘制], outline: xs = [%s], ys = [%s]", xsSb, ysSb);
                 context.fillPolygon(xs, ys);
             }
             if ((mode & DrawMode.Outline) == DrawMode.Outline) {
+                Timber.v("长按流程[绘制], outline: xs = [%s], ys = [%s]", xsSb, ysSb);
                 context.drawOutline(xs, ys);
             }
         }

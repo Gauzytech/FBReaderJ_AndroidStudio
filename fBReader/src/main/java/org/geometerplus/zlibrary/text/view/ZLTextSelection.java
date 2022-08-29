@@ -22,6 +22,8 @@ package org.geometerplus.zlibrary.text.view;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.SelectionCursor;
 
+import timber.log.Timber;
+
 class ZLTextSelection extends ZLTextHighlighting {
     private final ZLTextView myView;
     private final Point myCursorInMovementPoint = new Point(-1, -1);
@@ -49,12 +51,18 @@ class ZLTextSelection extends ZLTextHighlighting {
         return myCursorInMovementPoint;
     }
 
+    void start(ZLTextRegion region) {
+        clear();
+        myRightMostRegionSoul = myLeftMostRegionSoul = region.getSoul();
+    }
+
     boolean start(int x, int y) {
         clear();
 
         final ZLTextRegion region = myView.findRegion(
                 x, y, myView.maxSelectionDistance(), ZLTextRegion.AnyRegionFilter
         );
+        Timber.v("长按选中流程, 寻找选中区域: %s", region);
         if (region == null) {
             return false;
         }

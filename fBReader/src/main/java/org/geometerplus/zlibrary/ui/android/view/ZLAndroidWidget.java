@@ -197,6 +197,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     @Override
     public void reset(String from) {
         Timber.v("打开图书:渲染流程, 清空bitmap缓存, %s", from);
+        Timber.v("长按选中流程, 清空bitmap缓存, %s", from);
         myBitmapManager.reset();
     }
 
@@ -207,6 +208,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         if (!DebugHelper.ON_START_REPAINT && from.equals("onStart")) return;
 
         Timber.v("渲染流程:绘制, 刷新view %s", from);
+        Timber.v("长按选中流程, 刷新view %s", from);
         // 不是每次都会执行onDraw()
         // 不执行原因
         // 1. 自定义的View所在的布局中,自定义View计算不出位置.
@@ -454,7 +456,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public boolean onLongClick(View v) {
-        return contentProcessor.onFingerLongPress(myPressedX, myPressedY);
+        return contentProcessor.onFingerLongPress(myPressedX, myPressedY, null);
     }
 
     @Override
@@ -474,7 +476,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
     private class ShortClickRunnable implements Runnable {
         @Override
         public void run() {
-            contentProcessor.onFingerSingleTap(myPressedX, myPressedY);
+            contentProcessor.onFingerSingleTap(myPressedX, myPressedY, null);
             myPendingPress = false;
             myPendingShortClickRunnable = null;
         }
@@ -614,7 +616,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                 if (myPendingDoubleTap) {
                     contentProcessor.onFingerDoubleTap(x, y);
                 } else if (myLongClickPerformed) {
-                    contentProcessor.onFingerReleaseAfterLongPress(x, y);
+                    contentProcessor.onFingerReleaseAfterLongPress(x, y, null);
                 } else {
                     if (myPendingLongClickRunnable != null) {
                         removeCallbacks(myPendingLongClickRunnable);
@@ -627,7 +629,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                             }
                             postDelayed(myPendingShortClickRunnable, ViewConfiguration.getDoubleTapTimeout());
                         } else {
-                            contentProcessor.onFingerSingleTap(x, y);
+                            contentProcessor.onFingerSingleTap(x, y, null);
                         }
                     } else {
                         contentProcessor.onFingerRelease(x, y);
@@ -646,7 +648,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                     myPendingDoubleTap = false;
                 }
                 if (myLongClickPerformed) {
-                    contentProcessor.onFingerMoveAfterLongPress(x, y);
+                    contentProcessor.onFingerMoveAfterLongPress(x, y, null);
                 } else {
                     if (myPendingPress) {
                         if (isAMove) {
@@ -814,7 +816,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             throw new IllegalArgumentException("Must be FBReader");
         }
 
-        setContentProcessor(((FBReader) getContext()).getReaderController().contentProcessorImpl);
+        setContentProcessor(((FBReader) getContext()).getReaderController().contentProcessor);
     }
 
     @Override

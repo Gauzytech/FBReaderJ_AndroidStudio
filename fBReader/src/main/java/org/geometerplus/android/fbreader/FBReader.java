@@ -114,6 +114,7 @@ import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageManager;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessor;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterBridge;
 import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 
@@ -1693,9 +1694,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
         runOnUiThread(() -> flutterBridge.invokeMethod(method, arguments, callback));
     }
 
-    /**
-     * 小提示
-     */
+    /** 小提示 */
     private class TipRunner extends Thread {
 
         TipRunner() {

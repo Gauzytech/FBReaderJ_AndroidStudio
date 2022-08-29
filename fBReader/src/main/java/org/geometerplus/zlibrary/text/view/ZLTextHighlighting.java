@@ -43,8 +43,7 @@ public abstract class ZLTextHighlighting implements Comparable<ZLTextHighlightin
     public abstract ZLColor getOutlineColor();
 
     boolean intersects(ZLTextPage page) {
-        return
-                !isEmpty() &&
+        return !isEmpty() &&
                         !page.startCursor.isNull() && !page.endCursor.isNull() &&
                         page.startCursor.compareTo(getEndPosition()) < 0 &&
                         page.endCursor.compareTo(getStartPosition()) > 0;

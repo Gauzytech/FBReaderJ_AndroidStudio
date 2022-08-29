@@ -20,6 +20,9 @@
 package org.geometerplus.zlibrary.core.view;
 
 import org.geometerplus.zlibrary.core.application.ZLApplication;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.PaintListener;
+
+import kotlin.Pair;
 
 abstract public class ZLView implements ZLViewEnums {
 
@@ -87,9 +90,9 @@ abstract public class ZLView implements ZLViewEnums {
 
     public abstract boolean onFingerLongPress(int x, int y);
 
-    public abstract void onFingerReleaseAfterLongPress(int x, int y);
-
     public abstract void onFingerMoveAfterLongPress(int x, int y);
+
+    public abstract void onFingerReleaseAfterLongPress(int x, int y);
 
     public abstract void onFingerSingleTap(int x, int y);
 
@@ -168,4 +171,11 @@ abstract public class ZLView implements ZLViewEnums {
 
         void paint(ZLPaintContext context);
     }
+
+    // flutter方法
+    public abstract boolean onFingerLongPressFlutter(int x, int y, PaintListener paintListener);
+    public abstract void onFingerMoveAfterLongPressFlutter(int x, int y, PaintListener paintListener);
+    public abstract void onFingerReleaseAfterLongPressFlutter(int x, int y, PaintListener paintListener);
+    public abstract void onFingerSingleTapFlutter(int x, int y, PaintListener paintListener);
+
 }

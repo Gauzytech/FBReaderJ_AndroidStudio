@@ -44,6 +44,7 @@ import org.geometerplus.fbreader.fbreader.options.*;
 import org.geometerplus.fbreader.formats.*;
 import org.geometerplus.fbreader.network.sync.SyncData;
 import org.geometerplus.fbreader.util.*;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessor;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessorImpl;
 
 import timber.log.Timber;
@@ -77,7 +78,7 @@ public final class FBReaderApp extends ZLApplication {
     private volatile Book myStoredPositionBook;
 
     // 内容渲染presenter
-    public ContentProcessorImpl contentProcessorImpl;
+    public ContentProcessor contentProcessor;
 
     public FBReaderApp(SystemInfo systemInfo, final IBookCollection<Book> collection) {
         super(systemInfo);
@@ -143,7 +144,7 @@ public final class FBReaderApp extends ZLApplication {
         setView(bookTextView, "constructor");
 
         // 内容渲染presenter
-        contentProcessorImpl = new ContentProcessorImpl(this, systemInfo);
+        contentProcessor = new ContentProcessorImpl(this, systemInfo);
     }
 
     public void setExternalFileOpener(ExternalFileOpener o) {
@@ -238,7 +239,7 @@ public final class FBReaderApp extends ZLApplication {
 
     @Override
     public void onCleared() {
-        contentProcessorImpl = null;
+        contentProcessor = null;
     }
 
     public void storePosition() {

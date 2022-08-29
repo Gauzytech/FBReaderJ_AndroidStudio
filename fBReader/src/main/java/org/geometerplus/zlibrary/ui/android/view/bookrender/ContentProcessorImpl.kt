@@ -1,6 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender
 
 import android.graphics.Bitmap
+import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
@@ -90,12 +91,12 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         return targetContentView.hasSelection()
     }
 
-    override fun onFingerLongPress(x: Int, y: Int): Boolean {
-        return targetContentView.onFingerLongPress(x, y)
-    }
-
-    override fun onFingerSingleTap(x: Int, y: Int) {
-        targetContentView.onFingerSingleTap(x, y)
+    override fun onFingerSingleTap(x: Int, y: Int, paintListener: PaintListener?) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerSingleTapFlutter(x, y, paintListener!!)
+        } else {
+            targetContentView.onFingerSingleTap(x, y)
+        }
     }
 
     override fun onTrackballRotated(diffX: Int, diffY: Int): Boolean {
@@ -110,12 +111,31 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         targetContentView.onFingerDoubleTap(x, y)
     }
 
-    override fun onFingerReleaseAfterLongPress(x: Int, y: Int) {
-        targetContentView.onFingerReleaseAfterLongPress(x, y)
+    /** 触摸事件: 长按 */
+    override fun onFingerLongPress(x: Int, y: Int, paintListener: PaintListener?): Boolean {
+        return if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerLongPressFlutter(x, y, paintListener)
+        } else {
+            targetContentView.onFingerLongPress(x, y)
+        }
     }
 
-    override fun onFingerMoveAfterLongPress(x: Int, y: Int) {
-        targetContentView.onFingerMoveAfterLongPress(x, y)
+    /** 触摸事件: 长按移动 */
+    override fun onFingerMoveAfterLongPress(x: Int, y: Int, paintListener: PaintListener?) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerMoveAfterLongPressFlutter(x, y, paintListener)
+        } else {
+            targetContentView.onFingerMoveAfterLongPress(x, y)
+        }
+    }
+
+    /** 触摸事件: 长按结束 */
+    override fun onFingerReleaseAfterLongPress(x: Int, y: Int, paintListener: PaintListener?) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y, paintListener)
+        } else {
+            targetContentView.onFingerReleaseAfterLongPress(x, y)
+        }
     }
 
     override val isDoubleTapSupported: Boolean

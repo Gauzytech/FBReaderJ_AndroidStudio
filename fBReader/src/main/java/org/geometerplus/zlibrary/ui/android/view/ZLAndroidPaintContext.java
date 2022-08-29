@@ -320,21 +320,22 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         int yStart = (ys[0] + ys[last]) / 2;
         int xEnd = xStart;
         int yEnd = yStart;
+        int offset = 5;
         if (xs[0] != xs[last]) {
             if (xs[0] > xs[last]) {
-                xStart -= 5;
-                xEnd += 5;
+                xStart -= offset;
+                xEnd += offset;
             } else {
-                xStart += 5;
-                xEnd -= 5;
+                xStart += offset;
+                xEnd -= offset;
             }
         } else {
             if (ys[0] > ys[last]) {
-                yStart -= 5;
-                yEnd += 5;
+                yStart -= offset;
+                yEnd += offset;
             } else {
-                yStart += 5;
-                yEnd -= 5;
+                yStart += offset;
+                yEnd -= offset;
             }
         }
 
@@ -344,6 +345,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             path.lineTo(xs[i], ys[i]);
         }
         path.lineTo(xEnd, yEnd);
+        myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(new ZLColor(217, 237, 249)));
         myCanvas.drawPath(path, myOutlinePaint);
     }
 
@@ -373,7 +375,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setLineColor(ZLColor color) {
-        Timber.v("%s, setLineColor", TAG);
+        Timber.v("长按选中流程[绘制],  color = %s", color);
         if (color != null) {
             myLinePaint.setColor(ZLAndroidColorUtil.rgb(color));
             myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(color));
@@ -388,7 +390,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setFillColor(ZLColor color, int alpha) {
-        Timber.v("%s, setFillColor", TAG);
+        Timber.v("长按选中流程[绘制], color = %s", color);
         if (color != null) {
             myFillPaint.setColor(ZLAndroidColorUtil.rgba(color, alpha));
         }
