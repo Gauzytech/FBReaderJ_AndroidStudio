@@ -21,7 +21,9 @@ package org.geometerplus.zlibrary.ui.android.view;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.EmbossMaskFilter;
 import android.graphics.Matrix;
@@ -134,6 +136,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         myGeometry = geometry;
         myScrollbarWidth = scrollbarWidth;
 
+        // 设置文字的画笔
         myTextPaint.setLinearText(false);
         myTextPaint.setAntiAlias(AntiAliasOption.getValue());
         if (DeviceKerningOption.getValue()) {
@@ -146,14 +149,19 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
         myLinePaint.setStyle(Paint.Style.STROKE);
 
+        // 设置填充的画笔，比如：长按选中高亮
         myFillPaint.setAntiAlias(AntiAliasOption.getValue());
 
+        // 设置轮廓画笔, 比如: 长按选中图片或者超链接
         myOutlinePaint.setAntiAlias(true);
         myOutlinePaint.setDither(true);
         myOutlinePaint.setStrokeWidth(4);
         myOutlinePaint.setStyle(Paint.Style.STROKE);
+//        myOutlinePaint.setStyle(Paint.Style.FILL);
+        // 将path所有拐角变成圆角, 见https://blog.csdn.net/weixin_47623364/article/details/121597433
         myOutlinePaint.setPathEffect(new CornerPathEffect(5));
-        myOutlinePaint.setMaskFilter(new EmbossMaskFilter(new float[]{1, 1, 1}, .4f, 6f, 3.5f));
+        // 遮罩, 浮雕效果, 没啥用, 需要硬件加速支持, 见https://blog.csdn.net/lyz_zyx/article/details/78783956
+//        myOutlinePaint.setMaskFilter(new EmbossMaskFilter(new float[]{1, 1, 1}, .4f, 6f, 3.5f));
 
         myExtraPaint.setAntiAlias(true);
     }
@@ -314,7 +322,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     public void drawOutline(int[] xs, int[] ys) {
-        Timber.v("%s, drawOutline", TAG);
+        Timber.v("%s", TAG);
         final int last = xs.length - 1;
         int xStart = (xs[0] + xs[last]) / 2;
         int yStart = (ys[0] + ys[last]) / 2;
@@ -345,7 +353,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             path.lineTo(xs[i], ys[i]);
         }
         path.lineTo(xEnd, yEnd);
-        myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(new ZLColor(217, 237, 249)));
+//        myOutlinePaint.setAlpha(150);
         myCanvas.drawPath(path, myOutlinePaint);
     }
 

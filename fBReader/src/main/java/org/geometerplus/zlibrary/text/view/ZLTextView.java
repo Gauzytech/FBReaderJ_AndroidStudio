@@ -574,11 +574,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
-        // 绘制outline ????没发现效果
+        // 绘制outline: 长按图片或者超链接, 会有一个描边效果
         final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
-        Timber.v("长按选中流程, 当前outline = %s", outlinedElementRegion);
         if (outlinedElementRegion != null && myShowOutline) {
-            Timber.v("长按选中流程[绘制],  绘制outline");
+            Timber.v("长按选中流程[绘制],  绘制outline, %s", getSelectionBackgroundColor());
             paintContext.setLineColor(getSelectionBackgroundColor());
             outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
         }
@@ -1949,7 +1948,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     public final void outlineRegion(ZLTextRegion region) {
-        Timber.v("长按选中流程, 设置当前outline: %s", region);
         outlineRegion(region != null ? region.getSoul() : null);
     }
 

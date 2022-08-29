@@ -46,8 +46,8 @@ public final class HorizontalConvexHull implements Hull {
         }
         final int top = rectangle.top;
         final int bottom = rectangle.bottom;
-        for (ListIterator<Rect> iterator = myRectangles.listIterator(); iterator.hasNext(); ) {
-            Rect r = iterator.next();
+        for (ListIterator<Rect> iter = myRectangles.listIterator(); iter.hasNext(); ) {
+            Rect r = iter.next();
             if (r.bottom <= top) {
                 continue;
             }
@@ -58,15 +58,15 @@ public final class HorizontalConvexHull implements Hull {
                 final Rect before = new Rect(r);
                 before.bottom = top;
                 r.top = top;
-                iterator.previous();
-                iterator.add(before);
-                iterator.next();
+                iter.previous();
+                iter.add(before);
+                iter.next();
             }
             if (r.bottom > bottom) {
                 final Rect after = new Rect(r);
                 after.top = bottom;
                 r.bottom = bottom;
-                iterator.add(after);
+                iter.add(after);
             }
             r.left = Math.min(r.left, rectangle.left);
             r.right = Math.max(r.right, rectangle.right);
@@ -85,25 +85,25 @@ public final class HorizontalConvexHull implements Hull {
 
     private void normalize() {
         Rect previous = null;
-        for (ListIterator<Rect> iterator = myRectangles.listIterator(); iterator.hasNext(); ) {
-            final Rect current = iterator.next();
+        for (ListIterator<Rect> iter = myRectangles.listIterator(); iter.hasNext(); ) {
+            final Rect current = iter.next();
             if (previous != null) {
                 if ((previous.left == current.left) && (previous.right == current.right)) {
                     previous.bottom = current.bottom;
-                    iterator.remove();
+                    iter.remove();
                     continue;
                 }
                 if ((previous.bottom != current.top) &&
                         (current.left <= previous.right) &&
                         (previous.left <= current.right)) {
-                    iterator.previous();
-                    iterator.add(new Rect(
+                    iter.previous();
+                    iter.add(new Rect(
                             Math.max(previous.left, current.left),
                             previous.bottom,
                             Math.min(previous.right, current.right),
                             current.top
                     ));
-                    iterator.next();
+                    iter.next();
                 }
             }
             previous = current;
@@ -205,21 +205,12 @@ public final class HorizontalConvexHull implements Hull {
                 ys[count++] = yy;
             }
 
-            StringBuilder xsSb = new StringBuilder();
-            StringBuilder ysSb = new StringBuilder();
-            for (int cord : xs) {
-                xsSb.append(cord + ",");
-            }
-            for (int cord : ys) {
-                ysSb.append(cord + ",");
-            }
             // 绘制选中区域
             if ((mode & DrawMode.Fill) == DrawMode.Fill) {
-                Timber.v("长按流程[绘制], outline: xs = [%s], ys = [%s]", xsSb, ysSb);
                 context.fillPolygon(xs, ys);
             }
             if ((mode & DrawMode.Outline) == DrawMode.Outline) {
-                Timber.v("长按流程[绘制], outline: xs = [%s], ys = [%s]", xsSb, ysSb);
+                Timber.v("长按流程[绘制], outline");
                 context.drawOutline(xs, ys);
             }
         }

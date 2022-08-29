@@ -25,6 +25,8 @@ import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.options.*;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 
+import timber.log.Timber;
+
 public class ColorProfile {
 
     public static final String THEME_WHITE = "white";
@@ -96,6 +98,7 @@ public class ColorProfile {
     }
 
     private ColorProfile(String name) {
+        Timber.v("主题初始化, %s", name);
         Name = name;
         switch (name) {
             case THEME_YELLOW:
