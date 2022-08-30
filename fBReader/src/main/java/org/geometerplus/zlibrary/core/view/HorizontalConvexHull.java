@@ -210,7 +210,6 @@ public final class HorizontalConvexHull implements Hull {
                 context.fillPolygon(xs, ys);
             }
             if ((mode & DrawMode.Outline) == DrawMode.Outline) {
-                Timber.v("长按流程[绘制], outline");
                 context.drawOutline(xs, ys);
             }
         }

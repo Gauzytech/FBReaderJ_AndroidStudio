@@ -351,6 +351,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = findSelectionCursor(x, y, maxDist * maxDist);
         if (cursor != null) {
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+            Timber.v("长按流程, 移动cursor, %s", cursor);
             moveSelectionCursorTo(cursor, x, y, "onFingerPress");
             return;
         }
@@ -431,6 +432,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             mCanMagnifier = true;
+            Timber.v("长按流程, 移动cursor, %s", cursor);
             moveSelectionCursorTo(cursor, x, y, "onFingerMove");
             return;
         }
@@ -485,6 +487,7 @@ public final class FBView extends ZLTextView {
             final ZLTextRegion.Soul soul = region.getSoul();
             boolean doSelectRegion = false;
             if (soul instanceof ZLTextWordRegionSoul) {
+                // 一般的文字选中
                 switch (myReader.MiscOptions.WordTappingAction.getValue()) {
                     case startSelecting:
                         myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
@@ -513,10 +516,12 @@ public final class FBView extends ZLTextView {
                         break;
                 }
             } else if (soul instanceof ZLTextImageRegionSoul) {
+                // 图片
                 doSelectRegion =
                         myReader.ImageOptions.TapAction.getValue() !=
                                 ImageOptions.TapActionEnum.doNothing;
             } else if (soul instanceof ZLTextHyperlinkRegionSoul) {
+                // 超链接
                 doSelectRegion = true;
             }
 
@@ -608,6 +613,7 @@ public final class FBView extends ZLTextView {
 
         // 如果有选中，则(1). 清除选中，(2). 隐藏选中动作弹框
         if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+            Timber.v("长按流程, 选中");
             myReader.runAction(ActionCode.SELECTION_CLEAR);
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             return;
@@ -615,6 +621,7 @@ public final class FBView extends ZLTextView {
 
         final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
         if (hyperlinkRegion != null) {
+            Timber.v("长按流程, 超链接");
             outlineRegion(hyperlinkRegion);
             repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.PROCESS_HYPERLINK);
@@ -623,12 +630,14 @@ public final class FBView extends ZLTextView {
 
         final ZLTextRegion bookRegion = findRegion(x, y, 0, ZLTextRegion.ExtensionFilter);
         if (bookRegion != null) {
+            Timber.v("长按流程, DISPLAY_BOOK_POPUP");
             myReader.runAction(ActionCode.DISPLAY_BOOK_POPUP, bookRegion);
             return;
         }
 
         final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
         if (videoRegion != null) {
+            Timber.v("长按流程, video");
             outlineRegion(videoRegion);
             repaint("onFingerSingleTap");
             myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
@@ -637,6 +646,7 @@ public final class FBView extends ZLTextView {
 
         final ZLTextHighlighting highlighting = findHighlighting(x, y, maxSelectionDistance());
         if (highlighting instanceof BookmarkHighlighting) {
+            Timber.v("长按流程, SELECTION_BOOKMARK");
             myReader.runAction(
                     ActionCode.SELECTION_BOOKMARK,
                     ((BookmarkHighlighting) highlighting).Bookmark
@@ -653,11 +663,12 @@ public final class FBView extends ZLTextView {
     }
 
     private void onFingerSingleTapLastResort(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
-        myReader.runAction(getZoneMap().getActionByCoordinates(
+        String actionId = getZoneMap().getActionByCoordinates(
                 x, y, getContextWidth(), getContextHeight(),
                 isDoubleTapSupported() ? TapZoneMap.Tap.singleNotDoubleTap : TapZoneMap.Tap.singleTap
-        ), x, y);
+        );
+        myReader.runAction(actionId, x, y);
+        Timber.v("长按流程, [%s, %s], action = %s", x, y, actionId);
     }
 
     private TapZoneMap getZoneMap() {
@@ -1134,33 +1145,43 @@ public final class FBView extends ZLTextView {
 
         // 如果有选中，
         // 1. 清除选中，
-        // 2. 隐藏选中动作弹框 todo 实现flutter弹窗
+        // 2. 隐藏选中动作弹框
         if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+            Timber.v("长按流程, 选中");
             myReader.runAction(ActionCode.SELECTION_CLEAR);
             paintListener.repaint();
+            // todo 实现flutter弹窗
 //            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             return;
         }
 
+        // 只有在超链接上面点击了，才会触发这个逻辑
+        // 1. 隐藏outline
+        // 2. 超链接跳转
+        // TODO 是否应该改成点击空白地方应该隐藏outline????
         final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
         if (hyperlinkRegion != null) {
+            Timber.v("长按流程, 超链接");
             outlineRegion(hyperlinkRegion);
 //            repaint("onFingerSingleTap");
+            // todo action中跳转方法待实现
+            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             paintListener.repaint();
-            // todo
-//            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             return;
         }
 
-        // todo
+        // todo 这个是啥?? 图书简介界面?
 //        final ZLTextRegion bookRegion = findRegion(x, y, 0, ZLTextRegion.ExtensionFilter);
 //        if (bookRegion != null) {
+//              Timber.v("长按流程, 图书popup");
 //            myReader.runAction(ActionCode.DISPLAY_BOOK_POPUP, bookRegion);
 //            return;
 //        }
 
+        // todo video视频支持
         final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
         if (videoRegion != null) {
+            Timber.v("长按流程, video");
             outlineRegion(videoRegion);
 //            repaint("onFingerSingleTap");
             paintListener.repaint();
@@ -1169,9 +1190,10 @@ public final class FBView extends ZLTextView {
             return;
         }
 
-        // todo
+        // todo 书签高亮
 //        final ZLTextHighlighting highlighting = findHighlighting(x, y, maxSelectionDistance());
 //        if (highlighting instanceof BookmarkHighlighting) {
+//              Timber.v("长按流程, 书签高亮");
 //            myReader.runAction(
 //                    ActionCode.SELECTION_BOOKMARK,
 //                    ((BookmarkHighlighting) highlighting).Bookmark
@@ -1185,6 +1207,7 @@ public final class FBView extends ZLTextView {
 //            return;
 //        }
 
-        onFingerSingleTapLastResort(x, y);
+        // todo 显示顶部和底部menu的
+//        onFingerSingleTapLastResort(x, y);
     }
 }

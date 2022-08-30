@@ -30,6 +30,7 @@ import com.github.johnpersano.supertoasts.SuperToast;
 import com.github.johnpersano.supertoasts.util.OnClickWrapper;
 import com.github.johnpersano.supertoasts.util.OnDismissWrapper;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.network.ZLNetworkException;
 import org.geometerplus.zlibrary.core.resources.ZLResource;
 import org.geometerplus.zlibrary.text.view.*;
@@ -67,90 +68,98 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 		final ZLTextRegion.Soul soul = region.getSoul();
 		if (soul instanceof ZLTextHyperlinkRegionSoul) {
 			Reader.getTextView().hideOutline();
-			Reader.getViewWidget().repaint("ProcessHyperlinkAction.run");
-			final ZLTextHyperlink hyperlink = ((ZLTextHyperlinkRegionSoul)soul).Hyperlink;
-			switch (hyperlink.Type) {
-				case FBHyperlinkType.EXTERNAL:
-					openInBrowser(hyperlink.Id);
-					break;
-				case FBHyperlinkType.INTERNAL:
-				case FBHyperlinkType.FOOTNOTE:
-				{
-					final AutoTextSnippet snippet = Reader.getFootnoteData(hyperlink.Id);
-					if (snippet == null) {
+			if (DebugHelper.ENABLE_FLUTTER) {
+				// todo 实现跳转方法
+			} else  {
+				Reader.getViewWidget().repaint("ProcessHyperlinkAction.run");
+				final ZLTextHyperlink hyperlink = ((ZLTextHyperlinkRegionSoul)soul).Hyperlink;
+				switch (hyperlink.Type) {
+					case FBHyperlinkType.EXTERNAL:
+						openInBrowser(hyperlink.Id);
 						break;
-					}
+					case FBHyperlinkType.INTERNAL:
+					case FBHyperlinkType.FOOTNOTE:
+					{
+						final AutoTextSnippet snippet = Reader.getFootnoteData(hyperlink.Id);
+						if (snippet == null) {
+							break;
+						}
 
-					Reader.Collection.markHyperlinkAsVisited(Reader.getCurrentBook(), hyperlink.Id);
-					final boolean showToast;
-					switch (Reader.MiscOptions.ShowFootnoteToast.getValue()) {
-						default:
-						case never:
-							showToast = false;
-							break;
-						case footnotesOnly:
-							showToast = hyperlink.Type == FBHyperlinkType.FOOTNOTE;
-							break;
-						case footnotesAndSuperscripts:
-							showToast =
-								hyperlink.Type == FBHyperlinkType.FOOTNOTE ||
-								region.isVerticallyAligned();
-							break;
-						case allInternalLinks:
-							showToast = true;
-							break;
-					}
-					if (showToast) {
-						final SuperActivityToast toast;
-						if (snippet.IsEndOfText) {
-							toast = new SuperActivityToast(BaseActivity, SuperToast.Type.STANDARD);
-						} else {
-							toast = new SuperActivityToast(BaseActivity, SuperToast.Type.BUTTON);
-							toast.setButtonIcon(
-								android.R.drawable.ic_menu_more,
-								ZLResource.resource("toast").getResource("more").getValue()
-							);
-							toast.setOnClickWrapper(new OnClickWrapper("ftnt", new SuperToast.OnClickListener() {
+						Reader.Collection.markHyperlinkAsVisited(Reader.getCurrentBook(), hyperlink.Id);
+						final boolean showToast;
+						switch (Reader.MiscOptions.ShowFootnoteToast.getValue()) {
+							default:
+							case never:
+								showToast = false;
+								break;
+							case footnotesOnly:
+								showToast = hyperlink.Type == FBHyperlinkType.FOOTNOTE;
+								break;
+							case footnotesAndSuperscripts:
+								showToast =
+										hyperlink.Type == FBHyperlinkType.FOOTNOTE ||
+												region.isVerticallyAligned();
+								break;
+							case allInternalLinks:
+								showToast = true;
+								break;
+						}
+						if (showToast) {
+							final SuperActivityToast toast;
+							if (snippet.IsEndOfText) {
+								toast = new SuperActivityToast(BaseActivity, SuperToast.Type.STANDARD);
+							} else {
+								toast = new SuperActivityToast(BaseActivity, SuperToast.Type.BUTTON);
+								toast.setButtonIcon(
+										android.R.drawable.ic_menu_more,
+										ZLResource.resource("toast").getResource("more").getValue()
+								);
+								toast.setOnClickWrapper(new OnClickWrapper("ftnt", new SuperToast.OnClickListener() {
+									@Override
+									public void onClick(View view, Parcelable token) {
+										Reader.getTextView().hideOutline();
+										Reader.tryOpenFootnote(hyperlink.Id);
+									}
+								}));
+							}
+							toast.setText(snippet.getText());
+							toast.setDuration(Reader.MiscOptions.FootnoteToastDuration.getValue().Value);
+							toast.setOnDismissWrapper(new OnDismissWrapper("ftnt", new SuperToast.OnDismissListener() {
 								@Override
-								public void onClick(View view, Parcelable token) {
+								public void onDismiss(View view) {
 									Reader.getTextView().hideOutline();
-									Reader.tryOpenFootnote(hyperlink.Id);
+									Reader.getViewWidget().repaint("ProcessHyperlinkAction.onDismiss");
 								}
 							}));
+							Reader.getTextView().outlineRegion(region);
+							BaseActivity.showToast(toast);
+						} else {
+							Reader.tryOpenFootnote(hyperlink.Id);
 						}
-						toast.setText(snippet.getText());
-						toast.setDuration(Reader.MiscOptions.FootnoteToastDuration.getValue().Value);
-						toast.setOnDismissWrapper(new OnDismissWrapper("ftnt", new SuperToast.OnDismissListener() {
-							@Override
-							public void onDismiss(View view) {
-								Reader.getTextView().hideOutline();
-								Reader.getViewWidget().repaint("ProcessHyperlinkAction.onDismiss");
-							}
-						}));
-						Reader.getTextView().outlineRegion(region);
-						BaseActivity.showToast(toast);
-					} else {
-						Reader.tryOpenFootnote(hyperlink.Id);
+						break;
 					}
-					break;
 				}
 			}
 		} else if (soul instanceof ZLTextImageRegionSoul) {
 			Reader.getTextView().hideOutline();
-			Reader.getViewWidget().repaint("ProcessHyperlinkAction.ZLTextImageRegionSoul");
-			final String url = ((ZLTextImageRegionSoul)soul).ImageElement.URL;
-			if (url != null) {
-				try {
-					final Intent intent = new Intent();
-					intent.setClass(BaseActivity, ImageViewActivity.class);
-					intent.putExtra(ImageViewActivity.URL_KEY, url);
-					intent.putExtra(
-						ImageViewActivity.BACKGROUND_COLOR_KEY,
-						Reader.ImageOptions.ImageViewBackground.getValue().intValue()
-					);
-					OrientationUtil.startActivity(BaseActivity, intent);
-				} catch (Exception e) {
-					e.printStackTrace();
+			if (DebugHelper.ENABLE_FLUTTER) {
+				// todo 待实现
+			} else  {
+				Reader.getViewWidget().repaint("ProcessHyperlinkAction.ZLTextImageRegionSoul");
+				final String url = ((ZLTextImageRegionSoul)soul).ImageElement.URL;
+				if (url != null) {
+					try {
+						final Intent intent = new Intent();
+						intent.setClass(BaseActivity, ImageViewActivity.class);
+						intent.putExtra(ImageViewActivity.URL_KEY, url);
+						intent.putExtra(
+								ImageViewActivity.BACKGROUND_COLOR_KEY,
+								Reader.ImageOptions.ImageViewBackground.getValue().intValue()
+						);
+						OrientationUtil.startActivity(BaseActivity, intent);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		} else if (soul instanceof ZLTextWordRegionSoul) {
