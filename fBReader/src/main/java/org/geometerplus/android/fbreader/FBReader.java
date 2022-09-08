@@ -114,7 +114,6 @@ import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageManager;
 import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.ContentProcessor;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterBridge;
 import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 

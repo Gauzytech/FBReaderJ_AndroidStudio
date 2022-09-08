@@ -1,6 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender
 
 import android.graphics.Bitmap
+import androidx.annotation.WorkerThread
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.util.SystemInfo
@@ -20,6 +21,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ContentProcessor {
     // 预加载线程
     private val prepareService = Executors.newSingleThreadExecutor()
+    private var drawService = Executors.newFixedThreadPool(4)
     private val bookPageProvider: BookPageProvider = BookPageProvider(systemInfo)
 
     private val targetContentView = fbReaderApp.textView
@@ -93,7 +95,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
 
     override fun onFingerSingleTap(x: Int, y: Int, paintListener: PaintListener?) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerSingleTapFlutter(x, y, paintListener!!)
+            targetContentView.onFingerSingleTapFlutter(x, y).let {
+                paintListener?.repaint(it)
+            }
         } else {
             targetContentView.onFingerSingleTap(x, y)
         }
@@ -112,27 +116,61 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     }
 
     /** 触摸事件: 长按 */
-    override fun onFingerLongPress(x: Int, y: Int, paintListener: PaintListener?): Boolean {
+    override fun onFingerLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ): Boolean {
         return if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerLongPressFlutter(x, y, paintListener)
+            targetContentView.onFingerLongPressFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+                repaint
+            }
         } else {
             targetContentView.onFingerLongPress(x, y)
         }
     }
 
     /** 触摸事件: 长按移动 */
-    override fun onFingerMoveAfterLongPress(x: Int, y: Int, paintListener: PaintListener?) {
+    override fun onFingerMoveAfterLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerMoveAfterLongPressFlutter(x, y, paintListener)
+            targetContentView.onFingerMoveAfterLongPressFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+            }
         } else {
             targetContentView.onFingerMoveAfterLongPress(x, y)
         }
     }
 
     /** 触摸事件: 长按结束 */
-    override fun onFingerReleaseAfterLongPress(x: Int, y: Int, paintListener: PaintListener?) {
+    override fun onFingerReleaseAfterLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y, paintListener)
+            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+            }
         } else {
             targetContentView.onFingerReleaseAfterLongPress(x, y)
         }
@@ -141,16 +179,75 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override val isDoubleTapSupported: Boolean
         get() = targetContentView.isDoubleTapSupported
 
-    override fun onFingerRelease(x: Int, y: Int) {
-        targetContentView.onFingerRelease(x, y)
+    override fun onFingerRelease(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerReleaseFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+            }
+        } else {
+            targetContentView.onFingerRelease(x, y)
+        }
     }
 
-    override fun onFingerPress(x: Int, y: Int) {
-        targetContentView.onFingerPress(x, y)
+    override fun onFingerPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerPressFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+            }
+        } else {
+            targetContentView.onFingerPress(x, y)
+        }
     }
 
-    override fun onFingerMove(x: Int, y: Int) {
-        targetContentView.onFingerMove(x, y)
+    override fun onFingerMove(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ) {
+        if (DebugHelper.ENABLE_FLUTTER) {
+            targetContentView.onFingerMoveFlutter(x, y).let { repaint ->
+                if (repaint) {
+                    drawService.execute {
+                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                    }
+                }
+            }
+        } else {
+            targetContentView.onFingerMove(x, y)
+        }
+    }
+
+    @WorkerThread
+    private fun drawCurrentPage(size: Pair<Int, Int>): ByteArray {
+        val (width, height) = size
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        drawOnBitmap(
+            bitmap,
+            PageIndex.CURRENT,
+            width,
+            height,
+            0
+        )
+        return bitmap.toByteArray()
     }
 
     override val isHorizontal: Boolean

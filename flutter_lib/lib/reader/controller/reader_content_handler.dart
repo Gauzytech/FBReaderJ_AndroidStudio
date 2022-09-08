@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -10,6 +11,7 @@ import 'package:flutter_lib/reader/reader_book_content_view.dart';
 
 class ReaderContentHandler {
   MethodChannel methodChannel;
+  EventChannel eventChannel;
 
   // late MediaQueryData _mediaQueryData;
   ReaderBookContentViewState readerBookContentViewState;
@@ -18,9 +20,12 @@ class ReaderContentHandler {
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
 
   // PageIndex currentPageIndex = PageIndex.prev_2;
+  StreamSubscription? _streamSubscription;
 
   ReaderContentHandler(
-      {required this.methodChannel, required this.readerBookContentViewState}) {
+      {required this.methodChannel,
+      required this.eventChannel,
+      required this.readerBookContentViewState}) {
     methodChannel.setMethodCallHandler(_addNativeMethod);
   }
 
@@ -39,15 +44,28 @@ class ReaderContentHandler {
   Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
     switch (methodCall.method) {
       case 'init_load':
-        // 本地数据全部解析完毕后，会执行init_load方法开始渲染图书第一页
+      // 本地数据全部解析完毕后，会执行init_load方法开始渲染图书第一页
         ImageSrc imageSrc = getPage(PageIndex.current);
-        if(imageSrc.img != null) {
+        if (imageSrc.img != null) {
           refreshContent();
         } else {
           buildPage(PageIndex.current);
         }
         break;
     }
+  }
+
+  Future<void> updatePage(PageIndex pageIndex, Uint8List imgBytes) async {
+    // 将imageBytes转成img
+    ui.Codec codec = await ui.instantiateImageCodec(imgBytes);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    final image = fi.image;
+
+    // _bitmapManager缓存img
+    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
+
+    // 刷新custom painter
+    refreshContent();
   }
 
   /// 通知native创建新内容image
@@ -170,6 +188,8 @@ class ReaderContentHandler {
 
   void clear() {
     _bitmapManager.clear();
+    _streamSubscription?.cancel();
+    _streamSubscription = null;
   }
 
   /// 判断是否可以滚动到上一页/下一页
@@ -187,17 +207,23 @@ class ReaderContentHandler {
     );
   }
 
+  int time = 0;
+
   Future<void> callNativeMethod(String name, int x, int y) async {
     List<double> imageSize = getContentSize();
+    time = DateTime.now().millisecondsSinceEpoch;
+    print('时间测试, call $name $time');
     Uint8List imageBytes = await methodChannel.invokeMethod(
       name,
       {
         'touch_x': x,
         'touch_y': y,
         'width': imageSize[0],
-        'height': imageSize[1]
+        'height': imageSize[1],
+        'time_stamp': time,
       },
     );
+    print('时间测试, $name 获得结果, ${DateTime.now().millisecondsSinceEpoch}');
 
     // 将imageBytes转成img
     ui.Codec codec = await ui.instantiateImageCodec(imageBytes);

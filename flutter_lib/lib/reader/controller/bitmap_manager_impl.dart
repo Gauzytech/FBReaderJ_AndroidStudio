@@ -85,6 +85,8 @@ class BitmapManagerImpl extends IBitmapManager {
         "flutter内容绘制流程, replaceBitmapCache [${image.width}, ${image.height}], PageIndex = $index");
     for (int i = 0; i < pageIndexeCache.length; i++) {
       if (pageIndexeCache[i] == index) {
+        // dispose old image
+        _imageCache[i]?.dispose();
         _imageCache[i] = image;
         break;
       }

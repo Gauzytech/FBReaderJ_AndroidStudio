@@ -357,11 +357,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         repaint("moveSelectionCursorTo");
     }
 
-    protected void moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y) {
+    protected boolean moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y) {
         Timber.v("长按选中流程, %s", getSelectionDebug());
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         mySelection.setCursorInMovement(which, x, y);
-        mySelection.expandTo(myCurrentPage, x, y);
+        return mySelection.expandToFlutter(myCurrentPage, x, y);
     }
 
     protected void releaseSelectionCursor() {
@@ -411,10 +411,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return null;
         }
 
-        if (which == mySelection.getCursorInMovement()) {
-            return mySelection.getCursorInMovementPoint();
-        }
+//        if (which == mySelection.getCursorInMovement()) {
+//            Timber.v("小耳朵， 1");
+//            return mySelection.getCursorInMovementPoint();
+//        }
 
+        // 左侧小耳朵
         if (which == SelectionCursor.Which.Left) {
             if (mySelection.hasPartBeforePage(page)) {
                 return null;
@@ -424,6 +426,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 return new ZLTextSelection.Point(area.XStart, (area.YStart + area.YEnd) / 2);
             }
         } else {
+            // 右侧小耳朵
             if (mySelection.hasPartAfterPage(page)) {
                 return null;
             }
@@ -544,7 +547,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             final ZLColor bgColor = h.getBackgroundColor();
             if (bgColor != null) {
-                Timber.v("长按选中流程[绘制],  绘制fill");
                 paintContext.setFillColor(bgColor);
                 mode |= Hull.DrawMode.Fill;
             }
@@ -1113,6 +1115,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private ZLTextHighlighting getWordHighlighting(ZLTextPosition pos, List<ZLTextHighlighting> highlightingList) {
         for (ZLTextHighlighting h : highlightingList) {
             // 如果文本位置在高亮列表的位置里，返回该高亮信息
+            if (h.getStartPosition() == null) return  null;
             if (h.getStartPosition().compareToIgnoreChar(pos) <= 0 && pos.compareToIgnoreChar(h.getEndPosition()) <= 0) {
                 return h;
             }

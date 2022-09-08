@@ -19,6 +19,8 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import androidx.annotation.NonNull;
+
 import org.geometerplus.DebugHelper;
 import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.bookmodel.FBHyperlinkType;
@@ -60,7 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import kotlin.Pair;
 import timber.log.Timber;
 
 /**
@@ -344,6 +345,7 @@ public final class FBView extends ZLTextView {
      */
     @Override
     public void onFingerPress(int x, int y) {
+        Timber.v("触摸事件, [%s, %s]", x, y);
         // 隐藏Toast
         myReader.runAction(ActionCode.HIDE_TOAST);
 
@@ -404,7 +406,8 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerRelease(int x, int y) {
-        Timber.v("翻页动画, onFingerRelease, [%s, %s]", x, y);
+        Timber.v("触摸事件, [%s, %s]", x, y);
+
         mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
@@ -428,6 +431,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerMove(int x, int y) {
+        Timber.v("触摸事件, [%s, %s]", x, y);
 
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
@@ -463,7 +467,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public boolean onFingerLongPress(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("触摸事件, [%s, %s]", x, y);
         myReader.runAction(ActionCode.HIDE_TOAST);
         // 预览模式不处理
         if (isPreview()) {
@@ -537,7 +541,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerReleaseAfterLongPress(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("触摸事件, [%s, %s]", x, y);
         mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
@@ -574,7 +578,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerMoveAfterLongPress(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("触摸事件, [%s, %s]", x, y);
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             moveSelectionCursorTo(cursor, x, y, "onFingerMoveAfterLongPress");
@@ -604,7 +608,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerSingleTap(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("触摸事件, [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
         if (isPreview()) {
             myReader.runAction(ActionCode.SHOW_MENU, x, y);
@@ -685,6 +689,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerDoubleTap(int x, int y) {
+        Timber.v("触摸事件, [%s, %s]", x, y);
         myReader.runAction(ActionCode.HIDE_TOAST);
 
         myReader.runAction(getZoneMap().getActionByCoordinates(
@@ -694,6 +699,7 @@ public final class FBView extends ZLTextView {
 
     @Override
     public void onFingerEventCancelled() {
+        Timber.v("触摸事件");
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             releaseSelectionCursor();
@@ -1003,7 +1009,7 @@ public final class FBView extends ZLTextView {
     }
 
     @Override
-    public boolean onFingerLongPressFlutter(int x, int y, PaintListener paintListener) {
+    public boolean onFingerLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
 //        myReader.runAction(ActionCode.HIDE_TOAST);
         // 预览模式不处理
@@ -1040,7 +1046,6 @@ public final class FBView extends ZLTextView {
                             Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
                             moveSelectionCursorToFlutter(cursor, x, y);
                         }
-                        paintListener.repaint();
                         return true;
                     case selectSingleWord:
                     case openDictionary:
@@ -1057,7 +1062,6 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 super.outlineRegion(region);
-                paintListener.repaint();
                 return true;
             }
         }
@@ -1065,13 +1069,11 @@ public final class FBView extends ZLTextView {
     }
 
     @Override
-    public void onFingerMoveAfterLongPressFlutter(int x, int y, PaintListener paintListener) {
+    public boolean onFingerMoveAfterLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            moveSelectionCursorToFlutter(cursor, x, y);
-            paintListener.repaint();
-            return;
+            return moveSelectionCursorToFlutter(cursor, x, y);
         }
 
         ZLTextRegion region = getOutlinedRegion();
@@ -1087,28 +1089,29 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            paintListener.repaint();
+                            return true;
                         }
                     }
                 }
             }
         }
+
+        return false;
     }
 
     @Override
-    public void onFingerReleaseAfterLongPressFlutter(int x, int y, PaintListener paintListener) {
+    public boolean onFingerReleaseAfterLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
 //        mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             releaseSelectionCursor();
-            paintListener.repaint();
-            return;
+            return true;
         }
 
         // 如果有选中， 显示选中动作弹框
 //        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
-//            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+//            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL
 //            return;
 //        }
 
@@ -1127,15 +1130,16 @@ public final class FBView extends ZLTextView {
                                 ImageOptions.TapActionEnum.openImageView;
             }
 
-            // todo
+            // todo 超链接点击效果
 //            if (doRunAction) {
 //                myReader.runAction(ActionCode.PROCESS_HYPERLINK);
 //            }
         }
+        return false;
     }
 
     @Override
-    public void onFingerSingleTapFlutter(int x, int y, PaintListener paintListener) {
+    public boolean onFingerSingleTapFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
 //        if (isPreview()) {
@@ -1149,10 +1153,9 @@ public final class FBView extends ZLTextView {
         if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
             Timber.v("长按流程, 选中");
             myReader.runAction(ActionCode.SELECTION_CLEAR);
-            paintListener.repaint();
             // todo 实现flutter弹窗
 //            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
-            return;
+            return true;
         }
 
         // 只有在超链接上面点击了，才会触发这个逻辑
@@ -1166,8 +1169,7 @@ public final class FBView extends ZLTextView {
 //            repaint("onFingerSingleTap");
             // todo action中跳转方法待实现
             myReader.runAction(ActionCode.PROCESS_HYPERLINK);
-            paintListener.repaint();
-            return;
+            return true;
         }
 
         // todo 这个是啥?? 图书简介界面?
@@ -1184,10 +1186,9 @@ public final class FBView extends ZLTextView {
             Timber.v("长按流程, video");
             outlineRegion(videoRegion);
 //            repaint("onFingerSingleTap");
-            paintListener.repaint();
             // todo
 //            myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
-            return;
+            return true;
         }
 
         // todo 书签高亮
@@ -1209,5 +1210,107 @@ public final class FBView extends ZLTextView {
 
         // todo 显示顶部和底部menu的
 //        onFingerSingleTapLastResort(x, y);
+
+        return false;
+    }
+
+    /**
+     * @return 'true' need repaint, 'false' no need repaint
+     */
+    @Override
+    public boolean onFingerPressFlutter(int x, int y) {
+        // 隐藏Toast
+        myReader.runAction(ActionCode.HIDE_TOAST);
+
+        final float maxDist = ZLibrary.Instance().getDisplayDPI() / 4f;
+        final SelectionCursor.Which cursor = findSelectionCursor(x, y, maxDist * maxDist);
+        if (cursor != null) {
+            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+            Timber.v("长按流程, 移动cursor, %s", cursor);
+            moveSelectionCursorToFlutter(cursor, x, y);
+            return true;
+        } else {
+            // todo 如果允许屏幕亮度调节（手势），并且按下位置在内容宽度的 1 / 10，
+            // --> (1). 标识屏幕亮度调节，(2). 记录起始Y，(3). 记录当前屏幕亮度
+//        if (myReader.MiscOptions.AllowScreenBrightnessAdjustment.getValue() && x < getContextWidth() / 10) {
+//            myIsBrightnessAdjustmentInProgress = true;
+//            myStartY = y;
+//            myStartBrightness = myReader.getViewWidget().getScreenBrightness();
+//            return;
+//        }
+
+            // todo 开启手动滑动模式
+            // 长按之后，向下拖动，页面滚动的效果
+//        startManualScrolling(x, y);
+
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onFingerMoveFlutter(int x, int y) {
+
+        final SelectionCursor.Which cursor = getSelectionCursorInMovement();
+        if (cursor != null) {
+            mCanMagnifier = true;
+            Timber.v("长按流程, 移动cursor, %s", cursor);
+            return moveSelectionCursorToFlutter(cursor, x, y);
+        } else {
+            // todo 如果有选中， 隐藏选中动作弹框
+//        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+//            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+//            return;
+//        }
+
+//        synchronized (this) {
+//            if (myIsBrightnessAdjustmentInProgress) {
+//                if (x >= getContextWidth() / 5) {
+//                    myIsBrightnessAdjustmentInProgress = false;
+//                    startManualScrolling(x, y);
+//                } else {
+//                    final int delta = (myStartBrightness + 30) * (myStartY - y) / getContextHeight();
+//                    myReader.getViewWidget().setScreenBrightness(myStartBrightness + delta);
+//                    return;
+//                }
+//            }
+//
+//            if (isFlickScrollingEnabled()) {
+//                myReader.getViewWidget().scrollManuallyTo(x, y);
+//            }
+//        }
+
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onFingerReleaseFlutter(int x, int y) {
+        Timber.v("触摸事件, [%s, %s]", x, y);
+
+//        mCanMagnifier = false;
+        final SelectionCursor.Which cursor = getSelectionCursorInMovement();
+        if (cursor != null) {
+            releaseSelectionCursor();
+            return true;
+        } else {
+            // 如果有选中，恢复选中动作弹框
+//        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+//            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+//            return;
+//        }
+//        if (cursor != null) {
+//            releaseSelectionCursor();
+//        }
+            // todo
+//        else if (myIsBrightnessAdjustmentInProgress) {
+//            myIsBrightnessAdjustmentInProgress = false;
+//        } else if (isFlickScrollingEnabled()) {
+//            myReader.getViewWidget().startAnimatedScrolling(
+//                    x, y, myReader.PageTurningOptions.AnimationSpeed.getValue()
+//            );
+//        }
+
+            return false;
+        }
     }
 }

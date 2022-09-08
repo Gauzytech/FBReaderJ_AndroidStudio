@@ -62,17 +62,59 @@ interface ContentProcessor {
     val isHorizontal: Boolean
 
     /** 点击事件 */
-    fun onFingerSingleTap(x: Int, y: Int, paintListener: PaintListener?)
-    fun onFingerPress(x: Int, y: Int)
-    fun onFingerMove(x: Int, y: Int)
+    fun onFingerSingleTap(
+        x: Int,
+        y: Int,
+        paintListener: PaintListener?
+    )
+
+    fun onFingerPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    )
+
+    fun onFingerMove(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    )
+
+    fun onFingerRelease(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    )
+
     fun onFingerDoubleTap(x: Int, y: Int)
     fun onFingerEventCancelled()
+
     /** 长按事件 */
-    fun onFingerLongPress(x: Int, y: Int, paintListener: PaintListener?): Boolean
+    fun onFingerLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    ): Boolean
+
     /** 长按移动事件 */
-    fun onFingerMoveAfterLongPress(x: Int, y: Int, paintListener: PaintListener?)
+    fun onFingerMoveAfterLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    )
+
     /** 长按完成事件 */
-    fun onFingerReleaseAfterLongPress(x: Int, y: Int, paintListener: PaintListener?)
+    fun onFingerReleaseAfterLongPress(
+        x: Int,
+        y: Int,
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>?
+    )
 
     /**
      * 是否双击支持
@@ -80,7 +122,7 @@ interface ContentProcessor {
      * @return 是否双击支持
      */
     val isDoubleTapSupported: Boolean
-    fun onFingerRelease(x: Int, y: Int)
+
     fun onTrackballRotated(diffX: Int, diffY: Int): Boolean
 
     /** 获得图书内容可渲染区域的高度  */

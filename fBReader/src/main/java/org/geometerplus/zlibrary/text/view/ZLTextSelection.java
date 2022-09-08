@@ -21,6 +21,7 @@ package org.geometerplus.zlibrary.text.view;
 
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.SelectionCursor;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionRange;
 
 import timber.log.Timber;
 
@@ -101,6 +102,10 @@ class ZLTextSelection extends ZLTextHighlighting {
         if (isEmpty()) {
             return null;
         }
+
+        if (myLeftMostRegionSoul == null) {
+            return null;
+        }
         return new ZLTextFixedPosition(
                 myLeftMostRegionSoul.ParagraphIndex,
                 myLeftMostRegionSoul.StartElementIndex,
@@ -175,6 +180,8 @@ class ZLTextSelection extends ZLTextHighlighting {
         if (isEmpty()) {
             return;
         }
+        Timber.v("时间测试, before, left = %s, right = %s", myLeftMostRegionSoul, myRightMostRegionSoul);
+        SelectionRange prevRange = new SelectionRange(myLeftMostRegionSoul, myRightMostRegionSoul);
 
         final ZLTextElementAreaVector vector = page.TextElementMap;
         final ZLTextElementArea firstArea = vector.getFirstArea();
@@ -255,6 +262,12 @@ class ZLTextSelection extends ZLTextHighlighting {
             }
         }
 
+        // 判断选中区域是否相同
+        if (prevRange.isSame(myLeftMostRegionSoul, myRightMostRegionSoul)) {
+            Timber.v("时间测试, 重复选中 忽略");
+            return;
+        }
+
         if (myCursorInMovement == SelectionCursor.Which.Right) {
             if (hasPartAfterPage(page)) {
                 myView.turnPage(true, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
@@ -268,6 +281,115 @@ class ZLTextSelection extends ZLTextHighlighting {
                 myView.preparePaintInfo();
             }
         }
+        Timber.v("时间测试, after left = %s, right = %s", myLeftMostRegionSoul, myRightMostRegionSoul);
+    }
+
+    boolean expandToFlutter(ZLTextPage page, int x, int y) {
+        if (isEmpty()) {
+            return false;
+        }
+
+        SelectionRange prevRange = new SelectionRange(myLeftMostRegionSoul, myRightMostRegionSoul);
+
+        final ZLTextElementAreaVector vector = page.TextElementMap;
+        final ZLTextElementArea firstArea = vector.getFirstArea();
+        final ZLTextElementArea lastArea = vector.getLastArea();
+        if (firstArea != null && y < firstArea.YStart) {
+            if (myScroller != null && myScroller.scrollsForward()) {
+                myScroller.stop();
+                myScroller = null;
+            }
+            if (myScroller == null) {
+                myScroller = new Scroller(page, false, x, y);
+                return false;
+            }
+            //} else if (lastArea != null && y + ZLTextSelectionCursor.getHeight() / 2 + ZLTextSelectionCursor.getAccent() / 2 > lastArea.YEnd) {
+        } else if (lastArea != null && y > lastArea.YEnd) {
+            if (myScroller != null && !myScroller.scrollsForward()) {
+                myScroller.stop();
+                myScroller = null;
+            }
+            if (myScroller == null) {
+                myScroller = new Scroller(page, true, x, y);
+                return false;
+            }
+        } else {
+            if (myScroller != null) {
+                myScroller.stop();
+                myScroller = null;
+            }
+        }
+
+        if (myScroller != null) {
+            myScroller.setXY(x, y);
+        }
+
+        ZLTextRegion region = myView.findRegion(x, y, myView.maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
+        if (region == null) {
+            final ZLTextElementAreaVector.RegionPair pair =
+                    myView.findRegionsPair(x, y, ZLTextRegion.AnyRegionFilter);
+            if (pair.Before != null || pair.After != null) {
+                final ZLTextRegion.Soul base =
+                        myCursorInMovement == SelectionCursor.Which.Right
+                                ? myLeftMostRegionSoul : myRightMostRegionSoul;
+                if (pair.Before != null) {
+                    if (base.compareTo(pair.Before.getSoul()) <= 0) {
+                        region = pair.Before;
+                    } else {
+                        region = pair.After;
+                    }
+                } else {
+                    if (base.compareTo(pair.After.getSoul()) >= 0) {
+                        region = pair.After;
+                    } else {
+                        region = pair.Before;
+                    }
+                }
+            }
+        }
+        if (region == null) {
+            return false;
+        }
+
+        final ZLTextRegion.Soul soul = region.getSoul();
+        if (myCursorInMovement == SelectionCursor.Which.Right) {
+            if (myLeftMostRegionSoul.compareTo(soul) <= 0) {
+                myRightMostRegionSoul = soul;
+            } else {
+                myRightMostRegionSoul = myLeftMostRegionSoul;
+                myLeftMostRegionSoul = soul;
+                myCursorInMovement = SelectionCursor.Which.Left;
+            }
+        } else {
+            if (myRightMostRegionSoul.compareTo(soul) >= 0) {
+                myLeftMostRegionSoul = soul;
+            } else {
+                myLeftMostRegionSoul = myRightMostRegionSoul;
+                myRightMostRegionSoul = soul;
+                myCursorInMovement = SelectionCursor.Which.Right;
+            }
+        }
+
+        // 判断选中区域是否相同
+        if (prevRange.isSame(myLeftMostRegionSoul, myRightMostRegionSoul)) {
+            Timber.v("时间测试, 重复选中 忽略");
+            return false;
+        }
+
+        if (myCursorInMovement == SelectionCursor.Which.Right) {
+            if (hasPartAfterPage(page)) {
+                myView.turnPage(true, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
+                myView.Application.getViewWidget().reset("expandTo");
+                myView.preparePaintInfo();
+            }
+        } else {
+            if (hasPartBeforePage(page)) {
+                myView.turnPage(false, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
+                myView.Application.getViewWidget().reset("expandTo");
+                myView.preparePaintInfo();
+            }
+        }
+        return true;
     }
 
     boolean hasPartAfterPage(ZLTextPage page) {
@@ -310,6 +432,14 @@ class ZLTextSelection extends ZLTextHighlighting {
         Point(int x, int y) {
             X = x;
             Y = y;
+        }
+
+        @Override
+        public String toString() {
+            return "Point{" +
+                    "X=" + X +
+                    ", Y=" + Y +
+                    '}';
         }
     }
 

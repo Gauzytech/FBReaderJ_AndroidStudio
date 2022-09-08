@@ -554,7 +554,7 @@ public final class FBReaderApp extends ZLApplication {
                 bookTextView.setTextModel(bookModel.getTextModel());
 
                 Timber.v("flutter内容绘制流程, 请求%s", CMD_INIT_RENDER);
-                invokeFlutterMethod(CMD_INIT_RENDER, "解析完成, 渲染第一个bitmap！", null);
+                invokeFlutterMethod(CMD_INIT_RENDER, null, null);
 
             } else {
                 // 获得第一个paragraph的对象, 并使用moveStartCursor()将对象设为当前page

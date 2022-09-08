@@ -12,5 +12,5 @@ interface PaintListener {
     /**
      * 重新绘制当前页bitmap, 并传给flutter重新渲染
      */
-    fun repaint()
+    fun repaint(shouldRepaint: Boolean)
 }

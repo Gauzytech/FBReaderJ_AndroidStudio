@@ -456,7 +456,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public boolean onLongClick(View v) {
-        return contentProcessor.onFingerLongPress(myPressedX, myPressedY, null);
+        return contentProcessor.onFingerLongPress(myPressedX, myPressedY, null, null);
     }
 
     @Override
@@ -616,7 +616,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                 if (myPendingDoubleTap) {
                     contentProcessor.onFingerDoubleTap(x, y);
                 } else if (myLongClickPerformed) {
-                    contentProcessor.onFingerReleaseAfterLongPress(x, y, null);
+                    contentProcessor.onFingerReleaseAfterLongPress(x, y, null, null);
                 } else {
                     if (myPendingLongClickRunnable != null) {
                         removeCallbacks(myPendingLongClickRunnable);
@@ -632,7 +632,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                             contentProcessor.onFingerSingleTap(x, y, null);
                         }
                     } else {
-                        contentProcessor.onFingerRelease(x, y);
+                        contentProcessor.onFingerRelease(x, y, null, null);
                     }
                 }
                 myPendingDoubleTap = false;
@@ -648,7 +648,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                     myPendingDoubleTap = false;
                 }
                 if (myLongClickPerformed) {
-                    contentProcessor.onFingerMoveAfterLongPress(x, y, null);
+                    contentProcessor.onFingerMoveAfterLongPress(x, y, null, null);
                 } else {
                     if (myPendingPress) {
                         if (isAMove) {
@@ -659,20 +659,20 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                             if (myPendingLongClickRunnable != null) {
                                 removeCallbacks(myPendingLongClickRunnable);
                             }
-                            contentProcessor.onFingerPress(myPressedX, myPressedY);
+                            contentProcessor.onFingerPress(myPressedX, myPressedY, null, null);
                             myPendingPress = false;
                         }
                     }
                     if (!myPendingPress) {
                         // 有选中的情况，都交给onFingerMove
                         if (contentProcessor.hasSelection() || !contentProcessor.isHorizontal()) {
-                            contentProcessor.onFingerMove(x, y);
+                            contentProcessor.onFingerMove(x, y, null, null);
                         } else {
                             if (Math.abs(myPressedX - x) < Math.abs(myPressedY - y) || isMoveVertical) {
                                 onMoveVertical(mStartRawY, (int) event.getRawY());
                             } else {
                                 Timber.v("native横向翻页动画, onFingerMove");
-                                contentProcessor.onFingerMove(x, y);
+                                contentProcessor.onFingerMove(x, y, null, null);
                             }
                         }
                     }

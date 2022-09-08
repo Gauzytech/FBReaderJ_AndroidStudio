@@ -16,7 +16,7 @@ class ContentPainter extends CustomPainter {
 
   ReaderPageManager pageManager;
   TouchEvent? currentTouchData;
-  Offset? longPressOffset;
+  Offset? _selectionTouchOffset;
   int currentPageIndex = 0;
   int currentChapterId = 0;
 
@@ -70,18 +70,5 @@ class ContentPainter extends CustomPainter {
 
   Offset lastTouchPosition() {
     return currentTouchData?.touchPosition ?? Offset.zero;
-  }
-
-  /// 长按事件处理操作
-  /// 保存当前坐标
-  void setLongPressOffset(Offset? longPressOffset) {
-    this.longPressOffset = longPressOffset;
-  }
-
-  /// 判断是否坐标重复了
-  bool isDuplicateLongPressOffset(Offset offset) {
-    int prevDx = longPressOffset?.dx.toInt() ?? -1;
-    int prevDy = longPressOffset?.dy.toInt() ?? -1;
-    return offset.dx.toInt() == prevDx && offset.dy.toInt() == prevDy;
   }
 }

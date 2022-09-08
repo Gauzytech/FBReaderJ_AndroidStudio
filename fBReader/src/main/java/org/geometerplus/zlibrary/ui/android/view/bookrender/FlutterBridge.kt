@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.annotation.MainThread
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -25,6 +26,9 @@ import java.io.FileOutputStream
  */
 
 private const val TAG = "flutter_bridge"
+private const val METHOD_CHANNEL_PATH = "platform_channel_methods"
+private const val EVENT_CHANNEL_PATH = "platform_channel_events/page_repaint"
+
 private const val DRAW_ON_BITMAP = "draw_on_bitmap"
 private const val PREPARE_PAGE = "prepare_page"
 private const val CAN_SCROLL = "can_scroll"
@@ -33,6 +37,9 @@ private const val LONG_PRESS_START = "long_press_start"
 private const val LONG_PRESS_MOVE = "long_press_update"
 private const val LONG_PRESS_END = "long_press_end"
 private const val ON_TAP_UP = "on_tap_up"
+private const val ON_DRAG_START = "on_selection_drag_start"
+private const val ON_DRAG_MOVE = "on_selection_drag_move"
+private const val ON_DRAG_END = "on_selection_drag_end"
 
 class FlutterBridge(
     private val context: Context,
@@ -40,7 +47,8 @@ class FlutterBridge(
     messenger: BinaryMessenger
 ) : MethodCallHandler {
 
-    private var channel: MethodChannel = MethodChannel(messenger, "com.flutter.book.reader")
+    // flutter method通信 有返回值
+    private val channel = MethodChannel(messenger, METHOD_CHANNEL_PATH)
     private val contentProcessor = readerController.contentProcessor
 
     init {
@@ -99,61 +107,95 @@ class FlutterBridge(
                 val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Double>("width")!!.toInt()
                 val height = call.argument<Double>("height")!!.toInt()
-                Timber.v("flutter长按事件, 长按开始: [$dx, $dy], [$width, $height]")
-                contentProcessor.onFingerLongPress(dx, dy, object : PaintListener {
-                    override fun repaint() {
-                        Timber.v("flutter长按事件, 长按开始, 需要repaint")
-                        // 绘制内容的bitmap
-                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
-                        // 回调结果
-                        result.success(bitmap.toByteArray())
+                val time = call.argument<Long>("time_stamp")!!
+                Timber.v("flutter长按事件, $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
+                contentProcessor.onFingerLongPress(dx, dy, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_START, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
                     }
-                })
+                }, Pair(width, height))
             }
             LONG_PRESS_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Double>("width")!!.toInt()
                 val height = call.argument<Double>("height")!!.toInt()
-                Timber.v("flutter长按事件, 长按移动: [$dx, $dy], [$width, $height]")
-                contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : PaintListener {
-                    override fun repaint() {
-                        Timber.v("flutter长按事件, 长按移动, 需要repaint")
-                        // 绘制内容的bitmap
-                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
-                        // 回调结果
-                        result.success(bitmap.toByteArray())
+                val time = call.argument<Long>("time_stamp")!!
+                Timber.v("flutter长按事件,  $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
+                contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_MOVE, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
                     }
-                })
+                }, Pair(width, height))
             }
             LONG_PRESS_END -> {
                 val width = call.argument<Double>("width")!!.toInt()
                 val height = call.argument<Double>("height")!!.toInt()
-                Timber.v("flutter长按事件, 长按结束 [$width, $height]")
-                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : PaintListener {
-                    override fun repaint() {
-                        Timber.v("flutter长按事件, 长按结束, 需要repaint")
-                        // 绘制内容的bitmap
-                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
-                        // 回调结果
-                        result.success(bitmap.toByteArray())
+                val time = call.argument<Long>("time_stamp")!!
+                Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
+                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_END, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
                     }
-                })
+                }, Pair(width, height))
             }
             ON_TAP_UP -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Double>("width")!!.toInt()
                 val height = call.argument<Double>("height")!!.toInt()
+                val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerSingleTap(dx, dy, object : PaintListener {
-                    override fun repaint() {
-                        Timber.v("flutter长按事件, 点击, 需要repaint")
+                    override fun repaint(shouldRepaint: Boolean) {
+                        Timber.v("时间测试, 重绘返回 $ON_TAP_UP, $time ${System.currentTimeMillis() - time}")
                         // 绘制内容的bitmap
                         val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
                         // 回调结果
                         result.success(bitmap.toByteArray())
                     }
                 })
+            }
+            ON_DRAG_START -> {
+                val dx = call.argument<Int>("touch_x")!!.toInt()
+                val dy = call.argument<Int>("touch_y")!!.toInt()
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                val time = call.argument<Long>("time_stamp")!!
+                Timber.v("flutter长按事件, $ON_DRAG_START, [$dx, $dy]")
+                contentProcessor.onFingerPress(dx, dy, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $ON_DRAG_START, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
+                    }
+                }, Pair(width, height))
+            }
+            ON_DRAG_MOVE -> {
+                val dx = call.argument<Int>("touch_x")!!.toInt()
+                val dy = call.argument<Int>("touch_y")!!.toInt()
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                val time = call.argument<Long>("time_stamp")!!
+                Timber.v("flutter长按事件, $ON_DRAG_MOVE, [$dx, $dy]")
+                contentProcessor.onFingerMove(dx, dy, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $ON_DRAG_MOVE, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
+                    }
+                }, Pair(width, height))
+            }
+            ON_DRAG_END -> {
+                val width = call.argument<Double>("width")!!.toInt()
+                val height = call.argument<Double>("height")!!.toInt()
+                val time = call.argument<Long>("time_stamp")!!
+                contentProcessor.onFingerRelease(0, 0, object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $ON_DRAG_END, $time ${System.currentTimeMillis() - time}")
+                        result.success(data)
+                    }
+                }, Pair(width, height))
             }
         }
     }
@@ -177,7 +219,7 @@ class FlutterBridge(
     }
 
     private fun getTestNativeImage(result: MethodChannel.Result) {
-        val drawableId: Int =
+        val drawableId =
             context.resources.getIdentifier("test_img", "drawable", context.packageName)
         val bitmap = BitmapFactory.decodeResource(context.resources, drawableId)
         val baos = ByteArrayOutputStream()

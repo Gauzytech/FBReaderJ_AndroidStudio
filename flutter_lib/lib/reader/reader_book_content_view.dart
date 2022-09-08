@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
+import 'package:flutter_lib/reader/handler/selelction_event_handler.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:provider/provider.dart';
@@ -49,7 +50,8 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 class ReaderBookContentViewState
     extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
-  final _methodChannel = const MethodChannel('com.flutter.book.reader');
+  final _methodChannel = const MethodChannel('platform_channel_methods');
+  final _eventChannel = const EventChannel('platform_channel_events/page_repaint');
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
@@ -61,12 +63,18 @@ class ReaderBookContentViewState
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
+  late SelectionEventHandler _selectionEventHandler;
+  final PagePanDragRecognizer _pagePanDragRecognizer = PagePanDragRecognizer();
 
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     _readerContentHandler = ReaderContentHandler(
-        methodChannel: _methodChannel, readerBookContentViewState: this);
+        methodChannel: _methodChannel,
+        eventChannel: _eventChannel,
+        readerBookContentViewState: this);
+    _selectionEventHandler =
+        SelectionEventHandler(readerContentHandler: _readerContentHandler);
   }
 
   @override
@@ -128,71 +136,56 @@ class ReaderBookContentViewState
                 gestures: <Type, GestureRecognizerFactory>{
                   PagePanDragRecognizer: GestureRecognizerFactoryWithHandlers<
                       PagePanDragRecognizer>(
-                    () => PagePanDragRecognizer(),
+                        () => _pagePanDragRecognizer,
                     (PagePanDragRecognizer recognizer) {
                       recognizer.setMenuOpen(false);
-                      // recognizer.onDown = (detail) {
-                      //   print(
-                      //       "flutter动画流程:recognizer, ------------------触摸事件[onDown], ${detail.localPosition}------------------>>>>>>>>");
-                      //   onDownEvent(detail, readerViewModel);
-                      // };
                       recognizer.onStart = (detail) {
-                        print("flutter动画流程:recognizer, ------------------触摸事件[onStart], ${detail.localPosition}------------------>>>>>>>>");
-                        onDragStart(detail, readerViewModel);
+                        if (recognizer.isSelectionMenuShown()) {
+                          _selectionEventHandler.onSelectionDragStart(detail);
+                        } else {
+                          print(
+                              "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
+                          onDragStart(detail, readerViewModel);
+                        }
                       };
                       recognizer.onUpdate = (detail) {
-                        print("flutter动画流程:recognizer, ------------------触摸事件[onUpdate], ${detail.localPosition}------------------>>>>>>>>");
-                        if (!readerViewModel.getMenuOpenState()) {
+                        if (recognizer.isSelectionMenuShown()) {
+                          _selectionEventHandler.onSelectionDragMove(detail);
+                        } else if (!readerViewModel.getMenuOpenState()) {
+                          print(
+                              'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
                           onUpdateEvent(detail, readerViewModel);
                         } else {
-                          print('flutter动画流程:recognizer, [onUpdate]忽略${detail.localPosition}');
+                          print(
+                              'flutter动画流程[onDragUpdate], 忽略事件${detail.localPosition}');
                         }
                       };
                       recognizer.onEnd = (detail) {
-                        print("flutter动画流程:recognizer, ------------------触摸事件[onEnd], $detail------------------>>>>>>>>");
-                        if (!readerViewModel.getMenuOpenState()) {
+                        if (recognizer.isSelectionMenuShown()) {
+                          _selectionEventHandler.onSelectionDragEnd(detail);
+                        } else if (!readerViewModel.getMenuOpenState()) {
+                          print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
                           onEndEvent(detail, readerViewModel);
                         } else {
-                          print('flutter动画流程:recognizer, [onEnd]忽略$detail');
+                          print('flutter动画流程[onDragEnd], 忽略事件$detail');
                         }
                       };
                     },
                   ),
                   LongPressGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
+                  GestureRecognizerFactoryWithHandlers<
                           LongPressGestureRecognizer>(
                     () => LongPressGestureRecognizer(),
                     (LongPressGestureRecognizer recognizer) {
                       recognizer.onLongPressStart = (detail) {
-                        Offset position = detail.localPosition;
-                        if (_contentPainter
-                                ?.isDuplicateLongPressOffset(position) ==
-                            false) {
-                          _contentPainter?.setLongPressOffset(position);
-                          _readerContentHandler.callNativeMethod('long_press_start',
-                              position.dx.toInt(), position.dy.toInt());
-                        }
-                        print(
-                            "flutter动画流程:触摸事件, ------------------长按事件开始----$position-------------->>>>>>>>>");
+                        _pagePanDragRecognizer.setSelectionMenuState(true);
+                        _selectionEventHandler.onLongPressStart(detail);
                       };
                       recognizer.onLongPressMoveUpdate = (detail) {
-                        Offset position = detail.localPosition;
-                        if (_contentPainter
-                                ?.isDuplicateLongPressOffset(position) ==
-                            false) {
-                          _contentPainter?.setLongPressOffset(position);
-                          _readerContentHandler.callNativeMethod('long_press_update',
-                              position.dx.toInt(), position.dy.toInt());
-                        }
-                        print(
-                            "flutter动画流程:触摸事件, ------------------长按事件移动----$position-------------->>>>>>>>>");
+                        _selectionEventHandler.onLongPressMoveUpdate(detail);
                       };
                       recognizer.onLongPressUp = () {
-                        _contentPainter?.setLongPressOffset(null);
-                        _readerContentHandler.callNativeMethod(
-                            'long_press_end', 0, 0);
-                        print(
-                            "flutter动画流程:触摸事件, ------------------长按事件结束------------------>>>>>>>>>");
+                        _selectionEventHandler.onLongPressUp();
                       };
                     },
                   ),
@@ -200,11 +193,8 @@ class ReaderBookContentViewState
                           TapGestureRecognizer>(() => TapGestureRecognizer(),
                       (TapGestureRecognizer recognizer) {
                     recognizer.onTapUp = (detail) {
-                      Offset position = detail.localPosition;
-                      print(
-                          "flutter动画流程:触摸事件, ------------------onTapUp $position------------------>>>>>>>>>");
-                      _readerContentHandler.callNativeMethod('on_tap_up',
-                          position.dx.toInt(), position.dy.toInt());
+                      _selectionEventHandler.onTagUp(detail);
+                      _pagePanDragRecognizer.setSelectionMenuState(false);
                     };
                   })
                 },
@@ -246,8 +236,6 @@ class ReaderBookContentViewState
     animationController?.dispose();
     super.dispose();
   }
-
-  void onDownEvent(DragDownDetails detail, ReaderViewModel readerViewModel) {}
 
   void onDragStart(DragStartDetails detail, ReaderViewModel readerViewModel) {
     // 如果动画正在进行, 直接忽略event
