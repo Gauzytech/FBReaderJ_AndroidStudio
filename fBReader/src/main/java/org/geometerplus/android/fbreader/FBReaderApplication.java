@@ -90,9 +90,13 @@ public class FBReaderApplication extends ZLAndroidApplication {
         return flutterEngine.getDartExecutor().getBinaryMessenger();
     }
 
+    public void destroyEngine() {
+        flutterEngine.destroy();
+    }
+
     @Override
     public void onTerminate() {
-        flutterEngine.destroy();
+        destroyEngine();
         super.onTerminate();
     }
 }

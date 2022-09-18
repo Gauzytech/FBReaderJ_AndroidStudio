@@ -379,7 +379,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
                 getSupportFragmentManager()
                         .beginTransaction()
-                        .add(R.id.readerView, flutterFragment, "flutter_fragment")
+                        .replace(R.id.readerView, flutterFragment, "flutter_fragment")
                         .commit();
             }
         }

@@ -511,7 +511,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         Timber.v("渲染流程:Bitmap绘制[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.lineInfos.size());
         /*
-         * 内容 + 高亮
+         * 内容 + 高亮的绘制
          */
         final List<ZLTextLineInfo> lineInfoList = page.lineInfos;
         final int[] labels = new int[lineInfoList.size() + 1];

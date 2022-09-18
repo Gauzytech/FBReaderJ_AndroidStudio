@@ -21,11 +21,15 @@ class ReaderPageManager {
   TouchEvent? currentTouchData;
 
   GlobalKey canvasKey;
+  GlobalKey topIndicatorKey;
+  GlobalKey bottomIndicatorKey;
   AnimationController animationController;
   int currentAnimationType;
 
   ReaderPageManager({
     required this.canvasKey,
+    required this.topIndicatorKey,
+    required this.bottomIndicatorKey,
     required this.animationController,
     required this.currentAnimationType,
     required ReaderViewModel viewModel,

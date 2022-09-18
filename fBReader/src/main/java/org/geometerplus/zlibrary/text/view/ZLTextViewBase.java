@@ -92,8 +92,17 @@ abstract class ZLTextViewBase extends ZLView {
         return new ZLPaintContext.Size(getTextColumnWidth(), getTextAreaHeight());
     }
 
+    /**
+     * 一屏可绘制区域的高度
+     * 高度 = 顶部标题栏高度 + 图书内容高度 + 底部电量和页码栏高度
+     */
     int getTextAreaHeight() {
-        return getContextHeight() - getTopMargin() - getBottomMargin();
+        // 顶部留出margin: 绘制标题的空间
+        int topMargin = getTopMargin();
+        // 底部留出margin: 绘制电量图标, 页码的空间
+        int bottomMargin = getBottomMargin();
+        Timber.v("可绘制区域, mainHeight = %s, bottom = %s", getContextHeight(), bottomMargin);
+        return getContextHeight() - topMargin - bottomMargin;
     }
 
     protected int getColumnIndex(int x) {

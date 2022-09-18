@@ -27,7 +27,6 @@ import java.io.FileOutputStream
 
 private const val TAG = "flutter_bridge"
 private const val METHOD_CHANNEL_PATH = "platform_channel_methods"
-private const val EVENT_CHANNEL_PATH = "platform_channel_events/page_repaint"
 
 private const val DRAW_ON_BITMAP = "draw_on_bitmap"
 private const val PREPARE_PAGE = "prepare_page"
@@ -61,8 +60,8 @@ class FlutterBridge(
             DRAW_ON_BITMAP -> {
                 // 获取Flutter传递的参数
                 val index = call.argument<Int>("page_index")!!
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val pageIndex = PageIndex.getPageIndex(index)
                 Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
 
@@ -76,8 +75,8 @@ class FlutterBridge(
                 }
             }
             PREPARE_PAGE -> {
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val prev = call.argument<Boolean>("update_prev_page_cache")!!
                 val next = call.argument<Boolean>("update_next_page_cache")!!
                 Timber.v("$TAG, 收到了: [$prev, $next]")
@@ -119,8 +118,8 @@ class FlutterBridge(
             LONG_PRESS_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件,  $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
                 contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : ResultCallBack {
@@ -131,8 +130,8 @@ class FlutterBridge(
                 }, Pair(width, height))
             }
             LONG_PRESS_END -> {
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
                 contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : ResultCallBack {
@@ -145,8 +144,8 @@ class FlutterBridge(
             ON_TAP_UP -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerSingleTap(dx, dy, object : PaintListener {
                     override fun repaint(shouldRepaint: Boolean) {
@@ -161,8 +160,8 @@ class FlutterBridge(
             ON_DRAG_START -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $ON_DRAG_START, [$dx, $dy]")
                 contentProcessor.onFingerPress(dx, dy, object : ResultCallBack {
@@ -175,8 +174,8 @@ class FlutterBridge(
             ON_DRAG_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $ON_DRAG_MOVE, [$dx, $dy]")
                 contentProcessor.onFingerMove(dx, dy, object : ResultCallBack {
@@ -187,8 +186,8 @@ class FlutterBridge(
                 }, Pair(width, height))
             }
             ON_DRAG_END -> {
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerRelease(0, 0, object : ResultCallBack {
                     override fun onComplete(data: Any) {
@@ -202,6 +201,7 @@ class FlutterBridge(
 
     @MainThread
     fun invokeMethod(method: String, arguments: Any?, callback: MethodChannel.Result?) {
+        Timber.v("ceshi1234, density = ${context.resources.displayMetrics.density}")
         channel.invokeMethod(method, arguments, callback)
     }
 

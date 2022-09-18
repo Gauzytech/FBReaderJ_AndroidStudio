@@ -180,7 +180,6 @@ class ZLTextSelection extends ZLTextHighlighting {
         if (isEmpty()) {
             return;
         }
-        Timber.v("时间测试, before, left = %s, right = %s", myLeftMostRegionSoul, myRightMostRegionSoul);
         SelectionRange prevRange = new SelectionRange(myLeftMostRegionSoul, myRightMostRegionSoul);
 
         final ZLTextElementAreaVector vector = page.TextElementMap;
@@ -281,7 +280,6 @@ class ZLTextSelection extends ZLTextHighlighting {
                 myView.preparePaintInfo();
             }
         }
-        Timber.v("时间测试, after left = %s, right = %s", myLeftMostRegionSoul, myRightMostRegionSoul);
     }
 
     boolean expandToFlutter(ZLTextPage page, int x, int y) {
@@ -443,6 +441,9 @@ class ZLTextSelection extends ZLTextHighlighting {
         }
     }
 
+    /**
+     * Scroll是FBReader用来实现翻页划选的, 效果不行
+     */
     private class Scroller implements Runnable {
         private final ZLTextPage myPage;
         private final boolean myScrollForward;
