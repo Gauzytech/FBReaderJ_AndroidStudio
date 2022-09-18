@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/pair.dart';
@@ -243,19 +242,12 @@ class ReaderContentHandler {
   /// 获得需要绘制图片区域的跨高.
   /// returns [Pair] of [widthPx, heightPx].
   Pair _getBitmapDrawAreaMetrics() {
-    final ratio =
-        MediaQuery.of(readerBookContentViewState.context).devicePixelRatio;
-    print("flutter内容绘制流程, render_page, "
-        "ratio = $ratio, "
-        "windowSize = ${ui.window.physicalSize},"
-        "footerHeight = ${readerBookContentViewState.footerKey.currentContext?.size?.height} vs."
-        " ${readerBookContentViewState.getFooterHeight()},");
+    print("flutter内容绘制流程, render_page, windowSize = ${ui.window.physicalSize}");
 
     // 屏幕宽度
     double widthPx = ui.window.physicalSize.width;
-    // 屏幕高度 - footer高度
-    double heightPx = ui.window.physicalSize.height -
-        readerBookContentViewState.getFooterHeight() * ratio;
+    // 屏幕高度
+    double heightPx = ui.window.physicalSize.height;
     return Pair(widthPx, heightPx);
   }
 }

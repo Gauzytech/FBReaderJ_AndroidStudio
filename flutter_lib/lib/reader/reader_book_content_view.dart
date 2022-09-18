@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +15,6 @@ import 'animation/controller_animation_with_listener_number.dart';
 import 'controller/page_pan_gesture_recognizer.dart';
 import 'controller/reader_content_handler.dart';
 import 'controller/reader_page_manager.dart';
-import 'dart:ui' as ui;
 
 class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
   // 放大镜的半径
@@ -34,7 +35,7 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 
   @override
   BaseStatefulViewState<BaseStatefulView<BaseViewModel>, ReaderViewModel>
-      buildState() {
+  buildState() {
     return ReaderBookContentViewState();
   }
 
@@ -48,16 +49,14 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 // }
 }
 
-class ReaderBookContentViewState
-    extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
+class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
   final _methodChannel = const MethodChannel('platform_channel_methods');
   final _eventChannel =
-      const EventChannel('platform_channel_events/page_repaint');
+  const EventChannel('platform_channel_events/page_repaint');
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
-  final GlobalKey footerKey = GlobalKey();
   final GlobalKey topIndicatorKey = GlobalKey();
   final GlobalKey bottomIndicatorKey = GlobalKey();
   bool showCrossPageSelectionIndicator = false;
@@ -113,7 +112,7 @@ class ReaderBookContentViewState
           bottomIndicatorKey: bottomIndicatorKey,
           animationController: animationController!,
           currentAnimationType:
-              readerViewModel.getConfigData().currentAnimationMode,
+          readerViewModel.getConfigData().currentAnimationMode,
           viewModel: readerViewModel);
       readerViewModel.setContentHandler(_readerContentHandler);
       _contentPainter = ContentPainter(pageManager);
@@ -131,71 +130,67 @@ class ReaderBookContentViewState
         ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
 
     final contentSize = readerViewModel.getContentSize();
-    return Column(
-      children: <Widget>[
-        Expanded(
-          flex: 1,
-          child: RawGestureDetector(
-            behavior: HitTestBehavior.translucent,
-            gestures: <Type, GestureRecognizerFactory>{
-              PagePanDragRecognizer:
-                  GestureRecognizerFactoryWithHandlers<PagePanDragRecognizer>(
-                () => _pagePanDragRecognizer,
-                (PagePanDragRecognizer recognizer) {
-                  recognizer.setMenuOpen(false);
-                  recognizer.onStart = (detail) {
-                    if (recognizer.isSelectionMenuShown()) {
-                      _selectionEventHandler.onSelectionDragStart(detail);
-                    } else {
-                      print(
-                          "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
-                      onDragStart(detail, readerViewModel);
-                    }
-                  };
-                  recognizer.onUpdate = (detail) {
-                    if (recognizer.isSelectionMenuShown()) {
-                      _selectionEventHandler.onSelectionDragMove(detail);
-                    } else if (!readerViewModel.getMenuOpenState()) {
-                      print(
-                          'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
-                      onUpdateEvent(detail, readerViewModel);
-                    } else {
-                      print(
-                          'flutter动画流程[onDragUpdate], 忽略事件${detail.localPosition}');
-                    }
-                  };
-                  recognizer.onEnd = (detail) {
-                    if (recognizer.isSelectionMenuShown()) {
-                      _selectionEventHandler.onSelectionDragEnd(detail);
-                    } else if (!readerViewModel.getMenuOpenState()) {
-                      print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
-                      onEndEvent(detail, readerViewModel);
-                    } else {
-                      print('flutter动画流程[onDragEnd], 忽略事件$detail');
-                    }
-                  };
-                },
-              ),
-              LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
-                  LongPressGestureRecognizer>(
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        PagePanDragRecognizer:
+            GestureRecognizerFactoryWithHandlers<PagePanDragRecognizer>(
+          () => _pagePanDragRecognizer,
+          (PagePanDragRecognizer recognizer) {
+            recognizer.setMenuOpen(false);
+            recognizer.onStart = (detail) {
+              if (recognizer.isSelectionMenuShown()) {
+                _selectionEventHandler.onSelectionDragStart(detail);
+              } else {
+                  print(
+                      "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
+                  onDragStart(detail, readerViewModel);
+                }
+              };
+              recognizer.onUpdate = (detail) {
+                if (recognizer.isSelectionMenuShown()) {
+                  _selectionEventHandler.onSelectionDragMove(detail);
+                } else if (!readerViewModel.getMenuOpenState()) {
+                  print(
+                      'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
+                  onUpdateEvent(detail, readerViewModel);
+                } else {
+                  print(
+                      'flutter动画流程[onDragUpdate], 忽略事件${detail.localPosition}');
+                }
+              };
+              recognizer.onEnd = (detail) {
+                if (recognizer.isSelectionMenuShown()) {
+                  _selectionEventHandler.onSelectionDragEnd(detail);
+                } else if (!readerViewModel.getMenuOpenState()) {
+                  print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
+                  onEndEvent(detail, readerViewModel);
+                } else {
+                  print('flutter动画流程[onDragEnd], 忽略事件$detail');
+                }
+              };
+            },
+          ),
+          LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+              LongPressGestureRecognizer>(
                 () => LongPressGestureRecognizer(),
                 (LongPressGestureRecognizer recognizer) {
-                  recognizer.onLongPressStart = (detail) {
-                    _pagePanDragRecognizer.setSelectionMenuState(true);
-                    _selectionEventHandler.onLongPressStart(detail);
-                  };
-                  recognizer.onLongPressMoveUpdate = (detail) {
-                    _selectionEventHandler.onLongPressMoveUpdate(detail);
-                  };
-                  recognizer.onLongPressUp = () {
-                    _selectionEventHandler.onLongPressUp();
-                  };
-                },
-              ),
-              TapGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                      () => TapGestureRecognizer(),
-                      (TapGestureRecognizer recognizer) {
+              recognizer.onLongPressStart = (detail) {
+                _pagePanDragRecognizer.setSelectionMenuState(true);
+                _selectionEventHandler.onLongPressStart(detail);
+              };
+              recognizer.onLongPressMoveUpdate = (detail) {
+                _selectionEventHandler.onLongPressMoveUpdate(detail);
+              };
+              recognizer.onLongPressUp = () {
+                _selectionEventHandler.onLongPressUp();
+              };
+            },
+          ),
+          TapGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                  () => TapGestureRecognizer(),
+                  (TapGestureRecognizer recognizer) {
                 recognizer.onTapUp = (detail) {
                   // todo 只让indicator刷新, customPainter不应该刷新
                   setState(() {
@@ -210,64 +205,50 @@ class ReaderBookContentViewState
                   // _pagePanDragRecognizer.setSelectionMenuState(false);
                 };
               })
-            },
-            child: FittedBox(
-              child: Stack(
-                children: <Widget>[
-                  SizedBox(
-                    width: contentSize[0],
-                    height: contentSize[1],
-                    child: CustomPaint(
-                      key: contentKey,
-                      painter: _contentPainter,
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Visibility(
-                      visible: showCrossPageSelectionIndicator,
-                      child: Align(
-                        alignment: AlignmentDirectional.topStart,
-                        child: Container(
-                          // key: topIndicatorKey,
-                          width: 150,
-                          height: 150,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Visibility(
-                      visible: showCrossPageSelectionIndicator,
-                      child: Align(
-                        alignment: AlignmentDirectional.bottomEnd,
-                        child: Container(
-                          key: bottomIndicatorKey,
-                          width: 150,
-                          height: 150,
-                          color: Colors.greenAccent,
-                        ),
-                      ),
-                    ),
-                  )
-                ],
+        },
+        child: FittedBox(
+          child: Stack(
+            children: <Widget>[
+              SizedBox(
+                width: contentSize[0],
+                height: contentSize[1],
+                child: CustomPaint(
+                  key: contentKey,
+                  painter: _contentPainter,
+                ),
               ),
-            ),
+              Positioned.fill(
+                child: Visibility(
+                  visible: showCrossPageSelectionIndicator,
+                  child: Align(
+                    alignment: AlignmentDirectional.topStart,
+                    child: Container(
+                      // key: topIndicatorKey,
+                      width: 150,
+                      height: 150,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: Visibility(
+                  visible: showCrossPageSelectionIndicator,
+                  child: Align(
+                    alignment: AlignmentDirectional.bottomEnd,
+                    child: Container(
+                      key: bottomIndicatorKey,
+                      width: 150,
+                      height: 150,
+                      color: Colors.greenAccent,
+                    ),
+                  ),
+                ),
+              )
+            ],
           ),
         ),
-        Container(
-          key: footerKey,
-          width: double.infinity,
-          height: getFooterHeight(),
-          color: Colors.green.shade200,
-          child: const Text('底部: 显示图书电量和页码'),
-        ),
-      ],
-    );
-  }
-
-  double getFooterHeight() {
-    return ui.window.physicalSize.height * 0.01;
+      );
   }
 
   @override
@@ -304,14 +285,13 @@ class ReaderBookContentViewState
       _contentPainter
           ?.startCurrentTouchEvent(_contentPainter!.currentTouchData!);
       RenderObject? renderObject =
-          contentKey.currentContext?.findRenderObject();
+      contentKey.currentContext?.findRenderObject();
       print("渲染刷新, ${renderObject?.isRepaintBoundary}");
       renderObject?.markNeedsPaint();
     }
   }
 
-  Future<void> onUpdateEvent(
-      DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
+  Future<void> onUpdateEvent(DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
     if (!_contentPainter!.isDuplicateEvent(
       TouchEvent.ACTION_MOVE,
       detail.localPosition,
@@ -332,8 +312,7 @@ class ReaderBookContentViewState
     }
   }
 
-  Future<void> onEndEvent(
-      DragEndDetails detail, ReaderViewModel readerViewModel) async {
+  Future<void> onEndEvent(DragEndDetails detail, ReaderViewModel readerViewModel) async {
     if (!_contentPainter!.isDuplicateEvent(
       TouchEvent.ACTION_DRAG_END,
       _contentPainter!.lastTouchPosition(),
