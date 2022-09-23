@@ -623,9 +623,11 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
             AnimationHelper.closeBottomMenu(menuMore);
         });
 
+        // 上一页
         previousPage.setOnClickListener(v ->
                 readerController.runAction(ActionCode.TURN_PAGE_BACK));
 
+        // 下一页
         nextPage.setOnClickListener(v ->
                 readerController.runAction(ActionCode.TURN_PAGE_FORWARD));
 

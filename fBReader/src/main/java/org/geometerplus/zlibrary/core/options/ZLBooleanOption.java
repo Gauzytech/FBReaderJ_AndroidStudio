@@ -47,4 +47,13 @@ public final class ZLBooleanOption extends ZLOption {
 			Config.Instance().setSpecialBooleanValue(mySpecialName, getValue());
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "ZLBooleanOption{" +
+				"myDefaultValue=" + myDefaultValue +
+				", myDefaultStringValue='" + myDefaultStringValue + '\'' +
+				", mySpecialName='" + mySpecialName + '\'' +
+				'}';
+	}
 }

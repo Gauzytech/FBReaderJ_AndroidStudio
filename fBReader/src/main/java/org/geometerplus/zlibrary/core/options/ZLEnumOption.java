@@ -49,4 +49,9 @@ public final class ZLEnumOption<T extends Enum<T>> extends ZLOption {
 		myStringValue = String.valueOf(value);
 		setConfigValue(myStringValue);
 	}
+
+	@Override
+	public String toString() {
+		return "{ myValue = " + myValue + " }";
+	}
 }

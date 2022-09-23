@@ -43,6 +43,10 @@ class ContentPainter extends CustomPainter {
     return pageManager.shouldRepaint(oldDelegate, this);
   }
 
+  Future<bool> canScroll(TouchEvent event) async {
+    return await pageManager.canScroll(event);
+  }
+
   /// 缓存触摸事件判断滑动方向
   /// 注意多线程全局变量问题
   void setCurrentTouchEvent(TouchEvent event) {
@@ -54,17 +58,17 @@ class ContentPainter extends CustomPainter {
     return pageManager.setCurrentTouchEvent(event);
   }
 
-  bool isDuplicateEvent(int eventAction, Offset touchPosition) {
+  bool isDuplicateEvent(EventAction eventAction, Offset touchPosition) {
     if (currentTouchData == null) return false;
 
-    if (eventAction == TouchEvent.ACTION_DRAG_START ||
-        eventAction == TouchEvent.ACTION_MOVE) {
+    if (eventAction == EventAction.dragStart ||
+        eventAction == EventAction.move) {
       return currentTouchData!.action == eventAction &&
           currentTouchData!.touchPosition == touchPosition;
     } else {
-      return currentTouchData!.action == TouchEvent.ACTION_DRAG_END ||
+      return currentTouchData!.action == EventAction.dragEnd ||
           // 如果之前事件是down, 中间没有move事件，证明这只是个点击操作, 而不是fling
-          currentTouchData!.action == TouchEvent.ACTION_DRAG_START;
+          currentTouchData!.action == EventAction.dragStart;
     }
   }
 

@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 
 import '../controller/reader_content_handler.dart';
 
@@ -15,8 +17,14 @@ const tapUp = 'on_tap_up';
 class SelectionEventHandler {
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
+  GlobalKey topIndicatorKey;
+  GlobalKey bottomIndicatorKey;
+  bool _selectionMenuShown = false;
 
-  SelectionEventHandler({required this.readerContentHandler});
+  SelectionEventHandler(
+      {required this.readerContentHandler,
+      required this.topIndicatorKey,
+      required this.bottomIndicatorKey});
 
   /// 长按事件处理操作
   /// 保存当前坐标
@@ -29,6 +37,14 @@ class SelectionEventHandler {
     int prevDx = _selectionTouchOffset?.dx.toInt() ?? -1;
     int prevDy = _selectionTouchOffset?.dy.toInt() ?? -1;
     return offset.dx.toInt() == prevDx && offset.dy.toInt() == prevDy;
+  }
+
+  void setSelectionMenuState(bool isShow) {
+    _selectionMenuShown = isShow;
+  }
+
+  bool isSelectionMenuShown() {
+    return _selectionMenuShown;
   }
 
   void onSelectionDragStart(DragStartDetails detail) {
@@ -101,5 +117,55 @@ class SelectionEventHandler {
       position.dx.toInt(),
       position.dy.toInt(),
     );
+  }
+
+  bool enableCrossPageIndicator(
+    BuildContext context,
+    Offset touchPosition,
+  ) {
+    var ratio = MediaQuery.of(context).devicePixelRatio;
+    return overlapWithTopIndicator(touchPosition, ratio) ||
+        overlapWithBottomIndicator(touchPosition, ratio);
+  }
+
+  bool overlapWithTopIndicator(Offset touchPosition, double ratio) {
+    var renderBox =
+        topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
+    var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
+    var bottomLeft = renderBox.localToGlobal(Offset(0, renderBox.size.height));
+
+    return isOverlap(
+      touchPosition,
+      0,
+      topRight.dx * ratio,
+      0,
+      bottomLeft.dy * ratio,
+    );
+  }
+
+  bool overlapWithBottomIndicator(Offset touchPosition, double ratio) {
+    var renderBox =
+        bottomIndicatorKey.currentContext?.findRenderObject() as RenderBox;
+    var topLeft = renderBox.localToGlobal(Offset.zero);
+    var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
+    var bottomLeft = renderBox.localToGlobal(Offset(0, renderBox.size.height));
+
+    return isOverlap(
+      touchPosition,
+      topLeft.dx * ratio,
+      topRight.dx * ratio,
+      topLeft.dy * ratio,
+      bottomLeft.dy * ratio,
+    );
+  }
+
+  bool isOverlap(Offset touchPosition, double left, double right, double top,
+      double bottom) {
+    double touchDx = touchPosition.dx;
+    double touchDy = touchPosition.dy;
+    return touchDx >= left &&
+        touchDx <= right &&
+        touchDy >= top &&
+        touchDy <= bottom;
   }
 }

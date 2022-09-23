@@ -94,7 +94,7 @@ class SlidePageAnimation extends BaseAnimationPage {
     // }
 
     switch (event.action) {
-      case TouchEvent.ACTION_DRAG_START:
+      case EventAction.dragStart:
         if (!dy.isNaN && !dy.isInfinite) {
           mStartPoint = event.touchPosition;
           mStartDy = currentMoveDy;
@@ -102,7 +102,7 @@ class SlidePageAnimation extends BaseAnimationPage {
         }
 
         break;
-      case TouchEvent.ACTION_MOVE:
+      case EventAction.move:
         if (!getCachedTouchData().dy.isInfinite && !mStartPoint.dy.isInfinite) {
           double tempDy = event.touchPosition.dy - mStartPoint.dy;
           if (!currentSize.height.isInfinite &&
@@ -137,8 +137,8 @@ class SlidePageAnimation extends BaseAnimationPage {
           }
         }
         break;
-      case TouchEvent.ACTION_DRAG_END:
-      case TouchEvent.ACTION_CANCEL:
+      case EventAction.dragEnd:
+      case EventAction.cancel:
         break;
       default:
         break;

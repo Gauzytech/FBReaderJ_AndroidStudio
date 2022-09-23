@@ -49,4 +49,8 @@ public final class ZLStringOption extends ZLOption {
         }
     }
 
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

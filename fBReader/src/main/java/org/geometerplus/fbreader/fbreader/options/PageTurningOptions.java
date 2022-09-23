@@ -59,4 +59,15 @@ public class PageTurningOptions {
      */
     public final ZLStringOption TapZoneMap =
             new ZLStringOption("Scrolling", "TapZoneMap", "");
+
+    @Override
+    public String toString() {
+        return "PageTurningOptions{" +
+                "\nFingerScrolling=" + FingerScrolling +
+                ", \nAnimation=" + Animation +
+                ", \nAnimationSpeed=" + AnimationSpeed +
+                ", \nHorizontal=" + Horizontal +
+                ", \nTapZoneMap=" + TapZoneMap +
+                '}';
+    }
 }

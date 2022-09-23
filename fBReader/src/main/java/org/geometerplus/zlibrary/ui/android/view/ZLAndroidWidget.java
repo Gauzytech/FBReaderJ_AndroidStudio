@@ -164,12 +164,14 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     private void onDrawInScrolling(Canvas canvas) {
         Timber.v("渲染流程, onDrawInScrolling -> getCurrentView");
+        Timber.v("点击翻页流程");
 
         final AnimationProvider animator = getAnimationProvider("onDrawInScrolling");
         Timber.v("翻页动画, %s", animator.getClass().getSimpleName());
         final AnimationProvider.Mode oldMode = animator.getMode();
         animator.doStep();
         if (animator.inProgress()) {
+            Timber.v("点击翻页流程, 动画进行中");
             animator.draw(canvas);
             if (animator.getMode().Auto) {
                 postInvalidate();
@@ -177,6 +179,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             // drawFooter(canvas, animator);
         } else {
             Timber.v("渲染流程:绘制, call onDrawStatic");
+            Timber.v("点击翻页流程, 动画完毕, oldMode = %s", oldMode);
             switch (oldMode) {
                 case AnimatedScrollingForward: {
                     // progress直接记录在textPage上, 所以这里我们直接说需要上一页/下一页就行了
@@ -257,6 +260,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
             return;
         }
         final AnimationProvider animator = getAnimationProvider("startAnimatedScrolling");
+        Timber.v("点击翻页流程, %s", animator.getClass().getSimpleName());
         animator.setup(direction, getWidth(), getMainAreaHeight("startAnimatedScrolling"), myColorLevel);
         animator.startAnimatedScrolling(pageIndex, x, y, speed);
         if (animator.getMode().Auto) {

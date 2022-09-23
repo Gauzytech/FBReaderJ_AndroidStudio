@@ -22,6 +22,8 @@ package org.geometerplus.fbreader.fbreader;
 import org.geometerplus.fbreader.fbreader.options.PageTurningOptions;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 
+import timber.log.Timber;
+
 class TurnPageAction extends FBAction {
     private final boolean myForward;
 
@@ -42,6 +44,7 @@ class TurnPageAction extends FBAction {
     @Override
     protected void run(Object... params) {
         final PageTurningOptions preferences = Reader.PageTurningOptions;
+        Timber.v("点击翻页流程, %s", preferences);
         if (preferences.Animation.getValue() == ZLViewEnums.Animation.previewShift) {
             // 轻敲换页设置成没有动画
             preferences.Animation.setValue(ZLViewEnums.Animation.previewNone);
@@ -49,6 +52,7 @@ class TurnPageAction extends FBAction {
         if (params.length == 2 && params[0] instanceof Integer && params[1] instanceof Integer) {
             final int x = (Integer) params[0];
             final int y = (Integer) params[1];
+            Timber.v("点击翻页流程, start [%s, %s]", x, y);
             Reader.getViewWidget().startAnimatedScrolling(
                     myForward ? FBView.PageIndex.NEXT : FBView.PageIndex.PREV,
                     x, y,
@@ -57,6 +61,7 @@ class TurnPageAction extends FBAction {
                     preferences.AnimationSpeed.getValue()
             );
         } else {
+            Timber.v("点击翻页流程, start");
             Reader.getViewWidget().startAnimatedScrolling(
                     myForward ? FBView.PageIndex.NEXT : FBView.PageIndex.PREV,
                     preferences.Horizontal.getValue()

@@ -4,15 +4,19 @@ import 'package:flutter/gestures.dart';
 
 import '../../utils/screen_util.dart';
 
-class TouchEvent<T> {
-  static const int ACTION_DRAG_START = 0;
-  static const int ACTION_MOVE = 1;
-  static const int ACTION_DRAG_END = 2;
-  static const int ACTION_CANCEL = 3;
-  static const int ACTION_FLING_RELEASED = 4;
-  static const int ACTION_ANIMATION_DONE = 5;
+enum EventAction {
+  dragStart,
+  move,
+  dragEnd,
+  cancel,
+  flingReleased,
+  animationDone,
+  noAnimationForward,
+  noAnimationBackward,
+}
 
-  int action;
+class TouchEvent<T> {
+  EventAction action;
   T? _touchDetail;
   Offset touchPosition =
       Offset(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
@@ -54,19 +58,21 @@ class TouchEvent<T> {
   @override
   String toString() {
     String? result;
-    switch(action) {
-      case ACTION_DRAG_START:
+    switch (action) {
+      case EventAction.dragStart:
         result = 'action = down, touchPosition = $touchPosition';
         break;
-      case ACTION_MOVE:
+      case EventAction.move:
         result = 'action = move, touchPosition = $touchPosition';
         break;
-      case ACTION_DRAG_END:
+      case EventAction.dragEnd:
         result =
             'action = up, touchPosition = $touchPosition, detail: $_touchDetail';
         break;
-      case ACTION_CANCEL:
+      case EventAction.cancel:
         result = 'action = cancel, touchPosition = $touchPosition';
+        break;
+      default:
     }
 
     return result ?? 'touchPosition = $touchPosition';
@@ -74,13 +80,13 @@ class TouchEvent<T> {
 
   String get actionName {
     switch (action) {
-      case ACTION_DRAG_START:
+      case EventAction.dragStart:
         return 'ACTION_DOWN';
-      case ACTION_MOVE:
+      case EventAction.move:
         return 'ACTION_MOVE';
-      case ACTION_DRAG_END:
+      case EventAction.dragEnd:
         return 'ACTION_UP';
-      case ACTION_CANCEL:
+      case EventAction.cancel:
         return 'ACTION_CANCEL';
       default:
         return "ACTION_FLING_RELEASED";

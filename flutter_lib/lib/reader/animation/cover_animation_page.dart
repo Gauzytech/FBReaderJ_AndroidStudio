@@ -134,12 +134,12 @@ class CoverPageAnimation extends BaseAnimationPage {
     cacheCurrentTouchData(event.touchPosition);
 
     switch (event.action) {
-      case TouchEvent.ACTION_DRAG_START:
+      case EventAction.dragStart:
         mStartPoint = event.touchPosition;
         break;
-      case TouchEvent.ACTION_MOVE:
-      case TouchEvent.ACTION_DRAG_END:
-      case TouchEvent.ACTION_CANCEL:
+      case EventAction.move:
+      case EventAction.dragEnd:
+      case EventAction.cancel:
         if (coverDirection == ORIENTATION_VERTICAL) {
           isTurnNext = getCachedTouchData().dy - mStartPoint.dy < 0;
         } else {

@@ -68,11 +68,16 @@ public abstract class AnimationProvider {
         return myMode;
     }
 
+    public void setMode(Mode mode) {
+        Timber.v("动画流程，%s", mode);
+        myMode = mode;
+    }
+
     /**
      * 结束
      */
     public final void terminate() {
-        myMode = Mode.NoScrolling;
+        setMode(Mode.NoScrolling);
         mySpeed = 0;
         myDrawInfos.clear();
     }
@@ -86,7 +91,7 @@ public abstract class AnimationProvider {
      */
     public final void startManualScrolling(int x, int y) {
         if (!myMode.Auto) {
-            myMode = Mode.PreManualScrolling;
+            setMode(Mode.PreManualScrolling);
             myEndX = myStartX = x;
             myEndY = myStartY = y;
         }
@@ -125,7 +130,7 @@ public abstract class AnimationProvider {
             case PreManualScrolling:
                 myEndX = x;
                 myEndY = y;
-                myMode = detectManualMode();
+                setMode(detectManualMode());
                 break;
         }
     }
@@ -155,7 +160,7 @@ public abstract class AnimationProvider {
                 : (myHeight > myWidth ? myHeight / 4 : myHeight / 3);
         // 根据距离判断是否向前翻页
         boolean forward = Math.abs(diff) > Math.min(minDiff, dpi / 2);
-        myMode = forward ? Mode.AnimatedScrollingForward : Mode.AnimatedScrollingBackward;
+        setMode(forward ? Mode.AnimatedScrollingForward : Mode.AnimatedScrollingBackward);
         Timber.v("翻页动画, diff = %s, minDiff = %s, myMode = %s", diff, minDiff, myMode);
 
         // 速度
@@ -208,8 +213,7 @@ public abstract class AnimationProvider {
         }
 
         terminate();
-        myMode = Mode.AnimatedScrollingForward;
-
+        setMode(Mode.AnimatedScrollingForward);
         switch (myDirection) {
             case up:
             case rightToLeft:

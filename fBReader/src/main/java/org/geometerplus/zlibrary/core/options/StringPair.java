@@ -46,4 +46,12 @@ final class StringPair {
 	public int hashCode() {
 		return Group.hashCode() + 37 * Name.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return "StringPair{" +
+				"Group='" + Group + '\'' +
+				", Name='" + Name + '\'' +
+				'}';
+	}
 }

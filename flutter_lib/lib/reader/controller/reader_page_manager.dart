@@ -82,9 +82,11 @@ class ReaderPageManager {
   bool setCurrentTouchEvent(TouchEvent event) {
     /// 如果正在执行动画，判断是否需要中止动画
     switch (currentAnimationType) {
+      // 左右翻页
       case TYPE_ANIMATION_PAGE_TURN:
+        // 翻页惯性动画进行中
         if (isAnimationInProgress()) {
-          if (event.action == TouchEvent.ACTION_DRAG_START) {
+          if (event.action == EventAction.dragStart) {
             // 手指按下并开始移动
             print('flutter动画流程:中断动画${event.touchPoint}, ${event.actionName}');
             _pauseAnimation(event);
@@ -92,7 +94,8 @@ class ReaderPageManager {
           }
           return false;
         } else if (isAnimationPaused()) {
-          if (event.action == TouchEvent.ACTION_DRAG_END) {
+          // 翻页惯性动画被中断: 一般是在动画进行中手指再次触摸屏幕时发生
+          if (event.action == EventAction.dragEnd) {
             print('flutter动画流程:恢复动画${event.touchPoint}, ${event.actionName}');
             // 重新计算回弹spring动画
             _resumeAnimation();
@@ -108,7 +111,7 @@ class ReaderPageManager {
       default:
         if (currentState == RenderState.ANIMATING) {
           if (currentAnimationPage.shouldCancelAnimation()) {
-            if (event.action == TouchEvent.ACTION_DRAG_START) {
+            if (event.action == EventAction.dragStart) {
               cancelAnimation();
             }
           }
@@ -120,8 +123,8 @@ class ReaderPageManager {
 
   void _startTouchEvent(TouchEvent event) {
     /// 用户抬起手指后，是否需要执行动画
-    if (event.action == TouchEvent.ACTION_DRAG_END ||
-        event.action == TouchEvent.ACTION_CANCEL) {
+    if (event.action == EventAction.dragEnd ||
+        event.action == EventAction.cancel) {
       print('flutter动画流程:setCurrentTouchEvent${event.touchPoint}');
       switch (currentAnimationType) {
         // case TYPE_ANIMATION_SIMULATION_TURN:
@@ -182,10 +185,6 @@ class ReaderPageManager {
     return currentAnimationType;
   }
 
-  // void setCurrentCanvasContainerContext(GlobalKey canvasKey) {
-  //   this.canvasKey = canvasKey;
-  // }
-
   void startConfirmAnimation() {
     Animation<Offset>? animation = currentAnimationPage.getConfirmAnimation(
         animationController, canvasKey);
@@ -194,7 +193,6 @@ class ReaderPageManager {
       return;
     }
     setAnimation(animation);
-
     animationController.forward();
   }
 
@@ -218,7 +216,7 @@ class ReaderPageManager {
           currentState = RenderState.ANIMATING;
           canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
           currentAnimationPage.onTouchEvent(TouchEvent(
-              action: TouchEvent.ACTION_MOVE, touchPosition: animation.value));
+              action: EventAction.move, touchPosition: animation.value));
         })
         ..addStatusListener((status) {
           switch (status) {
@@ -227,7 +225,7 @@ class ReaderPageManager {
             case AnimationStatus.completed:
               currentState = RenderState.IDLE;
               TouchEvent event = TouchEvent(
-                action: TouchEvent.ACTION_DRAG_END,
+                action: EventAction.dragEnd,
                 touchPosition: const Offset(0, 0),
               );
               currentAnimationPage.onTouchEvent(event);
@@ -269,7 +267,7 @@ class ReaderPageManager {
       animationController.stop();
       currentState = RenderState.IDLE;
       TouchEvent event = TouchEvent(
-          action: TouchEvent.ACTION_DRAG_END, touchPosition: Offset.zero);
+          action: EventAction.dragEnd, touchPosition: Offset.zero);
       currentAnimationPage.onTouchEvent(event);
       currentTouchData = event.copy();
     }
@@ -294,7 +292,7 @@ class ReaderPageManager {
   bool shouldRepaint(
       CustomPainter oldDelegate, ContentPainter currentDelegate) {
     if (currentState == RenderState.ANIMATING ||
-        currentTouchData?.action == TouchEvent.ACTION_DRAG_START) {
+        currentTouchData?.action == EventAction.dragStart) {
       return true;
     }
 
@@ -316,11 +314,11 @@ class ReaderPageManager {
             currentAnimationPage.onTouchEvent(
               currentAnimationType == TYPE_ANIMATION_SLIDE_TURN
                   ? TouchEvent(
-                      action: TouchEvent.ACTION_MOVE,
+                      action: EventAction.move,
                       touchPosition: Offset(0, animationController.value),
                     )
                   : TouchEvent(
-                      action: TouchEvent.ACTION_FLING_RELEASED,
+                      action: EventAction.flingReleased,
                       touchPosition: Offset(animationController.value, 0),
                     ),
             );
@@ -347,7 +345,7 @@ class ReaderPageManager {
   void onAnimationComplete() {
     currentState = RenderState.IDLE;
     TouchEvent event = TouchEvent(
-      action: TouchEvent.ACTION_ANIMATION_DONE,
+      action: EventAction.animationDone,
       touchPosition: Offset.zero,
     );
     currentAnimationPage.onTouchEvent(event);

@@ -54,4 +54,14 @@ public final class ZLIntegerRangeOption extends ZLOption {
 		myStringValue = String.valueOf(value);
 		setConfigValue(myStringValue);
 	}
+
+	@Override
+	public String toString() {
+		return "ZLIntegerRangeOption{" +
+				"MinValue=" + MinValue +
+				", MaxValue=" + MaxValue +
+				", myValue=" + myValue +
+				", myStringValue='" + myStringValue + '\'' +
+				'}';
+	}
 }

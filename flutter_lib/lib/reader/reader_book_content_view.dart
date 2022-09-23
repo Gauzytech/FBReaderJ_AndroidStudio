@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,22 +51,20 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     with TickerProviderStateMixin {
   final _methodChannel = const MethodChannel('platform_channel_methods');
   final _eventChannel =
-  const EventChannel('platform_channel_events/page_repaint');
+      const EventChannel('platform_channel_events/page_repaint');
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
   final GlobalKey topIndicatorKey = GlobalKey();
   final GlobalKey bottomIndicatorKey = GlobalKey();
-  bool showCrossPageSelectionIndicator = false;
+  double _crossPageIndicatorOpacity = 0;
 
   ContentPainter? _contentPainter;
 
-  late ReaderPageManager pageManager;
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
-  late SelectionEventHandler _selectionEventHandler;
-  final PagePanDragRecognizer _pagePanDragRecognizer = PagePanDragRecognizer();
+  late SelectionEventHandler _selectionHandler;
 
   @override
   void onInitState() {
@@ -77,8 +73,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         methodChannel: _methodChannel,
         eventChannel: _eventChannel,
         readerBookContentViewState: this);
-    _selectionEventHandler =
-        SelectionEventHandler(readerContentHandler: _readerContentHandler);
+    _selectionHandler = SelectionEventHandler(
+        readerContentHandler: _readerContentHandler,
+        topIndicatorKey: topIndicatorKey,
+        bottomIndicatorKey: bottomIndicatorKey);
   }
 
   @override
@@ -106,7 +104,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
       readerViewModel.getConfigData().currentAnimationMode =
           ReaderPageManager.TYPE_ANIMATION_PAGE_TURN;
 
-      pageManager = ReaderPageManager(
+      ReaderPageManager pageManager = ReaderPageManager(
           canvasKey: contentKey,
           topIndicatorKey: topIndicatorKey,
           bottomIndicatorKey: bottomIndicatorKey,
@@ -130,26 +128,38 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
 
     final contentSize = readerViewModel.getContentSize();
-    return RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        PagePanDragRecognizer:
-            GestureRecognizerFactoryWithHandlers<PagePanDragRecognizer>(
-          () => _pagePanDragRecognizer,
-          (PagePanDragRecognizer recognizer) {
-            recognizer.setMenuOpen(false);
-            recognizer.onStart = (detail) {
-              if (recognizer.isSelectionMenuShown()) {
-                _selectionEventHandler.onSelectionDragStart(detail);
-              } else {
+    return FittedBox(
+      //GestureDetector需要放在fittedBox里，不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
+      child: RawGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        gestures: <Type, GestureRecognizerFactory>{
+          PagePanDragRecognizer:
+              GestureRecognizerFactoryWithHandlers<PagePanDragRecognizer>(
+            () => PagePanDragRecognizer(),
+            (PagePanDragRecognizer recognizer) {
+              recognizer.setMenuOpen(false);
+              recognizer.onStart = (detail) {
+                if (_selectionHandler.isSelectionMenuShown()) {
+                  _selectionHandler.onSelectionDragStart(detail);
+                  if (_selectionHandler.enableCrossPageIndicator(
+                      context, detail.localPosition)) {
+                    showIndicator();
+                  }
+                } else {
                   print(
                       "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
                   onDragStart(detail, readerViewModel);
                 }
               };
               recognizer.onUpdate = (detail) {
-                if (recognizer.isSelectionMenuShown()) {
-                  _selectionEventHandler.onSelectionDragMove(detail);
+                if (_selectionHandler.isSelectionMenuShown()) {
+                  _selectionHandler.onSelectionDragMove(detail);
+                  if (_selectionHandler.enableCrossPageIndicator(
+                      context, detail.localPosition)) {
+                    showIndicator();
+                  } else {
+                    hideIndicator();
+                  }
                 } else if (!readerViewModel.getMenuOpenState()) {
                   print(
                       'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
@@ -160,8 +170,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 }
               };
               recognizer.onEnd = (detail) {
-                if (recognizer.isSelectionMenuShown()) {
-                  _selectionEventHandler.onSelectionDragEnd(detail);
+                if (_selectionHandler.isSelectionMenuShown()) {
+                  _selectionHandler.onSelectionDragEnd(detail);
+                  hideIndicator();
                 } else if (!readerViewModel.getMenuOpenState()) {
                   print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
                   onEndEvent(detail, readerViewModel);
@@ -171,19 +182,19 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               };
             },
           ),
-          LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
-              LongPressGestureRecognizer>(
-                () => LongPressGestureRecognizer(),
-                (LongPressGestureRecognizer recognizer) {
+          LongPressGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(),
+            (LongPressGestureRecognizer recognizer) {
               recognizer.onLongPressStart = (detail) {
-                _pagePanDragRecognizer.setSelectionMenuState(true);
-                _selectionEventHandler.onLongPressStart(detail);
+                _selectionHandler.setSelectionMenuState(true);
+                _selectionHandler.onLongPressStart(detail);
               };
               recognizer.onLongPressMoveUpdate = (detail) {
-                _selectionEventHandler.onLongPressMoveUpdate(detail);
+                _selectionHandler.onLongPressMoveUpdate(detail);
               };
               recognizer.onLongPressUp = () {
-                _selectionEventHandler.onLongPressUp();
+                _selectionHandler.onLongPressUp();
               };
             },
           ),
@@ -191,64 +202,60 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
                   () => TapGestureRecognizer(),
                   (TapGestureRecognizer recognizer) {
-                recognizer.onTapUp = (detail) {
-                  // todo 只让indicator刷新, customPainter不应该刷新
-                  setState(() {
-                    showCrossPageSelectionIndicator = true;
-                  });
-                  // showCrossPageSelectionIndicator = true;
-                  // bottomIndicatorKey.currentContext
-                  //     ?.findRenderObject()
-                  //     ?.markNeedsPaint();
-
-                  // _selectionEventHandler.onTagUp(detail);
-                  // _pagePanDragRecognizer.setSelectionMenuState(false);
-                };
-              })
+            recognizer.onTapUp = (detail) {
+              if (_selectionHandler.isSelectionMenuShown()) {
+                _selectionHandler.onTagUp(detail);
+                _selectionHandler.setSelectionMenuState(false);
+              } else {
+                onTapUp(detail);
+              }
+            };
+          })
         },
-        child: FittedBox(
-          child: Stack(
-            children: <Widget>[
-              SizedBox(
-                width: contentSize[0],
-                height: contentSize[1],
+        child: Stack(
+          children: <Widget>[
+            SizedBox(
+              width: contentSize[0],
+              height: contentSize[1],
+              child: RepaintBoundary(
                 child: CustomPaint(
                   key: contentKey,
                   painter: _contentPainter,
                 ),
               ),
-              Positioned.fill(
-                child: Visibility(
-                  visible: showCrossPageSelectionIndicator,
-                  child: Align(
-                    alignment: AlignmentDirectional.topStart,
-                    child: Container(
-                      // key: topIndicatorKey,
-                      width: 150,
-                      height: 150,
-                      color: Colors.redAccent,
-                    ),
+            ),
+            Positioned.fill(
+              child: Opacity(
+                opacity: _crossPageIndicatorOpacity,
+                child: Align(
+                  alignment: AlignmentDirectional.topStart,
+                  child: Container(
+                    key: topIndicatorKey,
+                    width: 150,
+                    height: 150,
+                    color: Colors.redAccent,
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: Visibility(
-                  visible: showCrossPageSelectionIndicator,
-                  child: Align(
-                    alignment: AlignmentDirectional.bottomEnd,
-                    child: Container(
-                      key: bottomIndicatorKey,
-                      width: 150,
-                      height: 150,
-                      color: Colors.greenAccent,
-                    ),
+            ),
+            Positioned.fill(
+              child: Opacity(
+                opacity: _crossPageIndicatorOpacity,
+                child: Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Container(
+                    key: bottomIndicatorKey,
+                    width: 150,
+                    height: 150,
+                    color: Colors.greenAccent,
                   ),
                 ),
-              )
-            ],
-          ),
+              ),
+            )
+          ],
         ),
-      );
+      ),
+    );
   }
 
   @override
@@ -274,35 +281,34 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   void onDragStart(DragStartDetails detail, ReaderViewModel readerViewModel) {
     // 如果动画正在进行, 直接忽略event
-    if (!_contentPainter!
-        .isDuplicateEvent(TouchEvent.ACTION_DRAG_START, detail.localPosition)) {
+    if (!_contentPainter!.isDuplicateEvent(
+      EventAction.dragStart,
+      detail.localPosition,
+    )) {
       _contentPainter?.setCurrentTouchEvent(
         TouchEvent.fromOnDown(
-          TouchEvent.ACTION_DRAG_START,
+          EventAction.dragStart,
           detail.localPosition,
         ),
       );
       _contentPainter
           ?.startCurrentTouchEvent(_contentPainter!.currentTouchData!);
-      RenderObject? renderObject =
-      contentKey.currentContext?.findRenderObject();
-      print("渲染刷新, ${renderObject?.isRepaintBoundary}");
-      renderObject?.markNeedsPaint();
+      contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
     }
   }
 
   Future<void> onUpdateEvent(DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
     if (!_contentPainter!.isDuplicateEvent(
-      TouchEvent.ACTION_MOVE,
+      EventAction.move,
       detail.localPosition,
     )) {
       TouchEvent event = TouchEvent.fromOnUpdate(
-        TouchEvent.ACTION_MOVE,
+        EventAction.move,
         detail.localPosition,
       );
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
-      if (await pageManager.canScroll(event)) {
+      if (await _contentPainter!.canScroll(event)) {
         if (_contentPainter?.startCurrentTouchEvent(event) == true) {
           contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
         } else {
@@ -314,20 +320,45 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   Future<void> onEndEvent(DragEndDetails detail, ReaderViewModel readerViewModel) async {
     if (!_contentPainter!.isDuplicateEvent(
-      TouchEvent.ACTION_DRAG_END,
+      EventAction.dragEnd,
       _contentPainter!.lastTouchPosition(),
     )) {
       TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
-        TouchEvent.ACTION_DRAG_END,
+        EventAction.dragEnd,
         _contentPainter!.lastTouchPosition(),
         detail,
       );
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
-      if (await pageManager.canScroll(event)) {
+      if (await _contentPainter!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
       }
+    }
+  }
+
+  // todo 根据点击区域实现无动画翻页, 直接给一个上一页/下一页的坐标, 翻页过去
+  Future<void> onTapUp(TapUpDetails detail) async {
+    TouchEvent event = TouchEvent(action: EventAction.noAnimationForward, touchPosition: detail.localPosition);
+    if(await _contentPainter!.canScroll(event)) {
+      _contentPainter?.startCurrentTouchEvent(event);
+      contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+    }
+  }
+
+  void showIndicator() {
+    if (_crossPageIndicatorOpacity == 0) {
+      setState(() {
+        _crossPageIndicatorOpacity = 1;
+      });
+    }
+  }
+
+  void hideIndicator() {
+    if (_crossPageIndicatorOpacity == 1) {
+      setState(() {
+        _crossPageIndicatorOpacity = 0;
+      });
     }
   }
 }
