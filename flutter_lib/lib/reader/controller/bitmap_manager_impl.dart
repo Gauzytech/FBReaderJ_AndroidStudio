@@ -1,21 +1,19 @@
-import 'dart:ffi';
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_lib/interface/i_bitmap_manager.dart';
+import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 
 /// Bitmap管理（绘制后的图）的实现
-class BitmapManagerImpl extends IBitmapManager {
-  /// 缓存Bitmap大小
-  static const int cacheSize = 4;
+class BitmapManagerImpl with BitmapManager {
+
   final List<ui.Image?> _imageCache =
-      List.filled(cacheSize, null, growable: false);
+      List.filled(BitmapManager.cacheSize, null, growable: false);
 
   // 缓存4个pageIndex
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
-  List<PageIndex?> pageIndexeCache =
-      List.filled(cacheSize, null, growable: false);
+  List<PageIndex?> pageIndexCache =
+      List.filled(BitmapManager.cacheSize, null, growable: false);
   int _contentWidth = 0;
   int _contentHeight = 0;
 
@@ -33,10 +31,10 @@ class BitmapManagerImpl extends IBitmapManager {
 
   @override
   void clear() {
-    for (int i = 0; i < cacheSize; ++i) {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
       _imageCache[i]?.dispose();
       _imageCache[i] = null;
-      pageIndexeCache[i] = null;
+      pageIndexCache[i] = null;
     }
   }
 
@@ -46,8 +44,8 @@ class BitmapManagerImpl extends IBitmapManager {
   /// @return 阅读器内容Bitmap
   @override
   ImageSrc getBitmap(PageIndex index) {
-    for (int i = 0; i < cacheSize; ++i) {
-      if (pageIndexeCache[i] == index) {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      if (pageIndexCache[i] == index) {
         ui.Image? image = _imageCache[i];
         return ImageSrc(img: image, processing: image == null);
       }
@@ -60,10 +58,10 @@ class BitmapManagerImpl extends IBitmapManager {
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
     print(
-        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $pageIndexeCache");
+        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $pageIndexCache");
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
-    pageIndexeCache[internalCacheIndex] = pageIndex;
+    pageIndexCache[internalCacheIndex] = pageIndex;
 
     if (_imageCache[internalCacheIndex] == null) {
       return internalCacheIndex;
@@ -84,8 +82,8 @@ class BitmapManagerImpl extends IBitmapManager {
   void replaceBitmapCache(PageIndex index, ui.Image image) {
     print(
         "flutter内容绘制流程, replaceBitmapCache [${image.width}, ${image.height}], PageIndex = $index");
-    for (int i = 0; i < pageIndexeCache.length; i++) {
-      if (pageIndexeCache[i] == index) {
+    for (int i = 0; i < pageIndexCache.length; i++) {
+      if (pageIndexCache[i] == index) {
         // dispose old image
         _imageCache[i]?.dispose();
         _imageCache[i] = image;
@@ -108,16 +106,16 @@ class BitmapManagerImpl extends IBitmapManager {
   /// @return 索引位置
   int getInternalIndex(PageIndex index) {
     // 寻找没有存储内容的位置
-    for (int i = 0; i < cacheSize; ++i) {
-      if (pageIndexeCache[i] == null) {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      if (pageIndexCache[i] == null) {
         return i;
       }
     }
     // 如果没有，找一个不是当前的位置
-    for (int i = 0; i < cacheSize; ++i) {
-      if (pageIndexeCache[i] != PageIndex.current &&
-          pageIndexeCache[i] != PageIndex.prev &&
-          pageIndexeCache[i] != PageIndex.next) {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      if (pageIndexCache[i] != PageIndex.current &&
+          pageIndexCache[i] != PageIndex.prev &&
+          pageIndexCache[i] != PageIndex.next) {
         return i;
       }
     }
@@ -127,8 +125,8 @@ class BitmapManagerImpl extends IBitmapManager {
   /// 重置索引缓存
   /// TODO: 需要精确rest（避免不必要的缓存失效）
   void reset() {
-    for (int i = 0; i < cacheSize; ++i) {
-      pageIndexeCache[i] = null;
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      pageIndexCache[i] = null;
     }
   }
 
@@ -144,14 +142,14 @@ class BitmapManagerImpl extends IBitmapManager {
   /// shift backward
   /// next, current, next2, null
   void shift(bool forward) {
-    for (int i = 0; i < cacheSize; ++i) {
-      if (pageIndexeCache[i] == null) {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      if (pageIndexCache[i] == null) {
         continue;
       }
       if (forward) {
-        pageIndexeCache[i] = pageIndexeCache[i]!.getPrevious();
+        pageIndexCache[i] = pageIndexCache[i]!.getPrevious();
       } else {
-        pageIndexeCache[i] = pageIndexeCache[i]!.getNext();
+        pageIndexCache[i] = pageIndexCache[i]!.getNext();
       }
     }
   }

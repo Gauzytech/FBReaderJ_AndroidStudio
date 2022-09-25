@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,14 +53,17 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
   final _methodChannel = const MethodChannel('platform_channel_methods');
-  final _eventChannel =
-      const EventChannel('platform_channel_events/page_repaint');
+
+  // 翻页倒计时
+  Timer? _timer;
+  int currentTimer = 0;
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
   final GlobalKey topIndicatorKey = GlobalKey();
   final GlobalKey bottomIndicatorKey = GlobalKey();
-  double _crossPageIndicatorOpacity = 0;
+  double _topStartIndicatorOpacity = 0;
+  double _bottomEndIndicatorOpacity = 0;
 
   ContentPainter? _contentPainter;
 
@@ -71,7 +77,6 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     _readerContentHandler = ReaderContentHandler(
         methodChannel: _methodChannel,
-        eventChannel: _eventChannel,
         readerBookContentViewState: this);
     _selectionHandler = SelectionEventHandler(
         readerContentHandler: _readerContentHandler,
@@ -125,11 +130,12 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   @override
   Widget onBuildView(BuildContext context, ReaderViewModel? viewModel) {
     ReaderViewModel readerViewModel =
-        ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
+    ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
 
     final contentSize = readerViewModel.getContentSize();
     return FittedBox(
-      //GestureDetector需要放在fittedBox里，不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
+      // GestureDetector需要放在fittedBox里，
+      // 不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
       child: RawGestureDetector(
         behavior: HitTestBehavior.translucent,
         gestures: <Type, GestureRecognizerFactory>{
@@ -141,9 +147,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               recognizer.onStart = (detail) {
                 if (_selectionHandler.isSelectionMenuShown()) {
                   _selectionHandler.onSelectionDragStart(detail);
-                  if (_selectionHandler.enableCrossPageIndicator(
-                      context, detail.localPosition)) {
-                    showIndicator();
+                  var indicator = _selectionHandler.enableCrossPageIndicator(
+                      context, detail.localPosition);
+                  if (indicator != null) {
+                    showIndicator(indicator, detail.localPosition);
                   }
                 } else {
                   print(
@@ -154,9 +161,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               recognizer.onUpdate = (detail) {
                 if (_selectionHandler.isSelectionMenuShown()) {
                   _selectionHandler.onSelectionDragMove(detail);
-                  if (_selectionHandler.enableCrossPageIndicator(
-                      context, detail.localPosition)) {
-                    showIndicator();
+                  var indicator = _selectionHandler.enableCrossPageIndicator(
+                      context, detail.localPosition);
+                  if (indicator != null) {
+                    showIndicator(indicator, detail.localPosition);
                   } else {
                     hideIndicator();
                   }
@@ -183,9 +191,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
             },
           ),
           LongPressGestureRecognizer:
-              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
-            () => LongPressGestureRecognizer(),
-            (LongPressGestureRecognizer recognizer) {
+          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+                () => LongPressGestureRecognizer(),
+                (LongPressGestureRecognizer recognizer) {
               recognizer.onLongPressStart = (detail) {
                 _selectionHandler.setSelectionMenuState(true);
                 _selectionHandler.onLongPressStart(detail);
@@ -202,15 +210,15 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
                   () => TapGestureRecognizer(),
                   (TapGestureRecognizer recognizer) {
-            recognizer.onTapUp = (detail) {
-              if (_selectionHandler.isSelectionMenuShown()) {
-                _selectionHandler.onTagUp(detail);
-                _selectionHandler.setSelectionMenuState(false);
-              } else {
-                onTapUp(detail);
+                recognizer.onTapUp = (detail) {
+                  if (_selectionHandler.isSelectionMenuShown()) {
+                    _selectionHandler.onTagUp(detail);
+                    _selectionHandler.setSelectionMenuState(false);
+                  } else {
+                    navigatePageWithoutAnimation(detail.localPosition, null);
               }
-            };
-          })
+                };
+              })
         },
         child: Stack(
           children: <Widget>[
@@ -226,7 +234,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
             ),
             Positioned.fill(
               child: Opacity(
-                opacity: _crossPageIndicatorOpacity,
+                opacity: _topStartIndicatorOpacity,
                 child: Align(
                   alignment: AlignmentDirectional.topStart,
                   child: Container(
@@ -240,7 +248,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
             ),
             Positioned.fill(
               child: Opacity(
-                opacity: _crossPageIndicatorOpacity,
+                opacity: _bottomEndIndicatorOpacity,
                 child: Align(
                   alignment: AlignmentDirectional.bottomEnd,
                   child: Container(
@@ -276,6 +284,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   @override
   void dispose() {
     animationController?.dispose();
+    _cancelTimer();
     super.dispose();
   }
 
@@ -337,28 +346,109 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     }
   }
 
-  // todo 根据点击区域实现无动画翻页, 直接给一个上一页/下一页的坐标, 翻页过去
-  Future<void> onTapUp(TapUpDetails detail) async {
-    TouchEvent event = TouchEvent(action: EventAction.noAnimationForward, touchPosition: detail.localPosition);
-    if(await _contentPainter!.canScroll(event)) {
-      _contentPainter?.startCurrentTouchEvent(event);
-      contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+  // 根据点击区域实现无动画翻页
+  Future<void> navigatePageWithoutAnimation(
+      Offset touchPosition, SelectionIndicator? indicator) async {
+    var eventAction = getEventAction(touchPosition, indicator);
+    if (eventAction != null) {
+      TouchEvent event =
+          TouchEvent(action: eventAction, touchPosition: touchPosition);
+      if (await _contentPainter!.canScroll(event)) {
+        _contentPainter?.startCurrentTouchEvent(event);
+        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+      }
     }
   }
 
-  void showIndicator() {
-    if (_crossPageIndicatorOpacity == 0) {
-      setState(() {
-        _crossPageIndicatorOpacity = 1;
+  EventAction? getEventAction(
+      Offset? touchPosition, SelectionIndicator? indicator) {
+    switch (indicator) {
+      case SelectionIndicator.topStart:
+        // 上一页
+        return EventAction.noAnimationBackward;
+      case SelectionIndicator.bottomEnd:
+        // 下一页
+        return EventAction.noAnimationForward;
+      default:
+        double widthPx = ui.window.physicalSize.width;
+        double ratio = 0.25;
+        var prevPageRegion = [0, (widthPx * ratio).round()];
+        var nextPageRegion = [(widthPx - widthPx * ratio).round(), widthPx];
+        if (touchPosition!.dx >= prevPageRegion[0] &&
+            touchPosition.dx <= prevPageRegion[1]) {
+          // 上一页
+          return EventAction.noAnimationBackward;
+        } else if (touchPosition.dx >= nextPageRegion[0] &&
+            touchPosition.dx <= nextPageRegion[1]) {
+          // 下一页
+          return EventAction.noAnimationBackward;
+        } else {
+          return null;
+        }
+    }
+  }
+
+  void showIndicator(SelectionIndicator indicator, Offset touchPosition) {
+    if (indicator == SelectionIndicator.topStart) {
+      if (_topStartIndicatorOpacity == 0) {
+        setState(() {
+          _topStartIndicatorOpacity = 1;
+        });
+        startTimer(indicator, touchPosition);
+      }
+    } else {
+      if (_bottomEndIndicatorOpacity == 0) {
+        setState(() {
+          _bottomEndIndicatorOpacity = 1;
+        });
+        startTimer(indicator, touchPosition);
+      }
+    }
+  }
+
+  void startTimer(SelectionIndicator indicator, Offset touchPosition) {
+    if(_timer == null) {
+      print('倒计时, 倒计时开始: $currentTimer');
+      _timer = Timer.periodic(const Duration(milliseconds: 1000), (timer) {
+        currentTimer++;
+        print('倒计时, 倒计时进行中: $currentTimer');
+        // 倒计时结束，取消倒计时并进行翻页操作
+        if (currentTimer == 4) {
+          print('倒计时, 倒计时结束: $currentTimer, 进行翻页');
+          _cancelTimer();
+          // todo
+          //  1. 5页的翻页划选限制
+          //  2. 现在上一页选中文字会在翻页之后丢失,
+          //  3. 选中所有翻页页面的文字
+          //  4. 处理图片选中
+          navigatePageWithoutAnimation(touchPosition, indicator);
+        }
       });
     }
   }
 
   void hideIndicator() {
-    if (_crossPageIndicatorOpacity == 1) {
+    if (_topStartIndicatorOpacity == 1) {
+      // 显示翻页划选区域, 并启动倒计时
       setState(() {
-        _crossPageIndicatorOpacity = 0;
+        _topStartIndicatorOpacity = 0;
       });
+      _cancelTimer();
     }
+
+    if (_bottomEndIndicatorOpacity == 1) {
+      // 显示翻页划选区域, 并启动倒计时
+      setState(() {
+        _bottomEndIndicatorOpacity = 0;
+      });
+      _cancelTimer();
+    }
+  }
+
+  void _cancelTimer() {
+    print('倒计时, 倒计时取消: $currentTimer');
+    _timer?.cancel();
+    _timer = null;
+    currentTimer = 0;
   }
 }

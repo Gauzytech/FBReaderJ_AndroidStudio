@@ -10,7 +10,6 @@ import 'package:flutter_lib/reader/reader_book_content_view.dart';
 
 class ReaderContentHandler {
   MethodChannel methodChannel;
-  EventChannel eventChannel;
 
   // late MediaQueryData _mediaQueryData;
   ReaderBookContentViewState readerBookContentViewState;
@@ -21,10 +20,10 @@ class ReaderContentHandler {
   // PageIndex currentPageIndex = PageIndex.prev_2;
   StreamSubscription? _streamSubscription;
 
-  ReaderContentHandler(
-      {required this.methodChannel,
-      required this.eventChannel,
-      required this.readerBookContentViewState}) {
+  ReaderContentHandler({
+    required this.methodChannel,
+    required this.readerBookContentViewState,
+  }) {
     methodChannel.setMethodCallHandler(_addNativeMethod);
   }
 
@@ -171,9 +170,9 @@ class ReaderContentHandler {
     }
 
     print(
-        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.pageIndexeCache}");
+        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.pageIndexCache}");
     print(
-        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.pageIndexeCache}");
+        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.pageIndexCache}");
   }
 
   List<double> getContentSize() {

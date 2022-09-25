@@ -14,6 +14,10 @@ const longPressUpdate = 'long_press_update';
 const longPressEnd = 'long_press_end';
 const tapUp = 'on_tap_up';
 
+enum SelectionIndicator {
+  topStart, bottomEnd
+}
+
 class SelectionEventHandler {
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
@@ -119,13 +123,17 @@ class SelectionEventHandler {
     );
   }
 
-  bool enableCrossPageIndicator(
+  SelectionIndicator? enableCrossPageIndicator(
     BuildContext context,
     Offset touchPosition,
   ) {
     var ratio = MediaQuery.of(context).devicePixelRatio;
-    return overlapWithTopIndicator(touchPosition, ratio) ||
-        overlapWithBottomIndicator(touchPosition, ratio);
+    if(overlapWithTopIndicator(touchPosition, ratio)) {
+      return SelectionIndicator.topStart;
+    } else if(overlapWithBottomIndicator(touchPosition, ratio)) {
+      return SelectionIndicator.bottomEnd;
+    }
+    return null;
   }
 
   bool overlapWithTopIndicator(Offset touchPosition, double ratio) {
