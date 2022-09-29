@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterBridge;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.PaintListener;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 abstract public class ZLView implements ZLViewEnums {
 
@@ -178,7 +179,7 @@ abstract public class ZLView implements ZLViewEnums {
 
     public abstract boolean onFingerMoveAfterLongPressFlutter(int x, int y);
 
-    public abstract boolean onFingerReleaseAfterLongPressFlutter(int x, int y);
+    public abstract SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y);
 
     public abstract boolean onFingerSingleTapFlutter(int x, int y);
 

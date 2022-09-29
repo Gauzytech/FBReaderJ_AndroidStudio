@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
@@ -33,9 +34,7 @@ class ReaderContentHandler {
 
   void refreshContent() {
     readerBookContentViewState.viewModel?.notify();
-    readerBookContentViewState.contentKey.currentContext
-        ?.findRenderObject()
-        ?.markNeedsPaint();
+    readerBookContentViewState.refreshContentPainter();
   }
 
   /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
@@ -49,6 +48,13 @@ class ReaderContentHandler {
         } else {
           buildPage(PageIndex.current);
         }
+        break;
+      case "show_selection_menu":
+        Uint8List imgBytes = methodCall.arguments['page'];
+        int selectionStartY = methodCall.arguments['selectionStartY'];
+        int selectionEndY = methodCall.arguments['selectionEndY'];
+        print(
+            '时间测试 selectionStartY, ${imgBytes.length}, $selectionStartY, $selectionEndY');
         break;
     }
   }
@@ -87,15 +93,15 @@ class ReaderContentHandler {
   Future<ui.Image?> drawOnBitmap(
       int internalCacheIndex, PageIndex pageIndex, bool notify) async {
     try {
-      final metrics = _getBitmapDrawAreaMetrics();
+      final metrics = ui.window.physicalSize;
 
       // 调用native方法，将绘制当前page
       Uint8List imageBytes = await methodChannel.invokeMethod(
         'draw_on_bitmap',
         {
           'page_index': pageIndex.index,
-          'width': metrics.left,
-          'height': metrics.right,
+          'width': metrics.width,
+          'height': metrics.height,
         },
       );
 
@@ -123,7 +129,7 @@ class ReaderContentHandler {
 
   /// 到达当前页页之后, 事先缓存2页：上一页/下一页
   Future<void> preloadAdjacentPages() async {
-    final metrics = _getBitmapDrawAreaMetrics();
+    final metrics = ui.window.physicalSize;
 
     ImageSrc prevImage = getPage(PageIndex.prev);
     ImageSrc nextImage = getPage(PageIndex.next);
@@ -140,8 +146,8 @@ class ReaderContentHandler {
     if(prevIdx != null || nextIdx != null) {
       Map<Object?, Object?> result =
       await methodChannel.invokeMethod("prepare_page", {
-        'width': metrics.left,
-        'height': metrics.right,
+        'width': metrics.width,
+        'height': metrics.height,
         'update_prev_page_cache': prevIdx != null,
         'update_next_page_cache': nextIdx != null,
       });
@@ -175,7 +181,7 @@ class ReaderContentHandler {
         "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.pageIndexCache}");
   }
 
-  List<double> getContentSize() {
+  Size getContentSize() {
     return _bitmapManager.getContentSize();
   }
 
@@ -211,20 +217,25 @@ class ReaderContentHandler {
   int time = 0;
 
   Future<void> callNativeMethod(String name, int x, int y) async {
-    List<double> imageSize = getContentSize();
+    Size imageSize = getContentSize();
     time = DateTime.now().millisecondsSinceEpoch;
     print('时间测试, call $name $time');
-    Uint8List imageBytes = await methodChannel.invokeMethod(
+    Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
       name,
       {
         'touch_x': x,
         'touch_y': y,
-        'width': imageSize[0],
-        'height': imageSize[1],
+        'width': imageSize.width,
+        'height': imageSize.height,
         'time_stamp': time,
       },
     );
     print('时间测试, $name 获得结果, ${DateTime.now().millisecondsSinceEpoch}');
+
+    Uint8List imageBytes = result['page'];
+    int? selectionStartY = result['selectionStartY'];
+    int? selectionEndY = result['selectionEndY'];
+    print('时间测试 返回值, $name ${imageBytes.length}');
 
     // 将imageBytes转成img
     ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
@@ -236,17 +247,36 @@ class ReaderContentHandler {
 
     // 刷新custom painter
     refreshContent();
+    // 显示选择弹窗
+    if (selectionStartY != null && selectionEndY != null) {
+      readerBookContentViewState.showSelectionMenu(
+        getSelectionMenuPosition(selectionStartY, selectionEndY),
+      );
+    }
   }
 
-  /// 获得需要绘制图片区域的跨高.
-  /// returns [Pair] of [widthPx, heightPx].
-  Pair _getBitmapDrawAreaMetrics() {
-    print("flutter内容绘制流程, render_page, windowSize = ${ui.window.physicalSize}");
-
-    // 屏幕宽度
-    double widthPx = ui.window.physicalSize.width;
-    // 屏幕高度
-    double heightPx = ui.window.physicalSize.height;
-    return Pair(widthPx, heightPx);
+  Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
+    double margin = 25;
+    double selectionMenuHeight = ReaderBookContentViewState.selectionMenuSize.height;
+    double ratio = ui.window.devicePixelRatio;
+    double startYMargin = selectionStartY - margin;
+    double endYMargin = selectionEndY + margin;
+    double startY = startYMargin - selectionMenuHeight * ratio;
+    double startX = (getContentSize().width / ratio - ReaderBookContentViewState.selectionMenuSize.width) / 2 ;
+    Offset selectionMenuPosition;
+    if (startY > 0) {
+      print("选择弹窗, 上方");
+      // 显示在选中高亮上方
+      selectionMenuPosition = Offset(startX, startY / ratio);
+    } else if (endYMargin + selectionMenuHeight < getContentSize().height) {
+      print("选择弹窗, 下方");
+      // 显示在选中高亮下方
+      selectionMenuPosition = Offset(startX, endYMargin / ratio);
+    } else {
+      print("选择弹窗, 居中");
+      // 居中显示
+      selectionMenuPosition = Offset.infinite;
+    }
+    return selectionMenuPosition;
   }
 }

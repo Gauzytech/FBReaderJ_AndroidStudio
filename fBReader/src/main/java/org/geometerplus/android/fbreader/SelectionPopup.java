@@ -3,11 +3,13 @@ package org.geometerplus.android.fbreader;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import org.geometerplus.zlibrary.core.library.ZLibrary;
-import org.geometerplus.zlibrary.core.resources.ZLResource;
 import org.geometerplus.fbreader.fbreader.ActionCode;
 import org.geometerplus.fbreader.fbreader.FBReaderApp;
+import org.geometerplus.zlibrary.core.library.ZLibrary;
+import org.geometerplus.zlibrary.core.resources.ZLResource;
 import org.geometerplus.zlibrary.ui.android.R;
+
+import timber.log.Timber;
 
 /**
  * 选中动作弹框
@@ -61,19 +63,27 @@ class SelectionPopup extends PopupPanel implements View.OnClickListener {
 
         // Popup的高度
         int popupHeight = (int) (ZLibrary.Instance().getDisplayDPI() / 160f * 65 + 57);
+        Timber.v("选择弹窗, startY = %s, endY = %s, 高度 = %s, 总高度 = %s",
+                selectionStartY,
+                selectionEndY,
+                popupHeight,
+                ((View) myWindow.getParent()).getHeight());
         myWindow.post(() -> {
 
         });
         int startY = selectionStartY - popupHeight;
         if (startY > 0) {
+            // 显示在选中高亮上方
             layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
             layoutParams.topMargin = startY;
             myWindow.setBackgroundResource(R.drawable.reader_window_background_above);
         } else if (selectionEndY + popupHeight < ((View) myWindow.getParent()).getHeight()) {
+            // 显示在选中高亮下方
             layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
             layoutParams.topMargin = selectionEndY;
             myWindow.setBackgroundResource(R.drawable.reader_window_background_below);
         } else {
+            // 居中显示
             layoutParams.topMargin = 0;
             layoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
             myWindow.setBackgroundResource(R.drawable.reader_window_background_above);

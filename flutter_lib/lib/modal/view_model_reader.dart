@@ -43,12 +43,8 @@ class ReaderViewModel extends BaseViewModel {
     _readerContentHandler = handler;
   }
 
-  List<double> getContentSize() {
-    final size = ArgumentError.checkNotNull(
-            _readerContentHandler, '_readerContentHandler')
-        .getContentSize();
-    print('flutter内容绘制流程, size = $size');
-    return size;
+  Size getContentSize() {
+    return _readerContentHandler!.getContentSize();
   }
 
   ui.Image? getOrBuildPage(PageIndex index) {

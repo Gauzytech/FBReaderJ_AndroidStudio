@@ -7,6 +7,7 @@ import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.util.concurrent.Executors
 
@@ -160,14 +161,14 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerReleaseAfterLongPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        listener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y).let { repaint ->
-                if (repaint) {
+            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y).let { result ->
+                if (result !is SelectionResult.None) {
                     drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                        listener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
             }

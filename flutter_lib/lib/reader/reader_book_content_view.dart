@@ -10,6 +10,7 @@ import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selelction_event_handler.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
+import 'package:kumi_popup_window/kumi_popup_window.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
@@ -52,6 +53,8 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 
 class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
+  static const selectionMenuSize = Size(200, 48);
+
   final _methodChannel = const MethodChannel('platform_channel_methods');
 
   // 翻页倒计时
@@ -71,13 +74,13 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   late ReaderContentHandler _readerContentHandler;
   late SelectionEventHandler _selectionHandler;
+  KumiPopupWindow? _popupWindow;
 
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     _readerContentHandler = ReaderContentHandler(
-        methodChannel: _methodChannel,
-        readerBookContentViewState: this);
+        methodChannel: _methodChannel, readerBookContentViewState: this);
     _selectionHandler = SelectionEventHandler(
         readerContentHandler: _readerContentHandler,
         topIndicatorKey: topIndicatorKey,
@@ -197,6 +200,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               recognizer.onLongPressStart = (detail) {
                 _selectionHandler.setSelectionMenuState(true);
                 _selectionHandler.onLongPressStart(detail);
+                // showSelectionMenu(detail.globalPosition);
               };
               recognizer.onLongPressMoveUpdate = (detail) {
                 _selectionHandler.onLongPressMoveUpdate(detail);
@@ -210,21 +214,21 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
                   () => TapGestureRecognizer(),
                   (TapGestureRecognizer recognizer) {
-                recognizer.onTapUp = (detail) {
-                  if (_selectionHandler.isSelectionMenuShown()) {
-                    _selectionHandler.onTagUp(detail);
-                    _selectionHandler.setSelectionMenuState(false);
-                  } else {
-                    navigatePageWithoutAnimation(detail.localPosition, null);
+            recognizer.onTapUp = (detail) {
+              if (_selectionHandler.isSelectionMenuShown()) {
+                _selectionHandler.onTagUp(detail);
+                _selectionHandler.setSelectionMenuState(false);
+              } else {
+                navigatePageWithoutAnimation(detail.localPosition, null);
               }
-                };
-              })
+            };
+          })
         },
         child: Stack(
           children: <Widget>[
             SizedBox(
-              width: contentSize[0],
-              height: contentSize[1],
+              width: contentSize.width,
+              height: contentSize.height,
               child: RepaintBoundary(
                 child: CustomPaint(
                   key: contentKey,
@@ -450,5 +454,98 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     _timer?.cancel();
     _timer = null;
     currentTimer = 0;
+  }
+
+  /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio
+  void showSelectionMenu(Offset position) {
+    print('选择弹窗, position = $position');
+    if(position.isInfinite) {
+      print('选择弹窗, 居中');
+      _popupWindow = createPopupWindow(
+        context,
+        bgColor: Colors.grey.withOpacity(0),
+        duration: const Duration(milliseconds: 50),
+        //needSafeDisplay: true,
+        onDismissStart: (pop) {
+          print("选择弹窗, onDismissStart");
+        },
+        childFun: (pop) {
+          return buildSelectionMenu();
+        },
+      );
+    } else {
+      _popupWindow = createPopupWindow(
+        context,
+        bgColor: Colors.grey.withOpacity(0),
+        customPop: true,
+        duration: const Duration(milliseconds: 50),
+        //needSafeDisplay: true,
+        onDismissStart: (pop) {
+          print("选择弹窗, onDismissStart");
+        },
+        childFun: (pop) {
+          return Positioned(
+            left: position.dx,
+            top: position.dy,
+            child: ScaleTransition(
+              scale: Tween(begin: 0.0, end: 1.0)
+                  .chain(CurveTween(curve: Curves.decelerate))
+                  .animate(pop.controller!),
+              child: FadeTransition(
+                opacity: Tween(begin: -1.0, end: 1.0)
+                    .chain(CurveTween(curve: Curves.decelerate))
+                    .animate(pop.controller!),
+                child: buildSelectionMenu(),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    _popupWindow?.show(context);
+  }
+
+  void hideSelectionMenu() {
+    _popupWindow?.dismiss(context);
+    _popupWindow = null;
+  }
+
+  StatefulBuilder buildSelectionMenu() {
+    return StatefulBuilder(
+        key: GlobalKey(),
+        builder: (popContext, popState) {
+          return Container(
+            width: selectionMenuSize.width,
+            height: selectionMenuSize.height,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+              color: Colors.black,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  child: const Text('Note'),
+                  onPressed: () {
+                    print('选择弹窗, Note');
+                  },
+                ),
+                TextButton(
+                  child: const Text('Copy'),
+                  onPressed: () {
+                    print('选择弹窗, Copy');
+                  },
+                ),
+                TextButton(
+                  child: const Text('Search'),
+                  onPressed: () {
+                    print('选择弹窗, Search');
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 }

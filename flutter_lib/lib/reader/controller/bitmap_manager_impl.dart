@@ -154,8 +154,8 @@ class BitmapManagerImpl with BitmapManager {
     }
   }
 
-  List<double> getContentSize() {
-    return [_contentWidth.toDouble(), _contentHeight.toDouble()];
+  Size getContentSize() {
+    return Size(_contentWidth.toDouble(), _contentHeight.toDouble());
   }
 }
 

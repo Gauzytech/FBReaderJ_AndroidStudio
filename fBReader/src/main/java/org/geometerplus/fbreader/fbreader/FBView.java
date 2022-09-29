@@ -19,8 +19,6 @@
 
 package org.geometerplus.fbreader.fbreader;
 
-import androidx.annotation.NonNull;
-
 import org.geometerplus.DebugHelper;
 import org.geometerplus.fbreader.bookmodel.BookModel;
 import org.geometerplus.fbreader.bookmodel.FBHyperlinkType;
@@ -53,7 +51,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.PaintListener;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,14 +106,18 @@ public final class FBView extends ZLTextView {
 
     @Override
     protected void releaseSelectionCursor() {
-        if (DebugHelper.ENABLE_FLUTTER) {
-            super.releaseSelectionCursorFlutter();
-        } else {
-            super.releaseSelectionCursor();
-            if (getCountOfSelectedWords() > 0) {
-                myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
-            }
+        super.releaseSelectionCursor();
+        if (getCountOfSelectedWords() > 0) {
+            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
         }
+    }
+
+    private SelectionResult releaseSelectionCursorFlutter() {
+        super.releaseSelectionCursor();
+        if (getCountOfSelectedWords() > 0) {
+            return new SelectionResult.ShowMenu(getSelectionStartY() , getSelectionEndY());
+        }
+        return SelectionResult.NoMenu.INSTANCE;
     }
 
     @Override
@@ -414,7 +416,7 @@ public final class FBView extends ZLTextView {
             releaseSelectionCursor();
         }
         // 如果有选中，恢复选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
             return;
         }
@@ -442,7 +444,7 @@ public final class FBView extends ZLTextView {
         }
 
         // 如果有选中， 隐藏选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             return;
         }
@@ -468,6 +470,7 @@ public final class FBView extends ZLTextView {
     @Override
     public boolean onFingerLongPress(int x, int y) {
         Timber.v("触摸事件, [%s, %s]", x, y);
+        Timber.v("长按选中流程, [%s, %s]", x, y);
         myReader.runAction(ActionCode.HIDE_TOAST);
         // 预览模式不处理
         if (isPreview()) {
@@ -475,7 +478,7 @@ public final class FBView extends ZLTextView {
         }
 
         // 如果有选中， 隐藏选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             return true;
         }
@@ -542,16 +545,20 @@ public final class FBView extends ZLTextView {
     @Override
     public void onFingerReleaseAfterLongPress(int x, int y) {
         Timber.v("触摸事件, [%s, %s]", x, y);
+        Timber.v("长按选中流程, [%s, %s]", x, y);
+
         mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             releaseSelectionCursor();
+            Timber.v("长按选中流程, releaseSelectionCursor");
             return;
         }
 
         // 如果有选中， 显示选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             myReader.runAction(ActionCode.SELECTION_SHOW_PANEL);
+            Timber.v("长按选中流程, show panel");
             return;
         }
 
@@ -579,6 +586,8 @@ public final class FBView extends ZLTextView {
     @Override
     public void onFingerMoveAfterLongPress(int x, int y) {
         Timber.v("触摸事件, [%s, %s]", x, y);
+        Timber.v("长按选中流程, [%s, %s]", x, y);
+
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             moveSelectionCursorTo(cursor, x, y, "onFingerMoveAfterLongPress");
@@ -616,7 +625,7 @@ public final class FBView extends ZLTextView {
         }
 
         // 如果有选中，则(1). 清除选中，(2). 隐藏选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             Timber.v("长按流程, 选中");
             myReader.runAction(ActionCode.SELECTION_CLEAR);
             myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
@@ -1008,6 +1017,9 @@ public final class FBView extends ZLTextView {
         }
     }
 
+    /**
+     * 长按选中了文字会回调这个方法
+     */
     @Override
     public boolean onFingerLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
@@ -1068,6 +1080,9 @@ public final class FBView extends ZLTextView {
         return false;
     }
 
+    /**
+     * 长按选中了文字并拖动会回调这个方法
+     */
     @Override
     public boolean onFingerMoveAfterLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
@@ -1099,17 +1114,19 @@ public final class FBView extends ZLTextView {
         return false;
     }
 
+    /**
+     * 长按选中了文字直接松开, 或者长按并拖动再松开都会回调这个方法
+     */
     @Override
-    public boolean onFingerReleaseAfterLongPressFlutter(int x, int y) {
+    public SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
 //        mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            releaseSelectionCursor();
-            return true;
+            return releaseSelectionCursorFlutter();
         }
 
-        // 如果有选中， 显示选中动作弹框
+        // 如果有选中 显示选中动作弹框
 //        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
 //            myReader.runAction(ActionCode.SELECTION_SHOW_PANEL
 //            return;
@@ -1135,9 +1152,12 @@ public final class FBView extends ZLTextView {
 //                myReader.runAction(ActionCode.PROCESS_HYPERLINK);
 //            }
         }
-        return false;
+        return SelectionResult.None.INSTANCE;
     }
 
+    /**
+     * 手指点击回调的方法
+     */
     @Override
     public boolean onFingerSingleTapFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
@@ -1150,7 +1170,7 @@ public final class FBView extends ZLTextView {
         // 如果有选中，
         // 1. 清除选中，
         // 2. 隐藏选中动作弹框
-        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
+        if (hasSelection()) {
             Timber.v("长按流程, 选中");
             myReader.runAction(ActionCode.SELECTION_CLEAR);
             // todo 实现flutter弹窗
@@ -1215,6 +1235,8 @@ public final class FBView extends ZLTextView {
     }
 
     /**
+     * 已经长按选中了一些文字，点击选中小耳朵回调的方法
+     *
      * @return 'true' need repaint, 'false' no need repaint
      */
     @Override
@@ -1247,6 +1269,9 @@ public final class FBView extends ZLTextView {
         }
     }
 
+    /**
+     * 已经长按选中了一些文字，拖动选中小耳朵回调的方法
+     */
     @Override
     public boolean onFingerMoveFlutter(int x, int y) {
 
@@ -1283,6 +1308,9 @@ public final class FBView extends ZLTextView {
         }
     }
 
+    /**
+     * 已经长按选中了一些文字，拖动选中小耳朵完毕, 手指松开的回调的方法
+     */
     @Override
     public boolean onFingerReleaseFlutter(int x, int y) {
         Timber.v("触摸事件, [%s, %s]", x, y);

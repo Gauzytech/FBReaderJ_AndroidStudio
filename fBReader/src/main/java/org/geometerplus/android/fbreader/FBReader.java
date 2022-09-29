@@ -1324,6 +1324,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
         final ZLTextView view = readerController.getTextView();
         // 显示弹框
         readerController.showPopup(SelectionPopup.ID);
+        Timber.v("选择弹窗, 坐标: startY = %s, endY = %s", view.getSelectionStartY(), view.getSelectionEndY());
         // 位置移动
         ((SelectionPopup) readerController.getPopupById(SelectionPopup.ID)).move(view.getSelectionStartY(), view.getSelectionEndY());
     }
@@ -1692,7 +1693,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
     public void invokeFlutterMethod(@NonNull String method, @Nullable Object arguments, @Nullable MethodChannel.Result callback) {
         if (!DebugHelper.ENABLE_FLUTTER) return;
         Objects.requireNonNull(flutterBridge, "flutterBridge is null!");
-        runOnUiThread(() -> flutterBridge.invokeMethod(method, arguments, callback));
+        flutterBridge.invokeMethod(method, arguments, callback);
     }
 
     /** 小提示 */

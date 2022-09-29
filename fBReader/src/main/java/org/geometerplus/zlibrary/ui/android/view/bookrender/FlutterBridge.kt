@@ -3,15 +3,15 @@ package org.geometerplus.zlibrary.ui.android.view.bookrender
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.annotation.MainThread
+import androidx.appcompat.app.AppCompatActivity
 import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -111,7 +111,7 @@ class FlutterBridge(
                 contentProcessor.onFingerLongPress(dx, dy, object : ResultCallBack {
                     override fun onComplete(data: Any) {
                         Timber.v("时间测试, 重绘返回 $LONG_PRESS_START, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        result.success(mapOf("page" to data))
                     }
                 }, Pair(width, height))
             }
@@ -125,7 +125,7 @@ class FlutterBridge(
                 contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : ResultCallBack {
                     override fun onComplete(data: Any) {
                         Timber.v("时间测试, 重绘返回 $LONG_PRESS_MOVE, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        result.success(mapOf("page" to data))
                     }
                 }, Pair(width, height))
             }
@@ -134,10 +134,24 @@ class FlutterBridge(
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
-                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
+                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : SelectionListener {
+                    override fun onSelection(selectionResult: SelectionResult, img: ByteArray) {
                         Timber.v("时间测试, 重绘返回 $LONG_PRESS_END, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        if (selectionResult is SelectionResult.ShowMenu) {
+                            result.success(
+                                mapOf(
+                                    "page" to img,
+                                    "selectionStartY" to selectionResult.selectionStartY,
+                                    "selectionEndY" to selectionResult.selectionEndY
+                                )
+                            )
+                        } else {
+                            result.success(
+                                mapOf(
+                                    "page" to img,
+                                )
+                            )
+                        }
                     }
                 }, Pair(width, height))
             }
@@ -153,7 +167,7 @@ class FlutterBridge(
                         // 绘制内容的bitmap
                         val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
                         // 回调结果
-                        result.success(bitmap.toByteArray())
+                        result.success(mapOf("page" to bitmap.toByteArray()))
                     }
                 })
             }
@@ -167,7 +181,7 @@ class FlutterBridge(
                 contentProcessor.onFingerPress(dx, dy, object : ResultCallBack {
                     override fun onComplete(data: Any) {
                         Timber.v("时间测试, 重绘返回 $ON_DRAG_START, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        result.success(mapOf("page" to data))
                     }
                 }, Pair(width, height))
             }
@@ -181,7 +195,7 @@ class FlutterBridge(
                 contentProcessor.onFingerMove(dx, dy, object : ResultCallBack {
                     override fun onComplete(data: Any) {
                         Timber.v("时间测试, 重绘返回 $ON_DRAG_MOVE, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        result.success(mapOf("page" to data))
                     }
                 }, Pair(width, height))
             }
@@ -192,17 +206,18 @@ class FlutterBridge(
                 contentProcessor.onFingerRelease(0, 0, object : ResultCallBack {
                     override fun onComplete(data: Any) {
                         Timber.v("时间测试, 重绘返回 $ON_DRAG_END, $time ${System.currentTimeMillis() - time}")
-                        result.success(data)
+                        result.success(mapOf("page" to data))
                     }
                 }, Pair(width, height))
             }
         }
     }
 
-    @MainThread
-    fun invokeMethod(method: String, arguments: Any?, callback: MethodChannel.Result?) {
+    fun invokeMethod(method: String, arguments: Any?, callback: MethodChannel.Result? = null) {
         Timber.v("ceshi1234, density = ${context.resources.displayMetrics.density}")
-        channel.invokeMethod(method, arguments, callback)
+        (context as AppCompatActivity).runOnUiThread {
+            channel.invokeMethod(method, arguments, callback)
+        }
     }
 
     private fun drawBitmap(pageInt: PageIndex, width: Int, height: Int): Bitmap {

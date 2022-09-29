@@ -366,11 +366,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     protected void releaseSelectionCursor() {
         mySelection.stop();
-        repaint("releaseSelectionCursor");
-    }
-
-    protected void releaseSelectionCursorFlutter() {
-        mySelection.stop();
+        if(!DebugHelper.ENABLE_FLUTTER) {
+            repaint("releaseSelectionCursor");
+        }
     }
 
     protected SelectionCursor.Which getSelectionCursorInMovement() {
