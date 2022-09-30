@@ -343,4 +343,10 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
             resultCallBack.onComplete(map)
         }
     }
+
+    override fun cleaAllSelectedSections(resultCallBack: FlutterBridge.ResultCallBack?, size: Pair<Int, Int>) {
+        if (targetContentView.cleaAllSelectedSections()) {
+            resultCallBack?.onComplete(drawCurrentPage(size))
+        }
+    }
 }

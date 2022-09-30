@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
-import 'package:flutter_lib/reader/handler/selelction_event_handler.dart';
+import 'package:flutter_lib/reader/handler/selelction_handler.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:kumi_popup_window/kumi_popup_window.dart';
@@ -53,8 +53,6 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
 
 class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
     with TickerProviderStateMixin {
-  static const selectionMenuSize = Size(200, 48);
-
   final _methodChannel = const MethodChannel('platform_channel_methods');
 
   // 翻页倒计时
@@ -73,7 +71,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
-  late SelectionEventHandler _selectionHandler;
+  late SelectionHandler _selectionHandler;
   KumiPopupWindow? _popupWindow;
 
   @override
@@ -81,7 +79,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     _readerContentHandler = ReaderContentHandler(
         methodChannel: _methodChannel, readerBookContentViewState: this);
-    _selectionHandler = SelectionEventHandler(
+    _selectionHandler = SelectionHandler(
         readerContentHandler: _readerContentHandler,
         topIndicatorKey: topIndicatorKey,
         bottomIndicatorKey: bottomIndicatorKey);
@@ -459,93 +457,12 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio
   void showSelectionMenu(Offset position) {
     print('选择弹窗, position = $position');
-    if(position.isInfinite) {
-      print('选择弹窗, 居中');
-      _popupWindow = createPopupWindow(
-        context,
-        bgColor: Colors.grey.withOpacity(0),
-        duration: const Duration(milliseconds: 50),
-        //needSafeDisplay: true,
-        onDismissStart: (pop) {
-          print("选择弹窗, onDismissStart");
-        },
-        childFun: (pop) {
-          return buildSelectionMenu();
-        },
-      );
-    } else {
-      _popupWindow = createPopupWindow(
-        context,
-        bgColor: Colors.grey.withOpacity(0),
-        customPop: true,
-        duration: const Duration(milliseconds: 50),
-        //needSafeDisplay: true,
-        onDismissStart: (pop) {
-          print("选择弹窗, onDismissStart");
-        },
-        childFun: (pop) {
-          return Positioned(
-            left: position.dx,
-            top: position.dy,
-            child: ScaleTransition(
-              scale: Tween(begin: 0.0, end: 1.0)
-                  .chain(CurveTween(curve: Curves.decelerate))
-                  .animate(pop.controller!),
-              child: FadeTransition(
-                opacity: Tween(begin: -1.0, end: 1.0)
-                    .chain(CurveTween(curve: Curves.decelerate))
-                    .animate(pop.controller!),
-                child: buildSelectionMenu(),
-              ),
-            ),
-          );
-        },
-      );
-    }
-
+    _popupWindow = _selectionHandler.createSelectionMenu(context, position);
     _popupWindow?.show(context);
   }
 
   void hideSelectionMenu() {
     _popupWindow?.dismiss(context);
     _popupWindow = null;
-  }
-
-  StatefulBuilder buildSelectionMenu() {
-    return StatefulBuilder(
-        key: GlobalKey(),
-        builder: (popContext, popState) {
-          return Container(
-            width: selectionMenuSize.width,
-            height: selectionMenuSize.height,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-              color: Colors.black,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  child: const Text('Note'),
-                  onPressed: () {
-                    print('选择弹窗, Note');
-                  },
-                ),
-                TextButton(
-                  child: const Text('Copy'),
-                  onPressed: () {
-                    print('选择弹窗, Copy');
-                  },
-                ),
-                TextButton(
-                  child: const Text('Search'),
-                  onPressed: () {
-                    print('选择弹窗, Search');
-                  },
-                ),
-              ],
-            ),
-          );
-        });
   }
 }

@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:kumi_popup_window/kumi_popup_window.dart';
 
 import '../controller/reader_content_handler.dart';
 
@@ -13,19 +15,26 @@ const longPressStart = 'long_press_start';
 const longPressUpdate = 'long_press_update';
 const longPressEnd = 'long_press_end';
 const tapUp = 'on_tap_up';
+const selectionClear = 'selection_clear';
 
 enum SelectionIndicator {
   topStart, bottomEnd
 }
 
-class SelectionEventHandler {
+/// TODO
+/// 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
+/// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
+/// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
+class SelectionHandler {
+  static const selectionMenuSize = Size(200, 48);
+
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
   GlobalKey topIndicatorKey;
   GlobalKey bottomIndicatorKey;
   bool _selectionMenuShown = false;
 
-  SelectionEventHandler(
+  SelectionHandler(
       {required this.readerContentHandler,
       required this.topIndicatorKey,
       required this.bottomIndicatorKey});
@@ -175,5 +184,90 @@ class SelectionEventHandler {
         touchDx <= right &&
         touchDy >= top &&
         touchDy <= bottom;
+  }
+
+  /// 创建划选弹窗
+  KumiPopupWindow createSelectionMenu(BuildContext context, Offset position) {
+    if (position.isInfinite) {
+      print('选择弹窗, 居中');
+      return createPopupWindow(
+        context,
+        bgColor: Colors.grey.withOpacity(0),
+        duration: const Duration(milliseconds: 50),
+        //needSafeDisplay: true,
+        onDismissStart: (pop) {
+          readerContentHandler.callNativeMethod(tapUp, 0, 0);
+        },
+        childFun: (pop) {
+          return buildSelectionMenu();
+        },
+      );
+    } else {
+      return createPopupWindow(
+        context,
+        bgColor: Colors.grey.withOpacity(0),
+        customPop: true,
+        duration: const Duration(milliseconds: 50),
+        //needSafeDisplay: true,
+        onDismissStart: (pop) {
+          readerContentHandler.callNativeMethod(selectionClear, 0, 0);
+        },
+        childFun: (pop) {
+          return Positioned(
+            left: position.dx,
+            top: position.dy,
+            child: ScaleTransition(
+              scale: Tween(begin: 0.0, end: 1.0)
+                  .chain(CurveTween(curve: Curves.decelerate))
+                  .animate(pop.controller!),
+              child: FadeTransition(
+                opacity: Tween(begin: -1.0, end: 1.0)
+                    .chain(CurveTween(curve: Curves.decelerate))
+                    .animate(pop.controller!),
+                child: buildSelectionMenu(),
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  StatefulBuilder buildSelectionMenu() {
+    return StatefulBuilder(
+        key: GlobalKey(),
+        builder: (popContext, popState) {
+          return Container(
+            width: selectionMenuSize.width,
+            height: selectionMenuSize.height,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+              color: Colors.black,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  child: const Text('Note'),
+                  onPressed: () {
+                    print('选择弹窗, Note');
+                  },
+                ),
+                TextButton(
+                  child: const Text('Copy'),
+                  onPressed: () {
+                    print('选择弹窗, Copy');
+                  },
+                ),
+                TextButton(
+                  child: const Text('Search'),
+                  onPressed: () {
+                    print('选择弹窗, Search');
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 }

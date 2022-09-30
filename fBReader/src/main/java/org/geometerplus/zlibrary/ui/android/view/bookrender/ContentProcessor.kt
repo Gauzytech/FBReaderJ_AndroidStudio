@@ -130,4 +130,10 @@ interface ContentProcessor {
     fun setPreview(preview: Boolean)
     fun runActionByKey(key: Int, longPress: Boolean): Boolean
     fun hasKeyBinding(key: Int, longPress: Boolean): Boolean
+
+    /** 清除所有选中内容 */
+    fun cleaAllSelectedSections(
+        resultCallBack: FlutterBridge.ResultCallBack?,
+        size: Pair<Int, Int>
+    )
 }

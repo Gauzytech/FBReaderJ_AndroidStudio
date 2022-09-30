@@ -2023,8 +2023,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
 //    }
 
     public void clearSelection() {
-        if (mySelection.clear() && !DebugHelper.ENABLE_FLUTTER) {
-            repaint("clearSelection");
+        if (mySelection.clear()) {
+            if (!DebugHelper.ENABLE_FLUTTER) {
+                repaint("clearSelection");
+            }
         }
     }
 

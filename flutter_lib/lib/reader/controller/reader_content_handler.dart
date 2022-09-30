@@ -9,6 +9,8 @@ import 'package:flutter_lib/modal/pair.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
 
+import '../handler/selelction_handler.dart';
+
 class ReaderContentHandler {
   MethodChannel methodChannel;
 
@@ -257,12 +259,12 @@ class ReaderContentHandler {
 
   Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
     double margin = 25;
-    double selectionMenuHeight = ReaderBookContentViewState.selectionMenuSize.height;
+    double selectionMenuHeight = SelectionHandler.selectionMenuSize.height;
     double ratio = ui.window.devicePixelRatio;
     double startYMargin = selectionStartY - margin;
     double endYMargin = selectionEndY + margin;
     double startY = startYMargin - selectionMenuHeight * ratio;
-    double startX = (getContentSize().width / ratio - ReaderBookContentViewState.selectionMenuSize.width) / 2 ;
+    double startX = (getContentSize().width / ratio - SelectionHandler.selectionMenuSize.width) / 2 ;
     Offset selectionMenuPosition;
     if (startY > 0) {
       print("选择弹窗, 上方");

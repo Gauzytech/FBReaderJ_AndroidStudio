@@ -1169,12 +1169,8 @@ public final class FBView extends ZLTextView {
 
         // 如果有选中，
         // 1. 清除选中，
-        // 2. 隐藏选中动作弹框
-        if (hasSelection()) {
-            Timber.v("长按流程, 选中");
-            myReader.runAction(ActionCode.SELECTION_CLEAR);
-            // todo 实现flutter弹窗
-//            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+        // 2. 隐藏选中动作弹框(在flutter执行)
+        if (cleaAllSelectedSections()) {
             return true;
         }
 
@@ -1340,5 +1336,16 @@ public final class FBView extends ZLTextView {
 
             return false;
         }
+    }
+
+    /** 清除所有选中内容: 包括划选文字，选中的图片或者超链接等 */
+    @Override
+    public boolean cleaAllSelectedSections() {
+        // 1. 清除划选内容
+        if (hasSelection()) {
+            clearSelection();
+            return true;
+        }
+        return false;
     }
 }

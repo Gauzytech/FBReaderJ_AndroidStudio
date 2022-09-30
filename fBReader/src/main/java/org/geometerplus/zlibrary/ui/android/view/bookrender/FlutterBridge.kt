@@ -39,6 +39,7 @@ private const val ON_TAP_UP = "on_tap_up"
 private const val ON_DRAG_START = "on_selection_drag_start"
 private const val ON_DRAG_MOVE = "on_selection_drag_move"
 private const val ON_DRAG_END = "on_selection_drag_end"
+private const val SELECTION_CLEAR = "selection_clear"
 
 class FlutterBridge(
     private val context: Context,
@@ -210,11 +211,22 @@ class FlutterBridge(
                     }
                 }, Pair(width, height))
             }
+            SELECTION_CLEAR -> {
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
+                val time = call.argument<Long>("time_stamp")!!
+                contentProcessor.cleaAllSelectedSections(object : ResultCallBack {
+                    override fun onComplete(data: Any) {
+                        Timber.v("时间测试, 重绘返回 $SELECTION_CLEAR, $time ${System.currentTimeMillis() - time}")
+                        result.success(mapOf("page" to data))
+                    }
+                }, Pair(width, height))
+            }
         }
     }
 
     fun invokeMethod(method: String, arguments: Any?, callback: MethodChannel.Result? = null) {
-        Timber.v("ceshi1234, density = ${context.resources.displayMetrics.density}")
+        Timber.v("屏幕尺寸, density = ${context.resources.displayMetrics.density}")
         (context as AppCompatActivity).runOnUiThread {
             channel.invokeMethod(method, arguments, callback)
         }
