@@ -329,7 +329,6 @@ class ReaderPageManager {
           switch (status) {
             case AnimationStatus.dismissed:
               break;
-
             case AnimationStatus.completed:
               onAnimationComplete();
               break;
@@ -344,11 +343,9 @@ class ReaderPageManager {
 
   void onAnimationComplete() {
     currentState = RenderState.IDLE;
-    TouchEvent event = TouchEvent(
+    currentTouchData = TouchEvent(
       action: EventAction.animationDone,
       touchPosition: Offset.zero,
     );
-    currentAnimationPage.onTouchEvent(event);
-    currentTouchData = event.copy();
   }
 }

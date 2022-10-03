@@ -165,12 +165,14 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerReleaseAfterLongPressFlutter(x, y).let { result ->
-                if (result !is SelectionResult.None) {
+            when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
+                is SelectionResult.ShowMenu,
+                is SelectionResult.NoMenu -> {
                     drawService.execute {
                         listener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
+                else -> listener?.onSelection(result)
             }
         } else {
             targetContentView.onFingerReleaseAfterLongPress(x, y)
@@ -183,16 +185,18 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerRelease(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        listener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerReleaseFlutter(x, y).let { repaint ->
-                if (repaint) {
+            when (val result = targetContentView.onFingerReleaseFlutter(x, y)) {
+                is SelectionResult.ShowMenu,
+                is SelectionResult.NoMenu -> {
                     drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+                        listener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
+                is SelectionResult.None -> listener?.onSelection(result)
             }
         } else {
             targetContentView.onFingerRelease(x, y)

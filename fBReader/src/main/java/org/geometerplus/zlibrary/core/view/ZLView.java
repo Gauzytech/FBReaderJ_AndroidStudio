@@ -187,7 +187,7 @@ abstract public class ZLView implements ZLViewEnums {
 
     public abstract boolean onFingerMoveFlutter(int x, int y);
 
-    public abstract boolean onFingerReleaseFlutter(int x, int y);
+    public abstract SelectionResult onFingerReleaseFlutter(int x, int y);
 
     public abstract boolean cleaAllSelectedSections();
 }

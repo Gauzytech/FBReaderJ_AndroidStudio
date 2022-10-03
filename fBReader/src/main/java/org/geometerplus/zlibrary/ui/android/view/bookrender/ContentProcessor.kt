@@ -85,7 +85,7 @@ interface ContentProcessor {
     fun onFingerRelease(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        listener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 

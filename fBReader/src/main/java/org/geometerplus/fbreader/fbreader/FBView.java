@@ -1308,14 +1308,13 @@ public final class FBView extends ZLTextView {
      * 已经长按选中了一些文字，拖动选中小耳朵完毕, 手指松开的回调的方法
      */
     @Override
-    public boolean onFingerReleaseFlutter(int x, int y) {
+    public SelectionResult onFingerReleaseFlutter(int x, int y) {
         Timber.v("触摸事件, [%s, %s]", x, y);
 
 //        mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            releaseSelectionCursor();
-            return true;
+            return releaseSelectionCursorFlutter();
         } else {
             // 如果有选中，恢复选中动作弹框
 //        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
@@ -1334,7 +1333,7 @@ public final class FBView extends ZLTextView {
 //            );
 //        }
 
-            return false;
+            return SelectionResult.None.INSTANCE;
         }
     }
 

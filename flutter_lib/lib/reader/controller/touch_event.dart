@@ -10,7 +10,6 @@ enum EventAction {
   dragEnd,
   cancel,
   flingReleased,
-  animationDone,
   noAnimationForward,
   noAnimationBackward,
 }

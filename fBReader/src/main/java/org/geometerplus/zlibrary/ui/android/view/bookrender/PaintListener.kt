@@ -19,5 +19,5 @@ interface PaintListener {
 
 interface SelectionListener {
 
-    fun onSelection(selectionResult: SelectionResult, img: ByteArray)
+    fun onSelection(selectionResult: SelectionResult, img: ByteArray? = null)
 }

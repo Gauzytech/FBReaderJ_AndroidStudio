@@ -228,6 +228,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       } else {
         print('flutter动画流程:onDraw[无nextPage], actualOffsetX = $actualOffsetX, '
             'currentMoveDx = $currentMoveDx');
+        // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
         if (!isCanGoNext()) {
           lastIndex = 0;
           actualOffsetX = 0;
@@ -253,6 +254,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         print('flutter动画流程:onDraw[无prevPage], '
             'actualOffsetX = $actualOffsetX, '
             'currentMoveDx = $currentMoveDx');
+        // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
         if (!isCanGoPre()) {
           lastIndex = 0;
           actualOffsetX = 0;
@@ -264,9 +266,10 @@ class PageTurnAnimation extends BaseAnimationPage {
         }
       }
     } else {
-      print('flutter动画流程:onDraw[不绘制上下页], '
+      print('flutter动画流程:onDraw[只绘制current], '
           'actualOffsetX = $actualOffsetX, '
-          'currentMoveDx = $currentMoveDx, 只绘制current');
+          'currentMoveDx = $currentMoveDx');
+      _resetData();
       readerViewModel.preloadAdjacentPage();
     }
 
@@ -315,15 +318,6 @@ class PageTurnAnimation extends BaseAnimationPage {
           handleEvent(end);
         }
         break;
-      case EventAction.animationDone:
-        print(
-            'flutter动画流程:onTouchEvent${event.touchPoint}, ANIMATION_DONE, 动画执行完毕, 清理坐标数据');
-        // 动画执行完毕，清除进行中的动画数据
-        progressAnimation = null;
-        mStartDx = 0;
-        lastIndex = 0;
-        currentMoveDx = 0;
-        break;
       case EventAction.dragEnd:
       case EventAction.cancel:
         // 这里不会执行, 见setCurrentTouchEvent
@@ -333,12 +327,19 @@ class PageTurnAnimation extends BaseAnimationPage {
     }
   }
 
+  /// 清除所有翻页用到的临时数据
+  void _resetData() {
+    print('flutter动画流程，翻页完毕，清理所有临时数据');
+    progressAnimation = null;
+    mStartDx = 0;
+    lastIndex = 0;
+    currentMoveDx = 0;
+  }
+
   @override
   bool shouldCancelAnimation() {
     return true;
   }
-
-  void drawStatic(Canvas canvas) {}
 
   @override
   bool isCancelArea() {

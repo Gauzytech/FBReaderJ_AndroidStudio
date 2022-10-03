@@ -29,7 +29,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   provider: ^6.0.0
   ele_progress: ^0.0.1
-  kumi_popup_window: ^2.0.0-nullsafety
 
 dev_dependencies:
   flutter_test:

@@ -10,7 +10,7 @@ sealed class SelectionResult {
     data class ShowMenu(val selectionStartY: Int, val selectionEndY: Int) : SelectionResult()
 
     /**
-     * 选中了除文字之外的内容
+     * 选中了除文字之外的内容, 比如选中了图片，视频，超链接.
      */
     object NoMenu: SelectionResult()
 

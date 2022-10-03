@@ -10,7 +10,6 @@ import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selelction_handler.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
-import 'package:kumi_popup_window/kumi_popup_window.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
@@ -40,15 +39,6 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
   buildState() {
     return ReaderBookContentViewState();
   }
-
-// ui.Image drawOnBitmap() {
-//   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-//   Canvas canvas = Canvas(pictureRecorder);
-//
-//   canvas.drawImage(image, offset, paint);
-//
-//
-// }
 }
 
 class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
@@ -72,13 +62,12 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   late ReaderContentHandler _readerContentHandler;
   late SelectionHandler _selectionHandler;
-  KumiPopupWindow? _popupWindow;
 
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     _readerContentHandler = ReaderContentHandler(
-        methodChannel: _methodChannel, readerBookContentViewState: this);
+        methodChannel: _methodChannel, viewState: this);
     _selectionHandler = SelectionHandler(
         readerContentHandler: _readerContentHandler,
         topIndicatorKey: topIndicatorKey,
@@ -146,7 +135,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
             (PagePanDragRecognizer recognizer) {
               recognizer.setMenuOpen(false);
               recognizer.onStart = (detail) {
-                if (_selectionHandler.isSelectionMenuShown()) {
+                if (_selectionHandler.isSelectionStateEnabled) {
+                  // 拖动开始，此时划选模式应该已经激活，隐藏划选弹窗
+                  hideSelectionMenu();
                   _selectionHandler.onSelectionDragStart(detail);
                   var indicator = _selectionHandler.enableCrossPageIndicator(
                       context, detail.localPosition);
@@ -160,7 +151,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 }
               };
               recognizer.onUpdate = (detail) {
-                if (_selectionHandler.isSelectionMenuShown()) {
+                if (_selectionHandler.isSelectionStateEnabled) {
                   _selectionHandler.onSelectionDragMove(detail);
                   var indicator = _selectionHandler.enableCrossPageIndicator(
                       context, detail.localPosition);
@@ -179,7 +170,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 }
               };
               recognizer.onEnd = (detail) {
-                if (_selectionHandler.isSelectionMenuShown()) {
+                if (_selectionHandler.isSelectionStateEnabled) {
                   _selectionHandler.onSelectionDragEnd(detail);
                   hideIndicator();
                 } else if (!readerViewModel.getMenuOpenState()) {
@@ -196,9 +187,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 () => LongPressGestureRecognizer(),
                 (LongPressGestureRecognizer recognizer) {
               recognizer.onLongPressStart = (detail) {
-                _selectionHandler.setSelectionMenuState(true);
+                updateSelectionState(true);
+                // 长按开始，隐藏划选弹窗
+                hideSelectionMenu();
                 _selectionHandler.onLongPressStart(detail);
-                // showSelectionMenu(detail.globalPosition);
               };
               recognizer.onLongPressMoveUpdate = (detail) {
                 _selectionHandler.onLongPressMoveUpdate(detail);
@@ -213,11 +205,13 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                   () => TapGestureRecognizer(),
                   (TapGestureRecognizer recognizer) {
             recognizer.onTapUp = (detail) {
-              if (_selectionHandler.isSelectionMenuShown()) {
+              // 点击事件，隐藏划选弹窗
+              if (_selectionHandler.isSelectionStateEnabled) {
                 _selectionHandler.onTagUp(detail);
-                _selectionHandler.setSelectionMenuState(false);
+                hideSelectionMenu();
+                updateSelectionState(false);
               } else {
-                navigatePageWithoutAnimation(detail.localPosition, null);
+                navigatePageNoAnimation(detail.localPosition, null);
               }
             };
           })
@@ -261,7 +255,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                   ),
                 ),
               ),
-            )
+            ),
+            _selectionHandler.menuPosition != null
+                ? _buildSelectionLayer()
+                : const SizedBox(width: 0, height: 0),
           ],
         ),
       ),
@@ -349,7 +346,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   }
 
   // 根据点击区域实现无动画翻页
-  Future<void> navigatePageWithoutAnimation(
+  Future<void> navigatePageNoAnimation(
       Offset touchPosition, SelectionIndicator? indicator) async {
     var eventAction = getEventAction(touchPosition, indicator);
     if (eventAction != null) {
@@ -383,7 +380,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         } else if (touchPosition.dx >= nextPageRegion[0] &&
             touchPosition.dx <= nextPageRegion[1]) {
           // 下一页
-          return EventAction.noAnimationBackward;
+          return EventAction.noAnimationForward;
         } else {
           return null;
         }
@@ -423,7 +420,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           //  2. 现在上一页选中文字会在翻页之后丢失,
           //  3. 选中所有翻页页面的文字
           //  4. 处理图片选中
-          navigatePageWithoutAnimation(touchPosition, indicator);
+          navigatePageNoAnimation(touchPosition, indicator);
         }
       });
     }
@@ -456,13 +453,98 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio
   void showSelectionMenu(Offset position) {
-    print('选择弹窗, position = $position');
-    _popupWindow = _selectionHandler.createSelectionMenu(context, position);
-    _popupWindow?.show(context);
+    setState(() {
+      _selectionHandler.updateSelectionMenuPosition(position);
+    });
   }
 
   void hideSelectionMenu() {
-    _popupWindow?.dismiss(context);
-    _popupWindow = null;
+    if (_selectionHandler.menuPosition != null) {
+      setState(() {
+        _selectionHandler.updateSelectionMenuPosition(null);
+      });
+    }
+  }
+
+  void updateSelectionState(bool enable) {
+    _selectionHandler.updateSelectionState(enable);
+  }
+
+  Widget _buildSelectionLayer() {
+    Offset position = _selectionHandler.menuPosition!;
+    if (position.isInfinite) {
+      print('选择弹窗, 显示居中');
+      return Positioned.fill(
+        child: Align(
+          alignment: Alignment.center,
+          child: _buildSelectionMenu(),
+        ),
+      );
+    } else {
+      print('选择弹窗, 自定义位置 = ${_selectionHandler.menuPosition}');
+      return Positioned(
+        left: position.dx,
+        top: position.dy,
+        child: _buildSelectionMenu(),
+      );
+    }
+  }
+
+  Widget _buildSelectionMenu() {
+    double ratio = ui.window.devicePixelRatio;
+    return Container(
+      width: SelectionHandler.selectionMenuSize.width * ratio,
+      height: SelectionHandler.selectionMenuSize.height * ratio,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: Colors.black,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                textStyle: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                print('选择弹窗, Note');
+              },
+              child: const Text('Note'),
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              style: TextButton.styleFrom(
+                textStyle: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                print('选择弹窗, Copy');
+              },
+              child: const Text('Copy'),
+            ),
+          ),
+          Expanded(
+              child: TextButton(
+            style: TextButton.styleFrom(
+              textStyle: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onPressed: () {
+              print('选择弹窗, Search');
+            },
+            child: const Text('Search'),
+          )),
+        ],
+      ),
+    );
   }
 }

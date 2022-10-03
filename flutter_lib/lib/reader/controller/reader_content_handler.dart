@@ -15,7 +15,7 @@ class ReaderContentHandler {
   MethodChannel methodChannel;
 
   // late MediaQueryData _mediaQueryData;
-  ReaderBookContentViewState readerBookContentViewState;
+  ReaderBookContentViewState viewState;
 
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
@@ -25,7 +25,7 @@ class ReaderContentHandler {
 
   ReaderContentHandler({
     required this.methodChannel,
-    required this.readerBookContentViewState,
+    required this.viewState,
   }) {
     methodChannel.setMethodCallHandler(_addNativeMethod);
   }
@@ -35,8 +35,8 @@ class ReaderContentHandler {
   }
 
   void refreshContent() {
-    readerBookContentViewState.viewModel?.notify();
-    readerBookContentViewState.refreshContentPainter();
+    viewState.viewModel?.notify();
+    viewState.refreshContentPainter();
   }
 
   /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
@@ -234,26 +234,31 @@ class ReaderContentHandler {
     );
     print('时间测试, $name 获得结果, ${DateTime.now().millisecondsSinceEpoch}');
 
-    Uint8List imageBytes = result['page'];
+    Uint8List? imageBytes = result['page'];
     int? selectionStartY = result['selectionStartY'];
     int? selectionEndY = result['selectionEndY'];
-    print('时间测试 返回值, $name ${imageBytes.length}');
 
-    // 将imageBytes转成img
-    ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-    ui.FrameInfo fi = await codec.getNextFrame();
-    final image = fi.image;
+    if(imageBytes != null) {
+      // 将imageBytes转成img
+      ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
+      ui.FrameInfo fi = await codec.getNextFrame();
 
-    // _bitmapManager缓存img
-    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
+      // _bitmapManager缓存img
+      _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
 
-    // 刷新custom painter
-    refreshContent();
+      // 刷新custom painter
+      refreshContent();
+    }
+
     // 显示选择弹窗
     if (selectionStartY != null && selectionEndY != null) {
-      readerBookContentViewState.showSelectionMenu(
+      viewState.showSelectionMenu(
         getSelectionMenuPosition(selectionStartY, selectionEndY),
       );
+    } else {
+      if(name == longPressEnd || name == dragEnd) {
+        viewState.updateSelectionState(false);
+      }
     }
   }
 
@@ -269,11 +274,11 @@ class ReaderContentHandler {
     if (startY > 0) {
       print("选择弹窗, 上方");
       // 显示在选中高亮上方
-      selectionMenuPosition = Offset(startX, startY / ratio);
+      selectionMenuPosition = Offset(startX, startY);
     } else if (endYMargin + selectionMenuHeight < getContentSize().height) {
       print("选择弹窗, 下方");
       // 显示在选中高亮下方
-      selectionMenuPosition = Offset(startX, endYMargin / ratio);
+      selectionMenuPosition = Offset(startX, endYMargin);
     } else {
       print("选择弹窗, 居中");
       // 居中显示

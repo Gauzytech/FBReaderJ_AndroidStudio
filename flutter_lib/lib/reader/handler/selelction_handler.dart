@@ -1,10 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:kumi_popup_window/kumi_popup_window.dart';
 
 import '../controller/reader_content_handler.dart';
 
@@ -26,18 +22,24 @@ enum SelectionIndicator {
 /// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
 class SelectionHandler {
-  static const selectionMenuSize = Size(200, 48);
+  static const selectionMenuSize = Size(200, 40);
 
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
+  // 跨页划选指示器
   GlobalKey topIndicatorKey;
   GlobalKey bottomIndicatorKey;
-  bool _selectionMenuShown = false;
+  // 划选弹窗
+  bool _selectionState = false;
+  Offset? _selectionMenuPosition;
 
   SelectionHandler(
       {required this.readerContentHandler,
       required this.topIndicatorKey,
       required this.bottomIndicatorKey});
+
+  Offset? get menuPosition => _selectionMenuPosition;
+  bool get isSelectionStateEnabled => _selectionState;
 
   /// 长按事件处理操作
   /// 保存当前坐标
@@ -52,12 +54,12 @@ class SelectionHandler {
     return offset.dx.toInt() == prevDx && offset.dy.toInt() == prevDy;
   }
 
-  void setSelectionMenuState(bool isShow) {
-    _selectionMenuShown = isShow;
+  void updateSelectionState(bool enable) {
+    _selectionState = enable;
   }
 
-  bool isSelectionMenuShown() {
-    return _selectionMenuShown;
+  void updateSelectionMenuPosition(Offset? position) {
+    _selectionMenuPosition = position;
   }
 
   void onSelectionDragStart(DragStartDetails detail) {
@@ -184,90 +186,5 @@ class SelectionHandler {
         touchDx <= right &&
         touchDy >= top &&
         touchDy <= bottom;
-  }
-
-  /// 创建划选弹窗
-  KumiPopupWindow createSelectionMenu(BuildContext context, Offset position) {
-    if (position.isInfinite) {
-      print('选择弹窗, 居中');
-      return createPopupWindow(
-        context,
-        bgColor: Colors.grey.withOpacity(0),
-        duration: const Duration(milliseconds: 50),
-        //needSafeDisplay: true,
-        onDismissStart: (pop) {
-          readerContentHandler.callNativeMethod(tapUp, 0, 0);
-        },
-        childFun: (pop) {
-          return buildSelectionMenu();
-        },
-      );
-    } else {
-      return createPopupWindow(
-        context,
-        bgColor: Colors.grey.withOpacity(0),
-        customPop: true,
-        duration: const Duration(milliseconds: 50),
-        //needSafeDisplay: true,
-        onDismissStart: (pop) {
-          readerContentHandler.callNativeMethod(selectionClear, 0, 0);
-        },
-        childFun: (pop) {
-          return Positioned(
-            left: position.dx,
-            top: position.dy,
-            child: ScaleTransition(
-              scale: Tween(begin: 0.0, end: 1.0)
-                  .chain(CurveTween(curve: Curves.decelerate))
-                  .animate(pop.controller!),
-              child: FadeTransition(
-                opacity: Tween(begin: -1.0, end: 1.0)
-                    .chain(CurveTween(curve: Curves.decelerate))
-                    .animate(pop.controller!),
-                child: buildSelectionMenu(),
-              ),
-            ),
-          );
-        },
-      );
-    }
-  }
-
-  StatefulBuilder buildSelectionMenu() {
-    return StatefulBuilder(
-        key: GlobalKey(),
-        builder: (popContext, popState) {
-          return Container(
-            width: selectionMenuSize.width,
-            height: selectionMenuSize.height,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-              color: Colors.black,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  child: const Text('Note'),
-                  onPressed: () {
-                    print('选择弹窗, Note');
-                  },
-                ),
-                TextButton(
-                  child: const Text('Copy'),
-                  onPressed: () {
-                    print('选择弹窗, Copy');
-                  },
-                ),
-                TextButton(
-                  child: const Text('Search'),
-                  onPressed: () {
-                    print('选择弹窗, Search');
-                  },
-                ),
-              ],
-            ),
-          );
-        });
   }
 }

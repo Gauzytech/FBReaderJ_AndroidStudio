@@ -109,12 +109,10 @@ class FlutterBridge(
                 val height = call.argument<Double>("height")!!.toInt()
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
-                contentProcessor.onFingerLongPress(dx, dy, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_START, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerLongPress(
+                    dx, dy,
+                    getResultCallback(call.method, result, time), Pair(width, height)
+                )
             }
             LONG_PRESS_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
@@ -123,38 +121,21 @@ class FlutterBridge(
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件,  $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
-                contentProcessor.onFingerMoveAfterLongPress(dx, dy, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_MOVE, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerMoveAfterLongPress(
+                    dx, dy,
+                    getResultCallback(call.method, result, time), Pair(width, height)
+                )
             }
             LONG_PRESS_END -> {
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
-                contentProcessor.onFingerReleaseAfterLongPress(0, 0, object : SelectionListener {
-                    override fun onSelection(selectionResult: SelectionResult, img: ByteArray) {
-                        Timber.v("时间测试, 重绘返回 $LONG_PRESS_END, $time ${System.currentTimeMillis() - time}")
-                        if (selectionResult is SelectionResult.ShowMenu) {
-                            result.success(
-                                mapOf(
-                                    "page" to img,
-                                    "selectionStartY" to selectionResult.selectionStartY,
-                                    "selectionEndY" to selectionResult.selectionEndY
-                                )
-                            )
-                        } else {
-                            result.success(
-                                mapOf(
-                                    "page" to img,
-                                )
-                            )
-                        }
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerReleaseAfterLongPress(
+                    0, 0,
+                    getSelectionCallback(call.method, result, time),
+                    Pair(width, height)
+                )
             }
             ON_TAP_UP -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
@@ -179,12 +160,11 @@ class FlutterBridge(
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $ON_DRAG_START, [$dx, $dy]")
-                contentProcessor.onFingerPress(dx, dy, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $ON_DRAG_START, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerPress(
+                    dx, dy,
+                    getResultCallback(call.method, result, time),
+                    Pair(width, height)
+                )
             }
             ON_DRAG_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
@@ -193,34 +173,33 @@ class FlutterBridge(
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, $ON_DRAG_MOVE, [$dx, $dy]")
-                contentProcessor.onFingerMove(dx, dy, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $ON_DRAG_MOVE, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerMove(
+                    dx, dy,
+                    getResultCallback(call.method, result, time),
+                    Pair(width, height)
+                )
             }
             ON_DRAG_END -> {
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                contentProcessor.onFingerRelease(0, 0, object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $ON_DRAG_END, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.onFingerRelease(
+                    0, 0,
+                    getSelectionCallback(call.method, result, time),
+                    Pair(width, height)
+                )
             }
             SELECTION_CLEAR -> {
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                contentProcessor.cleaAllSelectedSections(object : ResultCallBack {
-                    override fun onComplete(data: Any) {
-                        Timber.v("时间测试, 重绘返回 $SELECTION_CLEAR, $time ${System.currentTimeMillis() - time}")
-                        result.success(mapOf("page" to data))
-                    }
-                }, Pair(width, height))
+                contentProcessor.cleaAllSelectedSections(
+                    getResultCallback(
+                        call.method,
+                        result,
+                        time
+                    ), Pair(width, height)
+                )
             }
         }
     }
@@ -268,6 +247,42 @@ class FlutterBridge(
         ops.flush()
         ops.close()
         Timber.v("flutter_bridge, save success!")
+    }
+
+    private fun getSelectionCallback(
+        name: String,
+        result: MethodChannel.Result,
+        time: Long
+    ): SelectionListener {
+        return object : SelectionListener {
+            override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
+                Timber.v("时间测试, 重绘返回 $name, $time ${System.currentTimeMillis() - time}")
+                if (selectionResult is SelectionResult.ShowMenu) {
+                    result.success(
+                        mapOf(
+                            "page" to img,
+                            "selectionStartY" to selectionResult.selectionStartY,
+                            "selectionEndY" to selectionResult.selectionEndY
+                        )
+                    )
+                } else {
+                    result.success(mapOf("page" to img))
+                }
+            }
+        }
+    }
+
+    private fun getResultCallback(
+        name: String,
+        result: MethodChannel.Result,
+        time: Long
+    ): ResultCallBack {
+        return object : ResultCallBack {
+            override fun onComplete(data: Any) {
+                Timber.v("时间测试, 重绘返回 $name, $time ${System.currentTimeMillis() - time}")
+                result.success(mapOf("page" to data))
+            }
+        }
     }
 
     interface ResultCallBack {
