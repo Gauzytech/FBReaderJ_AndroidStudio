@@ -344,7 +344,7 @@ class ReaderPageManager {
   void onAnimationComplete() {
     currentState = RenderState.IDLE;
     currentTouchData = TouchEvent(
-      action: EventAction.animationDone,
+      action: EventAction.dragEnd,
       touchPosition: Offset.zero,
     );
   }

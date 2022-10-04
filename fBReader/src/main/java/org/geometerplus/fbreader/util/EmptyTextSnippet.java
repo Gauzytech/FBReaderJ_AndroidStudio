@@ -40,4 +40,11 @@ public class EmptyTextSnippet implements TextSnippet {
 	public String getText() {
 		return "";
 	}
+
+	@Override
+	public String toString() {
+		return "EmptyTextSnippet{" +
+				"myPosition=" + myPosition +
+				'}';
+	}
 }

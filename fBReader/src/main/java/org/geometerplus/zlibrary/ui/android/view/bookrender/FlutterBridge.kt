@@ -40,6 +40,7 @@ private const val ON_DRAG_START = "on_selection_drag_start"
 private const val ON_DRAG_MOVE = "on_selection_drag_move"
 private const val ON_DRAG_END = "on_selection_drag_end"
 private const val SELECTION_CLEAR = "selection_clear"
+private const val SELECTED_TEXT = "selected_text"
 
 class FlutterBridge(
     private val context: Context,
@@ -200,6 +201,10 @@ class FlutterBridge(
                         time
                     ), Pair(width, height)
                 )
+            }
+            SELECTED_TEXT -> {
+                val textSnippet = contentProcessor.getSelectedText()
+                Timber.v("flutter长按事件, 获得选中文字: $textSnippet")
             }
         }
     }

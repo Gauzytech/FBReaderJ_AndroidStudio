@@ -1,45 +1,62 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 
 import '../controller/reader_content_handler.dart';
 
-const dragStart = 'on_selection_drag_start';
-const dragMove = 'on_selection_drag_move';
-const dragEnd = 'on_selection_drag_end';
+enum NativeCmd {
+  dragStart('on_selection_drag_start'),
+  dragMove('on_selection_drag_move'),
+  dragEnd('on_selection_drag_end'),
+  longPressStart('long_press_start'),
+  longPressUpdate('long_press_update'),
+  longPressEnd('long_press_end'),
+  tapUp('on_tap_up'),
+  selectionClear('selection_clear'),
+  selectedText('selected_text');
+
+  final String cmdName;
+  const NativeCmd(this.cmdName);
+}
+
 const longPressStart = 'long_press_start';
 const longPressUpdate = 'long_press_update';
 const longPressEnd = 'long_press_end';
 const tapUp = 'on_tap_up';
 const selectionClear = 'selection_clear';
+const selectedText = 'selected_text';
 
-enum SelectionIndicator {
-  topStart, bottomEnd
-}
+enum SelectionIndicator { topStart, bottomEnd }
 
 /// TODO
 /// 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
 /// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
 class SelectionHandler {
-  static const selectionMenuSize = Size(200, 40);
 
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
+
   // 跨页划选指示器
   GlobalKey topIndicatorKey;
   GlobalKey bottomIndicatorKey;
+
   // 划选弹窗
   bool _selectionState = false;
   Offset? _selectionMenuPosition;
+  SelectionMenuFactory? _menuFactory;
 
   SelectionHandler(
       {required this.readerContentHandler,
       required this.topIndicatorKey,
-      required this.bottomIndicatorKey});
+      required this.bottomIndicatorKey}) {
+    _menuFactory = SelectionMenuFactory();
+  }
 
   Offset? get menuPosition => _selectionMenuPosition;
+
   bool get isSelectionStateEnabled => _selectionState;
+
+  SelectionMenuFactory get factory => _menuFactory!;
 
   /// 长按事件处理操作
   /// 保存当前坐标
@@ -67,7 +84,7 @@ class SelectionHandler {
     print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作$position}");
     _setSelectionTouch(position);
     readerContentHandler.callNativeMethod(
-      dragStart,
+      NativeCmd.dragStart,
       position.dx.toInt(),
       position.dy.toInt(),
     );
@@ -79,7 +96,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        dragMove,
+        NativeCmd.dragMove,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -89,7 +106,7 @@ class SelectionHandler {
   void onSelectionDragEnd(DragEndDetails detail) {
     print("flutter动画流程[onDragEnd], 长按选择操作$detail");
     _setSelectionTouch(null);
-    readerContentHandler.callNativeMethod(dragEnd, 0, 0);
+    readerContentHandler.callNativeMethod(NativeCmd.dragEnd, 0, 0);
   }
 
   void onLongPressStart(LongPressStartDetails detail) {
@@ -98,7 +115,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        longPressStart,
+        NativeCmd.longPressStart,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -111,7 +128,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        longPressUpdate,
+        NativeCmd.longPressUpdate,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -121,14 +138,14 @@ class SelectionHandler {
   void onLongPressUp() {
     print("flutter动画流程:触摸事件, ------------长按事件结束------------>>>>>>>>>");
     _setSelectionTouch(null);
-    readerContentHandler.callNativeMethod(longPressEnd, 0, 0);
+    readerContentHandler.callNativeMethod(NativeCmd.longPressEnd, 0, 0);
   }
 
   void onTagUp(TapUpDetails detail) {
     Offset position = detail.localPosition;
     print("flutter动画流程:触摸事件, -------------onTapUp $position--------->>>>>>>>>");
     readerContentHandler.callNativeMethod(
-      tapUp,
+      NativeCmd.tapUp,
       position.dx.toInt(),
       position.dy.toInt(),
     );
@@ -186,5 +203,9 @@ class SelectionHandler {
         touchDx <= right &&
         touchDy >= top &&
         touchDy <= bottom;
+  }
+
+  void copy() {
+    readerContentHandler.callNativeMethod(NativeCmd.selectedText, 0, 0);
   }
 }

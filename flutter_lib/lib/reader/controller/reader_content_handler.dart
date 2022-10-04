@@ -5,9 +5,9 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/modal/pair.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
+import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 
 import '../handler/selelction_handler.dart';
 
@@ -218,58 +218,74 @@ class ReaderContentHandler {
 
   int time = 0;
 
-  Future<void> callNativeMethod(String name, int x, int y) async {
+  Future<void> callNativeMethod(NativeCmd nativeCmd, int x, int y) async {
     Size imageSize = getContentSize();
     time = DateTime.now().millisecondsSinceEpoch;
-    print('时间测试, call $name $time');
-    Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
-      name,
-      {
-        'touch_x': x,
-        'touch_y': y,
-        'width': imageSize.width,
-        'height': imageSize.height,
-        'time_stamp': time,
-      },
-    );
-    print('时间测试, $name 获得结果, ${DateTime.now().millisecondsSinceEpoch}');
+    print('时间测试, call $nativeCmd $time');
+    switch (nativeCmd) {
+      case NativeCmd.dragStart:
+      case NativeCmd.dragMove:
+      case NativeCmd.dragEnd:
+      case NativeCmd.longPressStart:
+      case NativeCmd.longPressUpdate:
+      case NativeCmd.longPressEnd:
+      case NativeCmd.tapUp:
+      case NativeCmd.selectionClear:
+        Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
+          nativeCmd.cmdName,
+          {
+            'touch_x': x,
+            'touch_y': y,
+            'width': imageSize.width,
+            'height': imageSize.height,
+            'time_stamp': time,
+          },
+        );
+        print(
+          '时间测试, $nativeCmd 获得结果, ${DateTime.now().millisecondsSinceEpoch}',
+        );
+        Uint8List? imageBytes = result['page'];
+        int? selectionStartY = result['selectionStartY'];
+        int? selectionEndY = result['selectionEndY'];
+        if (imageBytes != null) {
+          // 将imageBytes转成img
+          ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
+          ui.FrameInfo fi = await codec.getNextFrame();
+          // _bitmapManager缓存img
+          _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
+          // 刷新custom painter
+          refreshContent();
+        }
 
-    Uint8List? imageBytes = result['page'];
-    int? selectionStartY = result['selectionStartY'];
-    int? selectionEndY = result['selectionEndY'];
+        // 显示选择弹窗
+        if (selectionStartY != null && selectionEndY != null) {
+          viewState.showSelectionMenu(
+            getSelectionMenuPosition(selectionStartY, selectionEndY),
+          );
+        } else {
+          if (nativeCmd == NativeCmd.longPressEnd) {
+            print('时间测试, 取消长按状态',);
+            viewState.updateSelectionState(false);
+          }
+        }
+        break;
+      case NativeCmd.selectedText:
+        Map<dynamic, dynamic> result = await methodChannel.invokeMethod(nativeCmd.cmdName);
 
-    if(imageBytes != null) {
-      // 将imageBytes转成img
-      ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-      ui.FrameInfo fi = await codec.getNextFrame();
-
-      // _bitmapManager缓存img
-      _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
-
-      // 刷新custom painter
-      refreshContent();
-    }
-
-    // 显示选择弹窗
-    if (selectionStartY != null && selectionEndY != null) {
-      viewState.showSelectionMenu(
-        getSelectionMenuPosition(selectionStartY, selectionEndY),
-      );
-    } else {
-      if(name == longPressEnd || name == dragEnd) {
-        viewState.updateSelectionState(false);
-      }
+        break;
     }
   }
 
   Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
     double margin = 25;
-    double selectionMenuHeight = SelectionHandler.selectionMenuSize.height;
+    double selectionMenuHeight = SelectionMenuFactory.selectionMenuSize.height;
     double ratio = ui.window.devicePixelRatio;
     double startYMargin = selectionStartY - margin;
     double endYMargin = selectionEndY + margin;
     double startY = startYMargin - selectionMenuHeight * ratio;
-    double startX = (getContentSize().width / ratio - SelectionHandler.selectionMenuSize.width) / 2 ;
+    double startX = (getContentSize().width / ratio -
+            SelectionMenuFactory.selectionMenuSize.width) /
+        2;
     Offset selectionMenuPosition;
     if (startY > 0) {
       print("选择弹窗, 上方");

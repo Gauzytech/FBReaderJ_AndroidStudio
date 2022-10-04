@@ -1,6 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender
 
 import android.graphics.Bitmap
+import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 
@@ -136,4 +137,7 @@ interface ContentProcessor {
         resultCallBack: FlutterBridge.ResultCallBack?,
         size: Pair<Int, Int>
     )
+
+    /** 获得选中文字 */
+    fun getSelectedText(): TextSnippet
 }

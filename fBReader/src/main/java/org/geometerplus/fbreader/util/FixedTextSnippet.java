@@ -43,4 +43,13 @@ public final class FixedTextSnippet implements TextSnippet {
 	public String getText() {
 		return myText;
 	}
+
+	@Override
+	public String toString() {
+		return "FixedTextSnippet{" +
+				"myStart=" + myStart +
+				", myEnd=" + myEnd +
+				", myText='" + myText + '\'' +
+				'}';
+	}
 }

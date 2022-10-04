@@ -748,6 +748,9 @@ public final class FBView extends ZLTextView {
         return myReader.PageTurningOptions.Horizontal.getValue();
     }
 
+    /**
+     * 获得所有选中文字的个数
+     */
     public int getCountOfSelectedWords() {
         final WordCountTraverser traverser = new WordCountTraverser(this);
         if (!isSelectionEmpty()) {
@@ -756,6 +759,9 @@ public final class FBView extends ZLTextView {
         return traverser.getCount();
     }
 
+    /**
+     * 获得所有选中文字
+     */
     public TextSnippet getSelectedSnippet() {
         final ZLTextPosition start = getSelectionStartPosition();
         final ZLTextPosition end = getSelectionEndPosition();

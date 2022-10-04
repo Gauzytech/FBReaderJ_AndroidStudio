@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.annotation.WorkerThread
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
+import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
@@ -352,5 +353,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         if (targetContentView.cleaAllSelectedSections()) {
             resultCallBack?.onComplete(drawCurrentPage(size))
         }
+    }
+
+    override fun getSelectedText(): TextSnippet {
+        return targetContentView.selectedSnippet
     }
 }

@@ -8,6 +8,7 @@ import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selelction_handler.dart';
+import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:provider/provider.dart';
@@ -477,7 +478,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
       return Positioned.fill(
         child: Align(
           alignment: Alignment.center,
-          child: _buildSelectionMenu(),
+          child: _selectionHandler.factory.buildSelectionMenu((menuItem) {
+            _handleSelectionAction(menuItem);
+          }),
         ),
       );
     } else {
@@ -485,66 +488,22 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
       return Positioned(
         left: position.dx,
         top: position.dy,
-        child: _buildSelectionMenu(),
+        child: _selectionHandler.factory.buildSelectionMenu((menuItem) {
+          _handleSelectionAction(menuItem);
+        }),
       );
     }
   }
 
-  Widget _buildSelectionMenu() {
-    double ratio = ui.window.devicePixelRatio;
-    return Container(
-      width: SelectionHandler.selectionMenuSize.width * ratio,
-      height: SelectionHandler.selectionMenuSize.height * ratio,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-        color: Colors.black,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                textStyle: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: () {
-                print('选择弹窗, Note');
-              },
-              child: const Text('Note'),
-            ),
-          ),
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                textStyle: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: () {
-                print('选择弹窗, Copy');
-              },
-              child: const Text('Copy'),
-            ),
-          ),
-          Expanded(
-              child: TextButton(
-            style: TextButton.styleFrom(
-              textStyle: const TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            onPressed: () {
-              print('选择弹窗, Search');
-            },
-            child: const Text('Search'),
-          )),
-        ],
-      ),
-    );
+  void _handleSelectionAction(SelectionItem menuItem) {
+    switch (menuItem) {
+      case SelectionItem.note:
+        break;
+      case SelectionItem.copy:
+        _selectionHandler.copy();
+        break;
+      case SelectionItem.search:
+        break;
+    }
   }
 }
