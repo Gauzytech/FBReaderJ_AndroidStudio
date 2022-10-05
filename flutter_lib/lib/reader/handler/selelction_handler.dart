@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
+import 'dart:ui' as ui;
 
 import '../controller/reader_content_handler.dart';
 
@@ -151,20 +152,17 @@ class SelectionHandler {
     );
   }
 
-  SelectionIndicator? enableCrossPageIndicator(
-    BuildContext context,
-    Offset touchPosition,
-  ) {
-    var ratio = MediaQuery.of(context).devicePixelRatio;
-    if(overlapWithTopIndicator(touchPosition, ratio)) {
+  SelectionIndicator? enableCrossPageIndicator(Offset touchPosition,) {
+    if(overlapWithTopIndicator(touchPosition)) {
       return SelectionIndicator.topStart;
-    } else if(overlapWithBottomIndicator(touchPosition, ratio)) {
+    } else if(overlapWithBottomIndicator(touchPosition)) {
       return SelectionIndicator.bottomEnd;
     }
     return null;
   }
 
-  bool overlapWithTopIndicator(Offset touchPosition, double ratio) {
+  bool overlapWithTopIndicator(Offset touchPosition) {
+    var ratio = ui.window.devicePixelRatio;
     var renderBox =
         topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
     var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
@@ -179,7 +177,8 @@ class SelectionHandler {
     );
   }
 
-  bool overlapWithBottomIndicator(Offset touchPosition, double ratio) {
+  bool overlapWithBottomIndicator(Offset touchPosition) {
+    var ratio = ui.window.devicePixelRatio;
     var renderBox =
         bottomIndicatorKey.currentContext?.findRenderObject() as RenderBox;
     var topLeft = renderBox.localToGlobal(Offset.zero);

@@ -140,8 +140,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                   // 拖动开始，此时划选模式应该已经激活，隐藏划选弹窗
                   hideSelectionMenu();
                   _selectionHandler.onSelectionDragStart(detail);
-                  var indicator = _selectionHandler.enableCrossPageIndicator(
-                      context, detail.localPosition);
+                  var indicator = _selectionHandler
+                      .enableCrossPageIndicator(detail.localPosition);
                   if (indicator != null) {
                     showIndicator(indicator, detail.localPosition);
                   }
@@ -154,8 +154,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               recognizer.onUpdate = (detail) {
                 if (_selectionHandler.isSelectionStateEnabled) {
                   _selectionHandler.onSelectionDragMove(detail);
-                  var indicator = _selectionHandler.enableCrossPageIndicator(
-                      context, detail.localPosition);
+                  var indicator = _selectionHandler
+                      .enableCrossPageIndicator(detail.localPosition);
                   if (indicator != null) {
                     showIndicator(indicator, detail.localPosition);
                   } else {

@@ -205,6 +205,7 @@ class FlutterBridge(
             SELECTED_TEXT -> {
                 val textSnippet = contentProcessor.getSelectedText()
                 Timber.v("flutter长按事件, 获得选中文字: $textSnippet")
+                result.success(mapOf("text" to textSnippet.text))
             }
         }
     }

@@ -120,6 +120,14 @@ public final class FBView extends ZLTextView {
         return SelectionResult.NoMenu.INSTANCE;
     }
 
+    private SelectionResult checkExistSelection() {
+        // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
+        if (getCountOfSelectedWords() > 0) {
+            return new SelectionResult.ShowMenu(getSelectionStartY() , getSelectionEndY());
+        }
+        return SelectionResult.None.INSTANCE;
+    }
+
     @Override
     public synchronized void onScrollingFinished(PageIndex pageIndex) {
         super.onScrollingFinished(pageIndex);
@@ -1158,7 +1166,9 @@ public final class FBView extends ZLTextView {
 //                myReader.runAction(ActionCode.PROCESS_HYPERLINK);
 //            }
         }
-        return SelectionResult.None.INSTANCE;
+
+        // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
+        return checkExistSelection();
     }
 
     /**
@@ -1339,7 +1349,8 @@ public final class FBView extends ZLTextView {
 //            );
 //        }
 
-            return SelectionResult.None.INSTANCE;
+            // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
+            return checkExistSelection();
         }
     }
 

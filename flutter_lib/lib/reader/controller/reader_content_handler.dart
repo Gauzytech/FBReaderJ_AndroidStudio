@@ -271,7 +271,8 @@ class ReaderContentHandler {
         break;
       case NativeCmd.selectedText:
         Map<dynamic, dynamic> result = await methodChannel.invokeMethod(nativeCmd.cmdName);
-
+        String text = result['text'];
+        print('选中文字, $text');
         break;
     }
   }
