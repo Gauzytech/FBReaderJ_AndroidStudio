@@ -506,4 +506,33 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         break;
     }
   }
+
+  void showText(String text) {
+    showDialog(
+        context: context,
+        builder: (ctx) {
+          return SimpleDialog(
+            title: const Text('选中文字'),
+            titlePadding: const EdgeInsets.all(10),
+            elevation: 5,
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(10))),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                child: Text(text),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 10, top: 10, right: 10),
+                child: OutlinedButton(
+                  child: const Text("关闭"),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                  },
+                ),
+              )
+            ],
+          );
+        });
+  }
 }

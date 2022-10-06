@@ -18,65 +18,78 @@ class SelectionMenuFactory {
 
   Widget buildSelectionMenu(ValueSetter<SelectionItem> menuActionCallback) {
     double ratio = ui.window.devicePixelRatio;
-    return Container(
-      key: menuKey,
-      width: selectionMenuSize.width * ratio,
-      height: selectionMenuSize.height * ratio,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-        color: Colors.black,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                textStyle: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
+    return ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        child: SizedBox(
+          key: menuKey,
+          width: selectionMenuSize.width * ratio,
+          height: selectionMenuSize.height * ratio,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: createTextBtnBgColor(),
+                    minimumSize: MaterialStateProperty.all(
+                        const Size(double.infinity, double.infinity)),
+                  ),
+                  onPressed: () {
+                    menuActionCallback(SelectionItem.note);
+                  },
+                  onLongPress: () {},
+                  child: const Text(
+                    'Note',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-              onPressed: () {
-                menuActionCallback(SelectionItem.note);
-              },
-              onLongPress: () {},
-              child: const Text('Note'),
-            ),
-          ),
-          Expanded(
-            child: TextButton(
-              style: ButtonStyle(backgroundColor: createTextBtnBgColor()),
-              onPressed: () {
-                menuActionCallback(SelectionItem.copy);
-              },
-              onLongPress: () {},
-              child: const Text(
-                'Copy',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: createTextBtnBgColor(),
+                    minimumSize: MaterialStateProperty.all(
+                        const Size(double.infinity, double.infinity)),
+                  ),
+                  onPressed: () {
+                    menuActionCallback(SelectionItem.copy);
+                  },
+                  onLongPress: () {},
+                  child: const Text(
+                    'Copy',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          Expanded(
-              child: TextButton(
-                style: TextButton.styleFrom(
-              textStyle: const TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
+              Expanded(
+                child: TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: createTextBtnBgColor(),
+                    minimumSize: MaterialStateProperty.all(
+                        const Size(double.infinity, double.infinity)),
+                  ),
+                  onPressed: () {
+                    menuActionCallback(SelectionItem.search);
+                  },
+                  onLongPress: () {},
+                  child: const Text(
+                    'Search',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            onPressed: () {
-              menuActionCallback(SelectionItem.search);
-            },
-            onLongPress: () {},
-            child: const Text('Search'),
-          )),
-        ],
-      ),
-    );
+            ],
+          ),
+        ));
   }
 
   /// 处理点击按钮背景颜色
