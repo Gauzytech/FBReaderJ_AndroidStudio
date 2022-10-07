@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +49,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   // 翻页倒计时
   Timer? _timer;
-  int currentTimer = 0;
+  static const int timeFactorLimit = 50;
+  int currentTimeFactor = 0;
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
@@ -248,11 +250,23 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 opacity: _bottomEndIndicatorOpacity,
                 child: Align(
                   alignment: AlignmentDirectional.bottomEnd,
-                  child: Container(
+                  child: SizedBox(
                     key: bottomIndicatorKey,
                     width: 150,
                     height: 150,
-                    color: Colors.greenAccent,
+                    // color: Colors.greenAccent,
+                    child: EProgress(
+                        progress: currentTimeFactor * 2,
+                        type: ProgressType.liquid,
+                        strokeWidth: 0,
+                        textStyle: const TextStyle(
+                          fontSize: 40,
+                          color: Colors.red,
+                        ),
+                        backgroundColor: Colors.grey,
+                        format: (progress) {
+                          return '${_selectionHandler.crossPageCount}/${SelectionHandler.crossPageLimit}';
+                        }),
                   ),
                 ),
               ),
@@ -356,6 +370,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
       if (await _contentPainter!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        setState(() {
+          _selectionHandler.crossPageCount++;
+        });
       }
     }
   }
@@ -407,14 +424,16 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   }
 
   void startTimer(SelectionIndicator indicator, Offset touchPosition) {
-    if(_timer == null) {
-      print('倒计时, 倒计时开始: $currentTimer');
-      _timer = Timer.periodic(const Duration(milliseconds: 1000), (timer) {
-        currentTimer++;
-        print('倒计时, 倒计时进行中: $currentTimer');
+    if(_timer == null && _selectionHandler.crossPageCount < SelectionHandler.crossPageLimit) {
+      print('倒计时, 倒计时开始: $currentTimeFactor');
+      _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+        setState(() {
+          currentTimeFactor++;
+        });
+        print('倒计时, 倒计时进行中: $currentTimeFactor');
         // 倒计时结束，取消倒计时并进行翻页操作
-        if (currentTimer == 4) {
-          print('倒计时, 倒计时结束: $currentTimer, 进行翻页');
+        if (currentTimeFactor == timeFactorLimit) {
+          print('倒计时, 倒计时结束: $currentTimeFactor, 进行翻页');
           _cancelTimer();
           // todo
           //  1. 5页的翻页划选限制
@@ -446,10 +465,12 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   }
 
   void _cancelTimer() {
-    print('倒计时, 倒计时取消: $currentTimer');
+    print('倒计时, 倒计时取消: $currentTimeFactor');
     _timer?.cancel();
     _timer = null;
-    currentTimer = 0;
+    setState(() {
+      currentTimeFactor = 0;
+    });
   }
 
   /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio

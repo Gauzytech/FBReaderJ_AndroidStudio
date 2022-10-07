@@ -280,21 +280,19 @@ class ReaderContentHandler {
 
   Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
     double margin = 25;
-    double selectionMenuHeight = SelectionMenuFactory.selectionMenuSize.height;
     double ratio = ui.window.devicePixelRatio;
+    double selectionMenuHeight = SelectionMenuFactory.selectionMenuSize.height * ratio;
     double startYMargin = selectionStartY - margin;
     double endYMargin = selectionEndY + margin;
-    double startY = startYMargin - selectionMenuHeight * ratio;
-    double startX = (getContentSize().width / ratio -
-            SelectionMenuFactory.selectionMenuSize.width) /
-        2;
+    double startY = startYMargin - selectionMenuHeight;
+    double startX = (getContentSize().width / ratio - SelectionMenuFactory.selectionMenuSize.width) / 2;
     Offset selectionMenuPosition;
     if (startY > 0) {
       print("选择弹窗, 上方");
       // 显示在选中高亮上方
       selectionMenuPosition = Offset(startX, startY);
     } else if (endYMargin + selectionMenuHeight < getContentSize().height) {
-      print("选择弹窗, 下方");
+      print("选择弹窗, 下方"); 
       // 显示在选中高亮下方
       selectionMenuPosition = Offset(startX, endYMargin);
     } else {

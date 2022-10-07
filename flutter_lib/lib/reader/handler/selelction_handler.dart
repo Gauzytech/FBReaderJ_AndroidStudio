@@ -34,6 +34,10 @@ enum SelectionIndicator { topStart, bottomEnd }
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
 class SelectionHandler {
 
+  // 翻页划选最多5页
+  static const int crossPageLimit = 5;
+  int crossPageCount = 1;
+
   Offset? _selectionTouchOffset;
   ReaderContentHandler readerContentHandler;
 
@@ -74,6 +78,9 @@ class SelectionHandler {
 
   void updateSelectionState(bool enable) {
     _selectionState = enable;
+    if(!enable) {
+      crossPageCount = 1;
+    }
   }
 
   void updateSelectionMenuPosition(Offset? position) {
