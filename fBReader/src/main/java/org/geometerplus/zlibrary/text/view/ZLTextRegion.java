@@ -24,8 +24,7 @@ import androidx.annotation.NonNull;
 import java.util.*;
 
 import org.geometerplus.zlibrary.core.view.Hull;
-
-import timber.log.Timber;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
 
 public final class ZLTextRegion {
 	public static abstract class Soul implements Comparable<Soul> {
@@ -330,6 +329,10 @@ public final class ZLTextRegion {
 			}
 		}
 		return true;
+	}
+
+	public List<HighlightCoordinate> getDrawCoordinates(int mode) {
+		return hull().getDrawHighlightCoordinates(mode);
 	}
 
 	@NonNull

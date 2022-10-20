@@ -4,12 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
+import org.geometerplus.zlibrary.core.view.Hull
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
@@ -51,6 +53,7 @@ class FlutterBridge(
     // flutter method通信 有返回值
     private val channel = MethodChannel(messenger, METHOD_CHANNEL_PATH)
     private val contentProcessor = readerController.contentProcessor
+    private val gson = Gson()
 
     init {
         channel.setMethodCallHandler(this)
@@ -112,7 +115,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件, $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
                 contentProcessor.onFingerLongPress(
                     dx, dy,
-                    getResultCallback(call.method, result, time), Pair(width, height)
+                    getSelectionCallback(call.method, result), Pair(width, height)
                 )
             }
             LONG_PRESS_MOVE -> {
@@ -124,7 +127,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件,  $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
                 contentProcessor.onFingerMoveAfterLongPress(
                     dx, dy,
-                    getResultCallback(call.method, result, time), Pair(width, height)
+                    getResultCallback(call.method, result), Pair(width, height)
                 )
             }
             LONG_PRESS_END -> {
@@ -134,7 +137,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
                 contentProcessor.onFingerReleaseAfterLongPress(
                     0, 0,
-                    getSelectionCallback(call.method, result, time),
+                    getSelectionCallback(call.method, result),
                     Pair(width, height)
                 )
             }
@@ -146,7 +149,7 @@ class FlutterBridge(
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerSingleTap(dx, dy, object : PaintListener {
                     override fun repaint(shouldRepaint: Boolean) {
-                        Timber.v("时间测试, 重绘返回 $ON_TAP_UP, $time ${System.currentTimeMillis() - time}")
+                        Timber.v("时间测试, 重绘返回 $ON_TAP_UP")
                         // 绘制内容的bitmap
                         val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
                         // 回调结果
@@ -163,7 +166,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件, $ON_DRAG_START, [$dx, $dy]")
                 contentProcessor.onFingerPress(
                     dx, dy,
-                    getResultCallback(call.method, result, time),
+                    getResultCallback(call.method, result),
                     Pair(width, height)
                 )
             }
@@ -176,7 +179,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件, $ON_DRAG_MOVE, [$dx, $dy]")
                 contentProcessor.onFingerMove(
                     dx, dy,
-                    getResultCallback(call.method, result, time),
+                    getResultCallback(call.method, result),
                     Pair(width, height)
                 )
             }
@@ -186,7 +189,7 @@ class FlutterBridge(
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerRelease(
                     0, 0,
-                    getSelectionCallback(call.method, result, time),
+                    getSelectionCallback(call.method, result),
                     Pair(width, height)
                 )
             }
@@ -198,7 +201,6 @@ class FlutterBridge(
                     getResultCallback(
                         call.method,
                         result,
-                        time
                     ), Pair(width, height)
                 )
             }
@@ -258,21 +260,31 @@ class FlutterBridge(
     private fun getSelectionCallback(
         name: String,
         result: MethodChannel.Result,
-        time: Long
     ): SelectionListener {
         return object : SelectionListener {
             override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
-                Timber.v("时间测试, 重绘返回 $name, $time ${System.currentTimeMillis() - time}")
-                if (selectionResult is SelectionResult.ShowMenu) {
-                    result.success(
-                        mapOf(
-                            "page" to img,
-                            "selectionStartY" to selectionResult.selectionStartY,
-                            "selectionEndY" to selectionResult.selectionEndY
+                Timber.v("时间测试, 重绘返回 $name")
+                when (selectionResult) {
+                    is SelectionResult.HighlightRegion -> {
+                        if (selectionResult.highlightType == Hull.DrawMode.Outline) {
+                            result.success(
+                                mapOf("highlight_draw_data" to gson.toJson(selectionResult))
+                            )
+                        } else {
+                            result.success(mapOf("page" to img))
+                        }
+                    }
+                    is SelectionResult.ShowMenu -> {
+                        result.success(
+                            mapOf(
+                                "page" to img,
+                                "selectionStartY" to selectionResult.selectionStartY,
+                                "selectionEndY" to selectionResult.selectionEndY
+                            )
                         )
-                    )
-                } else {
-                    result.success(mapOf("page" to img))
+                    }
+                    SelectionResult.NoMenu,
+                    SelectionResult.None -> result.success(mapOf("page" to img))
                 }
             }
         }
@@ -281,11 +293,10 @@ class FlutterBridge(
     private fun getResultCallback(
         name: String,
         result: MethodChannel.Result,
-        time: Long
     ): ResultCallBack {
         return object : ResultCallBack {
             override fun onComplete(data: Any) {
-                Timber.v("时间测试, 重绘返回 $name, $time ${System.currentTimeMillis() - time}")
+                Timber.v("时间测试, 重绘返回 $name")
                 result.success(mapOf("page" to data))
             }
         }

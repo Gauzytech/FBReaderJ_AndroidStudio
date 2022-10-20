@@ -6,6 +6,7 @@ import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.util.SystemInfo
+import org.geometerplus.zlibrary.core.view.Hull
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
@@ -121,18 +122,26 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerLongPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ): Boolean {
         return if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerLongPressFlutter(x, y).let { repaint ->
-                if (repaint) {
-                    drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
+            targetContentView.onFingerLongPressFlutter(x, y).let { result ->
+                when(result) {
+                    is SelectionResult.HighlightRegion -> {
+                        if (result.highlightType == Hull.DrawMode.Outline) {
+                            selectionListener?.onSelection(result)
+                        } else {
+                            drawService.execute {
+                                Timber.v("长按选中流程[LongPress], 选中区域匹配结束. 开始异步重绘bitmap")
+                                selectionListener?.onSelection(result, drawCurrentPage(size!!))
+                            }
+                        }
                     }
+                    else -> Unit
                 }
-                repaint
             }
+            return false
         } else {
             targetContentView.onFingerLongPress(x, y)
         }
@@ -169,6 +178,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
             when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
                 is SelectionResult.ShowMenu,
                 is SelectionResult.NoMenu -> {
+                    Timber.v("长按选中流程[ReleaseAfterLongPress], 选中区域匹配结束. 开始异步重绘bitmap")
                     drawService.execute {
                         listener?.onSelection(result, drawCurrentPage(size!!))
                     }

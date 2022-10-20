@@ -19,6 +19,10 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
+
+import java.util.List;
+
 public interface Hull {
 
     interface DrawMode {
@@ -32,4 +36,9 @@ public interface Hull {
     int distanceTo(int x, int y);
 
     boolean isBefore(int x, int y);
+
+    /**
+     * 获得绘制高亮所需要的坐标，传给flutter进行绘制操作
+     */
+    List<HighlightCoordinate> getDrawHighlightCoordinates(int mode);
 }

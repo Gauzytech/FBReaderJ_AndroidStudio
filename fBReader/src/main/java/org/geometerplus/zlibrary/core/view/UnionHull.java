@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
+
 import java.util.*;
 
 public class UnionHull implements Hull {
@@ -50,5 +52,11 @@ public class UnionHull implements Hull {
             }
         }
         return false;
+    }
+
+    @Override
+    public List<HighlightCoordinate> getDrawHighlightCoordinates(int mode) {
+        // todo
+        return new ArrayList<>();
     }
 }

@@ -1,5 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
+import org.geometerplus.zlibrary.core.util.ZLColor
+
 sealed class SelectionResult {
 
     /**
@@ -12,10 +14,20 @@ sealed class SelectionResult {
     /**
      * 选中了除文字之外的内容, 比如选中了图片，视频，超链接.
      */
-    object NoMenu: SelectionResult()
+    object NoMenu : SelectionResult()
 
     /**
      * 没有选中内容
      */
-    object None: SelectionResult()
+    object None : SelectionResult()
+
+    /**
+     * @param highlightType 高亮的类型：文字高亮/轮廓高亮, 见[org.geometerplus.zlibrary.core.view.Hull.DrawMode]
+     * @param coordinates 高亮绘制的坐标
+     */
+    data class HighlightRegion(
+        val highlightType: Int,
+        val highlightColor: ZLColor,
+        val coordinates: List<HighlightCoordinate>
+    ) : SelectionResult()
 }

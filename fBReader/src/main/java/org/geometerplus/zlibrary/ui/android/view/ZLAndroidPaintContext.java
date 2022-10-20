@@ -383,7 +383,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setLineColor(ZLColor color) {
-        Timber.v("长按选中流程[绘制],  color = %s", color);
+        Timber.v("长按选中流程[绘制],  LineColor = %s", color);
         if (color != null) {
             myLinePaint.setColor(ZLAndroidColorUtil.rgb(color));
             myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(color));
@@ -398,7 +398,6 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setFillColor(ZLColor color, int alpha) {
-        Timber.v("长按选中流程[绘制], color = %s", color);
         if (color != null) {
             myFillPaint.setColor(ZLAndroidColorUtil.rgba(color, alpha));
         }

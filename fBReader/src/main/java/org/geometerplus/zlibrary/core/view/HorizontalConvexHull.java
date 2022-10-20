@@ -21,9 +21,13 @@ package org.geometerplus.zlibrary.core.view;
 
 import android.graphics.Rect;
 
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 
 import timber.log.Timber;
@@ -136,8 +140,10 @@ public final class HorizontalConvexHull implements Hull {
         if (mode == DrawMode.None) {
             return;
         }
-
+        Timber.v("长按选中流程[HorizontalConvexHull], mode = %s", mode);
         final LinkedList<Rect> rectangles = new LinkedList<>(myRectangles);
+
+        Timber.v("长按选中流程[HorizontalConvexHull], rectangles = %s", rectangles.size());
         while (!rectangles.isEmpty()) {
             final LinkedList<Rect> connected = new LinkedList<>();
             Rect previous = null;
@@ -210,8 +216,107 @@ public final class HorizontalConvexHull implements Hull {
                 context.fillPolygon(xs, ys);
             }
             if ((mode & DrawMode.Outline) == DrawMode.Outline) {
+                StringBuilder sb = new StringBuilder("xs = ");
+                for (int i : xs) {
+                    sb.append(i + ",");
+                }
+                sb.deleteCharAt(sb.length() - 1);
+                sb.append(" ys = ");
+                for (int i : ys) {
+                    sb.append(i + ",");
+                }
+                Timber.v("长按选中流程[HorizontalConvexHull], %s", sb);
                 context.drawOutline(xs, ys);
             }
         }
+    }
+
+    @Override
+    public List<HighlightCoordinate> getDrawHighlightCoordinates(int mode) {
+        List<HighlightCoordinate> coordinates = new ArrayList<>();
+
+        if (mode == DrawMode.None) {
+            return coordinates;
+        }
+        final LinkedList<Rect> rectangles = new LinkedList<>(myRectangles);
+
+        while (!rectangles.isEmpty()) {
+            final LinkedList<Rect> connected = new LinkedList<>();
+            Rect previous = null;
+            for (final Iterator<Rect> iterator = rectangles.iterator(); iterator.hasNext(); ) {
+                final Rect current = iterator.next();
+                if ((previous != null) && ((previous.left > current.right) || (current.left > previous.right))) {
+                    break;
+                }
+                iterator.remove();
+                connected.add(current);
+                previous = current;
+            }
+
+            final LinkedList<Integer> xList = new LinkedList<>();
+            final LinkedList<Integer> yList = new LinkedList<>();
+            int x, xPrev;
+
+            final ListIterator<Rect> iterator = connected.listIterator();
+            Rect r = iterator.next();
+            x = r.right + 2;
+            xList.add(x);
+            yList.add(r.top);
+            while (iterator.hasNext()) {
+                xPrev = x;
+                r = iterator.next();
+                x = r.right + 2;
+                if (x != xPrev) {
+                    final int y = (x < xPrev) ? r.top + 2 : r.top;
+                    xList.add(xPrev);
+                    yList.add(y);
+                    xList.add(x);
+                    yList.add(y);
+                }
+            }
+            xList.add(x);
+            yList.add(r.bottom + 2);
+
+            r = iterator.previous();
+            x = r.left - 2;
+            xList.add(x);
+            yList.add(r.bottom + 2);
+            while (iterator.hasPrevious()) {
+                xPrev = x;
+                r = iterator.previous();
+                x = r.left - 2;
+                if (x != xPrev) {
+                    final int y = (x > xPrev) ? r.bottom : r.bottom + 2;
+                    xList.add(xPrev);
+                    yList.add(y);
+                    xList.add(x);
+                    yList.add(y);
+                }
+            }
+            xList.add(x);
+            yList.add(r.top);
+
+            final int[] xs = new int[xList.size()];
+            final int[] ys = new int[yList.size()];
+            int count = 0;
+            for (int xx : xList) {
+                xs[count++] = xx;
+            }
+            count = 0;
+            for (int yy : yList) {
+                ys[count++] = yy;
+            }
+
+            // 绘制选中区域
+            if ((mode & DrawMode.Fill) == DrawMode.Fill) {
+                coordinates.add(new HighlightCoordinate(DrawMode.Fill, xs.clone(), ys.clone()));
+            }
+
+            if ((mode & DrawMode.Outline) == DrawMode.Outline) {
+                coordinates.add(new HighlightCoordinate(DrawMode.Outline, xs.clone(), ys.clone()));
+            }
+        }
+
+        return coordinates;
     }
 }

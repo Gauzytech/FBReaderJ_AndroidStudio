@@ -97,7 +97,7 @@ interface ContentProcessor {
     fun onFingerLongPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ): Boolean
 

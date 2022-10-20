@@ -66,6 +66,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 		}
 
 		final ZLTextRegion.Soul soul = region.getSoul();
+		// 跳转超链接
 		if (soul instanceof ZLTextHyperlinkRegionSoul) {
 			Reader.getTextView().hideOutline();
 			if (DebugHelper.ENABLE_FLUTTER) {
@@ -141,6 +142,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 				}
 			}
 		} else if (soul instanceof ZLTextImageRegionSoul) {
+			// 跳转图片
 			Reader.getTextView().hideOutline();
 			if (DebugHelper.ENABLE_FLUTTER) {
 				// todo 待实现

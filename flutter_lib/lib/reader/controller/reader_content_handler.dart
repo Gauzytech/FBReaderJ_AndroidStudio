@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
+import 'package:flutter_lib/reader/animation/model/highlight_coordinate.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
+import 'package:flutter_lib/utils/time_util.dart';
 
 import '../handler/selelction_handler.dart';
 
@@ -220,7 +223,7 @@ class ReaderContentHandler {
 
   Future<void> callNativeMethod(NativeCmd nativeCmd, int x, int y) async {
     Size imageSize = getContentSize();
-    time = DateTime.now().millisecondsSinceEpoch;
+    time = now();
     print('时间测试, call $nativeCmd $time');
     switch (nativeCmd) {
       case NativeCmd.dragStart:
@@ -242,19 +245,19 @@ class ReaderContentHandler {
           },
         );
         print(
-          '时间测试, $nativeCmd 获得结果, ${DateTime.now().millisecondsSinceEpoch}',
+          '时间测试, $nativeCmd 获得结果, ${now()}',
         );
         Uint8List? imageBytes = result['page'];
         int? selectionStartY = result['selectionStartY'];
         int? selectionEndY = result['selectionEndY'];
+        String? highlightDrawData = result['highlight_draw_data'];
+
+        if (highlightDrawData != null) {
+          _handleHighlight(highlightDrawData);
+        }
+
         if (imageBytes != null) {
-          // 将imageBytes转成img
-          ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-          ui.FrameInfo fi = await codec.getNextFrame();
-          // _bitmapManager缓存img
-          _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
-          // 刷新custom painter
-          refreshContent();
+          await _handleImage(imageBytes);
         }
 
         // 显示选择弹窗
@@ -263,7 +266,7 @@ class ReaderContentHandler {
             getSelectionMenuPosition(selectionStartY, selectionEndY),
           );
         } else {
-          if (nativeCmd == NativeCmd.longPressEnd) {
+          if (nativeCmd == NativeCmd.longPressEnd && highlightDrawData == null) {
             print('时间测试, 取消长按状态',);
             viewState.updateSelectionState(false);
           }
@@ -276,6 +279,26 @@ class ReaderContentHandler {
         viewState.showText(text);
         break;
     }
+  }
+
+  Future<void> _handleImage(Uint8List imageBytes) async {
+    // 将imageBytes转成img
+    ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    // _bitmapManager缓存img
+    _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
+    // 刷新custom painter
+    refreshContent();
+  }
+
+  void _handleHighlight(String highlightDrawData) {
+    Map<String, dynamic> highlightData = jsonDecode(highlightDrawData);
+    NeatColor highlightColor = NeatColor.fromJson(highlightData['highlightColor']);
+    List<HighlightCoordinate> coordinates =
+    (highlightData['coordinates'] as List)
+        .map((item) => HighlightCoordinate.fromJson(item))
+        .toList();
+    viewState.updateHighlight(highlightColor, coordinates);
   }
 
   Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
@@ -292,7 +315,7 @@ class ReaderContentHandler {
       // 显示在选中高亮上方
       selectionMenuPosition = Offset(startX, startY);
     } else if (endYMargin + selectionMenuHeight < getContentSize().height) {
-      print("选择弹窗, 下方"); 
+      print("选择弹窗, 下方");
       // 显示在选中高亮下方
       selectionMenuPosition = Offset(startX, endYMargin);
     } else {

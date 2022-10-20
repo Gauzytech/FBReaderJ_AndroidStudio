@@ -539,7 +539,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 笔记效果: 计算需要高亮的文字
         // 长按选中效果见findHighlightingList()
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
-
+        Timber.v("长按选中流程[绘制], text highlight = %s", highlightingList.size());
         for (ZLTextHighlighting h : highlightingList) {
             int mode = Hull.DrawMode.None;
 
@@ -555,6 +555,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 mode |= Hull.DrawMode.Outline;
             }
 
+            // 绘制高亮 todo 待确认？？
             if (mode != Hull.DrawMode.None) {
                 h.hull(page).draw(getContext(), mode);
             }
@@ -577,7 +578,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 绘制outline: 长按图片或者超链接, 会有一个描边效果
         final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
         if (outlinedElementRegion != null && myShowOutline) {
-            Timber.v("长按选中流程[绘制],  绘制outline, %s", getSelectionBackgroundColor());
+            Timber.v("长按选中流程[绘制],  绘制outline, %s, %s", getSelectionBackgroundColor(), outlinedElementRegion.hull().getClass().getSimpleName());
             paintContext.setLineColor(getSelectionBackgroundColor());
             outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
         }
@@ -1959,7 +1960,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     public void hideOutline() {
         myShowOutline = false;
-        Application.getViewWidget().reset("hideOutline");
+        if (!DebugHelper.ENABLE_FLUTTER) {
+            Application.getViewWidget().reset("hideOutline");
+        }
     }
 
     protected ZLTextHighlighting findHighlighting(int x, int y, int maxDistance) {

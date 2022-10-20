@@ -36,6 +36,7 @@ import org.geometerplus.zlibrary.core.filesystem.ZLResourceFile;
 import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.core.view.Hull;
 import org.geometerplus.zlibrary.core.view.SelectionCursor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
@@ -51,6 +52,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 import java.util.ArrayList;
@@ -120,10 +122,18 @@ public final class FBView extends ZLTextView {
         return SelectionResult.NoMenu.INSTANCE;
     }
 
-    private SelectionResult checkExistSelection() {
+    private SelectionResult checkExistSelection(List<HighlightCoordinate> coordinates) {
         // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
         if (getCountOfSelectedWords() > 0) {
             return new SelectionResult.ShowMenu(getSelectionStartY() , getSelectionEndY());
+        }
+
+        if (coordinates != null) {
+           return new SelectionResult.HighlightRegion(
+                   Hull.DrawMode.Outline,
+                   DebugHelper.outlineColor(),
+                   coordinates
+           );
         }
         return SelectionResult.None.INSTANCE;
     }
@@ -1033,9 +1043,11 @@ public final class FBView extends ZLTextView {
 
     /**
      * 长按选中了文字会回调这个方法
+     *
+     * @return
      */
     @Override
-    public boolean onFingerLongPressFlutter(int x, int y) {
+    public SelectionResult onFingerLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
 //        myReader.runAction(ActionCode.HIDE_TOAST);
         // 预览模式不处理
@@ -1072,7 +1084,11 @@ public final class FBView extends ZLTextView {
                             Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
                             moveSelectionCursorToFlutter(cursor, x, y);
                         }
-                        return true;
+                        // todo
+                        return new SelectionResult.HighlightRegion(
+                                Hull.DrawMode.Fill,
+                                DebugHelper.outlineColor(),
+                                new ArrayList<>());
                     case selectSingleWord:
                     case openDictionary:
                         doSelectRegion = true;
@@ -1088,10 +1104,13 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 super.outlineRegion(region);
-                return true;
+                return new SelectionResult.HighlightRegion(
+                        Hull.DrawMode.Outline,
+                        DebugHelper.outlineColor(),
+                        region.getDrawCoordinates(Hull.DrawMode.Outline));
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -1146,8 +1165,11 @@ public final class FBView extends ZLTextView {
 //            return;
 //        }
 
+        // 获得outline选中
         final ZLTextRegion region = getOutlinedRegion();
+        List<HighlightCoordinate> coordinates = null;
         if (region != null) {
+            coordinates = region.getDrawCoordinates(Hull.DrawMode.Outline);
             final ZLTextRegion.Soul soul = region.getSoul();
 
             boolean doRunAction = false;
@@ -1168,7 +1190,7 @@ public final class FBView extends ZLTextView {
         }
 
         // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
-        return checkExistSelection();
+        return checkExistSelection(coordinates);
     }
 
     /**
@@ -1200,7 +1222,7 @@ public final class FBView extends ZLTextView {
             outlineRegion(hyperlinkRegion);
 //            repaint("onFingerSingleTap");
             // todo action中跳转方法待实现
-            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
+//            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
             return true;
         }
 
@@ -1350,7 +1372,7 @@ public final class FBView extends ZLTextView {
 //        }
 
             // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
-            return checkExistSelection();
+            return checkExistSelection(null);
         }
     }
 
@@ -1362,6 +1384,13 @@ public final class FBView extends ZLTextView {
             clearSelection();
             return true;
         }
+
+        // 2. 清除图片, 超链接的outline选中效果
+        if(getOutlinedRegion() != null) {
+            hideOutline();
+            return true;
+        }
+
         return false;
     }
 }

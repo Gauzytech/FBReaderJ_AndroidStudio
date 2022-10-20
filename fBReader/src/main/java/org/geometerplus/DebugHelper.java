@@ -1,5 +1,6 @@
 package org.geometerplus;
 
+import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.text.view.PaintStateEnum;
 
 /**
@@ -41,5 +42,9 @@ public class DebugHelper {
 
    public static boolean filterTag(String source, String tag) {
       return source.contains(tag);
+   }
+
+   public static ZLColor outlineColor() {
+      return new ZLColor(66, 117, 245);
    }
 }

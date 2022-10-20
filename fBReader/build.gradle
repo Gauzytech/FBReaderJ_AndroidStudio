@@ -64,8 +64,10 @@ dependencies {
     implementation 'skin.support:skin-support-cardview:4.0.4'
     implementation 'skin.support:skin-support-constraint-layout:4.0.4'
 
+    // 删除这个import
     implementation 'com.haowen.bugreport:bugreport:0.0.13'
     implementation 'com.jakewharton.timber:timber:4.7.0'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     implementation project(':flutter')
 }

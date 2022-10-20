@@ -12,9 +12,11 @@ import 'package:flutter_lib/reader/handler/selelction_handler.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
+import 'package:flutter_lib/widget/highlight_painter.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
+import 'animation/model/highlight_coordinate.dart';
 import 'controller/page_pan_gesture_recognizer.dart';
 import 'controller/reader_content_handler.dart';
 import 'controller/reader_page_manager.dart';
@@ -54,12 +56,14 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   // 图书主内容区域
   final GlobalKey contentKey = GlobalKey();
+  final GlobalKey highlightLayerKey = GlobalKey();
   final GlobalKey topIndicatorKey = GlobalKey();
   final GlobalKey bottomIndicatorKey = GlobalKey();
   double _topStartIndicatorOpacity = 0;
   double _bottomEndIndicatorOpacity = 0;
 
   ContentPainter? _contentPainter;
+  HighlightPainter? _highlightPainter;
 
   AnimationController? animationController;
 
@@ -69,8 +73,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
-    _readerContentHandler = ReaderContentHandler(
-        methodChannel: _methodChannel, viewState: this);
+    _readerContentHandler =
+        ReaderContentHandler(methodChannel: _methodChannel, viewState: this);
     _selectionHandler = SelectionHandler(
         readerContentHandler: _readerContentHandler,
         topIndicatorKey: topIndicatorKey,
@@ -108,10 +112,11 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           bottomIndicatorKey: bottomIndicatorKey,
           animationController: animationController!,
           currentAnimationType:
-          readerViewModel.getConfigData().currentAnimationMode,
+              readerViewModel.getConfigData().currentAnimationMode,
           viewModel: readerViewModel);
       readerViewModel.setContentHandler(_readerContentHandler);
       _contentPainter = ContentPainter(pageManager);
+      _highlightPainter = HighlightPainter();
     }
 
     // 透明状态栏
@@ -212,6 +217,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               if (_selectionHandler.isSelectionStateEnabled) {
                 _selectionHandler.onTagUp(detail);
                 hideSelectionMenu();
+                updateHighlight(null, null);
                 updateSelectionState(false);
               } else {
                 navigatePageNoAnimation(detail.localPosition, null);
@@ -231,48 +237,23 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 ),
               ),
             ),
+            _buildHighlightLayer(contentSize.width, contentSize.height),
             Positioned.fill(
-              child: Opacity(
-                opacity: _topStartIndicatorOpacity,
-                child: Align(
-                  alignment: AlignmentDirectional.topStart,
-                  child: Container(
-                    key: topIndicatorKey,
-                    width: 150,
-                    height: 150,
-                    color: Colors.redAccent,
-                  ),
-                ),
+              child: _buildSelectionIndicator(
+                topIndicatorKey,
+                _topStartIndicatorOpacity,
+                AlignmentDirectional.topStart,
               ),
             ),
             Positioned.fill(
-              child: Opacity(
-                opacity: _bottomEndIndicatorOpacity,
-                child: Align(
-                  alignment: AlignmentDirectional.bottomEnd,
-                  child: SizedBox(
-                    key: bottomIndicatorKey,
-                    width: 150,
-                    height: 150,
-                    // color: Colors.greenAccent,
-                    child: EProgress(
-                        progress: currentTimeFactor * 2,
-                        type: ProgressType.liquid,
-                        strokeWidth: 0,
-                        textStyle: const TextStyle(
-                          fontSize: 40,
-                          color: Colors.red,
-                        ),
-                        backgroundColor: Colors.grey,
-                        format: (progress) {
-                          return '${_selectionHandler.crossPageCount}/${SelectionHandler.crossPageLimit}';
-                        }),
-                  ),
-                ),
+              child: _buildSelectionIndicator(
+                bottomIndicatorKey,
+                _bottomEndIndicatorOpacity,
+                AlignmentDirectional.bottomEnd,
               ),
             ),
             _selectionHandler.menuPosition != null
-                ? _buildSelectionLayer()
+                ? _buildSelectionMenuLayer()
                 : const SizedBox(width: 0, height: 0),
           ],
         ),
@@ -436,10 +417,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           print('倒计时, 倒计时结束: $currentTimeFactor, 进行翻页');
           _cancelTimer();
           // todo
-          //  1. 5页的翻页划选限制
-          //  2. 现在上一页选中文字会在翻页之后丢失,
-          //  3. 选中所有翻页页面的文字
-          //  4. 处理图片选中
+          //  1. 5页的翻页划选限制 (完成)
+          //  2. 在最后一页划选页取消划选之后, 前面的缓存页没有刷新,
+          //  3. 处理图片选中
           navigatePageNoAnimation(touchPosition, indicator);
         }
       });
@@ -492,7 +472,48 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
     _selectionHandler.updateSelectionState(enable);
   }
 
-  Widget _buildSelectionLayer() {
+  Widget _buildHighlightLayer(double width, double height) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          key: highlightLayerKey,
+          painter: _highlightPainter,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionIndicator(
+      GlobalKey key, double opacity, AlignmentDirectional alignment) {
+    return Opacity(
+      opacity: opacity,
+      child: Align(
+        alignment: alignment,
+        child: SizedBox(
+          key: key,
+          width: 200,
+          height: 150,
+          // color: Colors.greenAccent,
+          child: EProgress(
+              progress: currentTimeFactor * 2,
+              type: ProgressType.liquid,
+              strokeWidth: 0,
+              textStyle: const TextStyle(
+                fontSize: 40,
+                color: Colors.red,
+              ),
+              backgroundColor: Colors.grey,
+              format: (progress) {
+                return '${_selectionHandler.crossPageCount}/${SelectionHandler.crossPageLimit}';
+              }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionMenuLayer() {
     Offset position = _selectionHandler.menuPosition!;
     if (position.isInfinite) {
       print('选择弹窗, 显示居中');
@@ -555,5 +576,14 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
             ],
           );
         });
+  }
+
+  void updateHighlight(NeatColor? highlightColor, List<HighlightCoordinate>? coordinates) {
+    if(coordinates == null) {
+      _highlightPainter?.clearHighlight();
+    } else {
+      _highlightPainter?.updateHighlight(highlightColor!, coordinates);
+    }
+    highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
   }
 }
