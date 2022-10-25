@@ -52,7 +52,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 import java.util.ArrayList;
@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
 
 import timber.log.Timber;
@@ -122,18 +123,10 @@ public final class FBView extends ZLTextView {
         return SelectionResult.NoMenu.INSTANCE;
     }
 
-    private SelectionResult checkExistSelection(List<HighlightCoordinate> coordinates) {
+    private SelectionResult checkExistSelection() {
         // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
         if (getCountOfSelectedWords() > 0) {
-            return new SelectionResult.ShowMenu(getSelectionStartY() , getSelectionEndY());
-        }
-
-        if (coordinates != null) {
-           return new SelectionResult.HighlightRegion(
-                   Hull.DrawMode.Outline,
-                   DebugHelper.outlineColor(),
-                   coordinates
-           );
+            return new SelectionResult.ShowMenu(getSelectionStartY(), getSelectionEndY());
         }
         return SelectionResult.None.INSTANCE;
     }
@@ -1043,8 +1036,6 @@ public final class FBView extends ZLTextView {
 
     /**
      * 长按选中了文字会回调这个方法
-     *
-     * @return
      */
     @Override
     public SelectionResult onFingerLongPressFlutter(int x, int y) {
@@ -1084,11 +1075,11 @@ public final class FBView extends ZLTextView {
                             Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
                             moveSelectionCursorToFlutter(cursor, x, y);
                         }
-                        // todo
-                        return new SelectionResult.HighlightRegion(
-                                Hull.DrawMode.Fill,
-                                DebugHelper.outlineColor(),
-                                new ArrayList<>());
+                        return SelectionResult.Companion.createHighlight(
+                                findCurrentPageHighlightingCoordinates(),
+                                getSelectionCursorColor(),
+                                getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
+                                getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
                     case selectSingleWord:
                     case openDictionary:
                         doSelectRegion = true;
@@ -1104,31 +1095,39 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 super.outlineRegion(region);
-                return new SelectionResult.HighlightRegion(
-                        Hull.DrawMode.Outline,
-                        DebugHelper.outlineColor(),
-                        region.getDrawCoordinates(Hull.DrawMode.Outline));
+                return SelectionResult.Companion.createHighlight(
+                        new HighlightBlock(DebugHelper.outlineColor(),
+                                region.getDrawCoordinates(Hull.DrawMode.Outline)));
             }
         }
-        return null;
+        return SelectionResult.None.INSTANCE;
     }
 
     /**
      * 长按选中了文字并拖动会回调这个方法
      */
     @Override
-    public boolean onFingerMoveAfterLongPressFlutter(int x, int y) {
+    public SelectionResult onFingerMoveAfterLongPressFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        // 判断当前触摸坐标是否有选中文字
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            return moveSelectionCursorToFlutter(cursor, x, y);
+            if (moveSelectionCursorToFlutter(cursor, x, y)) {
+                return SelectionResult.Companion.createHighlight(
+                        findCurrentPageHighlightingCoordinates(),
+                        getSelectionCursorColor(),
+                        getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
+                        getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
+            } else {
+                return SelectionResult.None.INSTANCE;
+            }
         }
 
+        // 判断当前触摸坐标是否有选中outline
         ZLTextRegion region = getOutlinedRegion();
         if (region != null) {
             ZLTextRegion.Soul soul = region.getSoul();
-            if (soul instanceof ZLTextHyperlinkRegionSoul ||
-                    soul instanceof ZLTextWordRegionSoul) {
+            if (soul instanceof ZLTextHyperlinkRegionSoul || soul instanceof ZLTextWordRegionSoul) {
                 if (myReader.MiscOptions.WordTappingAction.getValue() !=
                         MiscOptions.WordTappingActionEnum.doNothing) {
                     region = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
@@ -1137,23 +1136,28 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            return true;
+                            return SelectionResult.Companion.createHighlight(
+                                    new HighlightBlock(DebugHelper.outlineColor(),
+                                            region.getDrawCoordinates(Hull.DrawMode.Outline)));
                         }
                     }
                 }
             }
         }
 
-        return false;
+        return SelectionResult.None.INSTANCE;
     }
 
     /**
      * 长按选中了文字直接松开, 或者长按并拖动再松开都会回调这个方法
+     *
+     * @return SelectionResult
      */
     @Override
     public SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("长按流程, onFingerReleaseAfterLongPressFlutter");
 //        mCanMagnifier = false;
+        // 判断手指触摸区域有没有选中text
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             return releaseSelectionCursorFlutter();
@@ -1165,32 +1169,33 @@ public final class FBView extends ZLTextView {
 //            return;
 //        }
 
-        // 获得outline选中
+        //  判断手指触摸区域有没有选中outline
         final ZLTextRegion region = getOutlinedRegion();
-        List<HighlightCoordinate> coordinates = null;
         if (region != null) {
-            coordinates = region.getDrawCoordinates(Hull.DrawMode.Outline);
             final ZLTextRegion.Soul soul = region.getSoul();
-
+            SelectionResult outlineResult = null;
             boolean doRunAction = false;
             if (soul instanceof ZLTextWordRegionSoul) {
                 doRunAction =
                         myReader.MiscOptions.WordTappingAction.getValue() ==
                                 MiscOptions.WordTappingActionEnum.openDictionary;
+                outlineResult = SelectionResult.OpenDirectory.INSTANCE;
             } else if (soul instanceof ZLTextImageRegionSoul) {
                 doRunAction =
                         myReader.ImageOptions.TapAction.getValue() ==
                                 ImageOptions.TapActionEnum.openImageView;
+                outlineResult = SelectionResult.OpenImage.INSTANCE;
             }
 
-            // todo 超链接点击效果
-//            if (doRunAction) {
+            // todo flutter实现打开图片, 超链接点击效果
+            if (doRunAction) {
 //                myReader.runAction(ActionCode.PROCESS_HYPERLINK);
-//            }
+                return Objects.requireNonNull(outlineResult);
+            }
         }
 
-        // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
-        return checkExistSelection(coordinates);
+        // 最后判断本page有没其他选中的文字, 因为可能之前有选中文字，然后拖动到了空白区域的情况
+        return checkExistSelection();
     }
 
     /**
@@ -1372,7 +1377,7 @@ public final class FBView extends ZLTextView {
 //        }
 
             // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
-            return checkExistSelection(null);
+            return checkExistSelection();
         }
     }
 

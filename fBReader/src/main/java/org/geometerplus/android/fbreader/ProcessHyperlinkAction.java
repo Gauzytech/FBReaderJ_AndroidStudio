@@ -76,6 +76,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 				final ZLTextHyperlink hyperlink = ((ZLTextHyperlinkRegionSoul)soul).Hyperlink;
 				switch (hyperlink.Type) {
 					case FBHyperlinkType.EXTERNAL:
+						// 浏览器跳转
 						openInBrowser(hyperlink.Id);
 						break;
 					case FBHyperlinkType.INTERNAL:
@@ -105,6 +106,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 								showToast = true;
 								break;
 						}
+						// 显示Toast
 						if (showToast) {
 							final SuperActivityToast toast;
 							if (snippet.IsEndOfText) {
@@ -148,6 +150,7 @@ class ProcessHyperlinkAction extends FBAndroidAction {
 				// todo 待实现
 			} else  {
 				Reader.getViewWidget().repaint("ProcessHyperlinkAction.ZLTextImageRegionSoul");
+				// 显示图片
 				final String url = ((ZLTextImageRegionSoul)soul).ImageElement.URL;
 				if (url != null) {
 					try {

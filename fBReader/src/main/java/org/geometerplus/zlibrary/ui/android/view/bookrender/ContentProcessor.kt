@@ -105,7 +105,7 @@ interface ContentProcessor {
     fun onFingerMoveAfterLongPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        listener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 

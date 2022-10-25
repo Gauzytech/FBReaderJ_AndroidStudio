@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/reader/animation/model/highlight_coordinate.dart';
+
+import '../reader/animation/model/highlight_block.dart';
+import '../reader/animation/model/selection_cursor.dart';
 
 class HighlightPainter extends CustomPainter {
   static const drawModeOutline = 1;
   static const drawModeFill = 2;
 
   /// 线画笔
-  final Paint _linePaint = Paint();
+  final Paint _linePaint = Paint()..style = PaintingStyle.stroke;
 
   /// 填充画笔
-  final Paint _fillPaint = Paint();
+  final Paint _fillPaint = Paint()..isAntiAlias = true;
 
   /// 轮廓线画笔
   final Paint _outLinePaint = Paint()
@@ -19,49 +21,84 @@ class HighlightPainter extends CustomPainter {
     ..strokeWidth = 4; //画笔的宽度
   // ..color = Colors.blueAccent; // 画笔颜色
   // ..blendMode = BlendMode.colorDodge; // 模式
-  List<HighlightCoordinate>? highlightCoordinates;
+
+  final Paint _contentBackgroundPaint = Paint();
+
+  List<HighlightBlock>? highlightBlocks;
+  List<SelectionCursor>? cursors;
 
   HighlightPainter({Key? key}) {
+    print('时间测试， init HighlightPainter');
     Paint.enableDithering = true;
+    // 默认图书内容背景颜色
+    _contentBackgroundPaint.color = Colors.white;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (highlightCoordinates != null) {
-      print('时间测试, 绘制高亮, $highlightCoordinates');
-      for (var item in highlightCoordinates!) {
-        if (item.drawMode == drawModeOutline) {
-          drawOutline(canvas, item.xs, item.ys);
-        } else if (item.drawMode == drawModeFill) {
-          drawPolygonalLine(canvas, item.xs, item.ys);
+    // 绘制图书内容的背景颜色 TODO 实现设置自定义背景颜色
+    canvas.drawRect(
+      Rect.fromPoints(Offset.zero, Offset(size.width, size.height)),
+      _contentBackgroundPaint,
+    );
+    // 绘制高亮
+    if (highlightBlocks != null) {
+      print('时间测试, 绘制高亮 -------------------------');
+      for (var item in highlightBlocks!) {
+        for (var coord in item.coordinates) {
+          if (coord.type == drawModeOutline) {
+            _outLinePaint.color = item.color.toColor();
+            _drawOutline(canvas, coord.xs, coord.ys);
+          } else if (coord.type == drawModeFill) {
+            _fillPaint.color = item.color.toColor();
+            _fillPolygon(canvas, coord.xs, coord.ys);
+          }
         }
+      }
+    }
+    // 绘制选中的左右光标
+    if(cursors != null) {
+      for(var cursor in cursors!) {
+        _drawSelectionCursor(canvas, cursor);
       }
     }
   }
 
   void updateHighlight(
-      NeatColor highlightColor, List<HighlightCoordinate> coordinates) {
-    print('时间测试, 更新高亮, $highlightColor');
-    _outLinePaint.color = highlightColor.toColor();
-    highlightCoordinates = List.from(coordinates);
+      List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+    print('时间测试, 更新高亮, $blocks');
+    if (blocks != null) {
+      highlightBlocks = List.from(blocks);
+    } else {
+      highlightBlocks = null;
+    }
+
+    if (selectionCursors != null) {
+      cursors = List.from(selectionCursors);
+    } else {
+      cursors = null;
+    }
   }
 
-  void clearHighlight() {
-    print('时间测试, 清除高亮');
-    highlightCoordinates = null;
-  }
-
-  void drawPolygonalLine(Canvas canvas, List<int> xs, List<int> ys) {
+  /// 绘制实心多边形
+  ///
+  /// @param xs X坐标集合
+  /// @param ys Y坐标集合
+  void _fillPolygon(Canvas canvas, List<int> xs, List<int> ys) {
     final Path path = Path();
     final int last = xs.length - 1;
     path.moveTo(xs[last].toDouble(), ys[last].toDouble());
     for (int i = 0; i <= last; ++i) {
       path.lineTo(xs[i].toDouble(), ys[i].toDouble());
     }
-    canvas.drawPath(path, _linePaint);
+    canvas.drawPath(path, _fillPaint);
   }
 
-  void drawOutline(Canvas canvas, List<int> xs, List<int> ys) {
+  /// 绘制轮廓线
+  ///
+  /// @param xs X坐标集合
+  /// @param ys Y坐标集合
+  void _drawOutline(Canvas canvas, List<int> xs, List<int> ys) {
     int last = xs.length - 1;
     double xStart = (xs[0] + xs[last]) / 2;
     double yStart = (ys[0] + ys[last]) / 2;
@@ -94,14 +131,50 @@ class HighlightPainter extends CustomPainter {
     canvas.drawPath(path, _outLinePaint);
   }
 
+  /// 绘制选择小耳朵
+  void _drawSelectionCursor(Canvas canvas, SelectionCursor cursor) {
+    _fillPaint.color = cursor.color.toColor();
+    final double unit = cursor.dpi / 130;
+    final double xCenter = cursor.direction == CursorDirection.left
+        ? cursor.point.x - unit - 1
+        : cursor.point.x + unit + 1;
+    _fillRectangle(canvas, xCenter - unit, cursor.point.y + cursor.dpi / 12,
+        xCenter + unit, cursor.point.y - cursor.dpi / 12);
+    if (cursor.direction == CursorDirection.left) {
+      _fillCircle(canvas, xCenter, cursor.point.y - cursor.dpi / 12, unit * 5);
+    } else {
+      _fillCircle(canvas, xCenter, cursor.point.y + cursor.dpi / 12, unit * 5);
+    }
+  }
+
+  void _fillRectangle(
+      Canvas canvas, double x0, double y0, double x1, double y1) {
+    if (x1 < x0) {
+      double swap = x1;
+      x1 = x0;
+      x0 = swap;
+    }
+    if (y1 < y0) {
+      double swap = y1;
+      y1 = y0;
+      y0 = swap;
+    }
+    canvas.drawRect(
+        Rect.fromPoints(Offset(x0, y0), Offset(x1 + 1, y1 + 1)), _fillPaint);
+  }
+
+  void _fillCircle(Canvas canvas, double x, double y, double radius) {
+    canvas.drawCircle(Offset(x, y), radius, _fillPaint);
+  }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    List<HighlightCoordinate>? oldCoordinates =
-        (oldDelegate as HighlightPainter).highlightCoordinates;
-    print('时间测试, shouldRepaint');
-    if (oldCoordinates == null || highlightCoordinates == null) return true;
-    for (var i = 0; i < oldCoordinates.length; i++) {
-      if (!oldCoordinates[i].equals(highlightCoordinates![i])) {
+    List<HighlightBlock>? oldBlocks =
+        (oldDelegate as HighlightPainter).highlightBlocks;
+    print('时间测试, shouldRepaint, old: $oldBlocks, new: $highlightBlocks');
+    if (oldBlocks == null || highlightBlocks == null) return true;
+    for (var i = 0; i < oldBlocks.length; i++) {
+      if (!oldBlocks[i].equals(highlightBlocks![i])) {
         print('时间测试, shouldRepaint = true');
         return true;
       }

@@ -157,6 +157,10 @@ class BitmapManagerImpl with BitmapManager {
   Size getContentSize() {
     return Size(_contentWidth.toDouble(), _contentHeight.toDouble());
   }
+
+  String debugCachedIndexString() {
+    return "$pageIndexCache";
+  }
 }
 
 class ImageSrc {
@@ -167,5 +171,10 @@ class ImageSrc {
 
   bool shouldDrawImage() {
     return img == null && !processing;
+  }
+
+  @override
+  String toString() {
+    return 'img = ${img != null}, processing = $processing';
   }
 }

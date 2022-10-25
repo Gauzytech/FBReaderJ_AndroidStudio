@@ -1,6 +1,8 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
+import org.geometerplus.zlibrary.core.library.ZLibrary
 import org.geometerplus.zlibrary.core.util.ZLColor
+import org.geometerplus.zlibrary.text.view.ZLTextSelection
 
 sealed class SelectionResult {
 
@@ -21,13 +23,31 @@ sealed class SelectionResult {
      */
     object None : SelectionResult()
 
+    object OpenDirectory : SelectionResult()
+    object OpenImage : SelectionResult()
+
     /**
-     * @param highlightType 高亮的类型：文字高亮/轮廓高亮, 见[org.geometerplus.zlibrary.core.view.Hull.DrawMode]
-     * @param coordinates 高亮绘制的坐标
+     * @param blocks 高亮区域
      */
-    data class HighlightRegion(
-        val highlightType: Int,
-        val highlightColor: ZLColor,
-        val coordinates: List<HighlightCoordinate>
+    data class Highlight(
+        val blocks: List<HighlightBlock>,
+        val leftSelectionCursor: SelectionCursor? = null,
+        val rightSelectionCursor: SelectionCursor? = null
     ) : SelectionResult()
+
+    companion object {
+        fun createHighlight(block: HighlightBlock): Highlight {
+            return Highlight(listOf(block))
+        }
+
+        fun createHighlight(
+            blocks: List<HighlightBlock>,
+            cursorColor: ZLColor,
+            leftPoint: ZLTextSelection.Point,
+            rightPoint: ZLTextSelection.Point,
+        ): Highlight {
+            val dpi = ZLibrary.Instance().displayDPI
+            return Highlight(blocks, SelectionCursor(cursorColor, leftPoint, dpi), SelectionCursor(cursorColor, rightPoint, dpi))
+        }
+    }
 }

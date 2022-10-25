@@ -19,6 +19,9 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.geometerplus.DebugHelper;
 import org.geometerplus.fbreader.book.Bookmark;
 import org.geometerplus.fbreader.fbreader.BookmarkHighlighting;
@@ -35,6 +38,7 @@ import org.geometerplus.zlibrary.text.model.ZLTextAlignmentType;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -409,6 +413,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return null;
         }
 
+        // 这个逻辑会导致小耳朵错位
 //        if (which == mySelection.getCursorInMovement()) {
 //            Timber.v("小耳朵， 1");
 //            return mySelection.getCursorInMovementPoint();
@@ -434,6 +439,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
         return null;
+    }
+
+    public ZLTextSelection.Point getCurrentPageSelectionCursorPoint(SelectionCursor.Which which) {
+        return  getSelectionCursorPoint(myCurrentPage, which);
     }
 
     private void drawSelectionCursor(ZLPaintContext context, ZLTextPage page, SelectionCursor.Which which) {
@@ -540,24 +549,30 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 长按选中效果见findHighlightingList()
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
         Timber.v("长按选中流程[绘制], text highlight = %s", highlightingList.size());
-        for (ZLTextHighlighting h : highlightingList) {
-            int mode = Hull.DrawMode.None;
+        // todo 把这个逻辑直接移到flutter
+        if (!DebugHelper.ENABLE_FLUTTER) {
+            for (ZLTextHighlighting h : highlightingList) {
+                int mode = Hull.DrawMode.None;
 
-            final ZLColor bgColor = h.getBackgroundColor();
-            if (bgColor != null) {
-                paintContext.setFillColor(bgColor);
-                mode |= Hull.DrawMode.Fill;
-            }
+                // 设置高亮颜色
+                final ZLColor bgColor = h.getBackgroundColor();
+                if (bgColor != null) {
+                    paintContext.setFillColor(bgColor);
+                    mode |= Hull.DrawMode.Fill;
+                }
 
-            final ZLColor outlineColor = h.getOutlineColor();
-            if (outlineColor != null) {
-                paintContext.setLineColor(outlineColor);
-                mode |= Hull.DrawMode.Outline;
-            }
+                // 设置outline颜色
+                final ZLColor outlineColor = h.getOutlineColor();
+                if (outlineColor != null) {
+                    paintContext.setLineColor(outlineColor);
+                    mode |= Hull.DrawMode.Outline;
+                }
 
-            // 绘制高亮 todo 待确认？？
-            if (mode != Hull.DrawMode.None) {
-                h.hull(page).draw(getContext(), mode);
+                // 进行高亮绘制
+                if (mode != Hull.DrawMode.None) {
+                    h.hull(page).draw(getContext(), mode);
+                    Timber.v("长按选中流程[绘制高亮], hull = %s", h.hull(page).getClass().getSimpleName());
+                }
             }
         }
 
@@ -576,16 +591,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         // 绘制outline: 长按图片或者超链接, 会有一个描边效果
-        final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
-        if (outlinedElementRegion != null && myShowOutline) {
-            Timber.v("长按选中流程[绘制],  绘制outline, %s, %s", getSelectionBackgroundColor(), outlinedElementRegion.hull().getClass().getSimpleName());
-            paintContext.setLineColor(getSelectionBackgroundColor());
-            outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
-        }
+        if (!DebugHelper.ENABLE_FLUTTER) {
+            final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
+            if (outlinedElementRegion != null && myShowOutline) {
+                Timber.v("长按选中流程[绘制],  绘制outline, %s, %s", getSelectionBackgroundColor(), outlinedElementRegion.hull().getClass().getSimpleName());
+                paintContext.setLineColor(getSelectionBackgroundColor());
+                outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
+            }
 
-        // 绘制选中的左右光标
-        drawSelectionCursor(paintContext, page, SelectionCursor.Which.Left);
-        drawSelectionCursor(paintContext, page, SelectionCursor.Which.Right);
+            // 绘制选中的左右光标
+            drawSelectionCursor(paintContext, page, SelectionCursor.Which.Left);
+            drawSelectionCursor(paintContext, page, SelectionCursor.Which.Right);
+        }
 
         // 左上角标题效果: 绘制头部（章节标题）
         paintContext.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
@@ -993,6 +1010,52 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
         return highlightingList;
+    }
+
+    /**
+     * 获得当前页面的文字高亮绘制坐标
+     */
+    protected List<HighlightBlock> findCurrentPageHighlightingCoordinates() {
+        final List<HighlightBlock> list = new ArrayList<>();
+        // 长按选中高亮效果
+        if (mySelection.intersects(myCurrentPage)) {
+            HighlightBlock block  = highlightingToBlock(mySelection, myCurrentPage);
+            if (block != null) {
+                list.add(block);
+            }
+        }
+        // 笔记高亮效果
+        synchronized (myHighlightingList) {
+            for (ZLTextHighlighting highlight : myHighlightingList) {
+                if (highlight.intersects(myCurrentPage)) {
+                    HighlightBlock block  = highlightingToBlock(highlight, myCurrentPage);
+                    if (block != null) {
+                        list.add(block);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    @Nullable
+    private HighlightBlock highlightingToBlock(ZLTextHighlighting highlighting, ZLTextPage page) {
+        int mode = Hull.DrawMode.None;
+        HighlightBlock highlightBlock = null;
+        if (highlighting.getBackgroundColor() != null) {
+            mode |= Hull.DrawMode.Fill;
+            highlightBlock = new HighlightBlock(
+                    highlighting.getBackgroundColor(),
+                    highlighting.hull(page).getDrawHighlightCoordinates(mode));
+        }
+
+        if (mySelection.getOutlineColor() != null) {
+            mode |= Hull.DrawMode.Outline;
+            highlightBlock = new HighlightBlock(
+                    highlighting.getOutlineColor(),
+                    highlighting.hull(page).getDrawHighlightCoordinates(mode));
+        }
+        return highlightBlock;
     }
 
     protected abstract ZLPaintContext.ColorAdjustingMode getAdjustingModeForImages();

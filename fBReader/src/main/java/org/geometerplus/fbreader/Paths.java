@@ -219,6 +219,11 @@ public abstract class Paths {
 			public String networkCacheDirectory() {
 				return tempDirectory() + "/cache";
 			}
+
+			@Override
+			public Context getContext() {
+				return context;
+			}
 		};
 	}
 

@@ -19,7 +19,10 @@
 
 package org.geometerplus.zlibrary.core.util;
 
+import android.content.Context;
+
 public interface SystemInfo {
 	String tempDirectory();
 	String networkCacheDirectory();
+	Context getContext();
 }

@@ -34,6 +34,9 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 
+import androidx.core.content.ContextCompat;
+
+import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
@@ -94,6 +97,8 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     private final Paint myExtraPaint = new Paint();
     private final Path myPath = new Path();
+
+    private final Paint transparentPaint = new Paint();
 
     /**
      * 几何属性
@@ -164,6 +169,10 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 //        myOutlinePaint.setMaskFilter(new EmbossMaskFilter(new float[]{1, 1, 1}, .4f, 6f, 3.5f));
 
         myExtraPaint.setAntiAlias(true);
+
+        transparentPaint.setColor(systemInfo.getContext().getResources().getColor(android.R.color.transparent));
+        transparentPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        transparentPaint.setAntiAlias(true);
     }
 
     private static ZLFile ourWallpaperFile;
@@ -290,7 +299,11 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         Timber.v("%s, clear", TAG);
         myBackgroundColor = color;
         myFillPaint.setColor(ZLAndroidColorUtil.rgb(color));
-        myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, myFillPaint);
+        if (DebugHelper.ENABLE_FLUTTER) {
+            myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, transparentPaint);
+        } else {
+            myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, myFillPaint);
+        }
     }
 
     @Override

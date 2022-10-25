@@ -28,7 +28,7 @@ const selectedText = 'selected_text';
 
 enum SelectionIndicator { topStart, bottomEnd }
 
-/// TODO
+/// TODO 见HighlightPainter
 /// 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
 /// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
@@ -87,6 +87,7 @@ class SelectionHandler {
     _selectionMenuPosition = position;
   }
 
+  // todo
   void onSelectionDragStart(DragStartDetails detail) {
     Offset position = detail.localPosition;
     print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作$position}");
@@ -98,6 +99,7 @@ class SelectionHandler {
     );
   }
 
+  // todo
   void onSelectionDragMove(DragUpdateDetails detail) {
     Offset position = detail.localPosition;
     print('flutter动画流程[onDragUpdate], 有长按选中弹窗, 进行选中区域操作$position');
@@ -111,6 +113,7 @@ class SelectionHandler {
     }
   }
 
+  // todo
   void onSelectionDragEnd(DragEndDetails detail) {
     print("flutter动画流程[onDragEnd], 长按选择操作$detail");
     _setSelectionTouch(null);

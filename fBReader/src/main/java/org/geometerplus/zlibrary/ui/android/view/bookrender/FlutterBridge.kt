@@ -11,7 +11,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
-import org.geometerplus.zlibrary.core.view.Hull
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
@@ -74,7 +73,7 @@ class FlutterBridge(
                 val bitmap = drawBitmap(pageIndex, width, height)
                 // 回调结果
                 if (DebugHelper.SAVE_BITMAP) {
-                    debugSave(bitmap.toByteArray(), "图书内容bitmap_current")
+                    debugSave(bitmap.toByteArray(), "图书内容bitmap_current.png")
                 } else {
                     result.success(bitmap.toByteArray())
                 }
@@ -112,7 +111,7 @@ class FlutterBridge(
                 val width = call.argument<Double>("width")!!.toInt()
                 val height = call.argument<Double>("height")!!.toInt()
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件, $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
+                Timber.v("flutter长按事件, ${call.method}: [$dx, $dy], [$width, $height]")
                 contentProcessor.onFingerLongPress(
                     dx, dy,
                     getSelectionCallback(call.method, result), Pair(width, height)
@@ -124,17 +123,17 @@ class FlutterBridge(
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件,  $LONG_PRESS_MOVE: [$dx, $dy], [$width, $height]")
+                Timber.v("flutter长按事件,  ${call.method}: [$dx, $dy], [$width, $height]")
                 contentProcessor.onFingerMoveAfterLongPress(
                     dx, dy,
-                    getResultCallback(call.method, result), Pair(width, height)
+                    getSelectionCallback(call.method, result), Pair(width, height)
                 )
             }
             LONG_PRESS_END -> {
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件, $LONG_PRESS_END [$width, $height]")
+                Timber.v("flutter长按事件, ${call.method} [$width, $height]")
                 contentProcessor.onFingerReleaseAfterLongPress(
                     0, 0,
                     getSelectionCallback(call.method, result),
@@ -221,7 +220,7 @@ class FlutterBridge(
 
     private fun drawBitmap(pageInt: PageIndex, width: Int, height: Int): Bitmap {
         // 绘制内容的bitmap
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         contentProcessor.drawOnBitmap(
             bitmap,
             pageInt,
@@ -243,6 +242,7 @@ class FlutterBridge(
 
     private fun debugSave(bytes: ByteArray, name: String) {
         val targetPath = "${context.cacheDir}/images/"
+        Timber.v("debug, $targetPath")
         val parent = File(targetPath)
         if (!parent.exists()) {
             parent.mkdirs()
@@ -265,26 +265,20 @@ class FlutterBridge(
             override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
                 Timber.v("时间测试, 重绘返回 $name")
                 when (selectionResult) {
-                    is SelectionResult.HighlightRegion -> {
-                        if (selectionResult.highlightType == Hull.DrawMode.Outline) {
-                            result.success(
-                                mapOf("highlight_draw_data" to gson.toJson(selectionResult))
-                            )
-                        } else {
-                            result.success(mapOf("page" to img))
-                        }
+                    is SelectionResult.Highlight -> {
+                        result.success(
+                            mapOf("highlights_data" to gson.toJson(selectionResult))
+                        )
                     }
                     is SelectionResult.ShowMenu -> {
                         result.success(
-                            mapOf(
-                                "page" to img,
-                                "selectionStartY" to selectionResult.selectionStartY,
-                                "selectionEndY" to selectionResult.selectionEndY
-                            )
+                            mapOf("selection_menu_data" to gson.toJson(selectionResult))
                         )
                     }
                     SelectionResult.NoMenu,
                     SelectionResult.None -> result.success(mapOf("page" to img))
+                    SelectionResult.OpenDirectory,
+                    SelectionResult.OpenImage -> Timber.v("时间测试, outline行为 ${selectionResult.javaClass.simpleName}, 功能待实现")
                 }
             }
         }

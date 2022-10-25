@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import android.content.Context;
+
 import java.util.List;
 
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -37,6 +39,11 @@ final class DummyPaintContext extends ZLPaintContext {
 
             public String networkCacheDirectory() {
                 return "";
+            }
+
+            @Override
+            public Context getContext() {
+                return null;
             }
         });
     }

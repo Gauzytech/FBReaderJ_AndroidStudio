@@ -6,7 +6,6 @@ import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.util.SystemInfo
-import org.geometerplus.zlibrary.core.view.Hull
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
@@ -126,20 +125,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         size: Pair<Int, Int>?
     ): Boolean {
         return if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerLongPressFlutter(x, y).let { result ->
-                when(result) {
-                    is SelectionResult.HighlightRegion -> {
-                        if (result.highlightType == Hull.DrawMode.Outline) {
-                            selectionListener?.onSelection(result)
-                        } else {
-                            drawService.execute {
-                                Timber.v("长按选中流程[LongPress], 选中区域匹配结束. 开始异步重绘bitmap")
-                                selectionListener?.onSelection(result, drawCurrentPage(size!!))
-                            }
-                        }
-                    }
-                    else -> Unit
-                }
+            when (val result = targetContentView.onFingerLongPressFlutter(x, y)) {
+                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                else -> Unit
             }
             return false
         } else {
@@ -151,16 +139,13 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerMoveAfterLongPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        listener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerMoveAfterLongPressFlutter(x, y).let { repaint ->
-                if (repaint) {
-                    drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
-                    }
-                }
+            when(val result = targetContentView.onFingerMoveAfterLongPressFlutter(x, y)) {
+                is SelectionResult.Highlight -> listener?.onSelection(result)
+                else -> Unit
             }
         } else {
             targetContentView.onFingerMoveAfterLongPress(x, y)
@@ -177,13 +162,10 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
                 is SelectionResult.ShowMenu,
-                is SelectionResult.NoMenu -> {
-                    Timber.v("长按选中流程[ReleaseAfterLongPress], 选中区域匹配结束. 开始异步重绘bitmap")
-                    drawService.execute {
-                        listener?.onSelection(result, drawCurrentPage(size!!))
-                    }
-                }
-                else -> listener?.onSelection(result)
+                is SelectionResult.Highlight,
+                is SelectionResult.OpenDirectory,
+                is SelectionResult.OpenImage -> listener?.onSelection(result)
+                else -> Unit
             }
         } else {
             targetContentView.onFingerReleaseAfterLongPress(x, y)
@@ -207,7 +189,8 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                         listener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
-                is SelectionResult.None -> listener?.onSelection(result)
+                is SelectionResult.Highlight -> listener?.onSelection(result)
+                else -> Unit
             }
         } else {
             targetContentView.onFingerRelease(x, y)
@@ -255,7 +238,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     @WorkerThread
     private fun drawCurrentPage(size: Pair<Int, Int>): ByteArray {
         val (width, height) = size
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         drawOnBitmap(
             bitmap,
             PageIndex.CURRENT,
@@ -338,7 +321,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updatePrevPage) {
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 drawOnBitmap(bitmap, PageIndex.PREV, width, height, 0)
                 map["prev"] = bitmap.toByteArray()
             }
@@ -351,7 +334,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updateNextPage) {
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 drawOnBitmap(bitmap, PageIndex.NEXT, width, height, 0)
                 map["next"] = bitmap.toByteArray()
             }

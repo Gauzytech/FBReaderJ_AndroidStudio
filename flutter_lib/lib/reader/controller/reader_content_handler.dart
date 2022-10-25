@@ -1,18 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/reader/animation/model/highlight_coordinate.dart';
+import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
-import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
-import '../handler/selelction_handler.dart';
+import '../animation/model/selection_cursor.dart';
+import '../handler/selection_handler.dart';
 
 class ReaderContentHandler {
   MethodChannel methodChannel;
@@ -136,21 +135,22 @@ class ReaderContentHandler {
   Future<void> preloadAdjacentPages() async {
     final metrics = ui.window.physicalSize;
 
-    ImageSrc prevImage = getPage(PageIndex.prev);
-    ImageSrc nextImage = getPage(PageIndex.next);
-
-    int? prevIdx = prevImage.shouldDrawImage()
+    int? prevIdx = getPage(PageIndex.prev).shouldDrawImage()
         ? _bitmapManager.findInternalCacheIndex(PageIndex.prev)
         : null;
-    int? nextIdx = nextImage.shouldDrawImage()
+    int? nextIdx = getPage(PageIndex.next).shouldDrawImage()
         ? _bitmapManager.findInternalCacheIndex(PageIndex.next)
         : null;
 
-    print("flutter动画流程:preloadAdjacentPage, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
-    print("flutter内容绘制流程, 需要预加载, 上一页: ${prevIdx != null}, 下一页: ${nextIdx != null} ");
-    if(prevIdx != null || nextIdx != null) {
+    if (prevIdx != null || nextIdx != null) {
+      if (prevIdx != null) {
+        print("flutter内容绘制流程, 预加载上一页");
+      }
+      if (nextIdx != null) {
+        print("flutter内容绘制流程, 预加载下一页");
+      }
       Map<Object?, Object?> result =
-      await methodChannel.invokeMethod("prepare_page", {
+          await methodChannel.invokeMethod("prepare_page", {
         'width': metrics.width,
         'height': metrics.height,
         'update_prev_page_cache': prevIdx != null,
@@ -179,11 +179,6 @@ class ReaderContentHandler {
         _bitmapManager.cacheBitmap(nextIdx, image);
       }
     }
-
-    print(
-        "flutter内容绘制流程, 预加载完成, 可用cache: ${_bitmapManager.pageIndexCache}");
-    print(
-        "flutter动画流程:preloadAdjacentPage, 预加载完成, 可用cache: ${_bitmapManager.pageIndexCache}");
   }
 
   Size getContentSize() {
@@ -234,7 +229,7 @@ class ReaderContentHandler {
       case NativeCmd.longPressEnd:
       case NativeCmd.tapUp:
       case NativeCmd.selectionClear:
-        Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
+      Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
           nativeCmd.cmdName,
           {
             'touch_x': x,
@@ -244,30 +239,28 @@ class ReaderContentHandler {
             'time_stamp': time,
           },
         );
-        print(
-          '时间测试, $nativeCmd 获得结果, ${now()}',
-        );
+        print('时间测试, $nativeCmd 获得结果, ${now()}');
+
         Uint8List? imageBytes = result['page'];
-        int? selectionStartY = result['selectionStartY'];
-        int? selectionEndY = result['selectionEndY'];
-        String? highlightDrawData = result['highlight_draw_data'];
-
-        if (highlightDrawData != null) {
-          _handleHighlight(highlightDrawData);
-        }
-
         if (imageBytes != null) {
+          print('时间测试, $nativeCmd handleImage');
           await _handleImage(imageBytes);
         }
 
+        // 高亮
+        String? highlightsData = result['highlights_data'];
+        if (highlightsData != null) {
+          print('时间测试, $nativeCmd _handleHighlight');
+          _handleHighlight(highlightsData);
+        }
+
         // 显示选择弹窗
-        if (selectionStartY != null && selectionEndY != null) {
-          viewState.showSelectionMenu(
-            getSelectionMenuPosition(selectionStartY, selectionEndY),
-          );
+        String? selectionMenuData = result['selection_menu_data'];
+        if (selectionMenuData != null) {
+          _handleSelectionMenu(selectionMenuData);
         } else {
-          if (nativeCmd == NativeCmd.longPressEnd && highlightDrawData == null) {
-            print('时间测试, 取消长按状态',);
+          if (nativeCmd == NativeCmd.longPressEnd && highlightsData == null) {
+            print('时间测试, 取消长按状态');
             viewState.updateSelectionState(false);
           }
         }
@@ -292,37 +285,29 @@ class ReaderContentHandler {
   }
 
   void _handleHighlight(String highlightDrawData) {
-    Map<String, dynamic> highlightData = jsonDecode(highlightDrawData);
-    NeatColor highlightColor = NeatColor.fromJson(highlightData['highlightColor']);
-    List<HighlightCoordinate> coordinates =
-    (highlightData['coordinates'] as List)
-        .map((item) => HighlightCoordinate.fromJson(item))
+    Map<String, dynamic> data = jsonDecode(highlightDrawData);
+    List<HighlightBlock> blocks = (data['blocks'] as List)
+        .map((item) => HighlightBlock.fromJson(item))
         .toList();
-    viewState.updateHighlight(highlightColor, coordinates);
+
+    Map<String, dynamic>? leftCursor = data['leftSelectionCursor'];
+    Map<String, dynamic>? rightCursor = data['rightSelectionCursor'];
+    List<SelectionCursor> cursors = [];
+    if (leftCursor != null) {
+      cursors.add(SelectionCursor.fromJson(CursorDirection.left, leftCursor));
+    }
+    if (rightCursor != null) {
+      cursors.add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
+    }
+    viewState.updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
   }
 
-  Offset getSelectionMenuPosition(int selectionStartY, int selectionEndY) {
-    double margin = 25;
-    double ratio = ui.window.devicePixelRatio;
-    double selectionMenuHeight = SelectionMenuFactory.selectionMenuSize.height * ratio;
-    double startYMargin = selectionStartY - margin;
-    double endYMargin = selectionEndY + margin;
-    double startY = startYMargin - selectionMenuHeight;
-    double startX = (getContentSize().width / ratio - SelectionMenuFactory.selectionMenuSize.width) / 2;
-    Offset selectionMenuPosition;
-    if (startY > 0) {
-      print("选择弹窗, 上方");
-      // 显示在选中高亮上方
-      selectionMenuPosition = Offset(startX, startY);
-    } else if (endYMargin + selectionMenuHeight < getContentSize().height) {
-      print("选择弹窗, 下方");
-      // 显示在选中高亮下方
-      selectionMenuPosition = Offset(startX, endYMargin);
-    } else {
-      print("选择弹窗, 居中");
-      // 居中显示
-      selectionMenuPosition = Offset.infinite;
-    }
-    return selectionMenuPosition;
+  void _handleSelectionMenu(String selectionMenuData) {
+    Map<String, dynamic> data = jsonDecode(selectionMenuData);
+    SelectionMenuPosition position = SelectionMenuPosition.fromJson(data);
+    Offset showPosition = position.toShowPosition(getContentSize());
+    viewState.showSelectionMenu(
+      showPosition,
+    );
   }
 }

@@ -21,7 +21,7 @@ package org.geometerplus.zlibrary.core.view;
 
 import android.graphics.Rect;
 
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.BlockCoordinate;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -232,8 +232,8 @@ public final class HorizontalConvexHull implements Hull {
     }
 
     @Override
-    public List<HighlightCoordinate> getDrawHighlightCoordinates(int mode) {
-        List<HighlightCoordinate> coordinates = new ArrayList<>();
+    public List<BlockCoordinate> getDrawHighlightCoordinates(int mode) {
+        List<BlockCoordinate> coordinates = new ArrayList<>();
 
         if (mode == DrawMode.None) {
             return coordinates;
@@ -309,11 +309,11 @@ public final class HorizontalConvexHull implements Hull {
 
             // 绘制选中区域
             if ((mode & DrawMode.Fill) == DrawMode.Fill) {
-                coordinates.add(new HighlightCoordinate(DrawMode.Fill, xs.clone(), ys.clone()));
+                coordinates.add(new BlockCoordinate(DrawMode.Fill, xs.clone(), ys.clone()));
             }
 
             if ((mode & DrawMode.Outline) == DrawMode.Outline) {
-                coordinates.add(new HighlightCoordinate(DrawMode.Outline, xs.clone(), ys.clone()));
+                coordinates.add(new BlockCoordinate(DrawMode.Outline, xs.clone(), ys.clone()));
             }
         }
 

@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
-import 'package:flutter_lib/reader/handler/selelction_handler.dart';
+import 'package:flutter_lib/reader/handler/selection_handler.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
@@ -16,7 +16,8 @@ import 'package:flutter_lib/widget/highlight_painter.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
-import 'animation/model/highlight_coordinate.dart';
+import 'animation/model/highlight_block.dart';
+import 'animation/model/selection_cursor.dart';
 import 'controller/page_pan_gesture_recognizer.dart';
 import 'controller/reader_content_handler.dart';
 import 'controller/reader_page_manager.dart';
@@ -63,7 +64,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   double _bottomEndIndicatorOpacity = 0;
 
   ContentPainter? _contentPainter;
-  HighlightPainter? _highlightPainter;
+  final HighlightPainter _highlightPainter = HighlightPainter();
 
   AnimationController? animationController;
 
@@ -73,6 +74,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
+    print('时间测试, onInitState');
     _readerContentHandler =
         ReaderContentHandler(methodChannel: _methodChannel, viewState: this);
     _selectionHandler = SelectionHandler(
@@ -83,10 +85,12 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   @override
   void loadData(BuildContext context, ReaderViewModel? viewModel) {
-    ReaderViewModel readerViewModel = ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
+    print('时间测试, loadData');
+    ReaderViewModel readerViewModel =
+        ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
 
     switch (readerViewModel.getConfigData().currentAnimationMode) {
-    // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
+      // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
       case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
         animationController = AnimationControllerWithListenerNumber(
           duration: const Duration(milliseconds: 300),
@@ -116,7 +120,6 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           viewModel: readerViewModel);
       readerViewModel.setContentHandler(_readerContentHandler);
       _contentPainter = ContentPainter(pageManager);
-      _highlightPainter = HighlightPainter();
     }
 
     // 透明状态栏
@@ -227,6 +230,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         },
         child: Stack(
           children: <Widget>[
+            _buildHighlightLayer(contentSize.width, contentSize.height),
             SizedBox(
               width: contentSize.width,
               height: contentSize.height,
@@ -237,7 +241,6 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 ),
               ),
             ),
-            _buildHighlightLayer(contentSize.width, contentSize.height),
             Positioned.fill(
               child: _buildSelectionIndicator(
                 topIndicatorKey,
@@ -578,12 +581,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
         });
   }
 
-  void updateHighlight(NeatColor? highlightColor, List<HighlightCoordinate>? coordinates) {
-    if(coordinates == null) {
-      _highlightPainter?.clearHighlight();
-    } else {
-      _highlightPainter?.updateHighlight(highlightColor!, coordinates);
-    }
+  void updateHighlight(List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+    _highlightPainter.updateHighlight(blocks, selectionCursors);
     highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
   }
 }

@@ -25,7 +25,7 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionRange
 
 import timber.log.Timber;
 
-class ZLTextSelection extends ZLTextHighlighting {
+public class ZLTextSelection extends ZLTextHighlighting {
     private final ZLTextView myView;
     private final Point myCursorInMovementPoint = new Point(-1, -1);
     private ZLTextRegion.Soul myLeftMostRegionSoul;
@@ -423,7 +423,7 @@ class ZLTextSelection extends ZLTextHighlighting {
         return myView.getSelectionCursorColor();
     }
 
-    static class Point {
+    public static class Point {
         int X;
         int Y;
 

@@ -25,7 +25,6 @@ class ContentPainter extends CustomPainter {
   @override
   Future paint(Canvas canvas, Size size) async {
     // TODO: implement paint
-
     // if (_image != null) {
 //      canvas.drawImageRect(_image, Offset(0.0, 0.0) & Size(_image.width.toDouble(), _image.height.toDouble()), Offset(0.0, 0.0) & Size(200, 200), _paint);
 

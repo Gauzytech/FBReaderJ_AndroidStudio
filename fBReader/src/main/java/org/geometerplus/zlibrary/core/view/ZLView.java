@@ -19,11 +19,10 @@
 
 package org.geometerplus.zlibrary.core.view;
 
-import org.geometerplus.zlibrary.core.application.ZLApplication;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoordinate;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
+import androidx.annotation.Nullable;
 
-import java.util.List;
+import org.geometerplus.zlibrary.core.application.ZLApplication;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 abstract public class ZLView implements ZLViewEnums {
 
@@ -176,7 +175,7 @@ abstract public class ZLView implements ZLViewEnums {
     // flutter方法
     public abstract SelectionResult onFingerLongPressFlutter(int x, int y);
 
-    public abstract boolean onFingerMoveAfterLongPressFlutter(int x, int y);
+    public abstract SelectionResult onFingerMoveAfterLongPressFlutter(int x, int y);
 
     public abstract SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y);
 
