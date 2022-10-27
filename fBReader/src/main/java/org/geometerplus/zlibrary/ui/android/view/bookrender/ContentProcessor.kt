@@ -72,21 +72,21 @@ interface ContentProcessor {
     fun onFingerPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 
     fun onFingerMove(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 
     fun onFingerRelease(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 
@@ -105,7 +105,7 @@ interface ContentProcessor {
     fun onFingerMoveAfterLongPress(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 
@@ -113,7 +113,7 @@ interface ContentProcessor {
     fun onFingerReleaseAfterLongPress(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     )
 

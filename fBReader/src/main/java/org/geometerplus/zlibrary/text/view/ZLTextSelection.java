@@ -370,7 +370,7 @@ public class ZLTextSelection extends ZLTextHighlighting {
 
         // 判断选中区域是否相同
         if (prevRange.isSame(myLeftMostRegionSoul, myRightMostRegionSoul)) {
-            Timber.v("时间测试, 重复选中 忽略");
+            Timber.tag("expandToFlutter").v("时间测试, 重复选中 忽略");
             return false;
         }
 

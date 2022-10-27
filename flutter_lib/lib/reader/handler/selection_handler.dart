@@ -9,7 +9,7 @@ enum NativeCmd {
   dragMove('on_selection_drag_move'),
   dragEnd('on_selection_drag_end'),
   longPressStart('long_press_start'),
-  longPressUpdate('long_press_update'),
+  longPressMove('long_press_move'),
   longPressEnd('long_press_end'),
   tapUp('on_tap_up'),
   selectionClear('selection_clear'),
@@ -28,10 +28,15 @@ const selectedText = 'selected_text';
 
 enum SelectionIndicator { topStart, bottomEnd }
 
-/// TODO 见HighlightPainter
-/// 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
+/// TODO
+/// 1. (已完成) 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
 /// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
+/// 2. tapUp改selectionResult
+/// 3. 局部刷新selectionMenu, 防止本页内容随selectionMenu显示隐藏刷新
+/// 4. 搞懂shouldPaint的调用
+/// 5. 增加添加本地图书功能 - DEMO测试
+/// 6. 研究pageView源码优化翻页效果
 class SelectionHandler {
 
   // 翻页划选最多5页
@@ -88,7 +93,7 @@ class SelectionHandler {
   }
 
   // todo
-  void onSelectionDragStart(DragStartDetails detail) {
+  void onDragStart(DragStartDetails detail) {
     Offset position = detail.localPosition;
     print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作$position}");
     _setSelectionTouch(position);
@@ -100,7 +105,7 @@ class SelectionHandler {
   }
 
   // todo
-  void onSelectionDragMove(DragUpdateDetails detail) {
+  void onDragMove(DragUpdateDetails detail) {
     Offset position = detail.localPosition;
     print('flutter动画流程[onDragUpdate], 有长按选中弹窗, 进行选中区域操作$position');
     if (!_isDuplicateTouch(position)) {
@@ -114,7 +119,7 @@ class SelectionHandler {
   }
 
   // todo
-  void onSelectionDragEnd(DragEndDetails detail) {
+  void onDragEnd(DragEndDetails detail) {
     print("flutter动画流程[onDragEnd], 长按选择操作$detail");
     _setSelectionTouch(null);
     readerContentHandler.callNativeMethod(NativeCmd.dragEnd, 0, 0);
@@ -133,13 +138,13 @@ class SelectionHandler {
     }
   }
 
-  void onLongPressMoveUpdate(LongPressMoveUpdateDetails detail) {
+  void onLongPressMove(LongPressMoveUpdateDetails detail) {
     Offset position = detail.localPosition;
     print("flutter动画流程:触摸事件, ------------长按事件移动 $position--------->>>>>>>>>");
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        NativeCmd.longPressUpdate,
+        NativeCmd.longPressMove,
         position.dx.toInt(),
         position.dy.toInt(),
       );

@@ -139,12 +139,12 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerMoveAfterLongPress(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when(val result = targetContentView.onFingerMoveAfterLongPressFlutter(x, y)) {
-                is SelectionResult.Highlight -> listener?.onSelection(result)
+                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -156,7 +156,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerReleaseAfterLongPress(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
@@ -164,7 +164,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 is SelectionResult.ShowMenu,
                 is SelectionResult.Highlight,
                 is SelectionResult.OpenDirectory,
-                is SelectionResult.OpenImage -> listener?.onSelection(result)
+                is SelectionResult.OpenImage -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -178,7 +178,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerRelease(
         x: Int,
         y: Int,
-        listener: SelectionListener?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
@@ -186,10 +186,10 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 is SelectionResult.ShowMenu,
                 is SelectionResult.NoMenu -> {
                     drawService.execute {
-                        listener?.onSelection(result, drawCurrentPage(size!!))
+                        selectionListener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
-                is SelectionResult.Highlight -> listener?.onSelection(result)
+                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -200,16 +200,13 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerPress(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerPressFlutter(x, y).let { repaint ->
-                if (repaint) {
-                    drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
-                    }
-                }
+            when (val result = targetContentView.onFingerPressFlutter(x, y)) {
+                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                else -> Unit
             }
         } else {
             targetContentView.onFingerPress(x, y)
@@ -219,16 +216,15 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     override fun onFingerMove(
         x: Int,
         y: Int,
-        resultCallBack: FlutterBridge.ResultCallBack?,
+        selectionListener: SelectionListener?,
         size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerMoveFlutter(x, y).let { repaint ->
-                if (repaint) {
-                    drawService.execute {
-                        resultCallBack?.onComplete(drawCurrentPage(size!!))
-                    }
-                }
+            val result = targetContentView.onFingerMoveFlutter(x, y)
+            Timber.v("时间测试, onFingerMove 返回结果 ${result.javaClass.simpleName}")
+            when(result) {
+                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                else -> Unit
             }
         } else {
             targetContentView.onFingerMove(x, y)

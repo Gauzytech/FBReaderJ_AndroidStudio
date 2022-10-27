@@ -101,9 +101,7 @@ public final class ZLTextRegion {
 		@NonNull
 		@Override
 		public String toString() {
-			return "ParagraphIndex= " + ParagraphIndex +
-					", StartElementIndex= " + StartElementIndex +
-					", EndElementIndex= " + EndElementIndex;
+			return String.format("[%s, %s, %s]", ParagraphIndex, StartElementIndex, EndElementIndex);
 		}
 	}
 

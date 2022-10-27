@@ -361,8 +361,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         repaint("moveSelectionCursorTo");
     }
 
+    /**
+     * 移动选择光标
+     * @return 'true' 选择区域拓展成功, 'false' 选择区域没拓展
+     */
     protected boolean moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y) {
-        Timber.v("长按选中流程, %s", getSelectionDebug());
+        Timber.v("长按选中流程[CursorToFlutter], %s", getSelectionDebug());
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         mySelection.setCursorInMovement(which, x, y);
         return mySelection.expandToFlutter(myCurrentPage, x, y);
@@ -463,6 +467,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     @Override
     public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
         Timber.v("渲染流程:Bitmap绘制, ================================ 开始paint: %s================================", pageIndex.name());
+        Timber.v("长按选中流程, 绘制");
         setContext(paintContext);
         // 绘制背景
         final ZLFile wallpaper = getWallpaperFile();

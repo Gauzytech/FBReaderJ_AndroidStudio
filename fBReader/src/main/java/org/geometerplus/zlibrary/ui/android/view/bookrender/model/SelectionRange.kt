@@ -12,6 +12,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextRegion.Soul
 data class SelectionRange(val leftMostRegionSoul: Soul?, val rightMostRegionSoul: Soul?) {
 
     fun isSame(leftMost: Soul?, rightMost: Soul?): Boolean {
+//        Timber.v("时间测试, start: $leftMostRegionSoul vs $leftMost, end: $rightMostRegionSoul vs. $rightMost")
         return leftMostRegionSoul == leftMost
                 && rightMostRegionSoul == rightMost
     }

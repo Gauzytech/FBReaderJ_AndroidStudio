@@ -43,11 +43,13 @@ sealed class SelectionResult {
         fun createHighlight(
             blocks: List<HighlightBlock>,
             cursorColor: ZLColor,
-            leftPoint: ZLTextSelection.Point,
-            rightPoint: ZLTextSelection.Point,
+            leftPoint: ZLTextSelection.Point?,
+            rightPoint: ZLTextSelection.Point?,
         ): Highlight {
             val dpi = ZLibrary.Instance().displayDPI
-            return Highlight(blocks, SelectionCursor(cursorColor, leftPoint, dpi), SelectionCursor(cursorColor, rightPoint, dpi))
+            val leftCursor = if (leftPoint != null) SelectionCursor(cursorColor, leftPoint, dpi) else null
+            val rightCursor = if (rightPoint != null) SelectionCursor(cursorColor, rightPoint, dpi) else null
+            return Highlight(blocks, leftCursor, rightCursor)
         }
     }
 }

@@ -149,7 +149,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 if (_selectionHandler.isSelectionStateEnabled) {
                   // 拖动开始，此时划选模式应该已经激活，隐藏划选弹窗
                   hideSelectionMenu();
-                  _selectionHandler.onSelectionDragStart(detail);
+                  _selectionHandler.onDragStart(detail);
                   var indicator = _selectionHandler
                       .enableCrossPageIndicator(detail.localPosition);
                   if (indicator != null) {
@@ -163,7 +163,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               };
               recognizer.onUpdate = (detail) {
                 if (_selectionHandler.isSelectionStateEnabled) {
-                  _selectionHandler.onSelectionDragMove(detail);
+                  _selectionHandler.onDragMove(detail);
                   var indicator = _selectionHandler
                       .enableCrossPageIndicator(detail.localPosition);
                   if (indicator != null) {
@@ -182,7 +182,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               };
               recognizer.onEnd = (detail) {
                 if (_selectionHandler.isSelectionStateEnabled) {
-                  _selectionHandler.onSelectionDragEnd(detail);
+                  _selectionHandler.onDragEnd(detail);
                   hideIndicator();
                 } else if (!readerViewModel.getMenuOpenState()) {
                   print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
@@ -202,9 +202,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 // 长按开始，隐藏划选弹窗
                 hideSelectionMenu();
                 _selectionHandler.onLongPressStart(detail);
+                //todo 激活跨页划选
               };
               recognizer.onLongPressMoveUpdate = (detail) {
-                _selectionHandler.onLongPressMoveUpdate(detail);
+                _selectionHandler.onLongPressMove(detail);
               };
               recognizer.onLongPressUp = () {
                 _selectionHandler.onLongPressUp();
@@ -353,6 +354,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           TouchEvent(action: eventAction, touchPosition: touchPosition);
       if (await _contentPainter!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
+        updateHighlight(null, null);
         contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
         setState(() {
           _selectionHandler.crossPageCount++;

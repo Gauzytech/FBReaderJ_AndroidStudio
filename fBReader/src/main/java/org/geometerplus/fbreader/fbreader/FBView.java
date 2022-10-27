@@ -1118,8 +1118,6 @@ public final class FBView extends ZLTextView {
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
-            } else {
-                return SelectionResult.None.INSTANCE;
             }
         }
 
@@ -1279,17 +1277,22 @@ public final class FBView extends ZLTextView {
      * @return 'true' need repaint, 'false' no need repaint
      */
     @Override
-    public boolean onFingerPressFlutter(int x, int y) {
+    public SelectionResult onFingerPressFlutter(int x, int y) {
         // 隐藏Toast
-        myReader.runAction(ActionCode.HIDE_TOAST);
+        // myReader.runAction(ActionCode.HIDE_TOAST);
 
         final float maxDist = ZLibrary.Instance().getDisplayDPI() / 4f;
+        // 寻找触摸范围内的选择光标
         final SelectionCursor.Which cursor = findSelectionCursor(x, y, maxDist * maxDist);
         if (cursor != null) {
-            myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
+            // myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             Timber.v("长按流程, 移动cursor, %s", cursor);
             moveSelectionCursorToFlutter(cursor, x, y);
-            return true;
+            return SelectionResult.Companion.createHighlight(
+                    findCurrentPageHighlightingCoordinates(),
+                    getSelectionCursorColor(),
+                    getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
+                    getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
         } else {
             // todo 如果允许屏幕亮度调节（手势），并且按下位置在内容宽度的 1 / 10，
             // --> (1). 标识屏幕亮度调节，(2). 记录起始Y，(3). 记录当前屏幕亮度
@@ -1304,7 +1307,7 @@ public final class FBView extends ZLTextView {
             // 长按之后，向下拖动，页面滚动的效果
 //        startManualScrolling(x, y);
 
-            return false;
+            return SelectionResult.None.INSTANCE;
         }
     }
 
@@ -1312,13 +1315,19 @@ public final class FBView extends ZLTextView {
      * 已经长按选中了一些文字，拖动选中小耳朵回调的方法
      */
     @Override
-    public boolean onFingerMoveFlutter(int x, int y) {
+    public SelectionResult onFingerMoveFlutter(int x, int y) {
 
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            mCanMagnifier = true;
-            Timber.v("长按流程, 移动cursor, %s", cursor);
-            return moveSelectionCursorToFlutter(cursor, x, y);
+//            mCanMagnifier = true;
+            Timber.v("长按流程[onFingerMoveFlutter], 移动cursor, %s", cursor);
+            if (moveSelectionCursorToFlutter(cursor, x, y)) {
+                return SelectionResult.Companion.createHighlight(
+                        findCurrentPageHighlightingCoordinates(),
+                        getSelectionCursorColor(),
+                        getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
+                        getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
+            }
         } else {
             // todo 如果有选中， 隐藏选中动作弹框
 //        if (myReader.isActionEnabled(ActionCode.SELECTION_CLEAR)) {
@@ -1337,14 +1346,15 @@ public final class FBView extends ZLTextView {
 //                    return;
 //                }
 //            }
-//
+//            // 长按之后，向下拖动，页面滚动的效果
 //            if (isFlickScrollingEnabled()) {
 //                myReader.getViewWidget().scrollManuallyTo(x, y);
 //            }
 //        }
 
-            return false;
         }
+
+        return SelectionResult.None.INSTANCE;
     }
 
     /**

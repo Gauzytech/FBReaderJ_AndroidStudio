@@ -225,7 +225,7 @@ class ReaderContentHandler {
       case NativeCmd.dragMove:
       case NativeCmd.dragEnd:
       case NativeCmd.longPressStart:
-      case NativeCmd.longPressUpdate:
+      case NativeCmd.longPressMove:
       case NativeCmd.longPressEnd:
       case NativeCmd.tapUp:
       case NativeCmd.selectionClear:
@@ -241,6 +241,7 @@ class ReaderContentHandler {
         );
         print('时间测试, $nativeCmd 获得结果, ${now()}');
 
+        // 书页内容
         Uint8List? imageBytes = result['page'];
         if (imageBytes != null) {
           print('时间测试, $nativeCmd handleImage');
@@ -254,7 +255,7 @@ class ReaderContentHandler {
           _handleHighlight(highlightsData);
         }
 
-        // 显示选择弹窗
+        // 选择弹窗
         String? selectionMenuData = result['selection_menu_data'];
         if (selectionMenuData != null) {
           _handleSelectionMenu(selectionMenuData);
