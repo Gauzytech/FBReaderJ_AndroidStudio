@@ -150,11 +150,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                   // 拖动开始，此时划选模式应该已经激活，隐藏划选弹窗
                   hideSelectionMenu();
                   _selectionHandler.onDragStart(detail);
-                  var indicator = _selectionHandler
-                      .enableCrossPageIndicator(detail.localPosition);
-                  if (indicator != null) {
-                    showIndicator(indicator, detail.localPosition);
-                  }
+                  _processIndicator(NativeCmd.dragStart, detail.localPosition);
                 } else {
                   print(
                       "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
@@ -164,31 +160,20 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
               recognizer.onUpdate = (detail) {
                 if (_selectionHandler.isSelectionStateEnabled) {
                   _selectionHandler.onDragMove(detail);
-                  var indicator = _selectionHandler
-                      .enableCrossPageIndicator(detail.localPosition);
-                  if (indicator != null) {
-                    showIndicator(indicator, detail.localPosition);
-                  } else {
-                    hideIndicator();
-                  }
+                  _processIndicator(NativeCmd.dragMove, detail.localPosition);
                 } else if (!readerViewModel.getMenuOpenState()) {
                   print(
                       'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
                   onUpdateEvent(detail, readerViewModel);
-                } else {
-                  print(
-                      'flutter动画流程[onDragUpdate], 忽略事件${detail.localPosition}');
                 }
               };
               recognizer.onEnd = (detail) {
                 if (_selectionHandler.isSelectionStateEnabled) {
                   _selectionHandler.onDragEnd(detail);
-                  hideIndicator();
+                  _processIndicator(NativeCmd.dragEnd, null);
                 } else if (!readerViewModel.getMenuOpenState()) {
                   print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
                   onEndEvent(detail, readerViewModel);
-                } else {
-                  print('flutter动画流程[onDragEnd], 忽略事件$detail');
                 }
               };
             },
@@ -202,13 +187,15 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
                 // 长按开始，隐藏划选弹窗
                 hideSelectionMenu();
                 _selectionHandler.onLongPressStart(detail);
-                //todo 激活跨页划选
+                _processIndicator(NativeCmd.longPressStart, detail.localPosition);
               };
               recognizer.onLongPressMoveUpdate = (detail) {
                 _selectionHandler.onLongPressMove(detail);
+                _processIndicator(NativeCmd.longPressMove, detail.localPosition);
               };
               recognizer.onLongPressUp = () {
                 _selectionHandler.onLongPressUp();
+                _processIndicator(NativeCmd.longPressEnd, null);
               };
             },
           ),
@@ -423,11 +410,43 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
           _cancelTimer();
           // todo
           //  1. 5页的翻页划选限制 (完成)
-          //  2. 在最后一页划选页取消划选之后, 前面的缓存页没有刷新,
+          //  2. 在最后一页划选页取消划选之后, 前面的缓存页没有刷新, (完成)
           //  3. 处理图片选中
           navigatePageNoAnimation(touchPosition, indicator);
         }
       });
+    }
+  }
+
+  void _processIndicator(NativeCmd cmd, Offset? localPosition) {
+    switch (cmd) {
+      case NativeCmd.dragStart:
+      case NativeCmd.longPressStart:
+        {
+          var indicator =
+              _selectionHandler.enableCrossPageIndicator(localPosition!);
+          if (indicator != null) {
+            showIndicator(indicator, localPosition);
+          }
+        }
+        break;
+      case NativeCmd.dragMove:
+      case NativeCmd.longPressMove:
+        {
+          var indicator =
+              _selectionHandler.enableCrossPageIndicator(localPosition!);
+          if (indicator != null) {
+            showIndicator(indicator, localPosition);
+          } else {
+            hideIndicator();
+          }
+        }
+        break;
+      case NativeCmd.dragEnd:
+      case NativeCmd.longPressEnd:
+        hideIndicator();
+        break;
+      default:
     }
   }
 
