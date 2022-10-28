@@ -95,11 +95,9 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         return targetContentView.hasSelection()
     }
 
-    override fun onFingerSingleTap(x: Int, y: Int, paintListener: PaintListener?) {
+    override fun onFingerSingleTap(x: Int, y: Int, selectionListener: SelectionListener?) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            targetContentView.onFingerSingleTapFlutter(x, y).let {
-                paintListener?.repaint(it)
-            }
+            targetContentView.onFingerSingleTapFlutter(x, y)
         } else {
             targetContentView.onFingerSingleTap(x, y)
         }

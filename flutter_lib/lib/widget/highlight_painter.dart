@@ -66,10 +66,11 @@ class HighlightPainter extends CustomPainter {
 
   void updateHighlight(
       List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
-    print('时间测试, 更新高亮, $blocks');
     if (blocks != null) {
+      print('时间测试, 更新高亮, $blocks');
       highlightBlocks = List.from(blocks);
     } else {
+      print('时间测试, 清除高亮');
       highlightBlocks = null;
     }
 

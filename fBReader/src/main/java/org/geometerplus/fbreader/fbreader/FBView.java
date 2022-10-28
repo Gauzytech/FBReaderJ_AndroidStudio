@@ -1200,7 +1200,7 @@ public final class FBView extends ZLTextView {
      * 手指点击回调的方法
      */
     @Override
-    public boolean onFingerSingleTapFlutter(int x, int y) {
+    public void onFingerSingleTapFlutter(int x, int y) {
         Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
 //        if (isPreview()) {
@@ -1212,7 +1212,7 @@ public final class FBView extends ZLTextView {
         // 1. 清除选中，
         // 2. 隐藏选中动作弹框(在flutter执行)
         if (cleaAllSelectedSections()) {
-            return true;
+            return;
         }
 
         // 只有在超链接上面点击了，才会触发这个逻辑
@@ -1224,9 +1224,9 @@ public final class FBView extends ZLTextView {
             Timber.v("长按流程, 超链接");
             outlineRegion(hyperlinkRegion);
 //            repaint("onFingerSingleTap");
-            // todo action中跳转方法待实现
+            // todo 超链接跳转方法待实现
 //            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
-            return true;
+            return;
         }
 
         // todo 这个是啥?? 图书简介界面?
@@ -1245,7 +1245,7 @@ public final class FBView extends ZLTextView {
 //            repaint("onFingerSingleTap");
             // todo
 //            myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
-            return true;
+            return;
         }
 
         // todo 书签高亮
@@ -1268,7 +1268,6 @@ public final class FBView extends ZLTextView {
         // todo 显示顶部和底部menu的
 //        onFingerSingleTapLastResort(x, y);
 
-        return false;
     }
 
     /**

@@ -66,7 +66,7 @@ interface ContentProcessor {
     fun onFingerSingleTap(
         x: Int,
         y: Int,
-        paintListener: PaintListener?
+        selectionListener: SelectionListener?
     )
 
     fun onFingerPress(

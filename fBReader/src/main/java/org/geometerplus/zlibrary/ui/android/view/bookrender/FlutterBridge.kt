@@ -108,25 +108,28 @@ class FlutterBridge(
             LONG_PRESS_START -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Double>("width")!!.toInt()
-                val height = call.argument<Double>("height")!!.toInt()
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件, ${call.method}: [$dx, $dy], [$width, $height]")
+                Timber.v("flutter长按事件, ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerLongPress(
-                    dx, dy,
-                    getSelectionCallback(call.method, result), Pair(width, height)
+                    dx,
+                    dy,
+                    getSelectionCallback(call.method, result),
+                    Pair(
+                        call.argument<Double>("width")!!.toInt(),
+                        call.argument<Double>("height")!!.toInt()
+                    )
                 )
             }
             LONG_PRESS_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件,  ${call.method}: [$dx, $dy], [$width, $height]")
+                Timber.v("flutter长按事件,  ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerMoveAfterLongPress(
-                    dx, dy,
-                    getSelectionCallback(call.method, result), Pair(width, height)
+                    dx,
+                    dy,
+                    getSelectionCallback(call.method, result),
+                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
                 )
             }
             LONG_PRESS_END -> {
@@ -141,66 +144,52 @@ class FlutterBridge(
                 )
             }
             ON_TAP_UP -> {
-                val dx = call.argument<Int>("touch_x")!!.toInt()
-                val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                contentProcessor.onFingerSingleTap(dx, dy, object : PaintListener {
-                    override fun repaint(shouldRepaint: Boolean) {
-                        Timber.v("时间测试, 重绘返回 $ON_TAP_UP")
-                        // 绘制内容的bitmap
-                        val bitmap = drawBitmap(PageIndex.CURRENT, width, height)
-                        // 回调结果
-                        result.success(mapOf("page" to bitmap.toByteArray()))
-                    }
-                })
+                contentProcessor.onFingerSingleTap(
+                    call.argument<Int>("touch_x")!!.toInt(),
+                    call.argument<Int>("touch_y")!!.toInt(),
+                    getSelectionCallback(call.method, result)
+                )
             }
             ON_SELECTION_DRAG_START -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerPress(
                     dx, dy,
                     getSelectionCallback(call.method, result),
-                    Pair(width, height)
+                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
                 )
             }
             ON_SELECTION_DRAG_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerMove(
                     dx, dy,
                     getSelectionCallback(call.method, result),
-                    Pair(width, height)
+                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
                 )
             }
             ON_SELECTION_DRAG_END -> {
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerRelease(
                     0, 0,
                     getSelectionCallback(call.method, result),
-                    Pair(width, height)
+                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
                 )
             }
             SELECTION_CLEAR -> {
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.cleaAllSelectedSections(
                     getResultCallback(
                         call.method,
                         result,
-                    ), Pair(width, height)
+                    ), Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
                 )
             }
             SELECTED_TEXT -> {

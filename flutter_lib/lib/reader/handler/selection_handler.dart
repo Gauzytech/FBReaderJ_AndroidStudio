@@ -32,7 +32,7 @@ enum SelectionIndicator { topStart, bottomEnd }
 /// 1. (已完成) 把这个选择, 高亮的绘制移到一个独立的图层, 就是在内容custom painter上再覆盖一层透明的选择高亮层,
 /// 因为长按划选每次会触发内容图片的重绘(高亮和内容一起绘制), 在老机器上有点卡.
 /// 参考: https://medium.flutterdevs.com/repaintboundary-in-flutter-9e2f426ff579, 中的_buildCursor()
-/// 2. tapUp改selectionResult
+/// 2. (已完成) tapUp改selectionResult
 /// 3. 局部刷新selectionMenu, 防止本页内容随selectionMenu显示隐藏刷新
 /// 4. 搞懂shouldPaint的调用
 /// 5. 增加添加本地图书功能 - DEMO测试
