@@ -377,7 +377,7 @@ class ReaderProgressManager {
     return true;
   }
 
-  void clear() {
+  void tearDown() {
 
   }
 

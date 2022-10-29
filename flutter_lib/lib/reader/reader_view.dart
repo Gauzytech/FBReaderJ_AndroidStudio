@@ -101,6 +101,12 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
     return true;
   }
 
+  @override
+  void dispose() {
+    print('flutter内容绘制流程, dispose1');
+    super.dispose();
+  }
+
   void initConfig() {
     configData = ReaderConfigEntity(id: 'test_id');
   }

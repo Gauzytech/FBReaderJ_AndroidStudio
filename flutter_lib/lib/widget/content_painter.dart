@@ -32,8 +32,12 @@ class ContentPainter extends CustomPainter {
     //   print("flutter内容绘制流程, _image draw finish");
     // }
 
-    pageManager.setPageSize(size);
-    pageManager.onPageDraw(canvas);
+    if(!pageManager.isPageDataEmpty()) {
+      pageManager.setPageSize(size);
+      pageManager.onPageDraw(canvas);
+    } else {
+      print('flutter内容绘制流程, 没有bitmap缓存数据, 绘制空白');
+    }
   }
 
   ///是否需要重绘

@@ -161,6 +161,14 @@ class BitmapManagerImpl with BitmapManager {
   String debugCachedIndexString() {
     return "$pageIndexCache";
   }
+
+  bool isEmpty() {
+    for (int i = 0; i < BitmapManager.cacheSize; ++i) {
+      if(pageIndexCache[i] != null) return false;
+      if(_imageCache[i] != null) return false;
+    }
+    return true;
+  }
 }
 
 class ImageSrc {

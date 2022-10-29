@@ -348,4 +348,8 @@ class ReaderPageManager {
       touchPosition: Offset.zero,
     );
   }
+
+  bool isPageDataEmpty() {
+    return currentAnimationPage.readerViewModel.isPageDataEmpty();
+  }
 }

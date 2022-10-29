@@ -115,6 +115,7 @@ import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 import org.geometerplus.zlibrary.ui.android.view.AndroidFontUtil;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterBridge;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand;
 import org.geometerplus.zlibrary.ui.android.view.callbacks.BookMarkCallback;
 
 import java.io.PrintWriter;
@@ -373,6 +374,7 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
             // 设置flutter阅读组件
             if (flutterFragment == null) {
+                Timber.v("flutter内容绘制流程, 创建flutterFragment");
                 flutterFragment = FlutterFragment
                         .withCachedEngine(FBReaderApplication.ENGINE_ID)
                         .build();
@@ -1013,7 +1015,12 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
 
     @Override
     protected void onDestroy() {
-//        readerView.removeAllViews();
+        // 通知flutter清除当前显示的图书页面, 避免用户切换图书时，有机会看到上一本图书的内容
+        invokeFlutterMethod(FlutterCommand.TEAR_DOWN, null, null);
+        flutterFragment.detachFromFlutterEngine();
+        readerView.removeAllViews();
+        flutterBridge.tearDown();
+        // 注销bind service
         getCollection().unbind();
         unbindService(DataConnection);
 //        readerController.onCleared();

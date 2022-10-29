@@ -12,6 +12,19 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.DRAW_ON_BITMAP
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_END
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_MOVE
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_START
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_SCROLLING_FINISHED
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_SELECTION_DRAG_END
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_SELECTION_DRAG_MOVE
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_SELECTION_DRAG_START
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_TAP_UP
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.PREPARE_PAGE
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTED_TEXT
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTION_CLEAR
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -28,20 +41,6 @@ import java.io.FileOutputStream
 
 private const val TAG = "flutter_bridge"
 private const val METHOD_CHANNEL_PATH = "platform_channel_methods"
-
-private const val DRAW_ON_BITMAP = "draw_on_bitmap"
-private const val PREPARE_PAGE = "prepare_page"
-private const val CAN_SCROLL = "can_scroll"
-private const val ON_SCROLLING_FINISHED = "on_scrolling_finished"
-private const val LONG_PRESS_START = "long_press_start"
-private const val LONG_PRESS_MOVE = "long_press_move"
-private const val LONG_PRESS_END = "long_press_end"
-private const val ON_TAP_UP = "on_tap_up"
-private const val ON_SELECTION_DRAG_START = "on_selection_drag_start"
-private const val ON_SELECTION_DRAG_MOVE = "on_selection_drag_move"
-private const val ON_SELECTION_DRAG_END = "on_selection_drag_end"
-private const val SELECTION_CLEAR = "selection_clear"
-private const val SELECTED_TEXT = "selected_text"
 
 class FlutterBridge(
     private val context: Context,
@@ -283,6 +282,10 @@ class FlutterBridge(
                 result.success(mapOf("page" to data))
             }
         }
+    }
+
+    fun tearDown() {
+        channel.setMethodCallHandler(null)
     }
 
     interface ResultCallBack {

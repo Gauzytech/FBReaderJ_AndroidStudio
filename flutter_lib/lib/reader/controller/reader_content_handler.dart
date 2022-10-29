@@ -22,9 +22,6 @@ class ReaderContentHandler {
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
 
-  // PageIndex currentPageIndex = PageIndex.prev_2;
-  StreamSubscription? _streamSubscription;
-
   ReaderContentHandler({
     required this.methodChannel,
     required this.viewState,
@@ -43,22 +40,15 @@ class ReaderContentHandler {
 
   /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
   Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
+    print('flutter内容绘制流程, 收到native通讯, ${methodCall.method}');
     switch (methodCall.method) {
       case 'init_load':
-        // 本地数据全部解析完毕后，会执行init_load方法开始渲染图书第一页
-        ImageSrc imageSrc = getPage(PageIndex.current);
-        if (imageSrc.img != null) {
-          refreshContent();
-        } else {
-          buildPage(PageIndex.current);
-        }
+        // 本地数据全部解析完毕后，会执行init_load方法开始通知渲染图书页面
+        buildPage(PageIndex.current);
         break;
-      case "show_selection_menu":
-        Uint8List imgBytes = methodCall.arguments['page'];
-        int selectionStartY = methodCall.arguments['selectionStartY'];
-        int selectionEndY = methodCall.arguments['selectionEndY'];
-        print(
-            '时间测试 selectionStartY, ${imgBytes.length}, $selectionStartY, $selectionEndY');
+      case 'tear_down':
+        tearDown();
+        refreshContent();
         break;
     }
   }
@@ -193,10 +183,8 @@ class ReaderContentHandler {
     return PageIndex.current;
   }
 
-  void clear() {
+  void tearDown() {
     _bitmapManager.clear();
-    _streamSubscription?.cancel();
-    _streamSubscription = null;
   }
 
   /// 判断是否可以滚动到上一页/下一页
@@ -310,5 +298,9 @@ class ReaderContentHandler {
     viewState.showSelectionMenu(
       showPosition,
     );
+  }
+
+  bool isCacheEmpty(){
+    return _bitmapManager.isEmpty();
   }
 }

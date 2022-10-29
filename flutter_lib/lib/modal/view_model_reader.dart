@@ -239,11 +239,15 @@ class ReaderViewModel extends BaseViewModel {
     _readerContentHandler?.preloadAdjacentPages();
   }
 
+  bool isPageDataEmpty() {
+    return _readerContentHandler?.isCacheEmpty() ?? true;
+  }
+
   @override
   void dispose() {
+    _readerContentHandler?.tearDown();
+    _configModel.tearDown();
+    _progressManager.tearDown();
     super.dispose();
-    _readerContentHandler?.clear();
-    _configModel.clear();
-    _progressManager.clear();
   }
 }

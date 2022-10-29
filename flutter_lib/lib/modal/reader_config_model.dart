@@ -13,7 +13,7 @@ class ReaderConfigModel {
 
   ReaderConfigModel({required this.viewModel});
 
-  void clear() {
+  void tearDown() {
     viewModel = null;
     // catalog = null;
     // configEntity = null;

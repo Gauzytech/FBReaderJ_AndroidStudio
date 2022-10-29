@@ -269,7 +269,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, Rea
 
   @override
   void dispose() {
+    print('flutter内容绘制流程, dispose2');
     animationController?.dispose();
+    viewModel?.dispose();
     _cancelTimer();
     super.dispose();
   }
