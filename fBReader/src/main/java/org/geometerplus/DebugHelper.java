@@ -20,6 +20,7 @@ public class DebugHelper {
    public static boolean ENABLE_SET_ORIENTATION = true;
    public static boolean ENABLE_ON_BOOK_UPDATED = false;
    public static boolean SAVE_BITMAP = false;
+   public static boolean ENABLE_SAF = true;
 
    public static String getPatinStateStr(int paintState) {
 
