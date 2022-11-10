@@ -22,7 +22,7 @@ import 'controller/page_pan_gesture_recognizer.dart';
 import 'controller/reader_content_handler.dart';
 import 'controller/reader_page_manager.dart';
 
-class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
+class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
   // 放大镜的半径
   static const double radius = 124;
   static const double targetDiameter = 2 * radius * 333 / 293;
@@ -37,7 +37,7 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
   // 页脚的bitmap
   // private Bitmap myFooterBitmap;
 
-  const ReaderWidget({Key? key}) : super(key: key);
+  const ReaderBookContentView({Key? key}) : super(key: key);
 
   @override
   BaseStatefulViewState<BaseStatefulView<BaseViewModel>, ReaderViewModel>
@@ -46,7 +46,7 @@ class ReaderWidget extends BaseStatefulView<ReaderViewModel> {
   }
 }
 
-class ReaderBookContentViewState extends BaseStatefulViewState<ReaderWidget, ReaderViewModel>
+class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContentView, ReaderViewModel>
     with TickerProviderStateMixin {
   final _methodChannel = const MethodChannel('platform_channel_methods');
 

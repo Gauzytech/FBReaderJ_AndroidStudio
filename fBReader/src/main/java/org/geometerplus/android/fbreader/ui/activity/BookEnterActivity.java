@@ -65,20 +65,23 @@ public class BookEnterActivity extends AppCompatActivity {
         Timber.v("图书导入, 开始获取图书数据");
         myCollection.bindToService(this, () -> {
             if (DebugHelper.ENABLE_SAF) {
-                findDeviceAvailableBooks();
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/epub+zip");
+                startActivityForResult(intent, REQUEST_CODE_FOR_SINGLE_FILE);
             } else {
                 // 通过AIDL接口调用数据库，获取之前阅读的图书信息
-                int idx = 2;
+                int idx = 4;
                 Book book = myCollection.getBookByFile(ROOT + name[idx]);
 
                 if (book == null) {
-                    Timber.v("ceshi123, 无数据, 获取asset demo图书");
+                    Timber.v("打开图书, 无数据, 获取asset demo图书");
                     String path = copy2Storage(idx);
                     System.out.println(path);
                     book = myCollection.getBookByFile(path);
                 }
                 if (book != null) {
-                    Timber.v("ceshi123, 数据获取成功, FBReader library -> 解析并打开");
+                    Timber.v("打开图书, 数据获取成功, FBReader library -> 解析并打开");
                     // 调用FbReader开始解析图书， 并且打开阅读界面
                     FBReader.openBookActivity(BookEnterActivity.this, book, null);
                     finish();
@@ -87,15 +90,6 @@ public class BookEnterActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    private void findDeviceAvailableBooks() {
-        //通过系统的文件浏览器选择一个文件
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        //筛选，只显示可以“打开”的结果，如文件(而不是联系人或时区列表)
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/epub+zip");
-        startActivityForResult(intent, REQUEST_CODE_FOR_SINGLE_FILE);
     }
 
     @Override

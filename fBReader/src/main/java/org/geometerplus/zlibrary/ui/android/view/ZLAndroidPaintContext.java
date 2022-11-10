@@ -140,7 +140,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         myCanvas = canvas;
         myGeometry = geometry;
         myScrollbarWidth = scrollbarWidth;
-        Timber.v("可会知区域, setMainHeight, %s", geometry.AreaSize.Height);
+        Timber.v("可绘制区域, setMainHeight, %s", geometry.AreaSize.Height);
         // 设置文字的画笔
         myTextPaint.setLinearText(false);
         myTextPaint.setAntiAlias(AntiAliasOption.getValue());

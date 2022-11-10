@@ -79,7 +79,7 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
                 });
               },
               child: RepaintBoundary(
-                child: ReaderWidget(
+                child: ReaderBookContentView(
                   key: readerKey,
                 ),
               ),
