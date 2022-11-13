@@ -14,9 +14,9 @@ class PagePanDragRecognizer extends PanGestureRecognizer {
   String get debugDescription => "page pan gesture recognizer";
 
   @override
-  void addPointer(PointerDownEvent event) {
+  void addAllowedPointer(PointerDownEvent event) {
     if (!isMenuOpen) {
-      super.addPointer(event);
+      super.addAllowedPointer(event);
     }
   }
 }

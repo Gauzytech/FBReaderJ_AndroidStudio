@@ -21,6 +21,7 @@ import 'animation/model/selection_cursor.dart';
 import 'controller/page_pan_gesture_recognizer.dart';
 import 'controller/reader_content_handler.dart';
 import 'controller/reader_page_manager.dart';
+import 'gestures/book_gesture_recognizer.dart';
 
 class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
   // 放大镜的半径
@@ -41,9 +42,7 @@ class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
 
   @override
   BaseStatefulViewState<BaseStatefulView<BaseViewModel>, ReaderViewModel>
-  buildState() {
-    return ReaderBookContentViewState();
-  }
+      buildState() => ReaderBookContentViewState();
 }
 
 class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContentView, ReaderViewModel>
@@ -66,6 +65,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
   ContentPainter? _contentPainter;
   final HighlightPainter _highlightPainter = HighlightPainter();
 
+  final GlobalKey<RawGestureDetectorState> _gestureDetectorKey =
+      GlobalKey<RawGestureDetectorState>();
+  Map<Type, GestureRecognizerFactory> _gestureRecognizers =
+      const <Type, GestureRecognizerFactory>{};
   AnimationController? animationController;
 
   late ReaderContentHandler _readerContentHandler;
@@ -86,10 +89,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
   @override
   void loadData(BuildContext context, ReaderViewModel? viewModel) {
     print('时间测试, loadData');
-    ReaderViewModel readerViewModel =
-        ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
+    assert(viewModel != null, 'ReaderViewModel cannot be null');
 
-    switch (readerViewModel.getConfigData().currentAnimationMode) {
+    switch (viewModel!.getConfigData().currentAnimationMode) {
       // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
       case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
         animationController = AnimationControllerWithListenerNumber(
@@ -107,7 +109,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     }
 
     if (animationController != null) {
-      readerViewModel.getConfigData().currentAnimationMode =
+      viewModel.getConfigData().currentAnimationMode =
           ReaderPageManager.TYPE_ANIMATION_PAGE_TURN;
 
       ReaderPageManager pageManager = ReaderPageManager(
@@ -115,10 +117,9 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
           topIndicatorKey: topIndicatorKey,
           bottomIndicatorKey: bottomIndicatorKey,
           animationController: animationController!,
-          currentAnimationType:
-              readerViewModel.getConfigData().currentAnimationMode,
-          viewModel: readerViewModel);
-      readerViewModel.setContentHandler(_readerContentHandler);
+          currentAnimationType: viewModel.getConfigData().currentAnimationMode,
+          viewModel: viewModel);
+      viewModel.setContentHandler(_readerContentHandler);
       _contentPainter = ContentPainter(pageManager);
     }
 
@@ -130,92 +131,17 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
 
   @override
   Widget onBuildView(BuildContext context, ReaderViewModel? viewModel) {
-    ReaderViewModel readerViewModel =
-    ArgumentError.checkNotNull(viewModel, 'ReaderViewModel');
+    assert(viewModel != null, 'ReaderViewModel cannot be null');
 
-    final contentSize = readerViewModel.getContentSize();
+    _setGestureRecognizers(viewModel!);
+    final contentSize = viewModel.getContentSize();
     return FittedBox(
       // GestureDetector需要放在fittedBox里，
       // 不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
       child: RawGestureDetector(
+        key: _gestureDetectorKey,
         behavior: HitTestBehavior.translucent,
-        gestures: <Type, GestureRecognizerFactory>{
-          PagePanDragRecognizer:
-              GestureRecognizerFactoryWithHandlers<PagePanDragRecognizer>(
-            () => PagePanDragRecognizer(),
-            (PagePanDragRecognizer recognizer) {
-              recognizer.setMenuOpen(false);
-              recognizer.onStart = (detail) {
-                if (_selectionHandler.isSelectionStateEnabled) {
-                  // 拖动开始，此时划选模式应该已经激活，隐藏划选弹窗
-                  hideSelectionMenu();
-                  _selectionHandler.onDragStart(detail);
-                  _processIndicator(NativeCmd.dragStart, detail.localPosition);
-                } else {
-                  print(
-                      "flutter动画流程[onDragStart], 进行翻页操作${detail.localPosition}");
-                  onDragStart(detail, readerViewModel);
-                }
-              };
-              recognizer.onUpdate = (detail) {
-                if (_selectionHandler.isSelectionStateEnabled) {
-                  _selectionHandler.onDragMove(detail);
-                  _processIndicator(NativeCmd.dragMove, detail.localPosition);
-                } else if (!readerViewModel.getMenuOpenState()) {
-                  print(
-                      'flutter动画流程[onDragUpdate], 进行翻页操作${detail.localPosition}');
-                  onUpdateEvent(detail, readerViewModel);
-                }
-              };
-              recognizer.onEnd = (detail) {
-                if (_selectionHandler.isSelectionStateEnabled) {
-                  _selectionHandler.onDragEnd(detail);
-                  _processIndicator(NativeCmd.dragEnd, null);
-                } else if (!readerViewModel.getMenuOpenState()) {
-                  print("flutter动画流程[onDragEnd], 进行翻页操作$detail");
-                  onEndEvent(detail, readerViewModel);
-                }
-              };
-            },
-          ),
-          LongPressGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
-                () => LongPressGestureRecognizer(),
-                (LongPressGestureRecognizer recognizer) {
-              recognizer.onLongPressStart = (detail) {
-                updateSelectionState(true);
-                // 长按开始，隐藏划选弹窗
-                hideSelectionMenu();
-                _selectionHandler.onLongPressStart(detail);
-                _processIndicator(NativeCmd.longPressStart, detail.localPosition);
-              };
-              recognizer.onLongPressMoveUpdate = (detail) {
-                _selectionHandler.onLongPressMove(detail);
-                _processIndicator(NativeCmd.longPressMove, detail.localPosition);
-              };
-              recognizer.onLongPressUp = () {
-                _selectionHandler.onLongPressUp();
-                _processIndicator(NativeCmd.longPressEnd, null);
-              };
-            },
-          ),
-          TapGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                  () => TapGestureRecognizer(),
-                  (TapGestureRecognizer recognizer) {
-            recognizer.onTapUp = (detail) {
-              // 点击事件，隐藏划选弹窗
-              if (_selectionHandler.isSelectionStateEnabled) {
-                _selectionHandler.onTagUp(detail);
-                hideSelectionMenu();
-                updateHighlight(null, null);
-                updateSelectionState(false);
-              } else {
-                navigatePageNoAnimation(detail.localPosition, null);
-              }
-            };
-          })
-        },
+        gestures: _gestureRecognizers,
         child: Stack(
           children: <Widget>[
             _buildHighlightLayer(contentSize.width, contentSize.height),
@@ -276,7 +202,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     super.dispose();
   }
 
-  void onDragStart(DragStartDetails detail, ReaderViewModel readerViewModel) {
+  void onDragStart(DragStartDetails detail) {
     // 如果动画正在进行, 直接忽略event
     if (!_contentPainter!.isDuplicateEvent(
       EventAction.dragStart,
@@ -294,7 +220,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     }
   }
 
-  Future<void> onUpdateEvent(DragUpdateDetails detail, ReaderViewModel readerViewModel) async {
+  Future<void> onUpdateEvent(DragUpdateDetails detail) async {
     if (!_contentPainter!.isDuplicateEvent(
       EventAction.move,
       detail.localPosition,
@@ -315,7 +241,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     }
   }
 
-  Future<void> onEndEvent(DragEndDetails detail, ReaderViewModel readerViewModel) async {
+  Future<void> onEndEvent(DragEndDetails detail) async {
     if (!_contentPainter!.isDuplicateEvent(
       EventAction.dragEnd,
       _contentPainter!.lastTouchPosition(),
@@ -604,8 +530,152 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
         });
   }
 
-  void updateHighlight(List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+  void updateHighlight(
+      List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
     _highlightPainter.updateHighlight(blocks, selectionCursors);
     highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
+  }
+
+  void _setGestureRecognizers(ReaderViewModel viewModel) {
+    switch (viewModel.getConfigData().currentAnimationMode) {
+      case ReaderPageManager.TYPE_ANIMATION_SLIDE_TURN:
+        animationController = AnimationControllerWithListenerNumber.unbounded(
+          duration: const Duration(milliseconds: 150),
+          vsync: this,
+        );
+        _gestureRecognizers = <Type, GestureRecognizerFactory>{
+          BookVerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+              BookVerticalDragGestureRecognizer>(
+              () => BookVerticalDragGestureRecognizer(),
+              (BookVerticalDragGestureRecognizer instance) {
+            instance
+              ..onDown = _handleDragDown
+              ..onStart = _handleDragStart
+              ..onUpdate = _handleDragUpdate
+              ..onEnd = _handleDragEnd
+              ..onCancel = _handleDragCancel;
+          }),
+          LongPressGestureRecognizer: _longPressRecognizer(),
+          TapGestureRecognizer: _tapRecognizer()
+        };
+        break;
+      // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
+      case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
+      case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
+        animationController = AnimationControllerWithListenerNumber.unbounded(
+          duration: const Duration(milliseconds: 150),
+          vsync: this,
+        );
+        _gestureRecognizers = <Type, GestureRecognizerFactory>{
+          BookHorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
+              BookHorizontalDragGestureRecognizer>(
+              () => BookHorizontalDragGestureRecognizer(),
+              (BookHorizontalDragGestureRecognizer instance) {
+            instance
+              ..onDown = _handleDragDown
+              ..onStart = _handleDragStart
+              ..onUpdate = _handleDragUpdate
+              ..onEnd = _handleDragEnd
+              ..onCancel = _handleDragCancel;
+          }),
+          LongPressGestureRecognizer: _longPressRecognizer(),
+          TapGestureRecognizer: _tapRecognizer()
+        };
+        break;
+    }
+  }
+
+  /// 这个方法在dragDown, longPressDown时都会调用
+  void _handleDragDown(DragDownDetails details) {
+    print("flutter动画流程[onDragDown], isSelected: ${_selectionHandler.isSelectionStateEnabled}");
+    if (_selectionHandler.isSelectionStateEnabled) {
+      // 此时划选模式应该已经激活，隐藏划选弹窗
+      hideSelectionMenu();
+    }
+  }
+
+  void _handleDragStart(DragStartDetails details) {
+    if (_selectionHandler.isSelectionStateEnabled) {
+      _selectionHandler.onDragStart(details);
+      _processIndicator(NativeCmd.dragStart, details.localPosition);
+    } else {
+      print("flutter动画流程[onDragStart], 进行翻页操作${details.localPosition}");
+      onDragStart(details);
+    }
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    if (_selectionHandler.isSelectionStateEnabled) {
+      _selectionHandler.onDragMove(details);
+      _processIndicator(NativeCmd.dragMove, details.localPosition);
+    } else {
+      print('flutter动画流程[onDragUpdate], 进行翻页操作${details.localPosition}');
+      onUpdateEvent(details);
+    }
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    if (_selectionHandler.isSelectionStateEnabled) {
+      _selectionHandler.onDragEnd(details);
+      _processIndicator(NativeCmd.dragEnd, null);
+    } else {
+      print("flutter动画流程[onDragEnd], 进行翻页操作$details");
+      onEndEvent(details);
+    }
+  }
+
+  void _handleDragCancel() {}
+
+  GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>
+      _longPressRecognizer() {
+    return GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+        () => LongPressGestureRecognizer(),
+        (LongPressGestureRecognizer instance) {
+      instance
+        ..onLongPressStart = _handleLongPressStart
+        ..onLongPressMoveUpdate = _handleLongPressUpdate
+        ..onLongPressEnd = _handleLongPressEnd
+        ..onLongPressCancel = _handleLongPressCancel;
+    });
+  }
+
+  void _handleLongPressStart(LongPressStartDetails details) {
+    if(!_selectionHandler.isSelectionStateEnabled) {
+      updateSelectionState(true);
+    }
+
+    _selectionHandler.onLongPressStart(details);
+    _processIndicator(NativeCmd.longPressStart, details.localPosition);
+  }
+
+  void _handleLongPressUpdate(LongPressMoveUpdateDetails details) {
+    _selectionHandler.onLongPressMove(details);
+    _processIndicator(NativeCmd.longPressMove, details.localPosition);
+  }
+
+  void _handleLongPressEnd(LongPressEndDetails details) {
+    _selectionHandler.onLongPressUp();
+    _processIndicator(NativeCmd.longPressEnd, null);
+  }
+
+  void _handleLongPressCancel() {}
+
+  GestureRecognizerFactoryWithHandlers<TapGestureRecognizer> _tapRecognizer() {
+    return GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+        () => TapGestureRecognizer(), (TapGestureRecognizer instance) {
+      instance.onTapUp = _handleTapUp;
+    });
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    // 点击事件，隐藏划选弹窗
+    if (_selectionHandler.isSelectionStateEnabled) {
+      _selectionHandler.onTagUp(details);
+      hideSelectionMenu();
+      updateHighlight(null, null);
+      updateSelectionState(false);
+    } else {
+      navigatePageNoAnimation(details.localPosition, null);
+    }
   }
 }

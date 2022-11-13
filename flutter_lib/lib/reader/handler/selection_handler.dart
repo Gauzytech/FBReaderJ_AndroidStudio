@@ -52,6 +52,8 @@ class SelectionHandler {
 
   // 划选弹窗
   bool _selectionState = false;
+  bool get isSelectionStateEnabled => _selectionState;
+
   Offset? _selectionMenuPosition;
   SelectionMenuFactory? _menuFactory;
 
@@ -63,8 +65,6 @@ class SelectionHandler {
   }
 
   Offset? get menuPosition => _selectionMenuPosition;
-
-  bool get isSelectionStateEnabled => _selectionState;
 
   SelectionMenuFactory get factory => _menuFactory!;
 
