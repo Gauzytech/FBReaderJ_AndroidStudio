@@ -7,63 +7,83 @@ import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
+import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
 import 'package:flutter_lib/reader/reader_book_content_view.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
 import '../animation/model/selection_cursor.dart';
-import '../handler/selection_handler.dart';
+import 'native_interface.dart';
 
-class ReaderContentHandler {
-  MethodChannel methodChannel;
+extension ImageParsing on Uint8List {
 
-  // late MediaQueryData _mediaQueryData;
+  /// 将[Uint8List]转成[Image]
+  Future<ui.Image> toImage() async {
+    ui.Codec codec = await ui.instantiateImageCodec(this);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return fi.image;
+  }
+}
+
+mixin PageContentProviderDelegate {
+  Future<void> initialize(PageIndex pageIndex);
+
+  void tearDown();
+
+  void refreshContent();
+}
+
+class PageContentProvider with PageContentProviderDelegate {
   ReaderBookContentViewState viewState;
 
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
 
-  ReaderContentHandler({
-    required this.methodChannel,
-    required this.viewState,
-  }) {
-    methodChannel.setMethodCallHandler(_addNativeMethod);
+  NativeInterface? _nativeInterface;
+
+  NativeInterface get nativeInterface => _nativeInterface!;
+
+  PageManagerDelegate? _pageManagerDelegate;
+
+  PageContentProvider({MethodChannel? methodChannel, required this.viewState}) {
+    assert(methodChannel != null);
+    _nativeInterface =
+        NativeInterface(methodChannel: methodChannel!, delegate: this);
   }
 
   ImageSrc getPage(PageIndex index) {
     return _bitmapManager.getBitmap(index);
   }
 
+  @override
   void refreshContent() {
     viewState.viewModel?.notify();
     viewState.refreshContentPainter();
   }
 
-  /* ---------------------------------------- Native调用Flutter方法 ----------------------------------------*/
-  Future<dynamic> _addNativeMethod(MethodCall methodCall) async {
-    print('flutter内容绘制流程, 收到native通讯, ${methodCall.method}');
-    switch (methodCall.method) {
-      case 'init_load':
-        // 本地数据全部解析完毕后，会执行init_load方法开始通知渲染图书页面
-        buildPage(PageIndex.current);
-        break;
-      case 'tear_down':
-        tearDown();
-        refreshContent();
-        break;
+  @override
+  Future<void> initialize(PageIndex pageIndex) async {
+    print('flutter内容绘制流程[initialize], $pageIndex');
+    // 如果没有找到缓存的Image, 回调native, 通知画一个新的
+    int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
+    // drawOnBitmap(internalIdx, pageIndex, true);
+    try {
+      // 调用native方法，将绘制当前page
+      Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
+        NativeScript.drawOnBitmap,
+        {'page_index': pageIndex.index},
+      );
+
+      final image = await imgBytes.toImage();
+
+      // _bitmapManager缓存img
+      _bitmapManager.setSize(image.width, image.height);
+      _bitmapManager.cacheBitmap(internalIdx, image);
+
+      // 刷新custom painter
+      refreshContent();
+    } on PlatformException catch (e) {
+      print("flutter内容绘制流程, $e");
     }
-  }
-
-  Future<void> updatePage(PageIndex pageIndex, Uint8List imgBytes) async {
-    // 将imageBytes转成img
-    ui.Codec codec = await ui.instantiateImageCodec(imgBytes);
-    ui.FrameInfo fi = await codec.getNextFrame();
-    final image = fi.image;
-
-    // _bitmapManager缓存img
-    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
-
-    // 刷新custom painter
-    refreshContent();
   }
 
   /// 通知native创建新内容image
@@ -85,12 +105,14 @@ class ReaderContentHandler {
   // 方法通道的方法是异步的
   /// 通知native绘制当前页img
   Future<ui.Image?> drawOnBitmap(
-      int internalCacheIndex, PageIndex pageIndex, bool notify) async {
+    int internalCacheIndex,
+    PageIndex pageIndex,
+    bool notify,
+  ) async {
     try {
       final metrics = ui.window.physicalSize;
-
       // 调用native方法，将绘制当前page
-      Uint8List imageBytes = await methodChannel.invokeMethod(
+      Uint8List imgBytes = await nativeInterface.channel.invokeMethod(
         'draw_on_bitmap',
         {
           'page_index': pageIndex.index,
@@ -100,16 +122,13 @@ class ReaderContentHandler {
       );
 
       // 将imageBytes转成img
-      ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-      ui.FrameInfo fi = await codec.getNextFrame();
-      final image = fi.image;
-
+      var image = await imgBytes.toImage();
       // _bitmapManager缓存img
       _bitmapManager.setSize(image.width, image.height);
       _bitmapManager.cacheBitmap(internalCacheIndex, image);
 
       // 刷新custom painter
-      if(notify) {
+      if (notify) {
         refreshContent();
       }
 
@@ -139,8 +158,9 @@ class ReaderContentHandler {
       if (nextIdx != null) {
         print("flutter内容绘制流程, 预加载下一页");
       }
+
       Map<Object?, Object?> result =
-          await methodChannel.invokeMethod("prepare_page", {
+      await nativeInterface.channel.invokeMethod("prepare_page", {
         'width': metrics.width,
         'height': metrics.height,
         'update_prev_page_cache': prevIdx != null,
@@ -150,9 +170,7 @@ class ReaderContentHandler {
       final prev = result['prev'];
       if (prevIdx != null && prev != null) {
         prev as Uint8List;
-        ui.Codec codec = await ui.instantiateImageCodec(prev);
-        ui.FrameInfo fi = await codec.getNextFrame();
-        final image = fi.image;
+        var image = await prev.toImage();
         print(
             "flutter内容绘制流程, 收到prevPage ${prev.length} ${image.width}, ${image.height}");
         _bitmapManager.cacheBitmap(prevIdx, image);
@@ -161,9 +179,7 @@ class ReaderContentHandler {
       final next = result['next'];
       if (nextIdx != null && next != null) {
         next as Uint8List;
-        ui.Codec codec = await ui.instantiateImageCodec(next);
-        ui.FrameInfo fi = await codec.getNextFrame();
-        final image = fi.image;
+        var image = await next.toImage();
         print(
             "flutter内容绘制流程, 收到prevPage ${next.length} ${image.width}, ${image.height}");
         _bitmapManager.cacheBitmap(nextIdx, image);
@@ -183,20 +199,22 @@ class ReaderContentHandler {
     return PageIndex.current;
   }
 
+  @override
   void tearDown() {
+    detach();
     _bitmapManager.clear();
   }
 
   /// 判断是否可以滚动到上一页/下一页
   Future<bool> canScroll(PageIndex pageIndex) async {
-    return await methodChannel.invokeMethod(
+    return await nativeInterface.channel.invokeMethod(
       'can_scroll',
       {'page_index': pageIndex.index},
     );
   }
 
   void onScrollingFinished(PageIndex pageIndex) {
-    methodChannel.invokeMethod(
+    nativeInterface.channel.invokeMethod(
       'on_scrolling_finished',
       {'page_index': pageIndex.index},
     );
@@ -204,21 +222,22 @@ class ReaderContentHandler {
 
   int time = 0;
 
-  Future<void> callNativeMethod(NativeCmd nativeCmd, int x, int y) async {
+  Future<void> callNativeMethod(NativeScript nativeCmd, int x, int y) async {
     Size imageSize = getContentSize();
     time = now();
     print('时间测试, call $nativeCmd $time');
     switch (nativeCmd) {
-      case NativeCmd.dragStart:
-      case NativeCmd.dragMove:
-      case NativeCmd.dragEnd:
-      case NativeCmd.longPressStart:
-      case NativeCmd.longPressMove:
-      case NativeCmd.longPressEnd:
-      case NativeCmd.tapUp:
-      case NativeCmd.selectionClear:
-      Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
-          nativeCmd.cmdName,
+      case NativeScript.dragStart:
+      case NativeScript.dragMove:
+      case NativeScript.dragEnd:
+      case NativeScript.longPressStart:
+      case NativeScript.longPressMove:
+      case NativeScript.longPressEnd:
+      case NativeScript.tapUp:
+      case NativeScript.selectionClear:
+        Map<dynamic, dynamic> result =
+            await nativeInterface.channel.invokeMethod(
+          nativeCmd.name,
           {
             'touch_x': x,
             'touch_y': y,
@@ -248,27 +267,28 @@ class ReaderContentHandler {
         if (selectionMenuData != null) {
           _handleSelectionMenu(selectionMenuData);
         } else {
-          if (nativeCmd == NativeCmd.longPressEnd && highlightsData == null) {
+          if (nativeCmd == NativeScript.longPressEnd &&
+              highlightsData == null) {
             print('时间测试, 取消长按状态');
             viewState.updateSelectionState(false);
           }
         }
         break;
-      case NativeCmd.selectedText:
-        Map<dynamic, dynamic> result = await methodChannel.invokeMethod(nativeCmd.cmdName);
+      case NativeScript.selectedText:
+        Map<dynamic, dynamic> result =
+            await nativeInterface.channel.invokeMethod(nativeCmd.name);
         String text = result['text'];
         print('选中文字, $text');
         viewState.showText(text);
         break;
+      default:
     }
   }
 
-  Future<void> _handleImage(Uint8List imageBytes) async {
-    // 将imageBytes转成img
-    ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
-    ui.FrameInfo fi = await codec.getNextFrame();
+  Future<void> _handleImage(Uint8List imgBytes) async {
+    var image = await imgBytes.toImage();
     // _bitmapManager缓存img
-    _bitmapManager.replaceBitmapCache(PageIndex.current, fi.image);
+    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
     // 刷新custom painter
     refreshContent();
   }
@@ -300,7 +320,15 @@ class ReaderContentHandler {
     );
   }
 
-  bool isCacheEmpty(){
+  bool isCacheEmpty() {
     return _bitmapManager.isEmpty();
+  }
+
+  void attach(PageManagerDelegate pageManagerDelegate) {
+    _pageManagerDelegate = pageManagerDelegate;
+  }
+
+  void detach() {
+    _pageManagerDelegate = null;
   }
 }

@@ -210,10 +210,10 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
-    // currentMoveDy负数: 往右滚动, 正数: 往左滚动
+    // currentMoveDy 负数: 往右滚动, 正数: 往左滚动
     double actualOffsetX = currentMoveDx < 0
-        ? -((currentMoveDx).abs() % currentSize.width)
-        : (currentMoveDx) % currentSize.width;
+        ? -(currentMoveDx.abs() % currentSize.width)
+        : currentMoveDx % currentSize.width;
     canvas.save();
     if (actualOffsetX < 0) {
       // 绘制下一页

@@ -16,7 +16,6 @@ class ContentPainter extends CustomPainter {
 
   ReaderPageManager pageManager;
   TouchEvent? currentTouchData;
-  Offset? _selectionTouchOffset;
   int currentPageIndex = 0;
   int currentChapterId = 0;
 

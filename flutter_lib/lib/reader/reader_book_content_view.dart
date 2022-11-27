@@ -5,8 +5,11 @@ import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
+import 'package:flutter_lib/reader/controller/book_page_controller.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selection_handler.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
@@ -18,26 +21,12 @@ import 'package:provider/provider.dart';
 import 'animation/controller_animation_with_listener_number.dart';
 import 'animation/model/highlight_block.dart';
 import 'animation/model/selection_cursor.dart';
-import 'controller/page_pan_gesture_recognizer.dart';
-import 'controller/reader_content_handler.dart';
+import 'controller/native_interface.dart';
+import 'controller/page_content_provider.dart';
 import 'controller/reader_page_manager.dart';
 import 'gestures/book_gesture_recognizer.dart';
 
 class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
-  // 放大镜的半径
-  static const double radius = 124;
-  static const double targetDiameter = 2 * radius * 333 / 293;
-  static const double magnifierMargin = 144;
-
-  // 放大倍数
-  static const double factor = 1;
-
-  // 画笔
-  // Paint myPaint = Paint();
-
-  // 页脚的bitmap
-  // private Bitmap myFooterBitmap;
-
   const ReaderBookContentView({Key? key}) : super(key: key);
 
   @override
@@ -45,8 +34,10 @@ class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
       buildState() => ReaderBookContentViewState();
 }
 
-class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContentView, ReaderViewModel>
-    with TickerProviderStateMixin {
+class ReaderBookContentViewState
+    extends BaseStatefulViewState<ReaderBookContentView, ReaderViewModel>
+    with TickerProviderStateMixin
+    implements BookPageScrollContext {
   final _methodChannel = const MethodChannel('platform_channel_methods');
 
   // 翻页倒计时
@@ -71,19 +62,22 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
       const <Type, GestureRecognizerFactory>{};
   AnimationController? animationController;
 
-  late ReaderContentHandler _readerContentHandler;
+  PageContentProvider? _pageContentProvider;
   late SelectionHandler _selectionHandler;
+
+  BookPageController? _controller;
 
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     print('时间测试, onInitState');
-    _readerContentHandler =
-        ReaderContentHandler(methodChannel: _methodChannel, viewState: this);
+    _pageContentProvider =
+        PageContentProvider(methodChannel: _methodChannel, viewState: this);
     _selectionHandler = SelectionHandler(
-        readerContentHandler: _readerContentHandler,
+        readerContentHandler: _pageContentProvider!,
         topIndicatorKey: topIndicatorKey,
         bottomIndicatorKey: bottomIndicatorKey);
+    _controller = BookPageControllerImpl();
   }
 
   @override
@@ -118,8 +112,11 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
           bottomIndicatorKey: bottomIndicatorKey,
           animationController: animationController!,
           currentAnimationType: viewModel.getConfigData().currentAnimationMode,
-          viewModel: viewModel);
-      viewModel.setContentHandler(_readerContentHandler);
+          viewModel: viewModel,
+          pageController: _controller,
+          scrollContext: this,
+          provider: _pageContentProvider);
+      viewModel.setContentHandler(_pageContentProvider!);
       _contentPainter = ContentPainter(pageManager);
     }
 
@@ -346,10 +343,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     }
   }
 
-  void _processIndicator(NativeCmd cmd, Offset? localPosition) {
+  void _processIndicator(NativeScript cmd, Offset? localPosition) {
     switch (cmd) {
-      case NativeCmd.dragStart:
-      case NativeCmd.longPressStart:
+      case NativeScript.dragStart:
+      case NativeScript.longPressStart:
         {
           var indicator =
               _selectionHandler.enableCrossPageIndicator(localPosition!);
@@ -358,8 +355,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
           }
         }
         break;
-      case NativeCmd.dragMove:
-      case NativeCmd.longPressMove:
+      case NativeScript.dragMove:
+      case NativeScript.longPressMove:
         {
           var indicator =
               _selectionHandler.enableCrossPageIndicator(localPosition!);
@@ -370,8 +367,8 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
           }
         }
         break;
-      case NativeCmd.dragEnd:
-      case NativeCmd.longPressEnd:
+      case NativeScript.dragEnd:
+      case NativeScript.longPressEnd:
         hideIndicator();
         break;
       default:
@@ -597,7 +594,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
   void _handleDragStart(DragStartDetails details) {
     if (_selectionHandler.isSelectionStateEnabled) {
       _selectionHandler.onDragStart(details);
-      _processIndicator(NativeCmd.dragStart, details.localPosition);
+      _processIndicator(NativeScript.dragStart, details.localPosition);
     } else {
       print("flutter动画流程[onDragStart], 进行翻页操作${details.localPosition}");
       onDragStart(details);
@@ -607,9 +604,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
   void _handleDragUpdate(DragUpdateDetails details) {
     if (_selectionHandler.isSelectionStateEnabled) {
       _selectionHandler.onDragMove(details);
-      _processIndicator(NativeCmd.dragMove, details.localPosition);
+      _processIndicator(NativeScript.dragMove, details.localPosition);
     } else {
-      print('flutter动画流程[onDragUpdate], 进行翻页操作${details.localPosition}');
+      print(
+          'flutter动画流程[onDragUpdate], 进行翻页操作 = ${details.localPosition}, primaryDelta = ${details.primaryDelta}');
       onUpdateEvent(details);
     }
   }
@@ -617,7 +615,7 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
   void _handleDragEnd(DragEndDetails details) {
     if (_selectionHandler.isSelectionStateEnabled) {
       _selectionHandler.onDragEnd(details);
-      _processIndicator(NativeCmd.dragEnd, null);
+      _processIndicator(NativeScript.dragEnd, null);
     } else {
       print("flutter动画流程[onDragEnd], 进行翻页操作$details");
       onEndEvent(details);
@@ -645,17 +643,17 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
     }
 
     _selectionHandler.onLongPressStart(details);
-    _processIndicator(NativeCmd.longPressStart, details.localPosition);
+    _processIndicator(NativeScript.longPressStart, details.localPosition);
   }
 
   void _handleLongPressUpdate(LongPressMoveUpdateDetails details) {
     _selectionHandler.onLongPressMove(details);
-    _processIndicator(NativeCmd.longPressMove, details.localPosition);
+    _processIndicator(NativeScript.longPressMove, details.localPosition);
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
     _selectionHandler.onLongPressUp();
-    _processIndicator(NativeCmd.longPressEnd, null);
+    _processIndicator(NativeScript.longPressEnd, null);
   }
 
   void _handleLongPressCancel() {}
@@ -678,4 +676,10 @@ class ReaderBookContentViewState extends BaseStatefulViewState<ReaderBookContent
       navigatePageNoAnimation(details.localPosition, null);
     }
   }
+
+  @override
+  TickerProvider get vsync => this;
+
+  @override
+  PageMode get pageMode => viewModel!.getConfigData().getPageMode();
 }

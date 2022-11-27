@@ -1,8 +1,13 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
+import 'package:flutter_lib/reader/controller/book_page_controller.dart';
+import 'package:flutter_lib/reader/controller/page_content_provider.dart';
+import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
 
 import '../../widget/content_painter.dart';
@@ -10,7 +15,11 @@ import '../animation/base_animation_page.dart';
 import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
-class ReaderPageManager {
+mixin PageManagerDelegate {
+  void updatePosition(ReaderViewModel viewModel);
+}
+
+class ReaderPageManager with PageManagerDelegate {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
@@ -26,6 +35,20 @@ class ReaderPageManager {
   AnimationController animationController;
   int currentAnimationType;
 
+  // 书页滚动控制
+  BookPageController? _pageController;
+  BookPageController get controller => _pageController!;
+
+  // 渲染position
+  BookPagePosition? _position;
+  BookPagePosition get position => _position!;
+
+  // 当前翻页模式的滚动物理行为
+  BookPagePhysics? _physics;
+  BookPageScrollContext scrollContext;
+
+  PageContentProvider? _contentProvider;
+
   ReaderPageManager({
     required this.canvasKey,
     required this.topIndicatorKey,
@@ -33,7 +56,15 @@ class ReaderPageManager {
     required this.animationController,
     required this.currentAnimationType,
     required ReaderViewModel viewModel,
-  }) {
+    BookPageController? pageController,
+    required this.scrollContext,
+    PageContentProvider? provider,
+  })
+      : assert(pageController != null),
+        _pageController = pageController {
+    assert(provider != null);
+    _contentProvider = provider;
+    _contentProvider?.attach(this);
     _setCurrentAnimation(currentAnimationType, viewModel);
     _setAnimationController(animationController);
   }
@@ -351,5 +382,15 @@ class ReaderPageManager {
 
   bool isPageDataEmpty() {
     return currentAnimationPage.readerViewModel.isPageDataEmpty();
+  }
+
+  /* ------------------------------------------ 翻页行为 --------------------------------------------------- */
+  @override
+  void updatePosition(ReaderViewModel viewModel) {
+    _physics = viewModel.getConfigData().getBookScrollPhysics();
+    assert(_pageController != null);
+    _position = controller.createBookPagePosition(_physics!, scrollContext);
+    assert(_position != null);
+    controller.attach(position);
   }
 }

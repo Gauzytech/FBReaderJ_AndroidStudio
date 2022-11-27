@@ -1,18 +1,25 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/reader_book_info.dart';
 import 'package:flutter_lib/modal/reader_config_model.dart';
 import 'package:flutter_lib/modal/reader_progress_manager.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
-import 'package:flutter_lib/reader/controller/reader_content_handler.dart';
+import 'package:flutter_lib/reader/controller/book_page_controller.dart';
+import 'package:flutter_lib/reader/controller/page_physics/book_page_turn_physics.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
+import 'package:flutter_lib/reader/controller/page_content_provider.dart';
 
+/// 提供所有图书数据
 class ReaderViewModel extends BaseViewModel {
   ReaderBookInfo bookInfo;
 
-  ReaderContentHandler? _readerContentHandler;
+  PageContentProvider? _readerContentHandler;
+
+
   late ReaderConfigModel _configModel;
 
   late ReaderProgressManager _progressManager;
@@ -39,7 +46,9 @@ class ReaderViewModel extends BaseViewModel {
     // }
   }
 
-  void setContentHandler(ReaderContentHandler handler) {
+  void setContentHandler(
+    PageContentProvider handler,
+  ) {
     _readerContentHandler = handler;
   }
 

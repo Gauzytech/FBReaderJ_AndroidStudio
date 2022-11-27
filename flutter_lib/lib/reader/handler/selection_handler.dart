@@ -2,22 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'dart:ui' as ui;
 
-import '../controller/reader_content_handler.dart';
-
-enum NativeCmd {
-  dragStart('on_selection_drag_start'),
-  dragMove('on_selection_drag_move'),
-  dragEnd('on_selection_drag_end'),
-  longPressStart('long_press_start'),
-  longPressMove('long_press_move'),
-  longPressEnd('long_press_end'),
-  tapUp('on_tap_up'),
-  selectionClear('selection_clear'),
-  selectedText('selected_text');
-
-  final String cmdName;
-  const NativeCmd(this.cmdName);
-}
+import '../controller/native_interface.dart';
+import '../controller/page_content_provider.dart';
 
 const longPressStart = 'long_press_start';
 const longPressUpdate = 'long_press_update';
@@ -35,8 +21,8 @@ enum SelectionIndicator { topStart, bottomEnd }
 /// 2. (已完成) tapUp改selectionResult
 /// 3. 局部刷新selectionMenu, 防止本页内容随selectionMenu显示隐藏刷新
 /// 4. 搞懂shouldPaint的调用
-/// 5. 增加添加本地图书功能 - DEMO测试
-/// 6. 研究pageView源码优化翻页效果
+/// 5. (已完成) 增加添加本地图书功能 - DEMO测试
+/// 6. (已完成) 研究pageView源码优化翻页效果
 class SelectionHandler {
 
   // 翻页划选最多5页
@@ -44,7 +30,7 @@ class SelectionHandler {
   int crossPageCount = 1;
 
   Offset? _selectionTouchOffset;
-  ReaderContentHandler readerContentHandler;
+  PageContentProvider readerContentHandler;
 
   // 跨页划选指示器
   GlobalKey topIndicatorKey;
@@ -98,7 +84,7 @@ class SelectionHandler {
     print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作$position}");
     _setSelectionTouch(position);
     readerContentHandler.callNativeMethod(
-      NativeCmd.dragStart,
+      NativeScript.dragStart,
       position.dx.toInt(),
       position.dy.toInt(),
     );
@@ -111,7 +97,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        NativeCmd.dragMove,
+        NativeScript.dragMove,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -122,7 +108,7 @@ class SelectionHandler {
   void onDragEnd(DragEndDetails detail) {
     print("flutter动画流程[onDragEnd], 长按选择操作$detail");
     _setSelectionTouch(null);
-    readerContentHandler.callNativeMethod(NativeCmd.dragEnd, 0, 0);
+    readerContentHandler.callNativeMethod(NativeScript.dragEnd, 0, 0);
   }
 
   void onLongPressStart(LongPressStartDetails detail) {
@@ -131,7 +117,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        NativeCmd.longPressStart,
+        NativeScript.longPressStart,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -144,7 +130,7 @@ class SelectionHandler {
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
-        NativeCmd.longPressMove,
+        NativeScript.longPressMove,
         position.dx.toInt(),
         position.dy.toInt(),
       );
@@ -154,14 +140,14 @@ class SelectionHandler {
   void onLongPressUp() {
     print("flutter动画流程:触摸事件, ------------长按事件结束------------>>>>>>>>>");
     _setSelectionTouch(null);
-    readerContentHandler.callNativeMethod(NativeCmd.longPressEnd, 0, 0);
+    readerContentHandler.callNativeMethod(NativeScript.longPressEnd, 0, 0);
   }
 
   void onTagUp(TapUpDetails detail) {
     Offset position = detail.localPosition;
     print("flutter动画流程:触摸事件, -------------onTapUp $position--------->>>>>>>>>");
     readerContentHandler.callNativeMethod(
-      NativeCmd.tapUp,
+      NativeScript.tapUp,
       position.dx.toInt(),
       position.dy.toInt(),
     );
@@ -220,6 +206,6 @@ class SelectionHandler {
   }
 
   void copy() {
-    readerContentHandler.callNativeMethod(NativeCmd.selectedText, 0, 0);
+    readerContentHandler.callNativeMethod(NativeScript.selectedText, 0, 0);
   }
 }

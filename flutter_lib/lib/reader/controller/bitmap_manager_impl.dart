@@ -12,7 +12,7 @@ class BitmapManagerImpl with BitmapManager {
 
   // 缓存4个pageIndex
   // pageIndex: PREV_2, PREV, CURRENT, NEXT, NEXT_2;
-  List<PageIndex?> pageIndexCache =
+  final List<PageIndex?> _pageIndexCache =
       List.filled(BitmapManager.cacheSize, null, growable: false);
   int _contentWidth = 0;
   int _contentHeight = 0;
@@ -34,7 +34,7 @@ class BitmapManagerImpl with BitmapManager {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
       _imageCache[i]?.dispose();
       _imageCache[i] = null;
-      pageIndexCache[i] = null;
+      _pageIndexCache[i] = null;
     }
   }
 
@@ -45,7 +45,7 @@ class BitmapManagerImpl with BitmapManager {
   @override
   ImageSrc getBitmap(PageIndex index) {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if (pageIndexCache[i] == index) {
+      if (_pageIndexCache[i] == index) {
         ui.Image? image = _imageCache[i];
         return ImageSrc(img: image, processing: image == null);
       }
@@ -58,10 +58,10 @@ class BitmapManagerImpl with BitmapManager {
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
     print(
-        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $pageIndexCache");
+        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $indexCacheDebugDescription");
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
-    pageIndexCache[internalCacheIndex] = pageIndex;
+    _pageIndexCache[internalCacheIndex] = pageIndex;
 
     if (_imageCache[internalCacheIndex] == null) {
       return internalCacheIndex;
@@ -82,8 +82,8 @@ class BitmapManagerImpl with BitmapManager {
   void replaceBitmapCache(PageIndex index, ui.Image image) {
     print(
         "flutter内容绘制流程, replaceBitmapCache [${image.width}, ${image.height}], PageIndex = $index");
-    for (int i = 0; i < pageIndexCache.length; i++) {
-      if (pageIndexCache[i] == index) {
+    for (int i = 0; i < _pageIndexCache.length; i++) {
+      if (_pageIndexCache[i] == index) {
         // dispose old image
         _imageCache[i]?.dispose();
         _imageCache[i] = image;
@@ -107,15 +107,15 @@ class BitmapManagerImpl with BitmapManager {
   int getInternalIndex(PageIndex index) {
     // 寻找没有存储内容的位置
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if (pageIndexCache[i] == null) {
+      if (_pageIndexCache[i] == null) {
         return i;
       }
     }
     // 如果没有，找一个不是当前的位置
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if (pageIndexCache[i] != PageIndex.current &&
-          pageIndexCache[i] != PageIndex.prev &&
-          pageIndexCache[i] != PageIndex.next) {
+      if (_pageIndexCache[i] != PageIndex.current &&
+          _pageIndexCache[i] != PageIndex.prev &&
+          _pageIndexCache[i] != PageIndex.next) {
         return i;
       }
     }
@@ -126,7 +126,7 @@ class BitmapManagerImpl with BitmapManager {
   /// TODO: 需要精确rest（避免不必要的缓存失效）
   void reset() {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      pageIndexCache[i] = null;
+      _pageIndexCache[i] = null;
     }
   }
 
@@ -143,13 +143,13 @@ class BitmapManagerImpl with BitmapManager {
   /// next, current, next2, null
   void shift(bool forward) {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if (pageIndexCache[i] == null) {
+      if (_pageIndexCache[i] == null) {
         continue;
       }
       if (forward) {
-        pageIndexCache[i] = pageIndexCache[i]!.getPrevious();
+        _pageIndexCache[i] = _pageIndexCache[i]!.getPrevious();
       } else {
-        pageIndexCache[i] = pageIndexCache[i]!.getNext();
+        _pageIndexCache[i] = _pageIndexCache[i]!.getNext();
       }
     }
   }
@@ -158,14 +158,12 @@ class BitmapManagerImpl with BitmapManager {
     return Size(_contentWidth.toDouble(), _contentHeight.toDouble());
   }
 
-  String debugCachedIndexString() {
-    return "$pageIndexCache";
-  }
+  String indexCacheDebugDescription() => "$_pageIndexCache";
 
   bool isEmpty() {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if(pageIndexCache[i] != null) return false;
-      if(_imageCache[i] != null) return false;
+      if (_pageIndexCache[i] != null) return false;
+      if (_imageCache[i] != null) return false;
     }
     return true;
   }
