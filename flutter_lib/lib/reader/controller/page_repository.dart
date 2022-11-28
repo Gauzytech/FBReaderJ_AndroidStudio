@@ -7,8 +7,8 @@ import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
-import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
-import 'package:flutter_lib/reader/reader_book_content_view.dart';
+import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
+import 'package:flutter_lib/reader/reader_content_view.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
 import '../animation/model/selection_cursor.dart';
@@ -24,7 +24,7 @@ extension ImageParsing on Uint8List {
   }
 }
 
-mixin PageContentProviderDelegate {
+mixin PageRepositoryDelegate {
   Future<void> initialize(PageIndex pageIndex);
 
   void tearDown();
@@ -32,19 +32,20 @@ mixin PageContentProviderDelegate {
   void refreshContent();
 }
 
-class PageContentProvider with PageContentProviderDelegate {
-  ReaderBookContentViewState viewState;
+class PageRepository with PageRepositoryDelegate {
+  ReaderContentViewState viewState;
 
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
 
+  // native代码通信interface
   NativeInterface? _nativeInterface;
 
   NativeInterface get nativeInterface => _nativeInterface!;
 
   PageManagerDelegate? _pageManagerDelegate;
 
-  PageContentProvider({MethodChannel? methodChannel, required this.viewState}) {
+  PageRepository({MethodChannel? methodChannel, required this.viewState}) {
     assert(methodChannel != null);
     _nativeInterface =
         NativeInterface(methodChannel: methodChannel!, delegate: this);
@@ -56,8 +57,8 @@ class PageContentProvider with PageContentProviderDelegate {
 
   @override
   void refreshContent() {
-    viewState.viewModel?.notify();
-    viewState.refreshContentPainter();
+    // viewState.viewModel?.notify();
+    _pageManagerDelegate!.scrollContext.invalidateContent();
   }
 
   @override
@@ -79,8 +80,8 @@ class PageContentProvider with PageContentProviderDelegate {
       _bitmapManager.setSize(image.width, image.height);
       _bitmapManager.cacheBitmap(internalIdx, image);
 
-      // 刷新custom painter
-      refreshContent();
+      // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
+      viewState.viewModel?.notify();
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
@@ -110,15 +111,10 @@ class PageContentProvider with PageContentProviderDelegate {
     bool notify,
   ) async {
     try {
-      final metrics = ui.window.physicalSize;
       // 调用native方法，将绘制当前page
-      Uint8List imgBytes = await nativeInterface.channel.invokeMethod(
-        'draw_on_bitmap',
-        {
-          'page_index': pageIndex.index,
-          'width': metrics.width,
-          'height': metrics.height,
-        },
+      Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
+        NativeScript.drawOnBitmap,
+        {'page_index': pageIndex.index},
       );
 
       // 将imageBytes转成img
@@ -142,8 +138,6 @@ class PageContentProvider with PageContentProviderDelegate {
 
   /// 到达当前页页之后, 事先缓存2页：上一页/下一页
   Future<void> preloadAdjacentPages() async {
-    final metrics = ui.window.physicalSize;
-
     int? prevIdx = getPage(PageIndex.prev).shouldDrawImage()
         ? _bitmapManager.findInternalCacheIndex(PageIndex.prev)
         : null;
@@ -152,20 +146,16 @@ class PageContentProvider with PageContentProviderDelegate {
         : null;
 
     if (prevIdx != null || nextIdx != null) {
-      if (prevIdx != null) {
-        print("flutter内容绘制流程, 预加载上一页");
-      }
-      if (nextIdx != null) {
-        print("flutter内容绘制流程, 预加载下一页");
-      }
+      if (prevIdx != null) print("flutter内容绘制流程, 预加载上一页");
+      if (nextIdx != null) print("flutter内容绘制流程, 预加载下一页");
 
-      Map<Object?, Object?> result =
-      await nativeInterface.channel.invokeMethod("prepare_page", {
-        'width': metrics.width,
-        'height': metrics.height,
-        'update_prev_page_cache': prevIdx != null,
-        'update_next_page_cache': nextIdx != null,
-      });
+      Map<Object?, Object?> result = await nativeInterface.evaluateNativeFunc(
+        NativeScript.preparePage,
+        {
+          'update_prev_page_cache': prevIdx != null,
+          'update_next_page_cache': nextIdx != null,
+        },
+      );
 
       final prev = result['prev'];
       if (prevIdx != null && prev != null) {
@@ -207,26 +197,26 @@ class PageContentProvider with PageContentProviderDelegate {
 
   /// 判断是否可以滚动到上一页/下一页
   Future<bool> canScroll(PageIndex pageIndex) async {
-    return await nativeInterface.channel.invokeMethod(
-      'can_scroll',
+    return await nativeInterface.evaluateNativeFunc(
+      NativeScript.canScroll,
       {'page_index': pageIndex.index},
     );
   }
 
   void onScrollingFinished(PageIndex pageIndex) {
-    nativeInterface.channel.invokeMethod(
-      'on_scrolling_finished',
+    nativeInterface.evaluateNativeFunc(
+      NativeScript.onScrollingFinished,
       {'page_index': pageIndex.index},
     );
   }
 
   int time = 0;
 
-  Future<void> callNativeMethod(NativeScript nativeCmd, int x, int y) async {
+  Future<void> callNativeMethod(NativeScript script, int x, int y) async {
     Size imageSize = getContentSize();
     time = now();
-    print('时间测试, call $nativeCmd $time');
-    switch (nativeCmd) {
+    print('时间测试, call $script $time');
+    switch (script) {
       case NativeScript.dragStart:
       case NativeScript.dragMove:
       case NativeScript.dragEnd:
@@ -235,9 +225,8 @@ class PageContentProvider with PageContentProviderDelegate {
       case NativeScript.longPressEnd:
       case NativeScript.tapUp:
       case NativeScript.selectionClear:
-        Map<dynamic, dynamic> result =
-            await nativeInterface.channel.invokeMethod(
-          nativeCmd.name,
+        Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
+          script,
           {
             'touch_x': x,
             'touch_y': y,
@@ -246,19 +235,19 @@ class PageContentProvider with PageContentProviderDelegate {
             'time_stamp': time,
           },
         );
-        print('时间测试, $nativeCmd 获得结果, ${now()}');
+        print('时间测试, $script 获得结果, ${now()}');
 
         // 书页内容
         Uint8List? imageBytes = result['page'];
         if (imageBytes != null) {
-          print('时间测试, $nativeCmd handleImage');
-          await _handleImage(imageBytes);
+          print('时间测试, $script handleImage');
+          _handleImage(imageBytes);
         }
 
         // 高亮
         String? highlightsData = result['highlights_data'];
         if (highlightsData != null) {
-          print('时间测试, $nativeCmd _handleHighlight');
+          print('时间测试, $script _handleHighlight');
           _handleHighlight(highlightsData);
         }
 
@@ -267,8 +256,7 @@ class PageContentProvider with PageContentProviderDelegate {
         if (selectionMenuData != null) {
           _handleSelectionMenu(selectionMenuData);
         } else {
-          if (nativeCmd == NativeScript.longPressEnd &&
-              highlightsData == null) {
+          if (script == NativeScript.longPressEnd && highlightsData == null) {
             print('时间测试, 取消长按状态');
             viewState.updateSelectionState(false);
           }
@@ -276,7 +264,7 @@ class PageContentProvider with PageContentProviderDelegate {
         break;
       case NativeScript.selectedText:
         Map<dynamic, dynamic> result =
-            await nativeInterface.channel.invokeMethod(nativeCmd.name);
+            await nativeInterface.evaluateNativeFunc(script);
         String text = result['text'];
         print('选中文字, $text');
         viewState.showText(text);

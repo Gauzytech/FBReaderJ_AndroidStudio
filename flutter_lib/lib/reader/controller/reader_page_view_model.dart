@@ -5,7 +5,7 @@ import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/book_page_controller.dart';
-import 'package:flutter_lib/reader/controller/page_content_provider.dart';
+import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
@@ -16,10 +16,13 @@ import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
 mixin PageManagerDelegate {
+  BookPageScrollContext get scrollContext;
+
   void updatePosition(ReaderViewModel viewModel);
 }
 
-class ReaderPageManager with PageManagerDelegate {
+/// 管理所有[ReaderBookContentView]的渲染行为
+class ReaderPageViewModel with PageManagerDelegate {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
@@ -29,42 +32,46 @@ class ReaderPageManager with PageManagerDelegate {
   RenderState? currentState;
   TouchEvent? currentTouchData;
 
-  GlobalKey canvasKey;
+  GlobalKey contentKey;
   GlobalKey topIndicatorKey;
   GlobalKey bottomIndicatorKey;
   AnimationController animationController;
   int currentAnimationType;
 
   // 书页滚动控制
-  BookPageController? _pageController;
   BookPageController get controller => _pageController!;
+  BookPageController? _pageController;
 
   // 渲染position
-  BookPagePosition? _position;
   BookPagePosition get position => _position!;
+  BookPagePosition? _position;
 
   // 当前翻页模式的滚动物理行为
   BookPagePhysics? _physics;
-  BookPageScrollContext scrollContext;
 
-  PageContentProvider? _contentProvider;
+  @override
+  BookPageScrollContext get scrollContext => _scrollContext!;
+  final BookPageScrollContext? _scrollContext;
 
-  ReaderPageManager({
-    required this.canvasKey,
+  PageRepository? _pageRepository;
+
+  ReaderPageViewModel({
+    required this.contentKey,
     required this.topIndicatorKey,
     required this.bottomIndicatorKey,
     required this.animationController,
     required this.currentAnimationType,
     required ReaderViewModel viewModel,
     BookPageController? pageController,
-    required this.scrollContext,
-    PageContentProvider? provider,
-  })
-      : assert(pageController != null),
-        _pageController = pageController {
-    assert(provider != null);
-    _contentProvider = provider;
-    _contentProvider?.attach(this);
+    BookPageScrollContext? scrollContext,
+    PageRepository? pageRepository,
+  })  : assert(pageController != null),
+        _pageController = pageController,
+        assert(scrollContext != null),
+        _scrollContext = scrollContext {
+    assert(pageRepository != null);
+    _pageRepository = pageRepository;
+    _pageRepository?.attach(this);
     _setCurrentAnimation(currentAnimationType, viewModel);
     _setAnimationController(animationController);
   }
@@ -85,7 +92,7 @@ class ReaderPageManager with PageManagerDelegate {
 
     if (currentAnimationPage.isForward(event)) {
       bool canScroll =
-          await currentAnimationPage.readerViewModel.canScroll(PageIndex.next);
+          await _pageRepository!.canScroll(PageIndex.next);
       // 判断下一页是否存在
       bool nextExist =
           currentAnimationPage.readerViewModel.pageExist(PageIndex.next);
@@ -218,7 +225,7 @@ class ReaderPageManager with PageManagerDelegate {
 
   void startConfirmAnimation() {
     Animation<Offset>? animation = currentAnimationPage.getConfirmAnimation(
-        animationController, canvasKey);
+        animationController, contentKey);
 
     if (animation == null) {
       return;
@@ -228,8 +235,8 @@ class ReaderPageManager with PageManagerDelegate {
   }
 
   void startCancelAnimation() {
-    Animation<Offset>? animation =
-        currentAnimationPage.getCancelAnimation(animationController, canvasKey);
+    Animation<Offset>? animation = currentAnimationPage.getCancelAnimation(
+        animationController, contentKey);
 
     if (animation == null) {
       return;
@@ -245,7 +252,7 @@ class ReaderPageManager with PageManagerDelegate {
       animation
         ..addListener(() {
           currentState = RenderState.ANIMATING;
-          canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
+          scrollContext.invalidateContent();
           currentAnimationPage.onTouchEvent(TouchEvent(
               action: EventAction.move, touchPosition: animation.value));
         })
@@ -322,6 +329,7 @@ class ReaderPageManager with PageManagerDelegate {
 
   bool shouldRepaint(
       CustomPainter oldDelegate, ContentPainter currentDelegate) {
+    print('flutter内容绘制流程, shouldRepaint');
     if (currentState == RenderState.ANIMATING ||
         currentTouchData?.action == EventAction.dragStart) {
       return true;
@@ -339,7 +347,7 @@ class ReaderPageManager with PageManagerDelegate {
         ..addListener(() {
           currentState = RenderState.ANIMATING;
           // 通知custom painter刷新
-          canvasKey.currentContext?.findRenderObject()?.markNeedsPaint();
+          scrollContext.invalidateContent();
           if (!animationController.value.isInfinite &&
               !animationController.value.isNaN) {
             currentAnimationPage.onTouchEvent(
@@ -381,7 +389,7 @@ class ReaderPageManager with PageManagerDelegate {
   }
 
   bool isPageDataEmpty() {
-    return currentAnimationPage.readerViewModel.isPageDataEmpty();
+    return _pageRepository?.isCacheEmpty() ?? true;
   }
 
   /* ------------------------------------------ 翻页行为 --------------------------------------------------- */

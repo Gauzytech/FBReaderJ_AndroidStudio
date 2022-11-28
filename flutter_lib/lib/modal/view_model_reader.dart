@@ -11,18 +11,21 @@ import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/book_page_controller.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_turn_physics.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
-import 'package:flutter_lib/reader/controller/page_content_provider.dart';
+import 'package:flutter_lib/reader/controller/page_repository.dart';
+import 'package:flutter_lib/utils/common_util.dart';
 
-/// 提供所有图书数据
+/// 提供所有图书数据, 用于阅读界面menu联动
 class ReaderViewModel extends BaseViewModel {
   ReaderBookInfo bookInfo;
 
-  PageContentProvider? _readerContentHandler;
+  PageRepository? _readerContentHandler;
 
 
   late ReaderConfigModel _configModel;
 
   late ReaderProgressManager _progressManager;
+
+  Size get contentSize => _readerContentHandler!.getContentSize();
 
   ReaderViewModel({required this.bookInfo}) {
     _configModel = ReaderConfigModel(viewModel: this);
@@ -47,13 +50,9 @@ class ReaderViewModel extends BaseViewModel {
   }
 
   void setContentHandler(
-    PageContentProvider handler,
+    PageRepository handler,
   ) {
     _readerContentHandler = handler;
-  }
-
-  Size getContentSize() {
-    return _readerContentHandler!.getContentSize();
   }
 
   ui.Image? getOrBuildPage(PageIndex index) {
@@ -234,7 +233,7 @@ class ReaderViewModel extends BaseViewModel {
 
   /// 判断是否可以进入上一页/下一页
   Future<bool> canScroll(PageIndex pageIndex) async {
-    final handler = ArgumentError.checkNotNull(
+    final handler = requireNotNull(
         _readerContentHandler, '_readerContentHandler');
     return await handler.canScroll(pageIndex);
   }

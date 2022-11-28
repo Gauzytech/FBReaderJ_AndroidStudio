@@ -10,4 +10,7 @@ abstract class BookPageScrollContext {
   /// 当前书页滚动模式
   /// 翻页模式/垂直滚动模式
   PageMode get pageMode;
+
+  /// 通知[ContentPainter]开始重绘
+  void invalidateContent();
 }

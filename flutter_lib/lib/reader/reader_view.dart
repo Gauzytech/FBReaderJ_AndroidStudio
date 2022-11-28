@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lib/modal/reader_book_info.dart';
 import 'package:flutter_lib/modal/reader_config_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
-import 'package:flutter_lib/reader/reader_book_content_view.dart';
+import 'package:flutter_lib/reader/reader_content_view.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 
+/// 整个阅读界面: 包括上部菜单栏, 下部菜单栏, 图书内容widget[ReaderContentView]
 class ReaderView extends BaseStatefulView<ReaderViewModel> {
   const ReaderView({Key? key}) : super(key: key);
 
   @override
-  BaseStatefulViewState<ReaderView, ReaderViewModel> buildState() {
-    return _ReaderState();
-  }
+  BaseStatefulViewState<ReaderView, ReaderViewModel> buildState() => _ReaderState();
 }
 
 class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
@@ -79,7 +77,7 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
                 });
               },
               child: RepaintBoundary(
-                child: ReaderBookContentView(
+                child: ReaderContentView(
                   key: readerKey,
                 ),
               ),
@@ -94,11 +92,6 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
   ReaderViewModel? buildViewModel(BuildContext context) {
     return ReaderViewModel(
         bookInfo: ReaderBookInfo());
-  }
-
-  @override
-  bool isBindViewModel() {
-    return true;
   }
 
   @override

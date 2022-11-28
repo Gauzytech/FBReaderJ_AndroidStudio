@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../reader/controller/reader_page_manager.dart';
+import '../reader/controller/reader_page_view_model.dart';
 import '../reader/controller/touch_event.dart';
 
 class ContentPainter extends CustomPainter {
@@ -14,7 +14,7 @@ class ContentPainter extends CustomPainter {
 
   // final ui.Image? _image;
 
-  ReaderPageManager pageManager;
+  ReaderPageViewModel pageManager;
   TouchEvent? currentTouchData;
   int currentPageIndex = 0;
   int currentChapterId = 0;

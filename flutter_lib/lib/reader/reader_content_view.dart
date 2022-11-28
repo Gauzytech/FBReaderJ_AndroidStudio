@@ -22,20 +22,21 @@ import 'animation/controller_animation_with_listener_number.dart';
 import 'animation/model/highlight_block.dart';
 import 'animation/model/selection_cursor.dart';
 import 'controller/native_interface.dart';
-import 'controller/page_content_provider.dart';
-import 'controller/reader_page_manager.dart';
+import 'controller/page_repository.dart';
+import 'controller/reader_page_view_model.dart';
 import 'gestures/book_gesture_recognizer.dart';
 
-class ReaderBookContentView extends BaseStatefulView<ReaderViewModel> {
-  const ReaderBookContentView({Key? key}) : super(key: key);
+/// 图书内容widget
+class ReaderContentView extends BaseStatefulView<ReaderViewModel> {
+  const ReaderContentView({Key? key}) : super(key: key);
 
   @override
   BaseStatefulViewState<BaseStatefulView<BaseViewModel>, ReaderViewModel>
-      buildState() => ReaderBookContentViewState();
+      buildState() => ReaderContentViewState();
 }
 
-class ReaderBookContentViewState
-    extends BaseStatefulViewState<ReaderBookContentView, ReaderViewModel>
+class ReaderContentViewState
+    extends BaseStatefulViewState<ReaderContentView, ReaderViewModel>
     with TickerProviderStateMixin
     implements BookPageScrollContext {
   final _methodChannel = const MethodChannel('platform_channel_methods');
@@ -62,19 +63,20 @@ class ReaderBookContentViewState
       const <Type, GestureRecognizerFactory>{};
   AnimationController? animationController;
 
-  PageContentProvider? _pageContentProvider;
+  PageRepository? _pageRepository;
   late SelectionHandler _selectionHandler;
 
   BookPageController? _controller;
+  ReaderPageViewModel? _readerPageViewModel;
 
   @override
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     print('时间测试, onInitState');
-    _pageContentProvider =
-        PageContentProvider(methodChannel: _methodChannel, viewState: this);
+    _pageRepository =
+        PageRepository(methodChannel: _methodChannel, viewState: this);
     _selectionHandler = SelectionHandler(
-        readerContentHandler: _pageContentProvider!,
+        readerContentHandler: _pageRepository!,
         topIndicatorKey: topIndicatorKey,
         bottomIndicatorKey: bottomIndicatorKey);
     _controller = BookPageControllerImpl();
@@ -82,19 +84,19 @@ class ReaderBookContentViewState
 
   @override
   void loadData(BuildContext context, ReaderViewModel? viewModel) {
-    print('时间测试, loadData');
+    print('flutter内容绘制流程, loadData');
     assert(viewModel != null, 'ReaderViewModel cannot be null');
 
     switch (viewModel!.getConfigData().currentAnimationMode) {
       // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
-      case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
+      case ReaderPageViewModel.TYPE_ANIMATION_COVER_TURN:
         animationController = AnimationControllerWithListenerNumber(
           duration: const Duration(milliseconds: 300),
           vsync: this,
         );
         break;
-      case ReaderPageManager.TYPE_ANIMATION_SLIDE_TURN:
-      case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
+      case ReaderPageViewModel.TYPE_ANIMATION_SLIDE_TURN:
+      case ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN:
         animationController = AnimationControllerWithListenerNumber.unbounded(
           duration: const Duration(milliseconds: 150),
           vsync: this,
@@ -103,11 +105,13 @@ class ReaderBookContentViewState
     }
 
     if (animationController != null) {
+      print('flutter内容绘制流程, create pageManager');
       viewModel.getConfigData().currentAnimationMode =
-          ReaderPageManager.TYPE_ANIMATION_PAGE_TURN;
+          ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN;
 
-      ReaderPageManager pageManager = ReaderPageManager(
-          canvasKey: contentKey,
+      // todo 这里要分两种情况，要重置整个viewTree的方法走viewModel, 只刷新特定CustomPainter的方法走pageManger
+      _readerPageViewModel = ReaderPageViewModel(
+          contentKey: contentKey,
           topIndicatorKey: topIndicatorKey,
           bottomIndicatorKey: bottomIndicatorKey,
           animationController: animationController!,
@@ -115,9 +119,9 @@ class ReaderBookContentViewState
           viewModel: viewModel,
           pageController: _controller,
           scrollContext: this,
-          provider: _pageContentProvider);
-      viewModel.setContentHandler(_pageContentProvider!);
-      _contentPainter = ContentPainter(pageManager);
+          pageRepository: _pageRepository);
+      viewModel.setContentHandler(_pageRepository!);
+      _contentPainter = ContentPainter(_readerPageViewModel!);
     }
 
     // 透明状态栏
@@ -129,9 +133,9 @@ class ReaderBookContentViewState
   @override
   Widget onBuildView(BuildContext context, ReaderViewModel? viewModel) {
     assert(viewModel != null, 'ReaderViewModel cannot be null');
-
+    print("flutter内容绘制流程, onBuildView");
     _setGestureRecognizers(viewModel!);
-    final contentSize = viewModel.getContentSize();
+    final contentSize = viewModel.contentSize;
     return FittedBox(
       // GestureDetector需要放在fittedBox里，
       // 不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
@@ -180,14 +184,10 @@ class ReaderBookContentViewState
     return Provider.of<ReaderViewModel>(context);
   }
 
+  // todo 为啥改成true 翻页就没有simulation了
   @override
   bool isBindViewModel() {
     return false;
-  }
-
-  void refreshContentPainter() {
-    print('flutter内容绘制流程, refreshContentPainter, ${contentKey.currentContext != null}');
-    contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
   }
 
   @override
@@ -213,7 +213,7 @@ class ReaderBookContentViewState
       );
       _contentPainter
           ?.startCurrentTouchEvent(_contentPainter!.currentTouchData!);
-      contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+      invalidateContent();
     }
   }
 
@@ -230,7 +230,7 @@ class ReaderBookContentViewState
       // 检查上一页/下一页是否存在
       if (await _contentPainter!.canScroll(event)) {
         if (_contentPainter?.startCurrentTouchEvent(event) == true) {
-          contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+          invalidateContent();
         } else {
           print('flutter动画流程:忽略onUpdate: ${detail.localPosition}');
         }
@@ -252,7 +252,7 @@ class ReaderBookContentViewState
       // 检查上一页/下一页是否存在
       if (await _contentPainter!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
-        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        invalidateContent();
       }
     }
   }
@@ -267,7 +267,7 @@ class ReaderBookContentViewState
       if (await _contentPainter!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         updateHighlight(null, null);
-        contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        invalidateContent();
         setState(() {
           _selectionHandler.crossPageCount++;
         });
@@ -462,6 +462,7 @@ class ReaderBookContentViewState
     );
   }
 
+  // todo 把selectionMenu变成一个stateLessWidget, 避免点击menu导致触发onDragDown的点击冲突
   Widget _buildSelectionMenuLayer() {
     Offset position = _selectionHandler.menuPosition!;
     if (position.isInfinite) {
@@ -491,6 +492,7 @@ class ReaderBookContentViewState
       case SelectionItem.note:
         break;
       case SelectionItem.copy:
+        print("选择弹窗, copy");
         _selectionHandler.copy();
         break;
       case SelectionItem.search:
@@ -535,11 +537,7 @@ class ReaderBookContentViewState
 
   void _setGestureRecognizers(ReaderViewModel viewModel) {
     switch (viewModel.getConfigData().currentAnimationMode) {
-      case ReaderPageManager.TYPE_ANIMATION_SLIDE_TURN:
-        animationController = AnimationControllerWithListenerNumber.unbounded(
-          duration: const Duration(milliseconds: 150),
-          vsync: this,
-        );
+      case ReaderPageViewModel.TYPE_ANIMATION_SLIDE_TURN:
         _gestureRecognizers = <Type, GestureRecognizerFactory>{
           BookVerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
               BookVerticalDragGestureRecognizer>(
@@ -557,12 +555,8 @@ class ReaderBookContentViewState
         };
         break;
       // case ReaderPageManager.TYPE_ANIMATION_SIMULATION_TURN:
-      case ReaderPageManager.TYPE_ANIMATION_COVER_TURN:
-      case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
-        animationController = AnimationControllerWithListenerNumber.unbounded(
-          duration: const Duration(milliseconds: 150),
-          vsync: this,
-        );
+      case ReaderPageViewModel.TYPE_ANIMATION_COVER_TURN:
+      case ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN:
         _gestureRecognizers = <Type, GestureRecognizerFactory>{
           BookHorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
               BookHorizontalDragGestureRecognizer>(
@@ -584,15 +578,19 @@ class ReaderBookContentViewState
 
   /// 这个方法在dragDown, longPressDown时都会调用
   void _handleDragDown(DragDownDetails details) {
-    print("flutter动画流程[onDragDown], isSelected: ${_selectionHandler.isSelectionStateEnabled}");
-    if (_selectionHandler.isSelectionStateEnabled) {
-      // 此时划选模式应该已经激活，隐藏划选弹窗
-      hideSelectionMenu();
-    }
+    print(
+        "flutter动画流程[onDragDown], isSelected: ${_selectionHandler.isSelectionStateEnabled}");
+    // print("选择弹窗[onDragDown]}");
+    // if (_selectionHandler.isSelectionStateEnabled) {
+    //   // 此时划选模式应该已经激活，隐藏划选弹窗
+    //   hideSelectionMenu();
+    // }
   }
 
   void _handleDragStart(DragStartDetails details) {
     if (_selectionHandler.isSelectionStateEnabled) {
+      // 如果划选模式已经激活，隐藏划选弹窗
+      hideSelectionMenu();
       _selectionHandler.onDragStart(details);
       _processIndicator(NativeScript.dragStart, details.localPosition);
     } else {
@@ -638,8 +636,11 @@ class ReaderBookContentViewState
   }
 
   void _handleLongPressStart(LongPressStartDetails details) {
-    if(!_selectionHandler.isSelectionStateEnabled) {
+    if (!_selectionHandler.isSelectionStateEnabled) {
       updateSelectionState(true);
+    } else {
+      // 如果划选模式已经激活，隐藏划选弹窗
+      hideSelectionMenu();
     }
 
     _selectionHandler.onLongPressStart(details);
@@ -682,4 +683,13 @@ class ReaderBookContentViewState
 
   @override
   PageMode get pageMode => viewModel!.getConfigData().getPageMode();
+
+  @override
+  void invalidateContent() {
+    print(
+        'flutter内容绘制流程[invalidateContent], contentKey exist = ${contentKey.currentContext != null}');
+    // markNeedsPaint不会调用shouldRepaint
+    // onBuildView会调用shouldRepaint
+    contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
+  }
 }

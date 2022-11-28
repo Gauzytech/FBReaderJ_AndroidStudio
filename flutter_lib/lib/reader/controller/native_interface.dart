@@ -1,7 +1,8 @@
-import 'package:flutter/services.dart';
-import 'package:flutter_lib/reader/controller/page_content_provider.dart';
-import 'package:flutter_lib/utils/common_util.dart';
 import 'dart:ui' as ui;
+
+import 'package:flutter/services.dart';
+import 'package:flutter_lib/reader/controller/page_repository.dart';
+import 'package:flutter_lib/utils/common_util.dart';
 
 import '../../modal/page_index.dart';
 
@@ -17,7 +18,8 @@ enum NativeScript {
   selectedText('selected_text'),
   drawOnBitmap('draw_on_bitmap'),
   preparePage('prepare_page'),
-  canScroll('can_scroll');
+  canScroll('can_scroll'),
+  onScrollingFinished('on_scrolling_finished');
 
   final String name;
 
@@ -28,9 +30,10 @@ enum NativeScript {
 class NativeInterface {
 
   final MethodChannel? _methodChannel;
+
   MethodChannel get channel => _methodChannel!;
 
-  PageContentProviderDelegate delegate;
+  PageRepositoryDelegate delegate;
 
   NativeInterface({MethodChannel? methodChannel, required this.delegate})
       : assert(methodChannel != null),
@@ -53,18 +56,54 @@ class NativeInterface {
     }
   }
 
-  Future<dynamic> evaluateNativeFunc(NativeScript script, Map<String, Object?> params) async {
+  Future<dynamic> evaluateNativeFunc(NativeScript script,
+      [Map<String, Object?>? params]) async {
     final metrics = ui.window.physicalSize;
-    switch(script) {
+    switch (script) {
       case NativeScript.drawOnBitmap:
         return channel.invokeMethod(
           script.name,
           {
-            'page_index': requireNotNull(params['page_index'], 'page_index is null'),
+            'page_index': requireNotNull(params!['page_index']),
             'width': metrics.width,
             'height': metrics.height,
           },
         );
+      case NativeScript.preparePage:
+        return channel.invokeMethod(
+          script.name,
+          {
+            'width': metrics.width,
+            'height': metrics.height,
+            'update_prev_page_cache':
+                requireNotNull(params!['update_prev_page_cache']),
+            'update_next_page_cache':
+                requireNotNull(params['update_next_page_cache']),
+          },
+        );
+      case NativeScript.canScroll:
+        return channel.invokeMethod(
+          script.name,
+          {
+            'page_index': requireNotNull(params!['page_index']),
+          },
+        );
+      case NativeScript.onScrollingFinished:
+        channel.invokeMethod(
+          script.name,
+          {'page_index': requireNotNull(params!['page_index'])},
+        );
+        return null;
+      case NativeScript.dragStart:
+      case NativeScript.dragMove:
+      case NativeScript.dragEnd:
+      case NativeScript.longPressStart:
+      case NativeScript.longPressMove:
+      case NativeScript.longPressEnd:
+      case NativeScript.tapUp:
+      case NativeScript.selectionClear:
+      case NativeScript.selectedText:
+        return channel.invokeMethod(script.name, params);
       default:
         throw UnsupportedError('Unhandled script: $script');
     }

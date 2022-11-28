@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
+
 import '../controller/native_interface.dart';
-import '../controller/page_content_provider.dart';
+import '../controller/page_repository.dart';
 
 const longPressStart = 'long_press_start';
 const longPressUpdate = 'long_press_update';
@@ -30,7 +31,7 @@ class SelectionHandler {
   int crossPageCount = 1;
 
   Offset? _selectionTouchOffset;
-  PageContentProvider readerContentHandler;
+  PageRepository readerContentHandler;
 
   // 跨页划选指示器
   GlobalKey topIndicatorKey;
@@ -38,9 +39,12 @@ class SelectionHandler {
 
   // 划选弹窗
   bool _selectionState = false;
+
   bool get isSelectionStateEnabled => _selectionState;
 
   Offset? _selectionMenuPosition;
+
+  SelectionMenuFactory get factory => _menuFactory!;
   SelectionMenuFactory? _menuFactory;
 
   SelectionHandler(
@@ -51,8 +55,6 @@ class SelectionHandler {
   }
 
   Offset? get menuPosition => _selectionMenuPosition;
-
-  SelectionMenuFactory get factory => _menuFactory!;
 
   /// 长按事件处理操作
   /// 保存当前坐标
@@ -165,7 +167,7 @@ class SelectionHandler {
   bool overlapWithTopIndicator(Offset touchPosition) {
     var ratio = ui.window.devicePixelRatio;
     var renderBox =
-        topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
+    topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
     var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
     var bottomLeft = renderBox.localToGlobal(Offset(0, renderBox.size.height));
 
@@ -181,7 +183,7 @@ class SelectionHandler {
   bool overlapWithBottomIndicator(Offset touchPosition) {
     var ratio = ui.window.devicePixelRatio;
     var renderBox =
-        bottomIndicatorKey.currentContext?.findRenderObject() as RenderBox;
+    bottomIndicatorKey.currentContext?.findRenderObject() as RenderBox;
     var topLeft = renderBox.localToGlobal(Offset.zero);
     var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
     var bottomLeft = renderBox.localToGlobal(Offset(0, renderBox.size.height));

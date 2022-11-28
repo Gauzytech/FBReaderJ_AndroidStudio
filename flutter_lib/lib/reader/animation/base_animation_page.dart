@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
+import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 
 import '../../modal/view_model_reader.dart';
 import '../../utils/screen_util.dart';

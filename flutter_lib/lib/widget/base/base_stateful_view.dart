@@ -27,6 +27,7 @@ abstract class BaseStatefulViewState<T extends BaseStatefulView,
     viewModel = buildViewModel(context);
 
     if (isBindViewModel()) {
+      print("viewModel, bind");
       return ChangeNotifierProvider<M>(
         create: (ctx) {
           loadData(ctx, viewModel);
@@ -45,6 +46,7 @@ abstract class BaseStatefulViewState<T extends BaseStatefulView,
         }),
       );
     } else {
+      print("viewModel, not bind");
       loadData(context, viewModel);
       return onBuildView(context, viewModel);
     }

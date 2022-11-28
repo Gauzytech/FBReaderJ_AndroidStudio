@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_turn_physics.dart';
-import 'package:flutter_lib/reader/controller/reader_page_manager.dart';
+import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 
 class ReaderConfigModel {
   ReaderViewModel? viewModel;
@@ -48,7 +48,7 @@ class ReaderConfigEntity {
   int bottomTipFontSize = 20;
 
   ReaderConfigEntity({
-    this.currentAnimationMode = ReaderPageManager.TYPE_ANIMATION_COVER_TURN,
+    this.currentAnimationMode = ReaderPageViewModel.TYPE_ANIMATION_COVER_TURN,
     this.currentCanvasBgColor = const Color(0xfffff2cc),
     this.currentPageIndex = 0,
     this.currentChapterIndex = 0,
@@ -65,7 +65,7 @@ class ReaderConfigEntity {
 
   PageMode getPageMode() {
     switch (currentAnimationMode) {
-      case ReaderPageManager.TYPE_ANIMATION_PAGE_TURN:
+      case ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN:
         return PageMode.horizontalPageTurn;
       default:
         return PageMode.verticalPageScroll;
