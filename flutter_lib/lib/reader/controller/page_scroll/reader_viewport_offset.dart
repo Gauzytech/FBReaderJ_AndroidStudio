@@ -67,7 +67,7 @@ abstract class ReaderViewportOffset {
   String toString() {
     final List<String> description = <String>[];
     debugFillDescription(description);
-    return '${describeIdentity(this)}(${description.join(", ")})';
+    return '${describeIdentity(this)} (${description.join(", ")})';
   }
 
   @mustCallSuper

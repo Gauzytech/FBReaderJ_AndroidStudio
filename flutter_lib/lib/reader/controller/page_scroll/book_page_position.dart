@@ -62,7 +62,7 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
     // todo 根据自己的书页渲染逻辑改造, 两种情况: 垂直滚动/横向翻页
     // 设置一页内容的宽度
     super.applyViewportDimension(viewportDimension);
-    // 初始化书页渲染的坐标, 暂时写个0
+    // todo 初始化书页渲染的坐标, 暂时写个0
     correctPixels(0);
     return false;
   }

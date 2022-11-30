@@ -3,7 +3,18 @@ import 'package:flutter/material.dart';
 import '../reader/controller/reader_page_view_model.dart';
 import '../reader/controller/touch_event.dart';
 
-class ContentPainter extends CustomPainter {
+mixin BookContentPainter {
+
+  void setCurrentTouchEvent(TouchEvent event);
+
+  bool startCurrentTouchEvent(TouchEvent? event);
+
+  bool isDuplicateEvent(EventAction eventAction, Offset touchPosition);
+
+  Offset lastTouchPosition();
+}
+
+class ContentPainter extends CustomPainter with BookContentPainter {
   // final Paint _paint = Paint()
   //   ..color = Colors.blueAccent // 画笔颜色
   //   ..strokeCap = StrokeCap.round //画笔笔触类型
@@ -14,12 +25,13 @@ class ContentPainter extends CustomPainter {
 
   // final ui.Image? _image;
 
-  ReaderPageViewModel pageManager;
+  final ReaderPageViewModel _pageViewModel;
   TouchEvent? currentTouchData;
   int currentPageIndex = 0;
   int currentChapterId = 0;
 
-  ContentPainter(this.pageManager, {Key? key});
+  ContentPainter({required ReaderPageViewModel pageViewModel, Key? key})
+      : _pageViewModel = pageViewModel;
 
   @override
   Future paint(Canvas canvas, Size size) async {
@@ -31,9 +43,10 @@ class ContentPainter extends CustomPainter {
     //   print("flutter内容绘制流程, _image draw finish");
     // }
 
-    if(!pageManager.isPageDataEmpty()) {
-      pageManager.setPageSize(size);
-      pageManager.onPageDraw(canvas);
+    if (!_pageViewModel.readerViewModel.isPageDataEmpty()) {
+      print('flutter内容绘制流程, 开始绘制');
+      _pageViewModel.setPageSize(size);
+      _pageViewModel.onPageDraw(canvas);
     } else {
       print('flutter内容绘制流程, 没有bitmap缓存数据, 绘制空白');
     }
@@ -42,24 +55,27 @@ class ContentPainter extends CustomPainter {
   ///是否需要重绘
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    return pageManager.shouldRepaint(oldDelegate, this);
+    return _pageViewModel.shouldRepaint(oldDelegate, this);
   }
 
   Future<bool> canScroll(TouchEvent event) async {
-    return await pageManager.canScroll(event);
+    return await _pageViewModel.canScroll(event);
   }
 
   /// 缓存触摸事件判断滑动方向
   /// 注意多线程全局变量问题
+  @override
   void setCurrentTouchEvent(TouchEvent event) {
     currentTouchData = event;
   }
 
   /// 将重绘数据给painter canvas
-  bool startCurrentTouchEvent(TouchEvent event) {
-    return pageManager.setCurrentTouchEvent(event);
+  @override
+  bool startCurrentTouchEvent(TouchEvent? event) {
+    return _pageViewModel.setCurrentTouchEvent(event ?? currentTouchData!);
   }
 
+  @override
   bool isDuplicateEvent(EventAction eventAction, Offset touchPosition) {
     if (currentTouchData == null) return false;
 
@@ -74,6 +90,7 @@ class ContentPainter extends CustomPainter {
     }
   }
 
+  @override
   Offset lastTouchPosition() {
     return currentTouchData?.touchPosition ?? Offset.zero;
   }

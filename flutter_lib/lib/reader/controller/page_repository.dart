@@ -8,14 +8,12 @@ import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
-import 'package:flutter_lib/reader/reader_content_view.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
 extension ImageParsing on Uint8List {
-
   /// 将[Uint8List]转成[Image]
   Future<ui.Image> toImage() async {
     ui.Codec codec = await ui.instantiateImageCodec(this);
@@ -33,7 +31,6 @@ mixin PageRepositoryDelegate {
 }
 
 class PageRepository with PageRepositoryDelegate {
-  ReaderContentViewState viewState;
 
   // 缓存图书内容图片的manager
   final BitmapManagerImpl _bitmapManager = BitmapManagerImpl();
@@ -43,12 +40,11 @@ class PageRepository with PageRepositoryDelegate {
 
   NativeInterface get nativeInterface => _nativeInterface!;
 
-  PageManagerDelegate? _pageManagerDelegate;
+  ReaderPageViewModelDelegate? _readerPageViewModelDelegate;
 
-  PageRepository({MethodChannel? methodChannel, required this.viewState}) {
-    assert(methodChannel != null);
+  PageRepository({required MethodChannel methodChannel}) {
     _nativeInterface =
-        NativeInterface(methodChannel: methodChannel!, delegate: this);
+        NativeInterface(methodChannel: methodChannel, delegate: this);
   }
 
   ImageSrc getPage(PageIndex index) {
@@ -58,7 +54,7 @@ class PageRepository with PageRepositoryDelegate {
   @override
   void refreshContent() {
     // viewState.viewModel?.notify();
-    _pageManagerDelegate!.scrollContext.invalidateContent();
+    _readerPageViewModelDelegate!.scrollContext.invalidateContent();
   }
 
   @override
@@ -66,7 +62,6 @@ class PageRepository with PageRepositoryDelegate {
     print('flutter内容绘制流程[initialize], $pageIndex');
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
-    // drawOnBitmap(internalIdx, pageIndex, true);
     try {
       // 调用native方法，将绘制当前page
       Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
@@ -80,8 +75,8 @@ class PageRepository with PageRepositoryDelegate {
       _bitmapManager.setSize(image.width, image.height);
       _bitmapManager.cacheBitmap(internalIdx, image);
 
-      // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
-      viewState.viewModel?.notify();
+      // 初始化page滚动相关的数据并通知页面刷新
+      _readerPageViewModelDelegate!.initialize(image.width, image.height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
@@ -258,7 +253,7 @@ class PageRepository with PageRepositoryDelegate {
         } else {
           if (script == NativeScript.longPressEnd && highlightsData == null) {
             print('时间测试, 取消长按状态');
-            viewState.updateSelectionState(false);
+            _readerPageViewModelDelegate!.selectionDelegate.updateSelectionState(false);
           }
         }
         break;
@@ -267,7 +262,7 @@ class PageRepository with PageRepositoryDelegate {
             await nativeInterface.evaluateNativeFunc(script);
         String text = result['text'];
         print('选中文字, $text');
-        viewState.showText(text);
+        _readerPageViewModelDelegate!.selectionDelegate.showText(text);
         break;
       default:
     }
@@ -296,14 +291,14 @@ class PageRepository with PageRepositoryDelegate {
     if (rightCursor != null) {
       cursors.add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
     }
-    viewState.updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
+    _readerPageViewModelDelegate!.selectionDelegate.updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
   }
 
   void _handleSelectionMenu(String selectionMenuData) {
     Map<String, dynamic> data = jsonDecode(selectionMenuData);
     SelectionMenuPosition position = SelectionMenuPosition.fromJson(data);
     Offset showPosition = position.toShowPosition(getContentSize());
-    viewState.showSelectionMenu(
+    _readerPageViewModelDelegate!.selectionDelegate.showSelectionMenu(
       showPosition,
     );
   }
@@ -312,11 +307,11 @@ class PageRepository with PageRepositoryDelegate {
     return _bitmapManager.isEmpty();
   }
 
-  void attach(PageManagerDelegate pageManagerDelegate) {
-    _pageManagerDelegate = pageManagerDelegate;
+  void attach(ReaderPageViewModelDelegate pageManagerDelegate) {
+    _readerPageViewModelDelegate = pageManagerDelegate;
   }
 
   void detach() {
-    _pageManagerDelegate = null;
+    _readerPageViewModelDelegate = null;
   }
 }

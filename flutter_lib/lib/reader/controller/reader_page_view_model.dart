@@ -5,24 +5,30 @@ import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/book_page_controller.dart';
-import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
+import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
 
+import '../../interface/content_selection_delegate.dart';
 import '../../widget/content_painter.dart';
 import '../animation/base_animation_page.dart';
+import '../animation/model/user_settings/page_mode.dart';
 import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
-mixin PageManagerDelegate {
+mixin ReaderPageViewModelDelegate {
   BookPageScrollContext get scrollContext;
 
-  void updatePosition(ReaderViewModel viewModel);
+  ContentSelectionDelegate get selectionDelegate;
+
+  ReaderViewModel get readerViewModel;
+
+  void initialize(int width, int height);
 }
 
 /// 管理所有[ReaderBookContentView]的渲染行为
-class ReaderPageViewModel with PageManagerDelegate {
+class ReaderPageViewModel with ReaderPageViewModelDelegate {
   static const TYPE_ANIMATION_SIMULATION_TURN = 1;
   static const TYPE_ANIMATION_COVER_TURN = 2;
   static const TYPE_ANIMATION_SLIDE_TURN = 3;
@@ -39,8 +45,7 @@ class ReaderPageViewModel with PageManagerDelegate {
   int currentAnimationType;
 
   // 书页滚动控制
-  BookPageController get controller => _pageController!;
-  BookPageController? _pageController;
+  final BookPageController _pageController;
 
   // 渲染position
   BookPagePosition get position => _position!;
@@ -50,10 +55,15 @@ class ReaderPageViewModel with PageManagerDelegate {
   BookPagePhysics? _physics;
 
   @override
-  BookPageScrollContext get scrollContext => _scrollContext!;
-  final BookPageScrollContext? _scrollContext;
+  BookPageScrollContext get scrollContext => _scrollContext;
+  final BookPageScrollContext _scrollContext;
 
-  PageRepository? _pageRepository;
+  @override
+  ContentSelectionDelegate get selectionDelegate => throw UnimplementedError();
+  final ContentSelectionDelegate _selectionDelegate;
+
+  @override
+  ReaderViewModel get readerViewModel => currentAnimationPage.readerViewModel;
 
   ReaderPageViewModel({
     required this.contentKey,
@@ -62,16 +72,15 @@ class ReaderPageViewModel with PageManagerDelegate {
     required this.animationController,
     required this.currentAnimationType,
     required ReaderViewModel viewModel,
-    BookPageController? pageController,
-    BookPageScrollContext? scrollContext,
-    PageRepository? pageRepository,
-  })  : assert(pageController != null),
-        _pageController = pageController,
-        assert(scrollContext != null),
-        _scrollContext = scrollContext {
-    assert(pageRepository != null);
-    _pageRepository = pageRepository;
-    _pageRepository?.attach(this);
+    required BookPageController pageController,
+    required BookPageScrollContext scrollContext,
+    required ContentSelectionDelegate selectionDelegate,
+    required PageRepository pageRepository,
+  })  : _pageController = pageController,
+        _scrollContext = scrollContext,
+        _selectionDelegate = selectionDelegate {
+    pageRepository.attach(this);
+    viewModel.setPageRepository(pageRepository);
     _setCurrentAnimation(currentAnimationType, viewModel);
     _setAnimationController(animationController);
   }
@@ -91,27 +100,23 @@ class ReaderPageViewModel with PageManagerDelegate {
     }
 
     if (currentAnimationPage.isForward(event)) {
-      bool canScroll =
-          await _pageRepository!.canScroll(PageIndex.next);
+      bool canScroll = await readerViewModel.canScroll(PageIndex.next);
       // 判断下一页是否存在
-      bool nextExist =
-          currentAnimationPage.readerViewModel.pageExist(PageIndex.next);
+      bool nextExist = readerViewModel.pageExist(PageIndex.next);
       print(
           "flutter动画流程:canScroll${event.touchPoint}, next canScroll: $canScroll, pageExist: $nextExist");
       if (!nextExist) {
-        currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.next);
+        readerViewModel.buildPageAsync(PageIndex.next);
       }
       return canScroll && nextExist;
     } else {
-      bool canScroll =
-          await currentAnimationPage.readerViewModel.canScroll(PageIndex.prev);
+      bool canScroll = await readerViewModel.canScroll(PageIndex.prev);
       // 判断上一页是否存在
-      bool prevExist =
-          currentAnimationPage.readerViewModel.pageExist(PageIndex.prev);
+      bool prevExist = readerViewModel.pageExist(PageIndex.prev);
       print(
           "flutter动画流程:canScroll${event.touchPoint}, prev canScroll: $canScroll, pageExist: $prevExist");
       if (!prevExist) {
-        currentAnimationPage.readerViewModel.buildPageAsync(PageIndex.prev);
+        readerViewModel.buildPageAsync(PageIndex.prev);
       }
       return canScroll && prevExist;
     }
@@ -340,14 +345,11 @@ class ReaderPageViewModel with PageManagerDelegate {
   }
 
   void _setAnimationController(AnimationController animationController) {
-
     if (currentAnimationType == TYPE_ANIMATION_SLIDE_TURN ||
         currentAnimationType == TYPE_ANIMATION_PAGE_TURN) {
       animationController
         ..addListener(() {
           currentState = RenderState.ANIMATING;
-          // 通知custom painter刷新
-          scrollContext.invalidateContent();
           if (!animationController.value.isInfinite &&
               !animationController.value.isNaN) {
             currentAnimationPage.onTouchEvent(
@@ -361,6 +363,8 @@ class ReaderPageViewModel with PageManagerDelegate {
                       touchPosition: Offset(animationController.value, 0),
                     ),
             );
+            // 通知custom painter刷新
+            scrollContext.invalidateContent("动画刷新");
           }
         })
         ..addStatusListener((status) {
@@ -388,17 +392,30 @@ class ReaderPageViewModel with PageManagerDelegate {
     );
   }
 
-  bool isPageDataEmpty() {
-    return _pageRepository?.isCacheEmpty() ?? true;
+  /* ------------------------------------------ 翻页相关 --------------------------------------------------- */
+  @override
+  void initialize(int width, int height) {
+    _updatePosition();
+    switch(scrollContext.pageMode) {
+      case PageMode.verticalPageScroll:
+        position.applyViewportDimension(height.toDouble());
+        break;
+      case PageMode.horizontalPageTurn:
+        position.applyViewportDimension(width.toDouble());
+        break;
+    }
+    // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
+    readerViewModel.notify();
+
+    print('flutter翻页行为, 初始化数据完毕: ${position.toString()}');
   }
 
-  /* ------------------------------------------ 翻页行为 --------------------------------------------------- */
-  @override
-  void updatePosition(ReaderViewModel viewModel) {
-    _physics = viewModel.getConfigData().getBookScrollPhysics();
-    assert(_pageController != null);
-    _position = controller.createBookPagePosition(_physics!, scrollContext);
+  /// 初始化翻页渲染坐标[_position]和翻页物理行为[_physics]
+  void _updatePosition() {
+    _physics = readerViewModel.getConfigData().getBookScrollPhysics();
+    _position =
+        _pageController.createBookPagePosition(_physics!, scrollContext);
     assert(_position != null);
-    controller.attach(position);
+    _pageController.attach(position);
   }
 }

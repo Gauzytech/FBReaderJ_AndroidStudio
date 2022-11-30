@@ -35,9 +35,8 @@ class NativeInterface {
 
   PageRepositoryDelegate delegate;
 
-  NativeInterface({MethodChannel? methodChannel, required this.delegate})
-      : assert(methodChannel != null),
-        _methodChannel = methodChannel {
+  NativeInterface({required MethodChannel methodChannel, required this.delegate})
+      : _methodChannel = methodChannel {
     channel.setMethodCallHandler(_addNativeMethod);
   }
 

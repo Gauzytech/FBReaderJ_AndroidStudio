@@ -106,6 +106,12 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     return true;
   }
 
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    description.add('viewport: ${_viewportDimension?.toStringAsFixed(1)}');
+  }
+
   void dispose() {
     scrollState?.dispose();
     _scrollState = null;

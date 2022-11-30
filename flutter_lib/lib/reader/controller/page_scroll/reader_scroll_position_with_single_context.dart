@@ -99,4 +99,19 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     return holdState;
   }
 
+  @override
+  void dispose() {
+    // _currentDrag?.dispose();
+    // _currentDrag = null;
+    super.dispose();
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    super.debugFillDescription(description);
+    description.add('${context.runtimeType}');
+    description.add('$physics');
+    description.add('$scrollState');
+    description.add('$userScrollDirection');
+  }
 }

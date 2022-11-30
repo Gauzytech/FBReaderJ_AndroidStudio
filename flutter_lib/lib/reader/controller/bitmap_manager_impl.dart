@@ -58,7 +58,7 @@ class BitmapManagerImpl with BitmapManager {
   @override
   int findInternalCacheIndex(PageIndex pageIndex) {
     print(
-        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $indexCacheDebugDescription");
+        "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $indexCacheDebugDescription}");
     final int internalCacheIndex = getInternalIndex(pageIndex);
     // 找到内部index先把位置占住
     _pageIndexCache[internalCacheIndex] = pageIndex;
@@ -158,7 +158,7 @@ class BitmapManagerImpl with BitmapManager {
     return Size(_contentWidth.toDouble(), _contentHeight.toDouble());
   }
 
-  String indexCacheDebugDescription() => "$_pageIndexCache";
+  String get indexCacheDebugDescription => '$_pageIndexCache';
 
   bool isEmpty() {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {

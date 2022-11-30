@@ -12,5 +12,5 @@ abstract class BookPageScrollContext {
   PageMode get pageMode;
 
   /// 通知[ContentPainter]开始重绘
-  void invalidateContent();
+  void invalidateContent([String? tag]);
 }

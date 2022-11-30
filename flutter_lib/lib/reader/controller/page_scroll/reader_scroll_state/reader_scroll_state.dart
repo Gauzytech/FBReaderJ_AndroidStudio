@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state_delegate.dart';
 
@@ -27,4 +28,7 @@ abstract class ReaderScrollState {
   /// Called when the scroll view stops performing this activity.
   @mustCallSuper
   void dispose() { }
+
+  @override
+  String toString() => describeIdentity(this);
 }

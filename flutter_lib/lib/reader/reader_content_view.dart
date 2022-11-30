@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
+import 'package:flutter_lib/interface/content_selection_delegate.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
@@ -38,7 +39,7 @@ class ReaderContentView extends BaseStatefulView<ReaderViewModel> {
 class ReaderContentViewState
     extends BaseStatefulViewState<ReaderContentView, ReaderViewModel>
     with TickerProviderStateMixin
-    implements BookPageScrollContext {
+    implements BookPageScrollContext, ContentSelectionDelegate {
   final _methodChannel = const MethodChannel('platform_channel_methods');
 
   // 翻页倒计时
@@ -54,7 +55,7 @@ class ReaderContentViewState
   double _topStartIndicatorOpacity = 0;
   double _bottomEndIndicatorOpacity = 0;
 
-  ContentPainter? _contentPainter;
+  BookContentPainter? _contentPainter;
   final HighlightPainter _highlightPainter = HighlightPainter();
 
   final GlobalKey<RawGestureDetectorState> _gestureDetectorKey =
@@ -73,8 +74,7 @@ class ReaderContentViewState
   void onInitState() {
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     print('时间测试, onInitState');
-    _pageRepository =
-        PageRepository(methodChannel: _methodChannel, viewState: this);
+    _pageRepository = PageRepository(methodChannel: _methodChannel);
     _selectionHandler = SelectionHandler(
         readerContentHandler: _pageRepository!,
         topIndicatorKey: topIndicatorKey,
@@ -117,11 +117,11 @@ class ReaderContentViewState
           animationController: animationController!,
           currentAnimationType: viewModel.getConfigData().currentAnimationMode,
           viewModel: viewModel,
-          pageController: _controller,
+          pageController: _controller!,
           scrollContext: this,
-          pageRepository: _pageRepository);
-      viewModel.setContentHandler(_pageRepository!);
-      _contentPainter = ContentPainter(_readerPageViewModel!);
+          selectionDelegate: this,
+          pageRepository: _pageRepository!);
+      _contentPainter = ContentPainter(pageViewModel: _readerPageViewModel!);
     }
 
     // 透明状态栏
@@ -152,7 +152,7 @@ class ReaderContentViewState
               child: RepaintBoundary(
                 child: CustomPaint(
                   key: contentKey,
-                  painter: _contentPainter,
+                  painter: _contentPainter as ContentPainter,
                 ),
               ),
             ),
@@ -184,7 +184,7 @@ class ReaderContentViewState
     return Provider.of<ReaderViewModel>(context);
   }
 
-  // todo 为啥改成true 翻页就没有simulation了
+  // todo 改成绑定ViewModel, 为啥改成true 翻页就没有simulation了
   @override
   bool isBindViewModel() {
     return false;
@@ -192,7 +192,7 @@ class ReaderContentViewState
 
   @override
   void dispose() {
-    print('flutter内容绘制流程, dispose2');
+    print('flutter内容绘制流程, dispose');
     animationController?.dispose();
     viewModel?.dispose();
     _cancelTimer();
@@ -212,7 +212,7 @@ class ReaderContentViewState
         ),
       );
       _contentPainter
-          ?.startCurrentTouchEvent(_contentPainter!.currentTouchData!);
+          ?.startCurrentTouchEvent(null);
       invalidateContent();
     }
   }
@@ -228,7 +228,7 @@ class ReaderContentViewState
       );
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
-      if (await _contentPainter!.canScroll(event)) {
+      if (await _readerPageViewModel!.canScroll(event)) {
         if (_contentPainter?.startCurrentTouchEvent(event) == true) {
           invalidateContent();
         } else {
@@ -250,7 +250,7 @@ class ReaderContentViewState
       );
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
-      if (await _contentPainter!.canScroll(event)) {
+      if (await _readerPageViewModel!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         invalidateContent();
       }
@@ -264,7 +264,7 @@ class ReaderContentViewState
     if (eventAction != null) {
       TouchEvent event =
           TouchEvent(action: eventAction, touchPosition: touchPosition);
-      if (await _contentPainter!.canScroll(event)) {
+      if (await _readerPageViewModel!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         updateHighlight(null, null);
         invalidateContent();
@@ -402,7 +402,7 @@ class ReaderContentViewState
     });
   }
 
-  /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio
+  @override
   void showSelectionMenu(Offset position) {
     setState(() {
       _selectionHandler.updateSelectionMenuPosition(position);
@@ -417,6 +417,7 @@ class ReaderContentViewState
     }
   }
 
+  @override
   void updateSelectionState(bool enable) {
     _selectionHandler.updateSelectionState(enable);
   }
@@ -500,6 +501,7 @@ class ReaderContentViewState
     }
   }
 
+  @override
   void showText(String text) {
     showDialog(
         context: context,
@@ -529,6 +531,7 @@ class ReaderContentViewState
         });
   }
 
+  @override
   void updateHighlight(
       List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
     _highlightPainter.updateHighlight(blocks, selectionCursors);
@@ -685,9 +688,9 @@ class ReaderContentViewState
   PageMode get pageMode => viewModel!.getConfigData().getPageMode();
 
   @override
-  void invalidateContent() {
+  void invalidateContent([String? tag]) {
     print(
-        'flutter内容绘制流程[invalidateContent], contentKey exist = ${contentKey.currentContext != null}');
+        'flutter内容绘制流程[invalidateContent], tag = $tag, contentKey exist = ${contentKey.currentContext != null}');
     // markNeedsPaint不会调用shouldRepaint
     // onBuildView会调用shouldRepaint
     contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
