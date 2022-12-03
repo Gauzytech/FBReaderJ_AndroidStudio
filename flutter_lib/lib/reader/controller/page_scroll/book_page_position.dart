@@ -21,6 +21,7 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
     required super.context,
     required super.physics,
     double viewportFraction = 1.0,
+    super.oldPosition,
   })  : assert(viewportFraction > 0.0),
         _viewportFraction = viewportFraction,
         super(initialPixels: null);

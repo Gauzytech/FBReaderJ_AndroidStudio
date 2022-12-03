@@ -3,8 +3,6 @@ import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 
-import 'page_physics/book_page_turn_physics.dart';
-
 mixin BookPageController {
 
   /// Animates the controlled [PageView] from the current page to the given page.
@@ -37,7 +35,8 @@ mixin BookPageController {
   /// The `duration` and `curve` arguments must not be null.
   Future<void> previousPage();
 
-  BookPagePosition createBookPagePosition(BookPagePhysics bookPagePhysics, BookPageScrollContext context);
+  BookPagePosition createBookPagePosition(BookPagePhysics bookPagePhysics,
+      BookPageScrollContext context, BookPagePosition? oldPosition);
 
   /// Register the given position with this controller.
   ///
@@ -78,8 +77,16 @@ class BookPageControllerImpl with BookPageController {
   }
 
   @override
-  BookPagePosition createBookPagePosition(BookPagePhysics bookPagePhysics, BookPageScrollContext context) {
-    return BookPagePosition(context: context, physics: bookPagePhysics);
+  BookPagePosition createBookPagePosition(
+    BookPagePhysics bookPagePhysics,
+    BookPageScrollContext context,
+    BookPagePosition? oldPosition,
+  ) {
+    return BookPagePosition(
+      context: context,
+      physics: bookPagePhysics,
+      oldPosition: oldPosition,
+    );
   }
 
   @override

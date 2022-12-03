@@ -1,6 +1,7 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/hold_scroll_state.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/idle_scroll_state.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/reader_scroll_state.dart';
@@ -50,7 +51,15 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   /// [State.dispose] method.
   final ValueNotifier<bool> isScrollingNotifier = ValueNotifier<bool>(false);
 
-  ReaderScrollPosition({required this.context, required this.physics});
+  ReaderScrollPosition({
+    required this.context,
+    required this.physics,
+    BookPagePosition? oldPosition,
+  }) {
+    if(oldPosition != null) {
+      absorb(oldPosition);
+    }
+  }
 
   /// 更新[pixels], 并需要通知观察者
   double setPixels(double newPixels) {
@@ -104,6 +113,30 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
       _viewportDimension = viewportDimension;
     }
     return true;
+  }
+
+  @protected
+  @mustCallSuper
+  void absorb(BookPagePosition other) {
+    assert(other.context == context);
+    assert(_pixels == null);
+    if (other.hasPixels) {
+      _pixels = other.pixels;
+    }
+    if (other.hasViewportDimension) {
+      _viewportDimension = other.viewportDimension;
+    }
+
+    assert(scrollState == null);
+    assert(other.scrollState != null);
+    _scrollState = other.scrollState;
+    other._scrollState = null;
+    if (other.runtimeType != runtimeType) {
+      scrollState!.resetActivity();
+    }
+    // todo setIgnorePointer用法
+    // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
+    isScrollingNotifier.value = scrollState!.isScrolling;
   }
 
   @override

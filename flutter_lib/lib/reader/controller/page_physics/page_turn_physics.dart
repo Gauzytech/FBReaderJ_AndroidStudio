@@ -6,9 +6,10 @@ import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position
 
 import 'book_page_physics.dart';
 
-class BookPageTurnPhysics with BookPagePhysics {
+/// 水平翻页的物理行为
+class PageTurnPhysics with BookPagePhysics {
   /// 创建图书滚动的物理行为.
-  BookPageTurnPhysics();
+  PageTurnPhysics();
 
   /// 计算滚动的默认精度, 见[ScrollPhysics], _kDefaultTolerance.
   Tolerance get tolerance => Tolerance(

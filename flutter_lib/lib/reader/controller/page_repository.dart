@@ -308,10 +308,12 @@ class PageRepository with PageRepositoryDelegate {
   }
 
   void attach(ReaderPageViewModelDelegate pageManagerDelegate) {
+    print('flutter内容绘制流程 repository attach');
     _readerPageViewModelDelegate = pageManagerDelegate;
   }
 
   void detach() {
+    print('flutter内容绘制流程 repository detach');
     _readerPageViewModelDelegate = null;
   }
 }

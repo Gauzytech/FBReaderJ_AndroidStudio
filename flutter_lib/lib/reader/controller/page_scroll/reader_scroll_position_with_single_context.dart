@@ -1,10 +1,10 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/ballistic_scroll_state.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/idle_scroll_state.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state_delegate.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
 
 import 'reader_scroll_state/hold_scroll_state.dart';
 
@@ -15,6 +15,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     required super.context,
     required super.physics,
     double? initialPixels = 0.0,
+    super.oldPosition,
   }) {
     if (!hasPixels && initialPixels != null) {
       correctPixels(initialPixels);

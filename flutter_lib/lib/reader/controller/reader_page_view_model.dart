@@ -1,19 +1,15 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
-import 'package:flutter_lib/reader/controller/book_page_controller.dart';
-import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
 
 import '../../interface/content_selection_delegate.dart';
 import '../../widget/content_painter.dart';
 import '../animation/base_animation_page.dart';
-import '../animation/model/user_settings/page_mode.dart';
 import '../animation/slide_animation_page.dart';
 import 'touch_event.dart';
 
@@ -39,27 +35,15 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
   TouchEvent? currentTouchData;
 
   GlobalKey contentKey;
-  GlobalKey topIndicatorKey;
-  GlobalKey bottomIndicatorKey;
   AnimationController animationController;
   int currentAnimationType;
-
-  // 书页滚动控制
-  final BookPageController _pageController;
-
-  // 渲染position
-  BookPagePosition get position => _position!;
-  BookPagePosition? _position;
-
-  // 当前翻页模式的滚动物理行为
-  BookPagePhysics? _physics;
 
   @override
   BookPageScrollContext get scrollContext => _scrollContext;
   final BookPageScrollContext _scrollContext;
 
   @override
-  ContentSelectionDelegate get selectionDelegate => throw UnimplementedError();
+  ContentSelectionDelegate get selectionDelegate => _selectionDelegate;
   final ContentSelectionDelegate _selectionDelegate;
 
   @override
@@ -67,17 +51,13 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
 
   ReaderPageViewModel({
     required this.contentKey,
-    required this.topIndicatorKey,
-    required this.bottomIndicatorKey,
     required this.animationController,
     required this.currentAnimationType,
     required ReaderViewModel viewModel,
-    required BookPageController pageController,
     required BookPageScrollContext scrollContext,
     required ContentSelectionDelegate selectionDelegate,
     required PageRepository pageRepository,
-  })  : _pageController = pageController,
-        _scrollContext = scrollContext,
+  })  : _scrollContext = scrollContext,
         _selectionDelegate = selectionDelegate {
     pageRepository.attach(this);
     viewModel.setPageRepository(pageRepository);
@@ -125,9 +105,9 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
   bool setCurrentTouchEvent(TouchEvent event) {
     /// 如果正在执行动画，判断是否需要中止动画
     switch (currentAnimationType) {
-      // 左右翻页
+    // 左右翻页
       case TYPE_ANIMATION_PAGE_TURN:
-        // 翻页惯性动画进行中
+      // 翻页惯性动画进行中
         if (isAnimationInProgress()) {
           if (event.action == EventAction.dragStart) {
             // 手指按下并开始移动
@@ -170,7 +150,7 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
         event.action == EventAction.cancel) {
       print('flutter动画流程:setCurrentTouchEvent${event.touchPoint}');
       switch (currentAnimationType) {
-        // case TYPE_ANIMATION_SIMULATION_TURN:
+      // case TYPE_ANIMATION_SIMULATION_TURN:
         case TYPE_ANIMATION_COVER_TURN:
           if (currentAnimationPage.isCancelArea()) {
             startCancelAnimation();
@@ -394,28 +374,5 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
 
   /* ------------------------------------------ 翻页相关 --------------------------------------------------- */
   @override
-  void initialize(int width, int height) {
-    _updatePosition();
-    switch(scrollContext.pageMode) {
-      case PageMode.verticalPageScroll:
-        position.applyViewportDimension(height.toDouble());
-        break;
-      case PageMode.horizontalPageTurn:
-        position.applyViewportDimension(width.toDouble());
-        break;
-    }
-    // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
-    readerViewModel.notify();
-
-    print('flutter翻页行为, 初始化数据完毕: ${position.toString()}');
-  }
-
-  /// 初始化翻页渲染坐标[_position]和翻页物理行为[_physics]
-  void _updatePosition() {
-    _physics = readerViewModel.getConfigData().getBookScrollPhysics();
-    _position =
-        _pageController.createBookPagePosition(_physics!, scrollContext);
-    assert(_position != null);
-    _pageController.attach(position);
-  }
+  void initialize(int width, int height) => scrollContext.initialize(width, height);
 }
