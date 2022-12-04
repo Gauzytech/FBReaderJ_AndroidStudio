@@ -1,11 +1,12 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/reader_scroll_state.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
 
 /// 手指抬起后, onDragUp, 执行模拟惯性动画.
-/// see [BallisticScrollActivity]
-class BallisticScrollState extends ReaderScrollState {
-  BallisticScrollState(
+///
+/// 具体功能方法模仿[BallisticScrollActivity].
+class BallisticScrollStage extends ReaderScrollStage {
+  BallisticScrollStage(
     super.delegate,
     Simulation simulation,
     TickerProvider vsync,

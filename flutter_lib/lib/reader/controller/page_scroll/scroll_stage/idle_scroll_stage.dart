@@ -1,10 +1,11 @@
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/reader_scroll_state.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
 
 /// 阅读内容滚动状态：静止
-/// see [IdleScrollActivity]
-class IdleScrollState extends ReaderScrollState {
+///
+/// 具体功能方法模仿[IdleScrollActivity]
+class IdleScrollStage extends ReaderScrollStage {
 
-  IdleScrollState(super.delegate);
+  IdleScrollStage(super.delegate);
 
   @override
   void applyNewDimensions() {

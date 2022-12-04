@@ -633,10 +633,13 @@ class ReaderContentViewState
     //   hideSelectionMenu();
     // }
 
-    assert(_drag == null);
-    assert(_hold == null);
-    _hold = position.hold(_disposeHold);
-    print('flutter翻页行为, hold创建完毕');
+    // 不是长按状态, 初始化drag滚动行为
+    if(!_selectionHandler.isSelectionStateEnabled) {
+      assert(_drag == null);
+      assert(_hold == null);
+      _hold = position.hold(_disposeHold);
+      print('flutter翻页行为, hold创建完毕, $position');
+    }
   }
 
   void _handleDragStart(DragStartDetails details) {
@@ -647,6 +650,14 @@ class ReaderContentViewState
       _processIndicator(NativeScript.dragStart, details.localPosition);
     } else {
       print("flutter动画流程[onDragStart], 进行翻页操作${details.localPosition}");
+
+      assert(_drag == null);
+      _drag = position.drag(details, _disposeDrag);
+      assert(_drag != null);
+      assert(_hold == null);
+
+      print('flutter翻页行为, drag创建完毕: $position');
+
       onDragStart(details);
     }
   }

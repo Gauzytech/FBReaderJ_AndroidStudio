@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
 
-abstract class ReaderScrollState {
-  /// The delegate that this activity will use to actuate the scroll view.
-  ReaderScrollStateDelegate get delegate => _delegate;
-  ReaderScrollStateDelegate _delegate;
+abstract class ReaderScrollStage {
+
+  /// 使用委托提供[ReaderScrollStage]与阅读界面的交互
+  ReaderScrollStageDelegate get delegate => _delegate;
+  ReaderScrollStageDelegate _delegate;
 
   /// Initializes [delegate] for subclasses.
-  ReaderScrollState(this._delegate);
+  ReaderScrollStage(this._delegate);
 
   void applyNewDimensions() {}
 

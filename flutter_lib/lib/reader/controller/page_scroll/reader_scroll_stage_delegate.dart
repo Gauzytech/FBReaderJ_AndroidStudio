@@ -6,7 +6,7 @@ import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dar
 ///
 /// Used by subclasses of [ReaderScrollState] to manipulate the scroll view that
 /// they are acting upon.
-abstract class ReaderScrollStateDelegate {
+abstract class ReaderScrollStageDelegate {
 
   /// 当前书页滚动模式
   /// 翻页模式/垂直滚动模式

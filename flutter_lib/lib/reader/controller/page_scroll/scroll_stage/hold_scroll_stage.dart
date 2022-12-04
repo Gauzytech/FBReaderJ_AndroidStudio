@@ -1,14 +1,15 @@
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/reader_scroll_state.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
 
 /// 阅读内容滚动状态：保持, 通常发生在手指按下的时候
-/// see [HoldScrollActivity]
-class HoldScrollState extends ReaderScrollState with ScrollHoldController {
-  HoldScrollState({
-    required ReaderScrollStateDelegate delegate,
+///
+/// 具体功能方法模仿[HoldScrollActivity].
+class HoldScrollStage extends ReaderScrollStage with ScrollHoldController {
+  HoldScrollStage({
+    required ReaderScrollStageDelegate delegate,
     this.onHoldCanceled,
   }) : super(delegate);
 

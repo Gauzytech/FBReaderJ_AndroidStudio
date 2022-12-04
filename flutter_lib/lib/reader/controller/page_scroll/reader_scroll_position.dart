@@ -1,18 +1,17 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/hold_scroll_state.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/idle_scroll_state.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/reader_scroll_state.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/hold_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/idle_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_viewport_offset.dart';
 
 import '../page_physics/book_page_physics.dart';
 
 abstract class ReaderScrollPosition extends ReaderViewportOffset {
-  /// Where the scrolling is taking place.
-  ///
-  /// Typically implemented by [ReaderBookContentViewState].
+  /// 阅读图书内容界面View, 就是[ReaderBookContentViewState].
   BookPageScrollContext context;
   BookPagePhysics physics;
 
@@ -30,22 +29,26 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   @override
   bool get hasViewportDimension => _viewportDimension != null;
 
-  /// 终止当前state然后开始一个[HoldScrollState].
+  /// 终止当前state然后开始一个[HoldScrollStage].
   ScrollHoldController hold(VoidCallback holdCancelCallback);
 
-  /// 当前正在执行的[ReaderScrollState].
+  /// 通过[DragStartDetails]开始一个drag stage, [dragCancelCallback]会在drag结束时调用.
+  Drag drag(DragStartDetails details, VoidCallback dragCancelCallback);
+
+  /// 当前正在执行的[ReaderScrollStage].
   ///
-  /// 没有scroll就是[IdleScrollState].
+  /// 没有scroll就是[IdleScrollStage].
   /// 可以通过[isScrollingNotifier]判断当前是否正在执行任何scroll事件.
   ///
-  /// Call [beginState] to change the current activity.
+  /// 调用[beginScrollStage]改变当前的滚动stage.
   @protected
   @visibleForTesting
-  ReaderScrollState? get scrollState => _scrollState;
-  ReaderScrollState? _scrollState;
+  ReaderScrollStage? get scrollStage => _scrollStage;
+  ReaderScrollStage? _scrollStage;
 
-  /// This notifier's value is true if a scroll is underway and false if the scroll
-  /// position is idle.
+  /// 通知滚动是否正在执行
+  /// true, 正在滚动
+  /// false, 没有滚动
   ///
   /// Listeners added by stateful widgets should be removed in the widget's
   /// [State.dispose] method.
@@ -67,7 +70,7 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     assert(
         SchedulerBinding.instance.schedulerPhase !=
             SchedulerPhase.persistentCallbacks,
-        "A scrollable's position should not change during the build, layout, and paint phases, otherwise the rendering will be confused.");
+        "滚动position不能在build, layout, 和paint时改变, 不然图书page页面的渲染会被混淆.");
     if (newPixels != pixels) {
       _pixels = newPixels;
       // todo 通知刷新ui
@@ -80,28 +83,28 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     _pixels = value;
   }
 
-  void beginScrollState(ReaderScrollState? newState) {
-    if(newState == null) return;
+  void beginScrollStage(ReaderScrollStage? newState) {
+    if (newState == null) return;
     bool wasScrolling, oldIgnorePointer;
-    if(_scrollState != null) {
-      oldIgnorePointer = _scrollState!.shouldIgnorePointer;
-      wasScrolling = _scrollState!.isScrolling;
+    if (_scrollStage != null) {
+      oldIgnorePointer = _scrollStage!.shouldIgnorePointer;
+      wasScrolling = _scrollStage!.isScrolling;
       if (wasScrolling && !newState.isScrolling) {
         // todo 发送一个通知: 之前的scroll停止了
         // didEndScroll();
       }
-      _scrollState!.dispose();
+      _scrollStage!.dispose();
     } else {
       oldIgnorePointer = false;
       wasScrolling = false;
     }
-    _scrollState = newState;
-    if (oldIgnorePointer != scrollState!.shouldIgnorePointer) {
+    _scrollStage = newState;
+    if (oldIgnorePointer != scrollStage!.shouldIgnorePointer) {
       // todo 弄清楚这个ignorePointer的实际作用
       // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
     }
-    isScrollingNotifier.value = scrollState!.isScrolling;
-    if (!wasScrolling && _scrollState!.isScrolling) {
+    isScrollingNotifier.value = scrollStage!.isScrolling;
+    if (!wasScrolling && _scrollStage!.isScrolling) {
       // todo 发送一个通知: 新的scroll开始了
       // didStartScroll();
     }
@@ -127,16 +130,16 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
       _viewportDimension = other.viewportDimension;
     }
 
-    assert(scrollState == null);
-    assert(other.scrollState != null);
-    _scrollState = other.scrollState;
-    other._scrollState = null;
+    assert(scrollStage == null);
+    assert(other.scrollStage != null);
+    _scrollStage = other.scrollStage;
+    other._scrollStage = null;
     if (other.runtimeType != runtimeType) {
-      scrollState!.resetActivity();
+      scrollStage!.resetActivity();
     }
     // todo setIgnorePointer用法
     // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
-    isScrollingNotifier.value = scrollState!.isScrolling;
+    isScrollingNotifier.value = scrollStage!.isScrolling;
   }
 
   @override
@@ -146,7 +149,7 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   }
 
   void dispose() {
-    scrollState?.dispose();
-    _scrollState = null;
+    scrollStage?.dispose();
+    _scrollStage = null;
   }
 }

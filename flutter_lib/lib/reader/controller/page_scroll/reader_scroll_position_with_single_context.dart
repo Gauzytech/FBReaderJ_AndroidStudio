@@ -1,16 +1,18 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_drag_controller.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/ballistic_scroll_state.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state/idle_scroll_state.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_state_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/ballistic_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/drag_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/idle_scroll_stage.dart';
 
-import 'reader_scroll_state/hold_scroll_state.dart';
+import 'scroll_stage/hold_scroll_stage.dart';
 
 class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
-    implements ReaderScrollStateDelegate {
-
+    implements ReaderScrollStageDelegate {
   ReaderScrollPositionWithSingleContext({
     required super.context,
     required super.physics,
@@ -22,10 +24,10 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     }
 
     // 初始化当前滚动行为是静止
-    if (scrollState == null) {
+    if (scrollStage == null) {
       goIdle();
     }
-    assert(scrollState != null);
+    assert(scrollStage != null);
   }
 
   // 代表当前用户触摸操作的滚动方向, 有三种情况:
@@ -50,7 +52,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   double setPixels(double newPixels) {
-    assert(scrollState!.isScrolling);
+    assert(scrollStage!.isScrolling);
     return super.setPixels(newPixels);
   }
 
@@ -62,7 +64,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   void goIdle() {
-    beginScrollState(IdleScrollState(this));
+    beginScrollStage(IdleScrollStage(this));
   }
 
   @override
@@ -70,7 +72,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     assert(hasPixels);
     final Simulation? simulation = physics.createBallisticSimulation(this, velocity);
     if(simulation != null) {
-      beginScrollState(BallisticScrollState(this, simulation, context.vsync));
+      beginScrollStage(BallisticScrollStage(this, simulation, context.vsync));
     } else {
       goIdle();
     }
@@ -90,20 +92,34 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   ScrollHoldController hold(VoidCallback holdCancelCallback) {
-    final double previousVelocity = scrollState!.velocity;
-    final HoldScrollState holdState = HoldScrollState(
+    final double previousVelocity = scrollStage!.velocity;
+    final HoldScrollStage holdStage = HoldScrollStage(
       delegate: this,
       onHoldCanceled: holdCancelCallback,
     );
-    beginScrollState(holdState);
+    beginScrollStage(holdStage);
     _heldPreviousState = previousVelocity;
-    return holdState;
+    return holdStage;
+  }
+
+  ReaderDragController? _currentDrag;
+
+  @override
+  Drag drag(DragStartDetails details, VoidCallback dragCancelCallback) {
+    final ReaderDragController drag = ReaderDragController(
+      delegate: this,
+      details: details,
+    );
+    beginScrollStage(DragScrollStage(delegate: this, controller: drag));
+    assert(_currentDrag == null);
+    _currentDrag = drag;
+    return drag;
   }
 
   @override
   void dispose() {
-    // _currentDrag?.dispose();
-    // _currentDrag = null;
+    _currentDrag?.dispose();
+    _currentDrag = null;
     super.dispose();
   }
 
@@ -112,7 +128,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     super.debugFillDescription(description);
     description.add('${context.runtimeType}');
     description.add('$physics');
-    description.add('$scrollState');
+    description.add('$scrollStage');
     description.add('$userScrollDirection');
   }
 }

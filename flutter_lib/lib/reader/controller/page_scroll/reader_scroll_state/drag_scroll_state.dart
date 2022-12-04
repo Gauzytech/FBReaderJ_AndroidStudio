@@ -1,5 +1,0 @@
-
-/// see [DragScrollActivity]
-class DragScrollState {
-
-}
