@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show precisionErrorTolerance;
+import 'package:flutter/src/painting/basic_types.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position_with_single_context.dart';
 
 class BookPagePosition extends ReaderScrollPositionWithSingleContext {
@@ -67,4 +68,7 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
     correctPixels(0);
     return false;
   }
+
+  @override
+  AxisDirection get axisDirection => context.axisDirection;
 }

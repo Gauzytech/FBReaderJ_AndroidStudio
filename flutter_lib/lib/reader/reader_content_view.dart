@@ -42,10 +42,10 @@ class ReaderContentView extends BaseStatefulView<ReaderViewModel> {
   /// 翻页控制, 控制[BookPagePosition]的翻页渲染
   BookPageController? controller;
 
-  // 当前翻页模式行为
+  /// 当前翻页模式行为
   final BookPagePhysics physics;
 
-  // 滚动方向
+  /// 当前坐标系的方向
   final AxisDirection axisDirection;
 
   @override
@@ -125,9 +125,10 @@ class ReaderContentViewState
     print('flutter生命周期, onInitState');
     _pageRepository = PageRepository(methodChannel: _methodChannel);
     _selectionHandler = SelectionHandler(
-        readerContentHandler: _pageRepository!,
-        topIndicatorKey: topIndicatorKey,
-        bottomIndicatorKey: bottomIndicatorKey);
+      readerContentHandler: _pageRepository!,
+      topIndicatorKey: topIndicatorKey,
+      bottomIndicatorKey: bottomIndicatorKey,
+    );
   }
 
   @override
@@ -669,7 +670,13 @@ class ReaderContentViewState
     } else {
       print(
           'flutter动画流程[onDragUpdate], 进行翻页操作 = ${details.localPosition}, primaryDelta = ${details.primaryDelta}');
+
+      assert(_hold == null || _drag == null);
+      _drag?.update(details);
+
       onUpdateEvent(details);
+
+      print('flutter翻页行为, dragUpdate: $position');
     }
   }
 
@@ -679,7 +686,13 @@ class ReaderContentViewState
       _processIndicator(NativeScript.dragEnd, null);
     } else {
       print("flutter动画流程[onDragEnd], 进行翻页操作$details");
+      // assert(_hold == null || _drag == null);
+      // _drag?.end(details);
+      // assert(_drag == null);
+
       onEndEvent(details);
+
+      print('flutter翻页行为, dragEnd: $position');
     }
   }
 
@@ -751,6 +764,9 @@ class ReaderContentViewState
 
   @override
   TickerProvider get vsync => this;
+
+  @override
+  AxisDirection get axisDirection => widget.axisDirection;
 
   @override
   PageMode get pageMode => viewModel!.getConfigData().getPageMode();

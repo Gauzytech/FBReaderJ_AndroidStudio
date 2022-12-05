@@ -15,7 +15,7 @@ mixin BookPagePhysics {
   double getTargetPixels(BookPagePosition position, Tolerance tolerance, double velocity);
 
   // todo 翻译
-  /// Used by [DragScrollState] and other user-driven activities to convert
+  /// Used by [DragScrollStage] and other user-driven activities to convert
   /// an offset in logical pixels as provided by the [DragUpdateDetails] into a
   /// delta to apply (subtract from the current position) using
   /// [ReaderScrollStateDelegate.setPixels].

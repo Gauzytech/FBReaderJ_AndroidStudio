@@ -30,14 +30,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     assert(scrollStage != null);
   }
 
-  // 代表当前用户触摸操作的滚动方向, 有三种情况:
-  // 1. idle, 表示没有scroll
-  // 2. forward, 正数
-  //  a. 垂直滚动(从上往下): 书页内容显示上边部分，上一页
-  //  b. 翻页滚动(从右往左): 书页内容显示左边部分，上一页
-  // 3. reverse, 负数
-  //  a. 垂直滚动(从上往下): 书页内容显示下边部分，下一页
-  //  b. 翻页滚动(从左往右): 书页内容显示右边部分，下一页
   @override
   ScrollDirection get userScrollDirection => _userScrollDirection;
   ScrollDirection _userScrollDirection = ScrollDirection.idle;
@@ -49,6 +41,9 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   PageMode get pageMode => context.pageMode;
+
+  @override
+  AxisDirection get axisDirection => context.axisDirection;
 
   @override
   double setPixels(double newPixels) {

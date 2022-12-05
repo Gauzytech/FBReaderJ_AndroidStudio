@@ -121,6 +121,9 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
     return [];
   }
 
+  // 获得坐标系的方向
+  // right/down, [0, 0]在左上角
+  // left/up, [0, 0]在右下角
   AxisDirection _getDirection(ReaderViewModel viewModel) {
     switch(viewModel.getConfigData().currentAnimationMode) {
       case ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN:

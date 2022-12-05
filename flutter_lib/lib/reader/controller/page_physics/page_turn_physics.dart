@@ -30,10 +30,11 @@ class PageTurnPhysics with BookPagePhysics {
       ReaderScrollPosition position, double velocity) {
     final Tolerance tolerance = this.tolerance;
     final double target = getTargetPixels(position as BookPagePosition, tolerance, velocity);
-    if (target != position.pixels) {
-      return ScrollSpringSimulation(spring, position.pixels, target, velocity,
-          tolerance: tolerance);
-    }
+    print('flutter翻页行为, target = $target');
+    // if (target != position.pixels) {
+    //   return ScrollSpringSimulation(spring, position.pixels, target, velocity,
+    //       tolerance: tolerance);
+    // }
     return null;
   }
 
@@ -54,4 +55,7 @@ class PageTurnPhysics with BookPagePhysics {
   double applyPhysicsToUserOffset(ReaderScrollPosition position, double offset) {
     return offset;
   }
+
+  @override
+  String toString() => 'PageTurnPhysics';
 }

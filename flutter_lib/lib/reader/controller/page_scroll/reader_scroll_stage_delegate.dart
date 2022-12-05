@@ -1,4 +1,5 @@
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 
@@ -7,6 +8,11 @@ import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dar
 /// Used by subclasses of [ReaderScrollState] to manipulate the scroll view that
 /// they are acting upon.
 abstract class ReaderScrollStageDelegate {
+
+  /// 当前坐标系的方向
+  /// right/down, [0, 0]在左上角
+  /// left/up, [0, 0]在右下角
+  AxisDirection get axisDirection;
 
   /// 当前书页滚动模式
   /// 翻页模式/垂直滚动模式

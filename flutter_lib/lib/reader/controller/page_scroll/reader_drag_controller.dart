@@ -25,14 +25,28 @@ class ReaderDragController implements Drag {
   dynamic get lastDetails => _lastDetails;
   dynamic _lastDetails;
 
+  bool get _reversed => axisDirectionIsReversed(delegate.axisDirection);
+
   @override
   void update(DragUpdateDetails details) {
-    // TODO: implement update
+    assert(details.primaryDelta != null);
+    _lastDetails = details;
+    double offset = details.primaryDelta!;
+
+    if(_reversed) {
+      offset = -offset;
+    }
+    delegate.applyUserOffset(offset);
   }
 
   @override
   void end(DragEndDetails details) {
-    // TODO: implement end
+    assert(details.primaryVelocity != null);
+    double velocity = -details.primaryVelocity!;
+    if (_reversed) {
+      velocity = -velocity;
+    }
+    delegate.goBallistic(velocity);
   }
 
   @override
