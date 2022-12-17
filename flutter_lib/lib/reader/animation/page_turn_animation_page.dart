@@ -2,13 +2,14 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/pair.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 
-import '../../modal/view_model_reader.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
 
@@ -210,6 +211,7 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onDraw(Canvas canvas) {
+    print('flutter动画流程 onDraw');
     // currentMoveDy 负数: 往右滚动, 正数: 往左滚动
     double actualOffsetX = currentMoveDx < 0
         ? -(currentMoveDx.abs() % currentSize.width)
@@ -222,9 +224,18 @@ class PageTurnAnimation extends BaseAnimationPage {
       if (nextPage != null) {
         canvas.translate(actualOffsetX + currentSize.width, 0);
         canvas.drawImage(nextPage, Offset.zero, _paint);
-        print('flutter动画流程:onDraw下一页, actualOffsetX = $actualOffsetX, '
-            'currentMoveDx = $currentMoveDx, '
-            'translate = ${actualOffsetX - currentSize.width}');
+        print(
+          'flutter动画流程:onDraw下一页, '
+          'actualOffsetX = $actualOffsetX, '
+          'currentMoveDx = $currentMoveDx, '
+          'translate = ${actualOffsetX - currentSize.width}',
+        );
+        print(
+          'flutter滚动数据:onDraw下一页, '
+          'actualOffsetX = $actualOffsetX, '
+          'currentMoveDx = $currentMoveDx, '
+          'translate = ${actualOffsetX - currentSize.width}',
+        );
       } else {
         print('flutter动画流程:onDraw[无nextPage], actualOffsetX = $actualOffsetX, '
             'currentMoveDx = $currentMoveDx');
@@ -246,10 +257,18 @@ class PageTurnAnimation extends BaseAnimationPage {
       if (prevPage != null) {
         canvas.translate(actualOffsetX - currentSize.width, 0);
         canvas.drawImage(prevPage, Offset.zero, _paint);
-        print('flutter动画流程:onDraw上一页, '
-            'actualOffsetX = $actualOffsetX, '
-            'currentMoveDx = $currentMoveDx, '
-            'translate = ${actualOffsetX - currentSize.width}');
+        print(
+          'flutter动画流程:onDraw上一页, '
+          'actualOffsetX = $actualOffsetX, '
+          'currentMoveDx = $currentMoveDx, '
+          'translate = ${actualOffsetX - currentSize.width}',
+        );
+        print(
+          'flutter滚动数据:onDraw上一页, '
+          'actualOffsetX = $actualOffsetX, '
+          'currentMoveDx = $currentMoveDx, '
+          'translate = ${actualOffsetX - currentSize.width}',
+        );
       } else {
         print('flutter动画流程:onDraw[无prevPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -314,6 +333,7 @@ class PageTurnAnimation extends BaseAnimationPage {
           TouchEvent end = TouchEvent(
             action: event.action,
             touchPosition: Offset(getEndDx(goNextPage), event.touchPosition.dy),
+            pixels: -1,
           );
           handleEvent(end);
         }
@@ -324,6 +344,34 @@ class PageTurnAnimation extends BaseAnimationPage {
         break;
       default:
         break;
+    }
+  }
+
+  @override
+  void onPagePreDraw(PagePaintMetaData metaData) {
+    // todo 创建一个页面绘制绘制页面
+    Size currentSize = readerViewModel.contentSize;
+    switch (metaData.userScrollDirection) {
+      case ScrollDirection.forward:
+        if (metaData.page == 0.0) {
+          print('flutter翻页行为, shift上一页');
+        }
+
+        double actualOffsetX = metaData.pixels % currentSize.width;
+        double translateX = actualOffsetX + currentSize.width;
+        print(
+            'flutter滚动数据, actualOffsetX = $actualOffsetX，currentMoveDx = ${metaData.pixels}, translateX = $translateX');
+        break;
+      case ScrollDirection.reverse:
+        if (metaData.page == 1.0) {
+          print('flutter翻页行为, shift下一页');
+        }
+        double actualOffsetX = -(metaData.pixels % currentSize.width);
+        double translateX = actualOffsetX - currentSize.width;
+        print(
+            'flutter滚动数据, actualOffsetX = $actualOffsetX，currentMoveDx = ${metaData.pixels}, translateX = $translateX');
+        break;
+      default:
     }
   }
 
@@ -405,7 +453,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         if (!moveDistanceX.isInfinite && !currentMoveDx.isInfinite) {
           currentMoveDx = getPageMoveDx(moveDistanceX);
           print('flutter动画流程:handleEvent[${event.actionName}], '
-              '本次事件偏移量currentMoveDx = $currentMoveDx, ${progressAnimation?.springRange}');
+              '本次事件偏移量currentMoveDx = $currentMoveDx, pixels = ${event.pixels}, ${progressAnimation?.springRange}');
         }
       }
     }

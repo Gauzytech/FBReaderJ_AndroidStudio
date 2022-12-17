@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 /// see [ViewportOffset]
-abstract class ReaderViewportOffset {
+abstract class ReaderViewportOffset extends ChangeNotifier {
+
   ReaderViewportOffset();
 
   /// todo 写注释

@@ -64,63 +64,9 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     }
   }
 
-  /// 更新[pixels], 并需要通知观察者
-  double setPixels(double newPixels) {
-    assert(hasPixels);
-    assert(
-        SchedulerBinding.instance.schedulerPhase !=
-            SchedulerPhase.persistentCallbacks,
-        "滚动position不能在build, layout, 和paint时改变, 不然图书page页面的渲染会被混淆.");
-    if (newPixels != pixels) {
-      _pixels = newPixels;
-      // todo 通知刷新ui
-    }
-    return 0.0;
-  }
-
-  /// 更新[pixels], 并不通知观察者
-  void correctPixels(double value) {
-    _pixels = value;
-  }
-
-  void beginScrollStage(ReaderScrollStage? newState) {
-    if (newState == null) return;
-    bool wasScrolling, oldIgnorePointer;
-    if (_scrollStage != null) {
-      oldIgnorePointer = _scrollStage!.shouldIgnorePointer;
-      wasScrolling = _scrollStage!.isScrolling;
-      if (wasScrolling && !newState.isScrolling) {
-        // todo 发送一个通知: 之前的scroll停止了
-        // didEndScroll();
-      }
-      _scrollStage!.dispose();
-    } else {
-      oldIgnorePointer = false;
-      wasScrolling = false;
-    }
-    _scrollStage = newState;
-    if (oldIgnorePointer != scrollStage!.shouldIgnorePointer) {
-      // todo 弄清楚这个ignorePointer的实际作用
-      // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
-    }
-    isScrollingNotifier.value = scrollStage!.isScrolling;
-    if (!wasScrolling && _scrollStage!.isScrolling) {
-      // todo 发送一个通知: 新的scroll开始了
-      // didStartScroll();
-    }
-  }
-
-  @override
-  bool applyViewportDimension(double viewportDimension) {
-    if(_viewportDimension != viewportDimension) {
-      _viewportDimension = viewportDimension;
-    }
-    return true;
-  }
-
   @protected
   @mustCallSuper
-  void absorb(BookPagePosition other) {
+  void absorb(ReaderScrollPosition other) {
     assert(other.context == context);
     assert(_pixels == null);
     if (other.hasPixels) {
@@ -140,6 +86,61 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     // todo setIgnorePointer用法
     // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
     isScrollingNotifier.value = scrollStage!.isScrolling;
+  }
+
+  /// 更新[pixels], 并需要通知观察者
+  double setPixels(double newPixels) {
+    assert(hasPixels);
+    assert(
+        SchedulerBinding.instance.schedulerPhase !=
+            SchedulerPhase.persistentCallbacks,
+        "滚动position不能在build, layout, 和paint时改变, 不然图书page页面的渲染会被混淆.");
+    if (newPixels != pixels) {
+      _pixels = newPixels;
+      // todo 通知刷新ui
+      notifyListeners();
+    }
+    return 0.0;
+  }
+
+  /// 更新[pixels], 并不通知观察者
+  void correctPixels(double value) {
+    _pixels = value;
+  }
+
+  void beginScrollStage(ReaderScrollStage? newStage) {
+    if (newStage == null) return;
+    bool wasScrolling, oldIgnorePointer;
+    if (_scrollStage != null) {
+      oldIgnorePointer = _scrollStage!.shouldIgnorePointer;
+      wasScrolling = _scrollStage!.isScrolling;
+      if (wasScrolling && !newStage.isScrolling) {
+        // todo 发送一个通知: 之前的scroll停止了
+        // didEndScroll();
+      }
+      _scrollStage!.dispose();
+    } else {
+      oldIgnorePointer = false;
+      wasScrolling = false;
+    }
+    _scrollStage = newStage;
+    if (oldIgnorePointer != scrollStage!.shouldIgnorePointer) {
+      // todo 弄清楚这个ignorePointer的实际作用
+      // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
+    }
+    isScrollingNotifier.value = scrollStage!.isScrolling;
+    if (!wasScrolling && _scrollStage!.isScrolling) {
+      // todo 发送一个通知: 新的scroll开始了
+      // didStartScroll();
+    }
+  }
+
+  @override
+  bool applyViewportDimension(double viewportDimension) {
+    if(_viewportDimension != viewportDimension) {
+      _viewportDimension = viewportDimension;
+    }
+    return true;
   }
 
   @override

@@ -1,8 +1,10 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/modal/page_index.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
@@ -172,13 +174,12 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
     }
   }
 
-  void setPageSize(Size size) {
-    currentAnimationPage.setSize(size);
-  }
+  void setPageSize(Size size) => currentAnimationPage.setSize(size);
 
-  void onPageDraw(Canvas canvas) {
-    currentAnimationPage.onDraw(canvas);
-  }
+  /// 新翻页实现
+  void onPagePreDraw(PagePaintMetaData data) => currentAnimationPage.onPagePreDraw(data);
+
+  void onPageDraw(Canvas canvas) => currentAnimationPage.onDraw(canvas);
 
   void _setCurrentAnimation(int animationType, ReaderViewModel viewModel) {
     // currentAnimationType = animationType;
@@ -239,7 +240,10 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
           currentState = RenderState.ANIMATING;
           scrollContext.invalidateContent();
           currentAnimationPage.onTouchEvent(TouchEvent(
-              action: EventAction.move, touchPosition: animation.value));
+            action: EventAction.move,
+            touchPosition: animation.value,
+            pixels: -1,
+          ));
         })
         ..addStatusListener((status) {
           switch (status) {
@@ -250,6 +254,7 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
               TouchEvent event = TouchEvent(
                 action: EventAction.dragEnd,
                 touchPosition: const Offset(0, 0),
+                pixels: -1,
               );
               currentAnimationPage.onTouchEvent(event);
               currentTouchData = event.copy();
@@ -290,7 +295,10 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
       animationController.stop();
       currentState = RenderState.IDLE;
       TouchEvent event = TouchEvent(
-          action: EventAction.dragEnd, touchPosition: Offset.zero);
+        action: EventAction.dragEnd,
+        touchPosition: Offset.zero,
+        pixels: -1,
+      );
       currentAnimationPage.onTouchEvent(event);
       currentTouchData = event.copy();
     }
@@ -337,11 +345,11 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
                   ? TouchEvent(
                       action: EventAction.move,
                       touchPosition: Offset(0, animationController.value),
-                    )
+                      pixels: -1)
                   : TouchEvent(
                       action: EventAction.flingReleased,
                       touchPosition: Offset(animationController.value, 0),
-                    ),
+                      pixels: -1),
             );
             // 通知custom painter刷新
             scrollContext.invalidateContent("动画刷新");
@@ -367,9 +375,7 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
   void onAnimationComplete() {
     currentState = RenderState.IDLE;
     currentTouchData = TouchEvent(
-      action: EventAction.dragEnd,
-      touchPosition: Offset.zero,
-    );
+        action: EventAction.dragEnd, touchPosition: Offset.zero, pixels: -1);
   }
 
   /* ------------------------------------------ 翻页相关 --------------------------------------------------- */

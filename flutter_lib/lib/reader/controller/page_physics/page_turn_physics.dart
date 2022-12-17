@@ -30,11 +30,11 @@ class PageTurnPhysics with BookPagePhysics {
       ReaderScrollPosition position, double velocity) {
     final Tolerance tolerance = this.tolerance;
     final double target = getTargetPixels(position as BookPagePosition, tolerance, velocity);
-    print('flutter翻页行为, target = $target');
-    // if (target != position.pixels) {
-    //   return ScrollSpringSimulation(spring, position.pixels, target, velocity,
-    //       tolerance: tolerance);
-    // }
+    if (target != position.pixels) {
+      print('flutter翻页行为[createBallisticSimulation], 创建动画, ${position.pixels} -> $target');
+      return ScrollSpringSimulation(spring, position.pixels, target, velocity,
+          tolerance: tolerance);
+    }
     return null;
   }
 

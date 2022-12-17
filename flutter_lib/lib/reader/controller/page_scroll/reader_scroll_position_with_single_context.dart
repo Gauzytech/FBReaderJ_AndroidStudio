@@ -5,11 +5,12 @@ import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart'
 import 'package:flutter_lib/reader/controller/page_scroll/reader_drag_controller.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/ballistic_scroll_stage.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/drag_scroll_stage.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/idle_scroll_stage.dart';
 
+import 'scroll_stage/ballistic_scroll_stage.dart';
 import 'scroll_stage/hold_scroll_stage.dart';
+import 'scroll_stage/reader_scroll_stage.dart';
 
 class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     implements ReaderScrollStageDelegate {
@@ -37,7 +38,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   /// Velocity from a previous scrollState temporarily held by [hold] to potentially
   /// transfer to a next scrollState.
-  double _heldPreviousState = 0.0;
+  double _heldPreviousStageVelocity = 0.0;
 
   @override
   PageMode get pageMode => context.pageMode;
@@ -49,6 +50,38 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
   double setPixels(double newPixels) {
     assert(scrollStage!.isScrolling);
     return super.setPixels(newPixels);
+  }
+
+  @override
+  void absorb(ReaderScrollPosition other) {
+    super.absorb(other);
+    if(other is! ReaderScrollPositionWithSingleContext) {
+      goIdle();
+      return;
+    }
+    scrollStage!.updateDelegate(this);
+    _userScrollDirection = other._userScrollDirection;
+    assert(_currentDrag == null);
+    if (other._currentDrag != null) {
+      _currentDrag = other._currentDrag;
+      _currentDrag!.updateDelegate(this);
+      other._currentDrag = null;
+    }
+  }
+
+  @override
+  void beginScrollStage(ReaderScrollStage? newStage) {
+    _heldPreviousStageVelocity = 0.0;
+    if(newStage == null) {
+      return;
+    }
+    assert(newStage.delegate == this);
+    super.beginScrollStage(newStage);
+    _currentDrag?.dispose();
+    _currentDrag = null;
+    if (!scrollStage!.isScrolling) {
+      updateUserScrollDirection(ScrollDirection.idle);
+    }
   }
 
   @override
@@ -65,10 +98,12 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
   @override
   void goBallistic(double velocity) {
     assert(hasPixels);
-    final Simulation? simulation = physics.createBallisticSimulation(this, velocity);
+    final Simulation? simulation =
+        physics.createBallisticSimulation(this, velocity);
     if(simulation != null) {
       beginScrollStage(BallisticScrollStage(this, simulation, context.vsync));
     } else {
+      print('flutter翻页行为: go idle');
       goIdle();
     }
   }
@@ -93,7 +128,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
       onHoldCanceled: holdCancelCallback,
     );
     beginScrollStage(holdStage);
-    _heldPreviousState = previousVelocity;
+    _heldPreviousStageVelocity = previousVelocity;
     return holdStage;
   }
 
@@ -104,6 +139,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     final ReaderDragController drag = ReaderDragController(
       delegate: this,
       details: details,
+      onDragCanceled: dragCancelCallback,
     );
     beginScrollStage(DragScrollStage(delegate: this, controller: drag));
     assert(_currentDrag == null);

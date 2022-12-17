@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
 import '../reader/controller/reader_page_view_model.dart';
 import '../reader/controller/touch_event.dart';
@@ -12,18 +13,11 @@ mixin BookContentPainter {
   bool isDuplicateEvent(EventAction eventAction, Offset touchPosition);
 
   Offset lastTouchPosition();
+
+  void onPagePaintMetaUpdate(PagePaintMetaData data);
 }
 
 class ContentPainter extends CustomPainter with BookContentPainter {
-  // final Paint _paint = Paint()
-  //   ..color = Colors.blueAccent // 画笔颜色
-  //   ..strokeCap = StrokeCap.round //画笔笔触类型
-  //   ..isAntiAlias = true //是否启动抗锯齿
-  //   ..strokeWidth = 6.0 //画笔的宽度
-  //   ..style = PaintingStyle.stroke // 样式
-  //   ..blendMode = BlendMode.colorDodge; // 模式
-
-  // final ui.Image? _image;
 
   final ReaderPageViewModel _pageViewModel;
   TouchEvent? currentTouchData;
@@ -35,14 +29,6 @@ class ContentPainter extends CustomPainter with BookContentPainter {
 
   @override
   Future paint(Canvas canvas, Size size) async {
-    // TODO: implement paint
-    // if (_image != null) {
-//      canvas.drawImageRect(_image, Offset(0.0, 0.0) & Size(_image.width.toDouble(), _image.height.toDouble()), Offset(0.0, 0.0) & Size(200, 200), _paint);
-
-    //   canvas.drawImage(_image!, Offset.zero, Paint());
-    //   print("flutter内容绘制流程, _image draw finish");
-    // }
-
     if (!_pageViewModel.readerViewModel.isPageDataEmpty()) {
       print('flutter内容绘制流程, 开始绘制');
       _pageViewModel.setPageSize(size);
@@ -94,4 +80,7 @@ class ContentPainter extends CustomPainter with BookContentPainter {
   Offset lastTouchPosition() {
     return currentTouchData?.touchPosition ?? Offset.zero;
   }
+
+  @override
+  void onPagePaintMetaUpdate(PagePaintMetaData data) => _pageViewModel.onPagePreDraw(data);
 }

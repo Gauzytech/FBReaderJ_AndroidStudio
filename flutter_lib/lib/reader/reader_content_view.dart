@@ -4,11 +4,13 @@ import 'dart:ui' as ui;
 import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/interface/content_selection_delegate.dart';
 import 'package:flutter_lib/modal/base_view_model.dart';
 import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/book_page_controller.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
@@ -28,6 +30,7 @@ import 'controller/page_physics/book_page_physics.dart';
 import 'controller/page_repository.dart';
 import 'controller/reader_page_view_model.dart';
 import 'gestures/book_gesture_recognizer.dart';
+import 'handler/selection_handler.dart' as handlers;
 
 /// 图书内容widget
 class ReaderContentView extends BaseStatefulView<ReaderViewModel> {
@@ -83,13 +86,13 @@ class ReaderContentViewState
   final HighlightPainter _highlightPainter = HighlightPainter();
 
   final GlobalKey<RawGestureDetectorState> _gestureDetectorKey =
-  GlobalKey<RawGestureDetectorState>();
+      GlobalKey<RawGestureDetectorState>();
   Map<Type, GestureRecognizerFactory> _gestureRecognizers =
       const <Type, GestureRecognizerFactory>{};
   AnimationController? animationController;
 
   PageRepository? _pageRepository;
-  late SelectionHandler _selectionHandler;
+  late handlers.SelectionHandler _selectionHandler;
 
   BookPageController get _effectiveController => widget.controller!;
   ReaderPageViewModel? _readerPageViewModel;
@@ -124,7 +127,7 @@ class ReaderContentViewState
     // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     print('flutter生命周期, onInitState');
     _pageRepository = PageRepository(methodChannel: _methodChannel);
-    _selectionHandler = SelectionHandler(
+    _selectionHandler = handlers.SelectionHandler(
       readerContentHandler: _pageRepository!,
       topIndicatorKey: topIndicatorKey,
       bottomIndicatorKey: bottomIndicatorKey,
@@ -241,6 +244,7 @@ class ReaderContentViewState
     viewModel?.dispose();
     _cancelTimer();
     _pageRepository?.tearDown();
+    _position?.removeListener(onPagePaintMetaUpdate);
     super.dispose();
   }
 
@@ -252,9 +256,7 @@ class ReaderContentViewState
     )) {
       _contentPainter?.setCurrentTouchEvent(
         TouchEvent.fromOnDown(
-          EventAction.dragStart,
-          detail.localPosition,
-        ),
+            EventAction.dragStart, detail.localPosition, position.pixels),
       );
       _contentPainter
           ?.startCurrentTouchEvent(null);
@@ -268,9 +270,7 @@ class ReaderContentViewState
       detail.localPosition,
     )) {
       TouchEvent event = TouchEvent.fromOnUpdate(
-        EventAction.move,
-        detail.localPosition,
-      );
+          EventAction.move, detail.localPosition, position.pixels);
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
       if (await _readerPageViewModel!.canScroll(event)) {
@@ -289,10 +289,10 @@ class ReaderContentViewState
       _contentPainter!.lastTouchPosition(),
     )) {
       TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
-        EventAction.dragEnd,
-        _contentPainter!.lastTouchPosition(),
-        detail,
-      );
+          EventAction.dragEnd,
+          _contentPainter!.lastTouchPosition(),
+          detail,
+          position.pixels);
       _contentPainter?.setCurrentTouchEvent(event);
       // 检查上一页/下一页是否存在
       if (await _readerPageViewModel!.canScroll(event)) {
@@ -306,8 +306,10 @@ class ReaderContentViewState
   Future<void> navigatePageNoAnimation(Offset touchPosition, SelectionIndicator? indicator) async {
     var eventAction = getEventAction(touchPosition, indicator);
     if (eventAction != null) {
-      TouchEvent event =
-      TouchEvent(action: eventAction, touchPosition: touchPosition);
+      TouchEvent event = TouchEvent(
+          action: eventAction,
+          touchPosition: touchPosition,
+          pixels: position.pixels);
       if (await _readerPageViewModel!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
         updateHighlight(null, null);
@@ -365,7 +367,9 @@ class ReaderContentViewState
   }
 
   void startTimer(SelectionIndicator indicator, Offset touchPosition) {
-    if(_timer == null && _selectionHandler.crossPageCount < SelectionHandler.crossPageLimit) {
+    if (_timer == null &&
+        _selectionHandler.crossPageCount <
+            handlers.SelectionHandler.crossPageLimit) {
       print('倒计时, 倒计时开始: $currentTimeFactor');
       _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
         setState(() {
@@ -498,7 +502,7 @@ class ReaderContentViewState
               ),
               backgroundColor: Colors.grey,
               format: (progress) {
-                return '${_selectionHandler.crossPageCount}/${SelectionHandler.crossPageLimit}';
+                return '${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}';
               }),
         ),
       ),
@@ -639,7 +643,6 @@ class ReaderContentViewState
       assert(_drag == null);
       assert(_hold == null);
       _hold = position.hold(_disposeHold);
-      print('flutter翻页行为, hold创建完毕, $position');
     }
   }
 
@@ -657,9 +660,7 @@ class ReaderContentViewState
       assert(_drag != null);
       assert(_hold == null);
 
-      print('flutter翻页行为, drag创建完毕: $position');
-
-      onDragStart(details);
+      // onDragStart(details);
     }
   }
 
@@ -674,9 +675,7 @@ class ReaderContentViewState
       assert(_hold == null || _drag == null);
       _drag?.update(details);
 
-      onUpdateEvent(details);
-
-      print('flutter翻页行为, dragUpdate: $position');
+      // onUpdateEvent(details);
     }
   }
 
@@ -686,13 +685,12 @@ class ReaderContentViewState
       _processIndicator(NativeScript.dragEnd, null);
     } else {
       print("flutter动画流程[onDragEnd], 进行翻页操作$details");
-      // assert(_hold == null || _drag == null);
-      // _drag?.end(details);
-      // assert(_drag == null);
+      // todo 把pixels转成当前onDraw自己的一套坐标
+      assert(_hold == null || _drag == null);
+      _drag?.end(details);
+      assert(_drag == null);
 
-      onEndEvent(details);
-
-      print('flutter翻页行为, dragEnd: $position');
+      // onEndEvent(details);
     }
   }
 
@@ -786,6 +784,7 @@ class ReaderContentViewState
     _physics = widget.physics;
     final BookPagePosition? oldPosition = _position;
     if (oldPosition != null) {
+      oldPosition.removeListener(onPagePaintMetaUpdate);
       _effectiveController.detach(oldPosition);
       // It's important that we not dispose the old position until after the
       // viewport has had a chance to unregister its listeners from the old
@@ -795,6 +794,7 @@ class ReaderContentViewState
     _position = _effectiveController.createBookPagePosition(
         _physics!, this, oldPosition);
     assert(_position != null);
+    position.addListener(onPagePaintMetaUpdate);
     _effectiveController.attach(position);
   }
 
@@ -811,7 +811,16 @@ class ReaderContentViewState
     // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
     assert(viewModel != null);
     viewModel!.notify();
-
     print('flutter翻页行为, 初始化数据完毕: ${position.toString()}');
+  }
+
+  void onPagePaintMetaUpdate() {
+    print('flutter翻页行为, position更新: $position');
+    _contentPainter?.onPagePaintMetaUpdate(PagePaintMetaData(
+      position.pixels,
+      position.page!,
+      position.userScrollDirection,
+    ));
+    invalidateContent();
   }
 }

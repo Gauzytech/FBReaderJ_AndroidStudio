@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
 import '../../modal/view_model_reader.dart';
 import '../../utils/screen_util.dart';
@@ -39,6 +39,8 @@ abstract class BaseAnimationPage {
   void onDraw(Canvas canvas);
 
   void onTouchEvent(TouchEvent event);
+
+  void onPagePreDraw(PagePaintMetaData metaData) {}
 
   // void setAnimationController(AnimationController controller) {
   //   animationController = controller;

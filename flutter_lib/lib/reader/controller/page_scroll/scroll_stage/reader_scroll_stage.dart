@@ -10,6 +10,14 @@ abstract class ReaderScrollStage {
   /// Initializes [delegate] for subclasses.
   ReaderScrollStage(this._delegate);
 
+  /// 更新stage的[ReaderScrollStageDelegate].
+  ///
+  /// 当[ReaderScrollStage]将要被弃用时调用本方法把[ReaderScrollStageDelegate]对象更新.
+  void updateDelegate(ReaderScrollStageDelegate value) {
+    assert(_delegate != value);
+    _delegate = value;
+  }
+
   void applyNewDimensions() {}
 
   void resetActivity() { }

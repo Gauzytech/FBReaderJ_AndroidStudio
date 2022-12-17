@@ -27,6 +27,11 @@ class ReaderDragController implements Drag {
 
   bool get _reversed => axisDirectionIsReversed(delegate.axisDirection);
 
+  void updateDelegate(ReaderScrollStageDelegate value) {
+    assert(_delegate != value);
+    _delegate = value;
+  }
+
   @override
   void update(DragUpdateDetails details) {
     assert(details.primaryDelta != null);

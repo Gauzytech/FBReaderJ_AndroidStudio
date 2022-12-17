@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
@@ -20,17 +21,24 @@ class TouchEvent<T> {
   Offset touchPosition =
       Offset(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
 
-  TouchEvent({required this.action, required this.touchPosition});
+  double pixels;
 
-  TouchEvent.fromOnDown(this.action, this.touchPosition);
+  TouchEvent(
+      {required this.action,
+      required this.touchPosition,
+      required this.pixels});
 
-  TouchEvent.fromOnUpdate(this.action, this.touchPosition);
+  TouchEvent.fromOnDown(this.action, this.touchPosition, this.pixels);
 
-  TouchEvent.fromOnEnd(this.action, this.touchPosition, DragEndDetails details) {
+  TouchEvent.fromOnUpdate(this.action, this.touchPosition, this.pixels);
+
+  TouchEvent.fromOnEnd(
+      this.action, this.touchPosition, DragEndDetails details, this.pixels) {
     _touchDetail = details as T;
   }
 
-  DragEndDetails? get touchDetail => _touchDetail is DragEndDetails ? _touchDetail as DragEndDetails : null;
+  DragEndDetails? get touchDetail =>
+      _touchDetail is DragEndDetails ? _touchDetail as DragEndDetails : null;
 
   @override
   bool operator ==(other) {
@@ -45,7 +53,7 @@ class TouchEvent<T> {
   int get hashCode => super.hashCode;
 
   TouchEvent copy() {
-    TouchEvent event = TouchEvent(action: action, touchPosition: touchPosition);
+    TouchEvent event = TouchEvent(action: action, touchPosition: touchPosition, pixels: pixels);
     event._touchDetail = _touchDetail;
     return event;
   }
