@@ -30,9 +30,13 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
   double get _initialPageOffset =>
       math.max(0, viewportDimension * (viewportFraction - 1) / 2);
 
+  /// 通过pixels计算当前page
+  /// 0.0 当前页
+  /// -1.0 上一页
+  /// 1.0 下一页
   double getPageFromPixels(double pixels, double viewportDimension) {
     assert(viewportDimension > 0.0);
-    final double actual = math.max(0.0, pixels - _initialPageOffset) /
+    final double actual = (pixels - _initialPageOffset) /
         (viewportDimension * viewportFraction);
     final double round = actual.roundToDouble();
     if ((actual - round).abs() < precisionErrorTolerance) {

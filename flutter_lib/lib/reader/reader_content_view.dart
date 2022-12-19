@@ -627,6 +627,7 @@ class ReaderContentViewState
 
   Drag? _drag;
   ScrollHoldController? _hold;
+  static const bool newScroll = true;
 
   /// 这个方法在dragDown, longPressDown时都会调用
   void _handleDragDown(DragDownDetails details) {
@@ -640,9 +641,11 @@ class ReaderContentViewState
 
     // 不是长按状态, 初始化drag滚动行为
     if(!_selectionHandler.isSelectionStateEnabled) {
-      assert(_drag == null);
-      assert(_hold == null);
-      _hold = position.hold(_disposeHold);
+      if (newScroll) {
+        assert(_drag == null);
+        assert(_hold == null);
+        _hold = position.hold(_disposeHold);
+      }
     }
   }
 
@@ -655,12 +658,14 @@ class ReaderContentViewState
     } else {
       print("flutter动画流程[onDragStart], 进行翻页操作${details.localPosition}");
 
-      assert(_drag == null);
-      _drag = position.drag(details, _disposeDrag);
-      assert(_drag != null);
-      assert(_hold == null);
-
-      // onDragStart(details);
+      if (newScroll) {
+        assert(_drag == null);
+        _drag = position.drag(details, _disposeDrag);
+        assert(_drag != null);
+        assert(_hold == null);
+      } else {
+        onDragStart(details);
+      }
     }
   }
 
@@ -672,10 +677,12 @@ class ReaderContentViewState
       print(
           'flutter动画流程[onDragUpdate], 进行翻页操作 = ${details.localPosition}, primaryDelta = ${details.primaryDelta}');
 
-      assert(_hold == null || _drag == null);
-      _drag?.update(details);
-
-      // onUpdateEvent(details);
+      if (newScroll) {
+        assert(_hold == null || _drag == null);
+        _drag?.update(details);
+      } else {
+        onUpdateEvent(details);
+      }
     }
   }
 
@@ -685,12 +692,13 @@ class ReaderContentViewState
       _processIndicator(NativeScript.dragEnd, null);
     } else {
       print("flutter动画流程[onDragEnd], 进行翻页操作$details");
-      // todo 把pixels转成当前onDraw自己的一套坐标
-      assert(_hold == null || _drag == null);
-      _drag?.end(details);
-      assert(_drag == null);
-
-      // onEndEvent(details);
+      if (newScroll) {
+        assert(_hold == null || _drag == null);
+        _drag?.end(details);
+        assert(_drag == null);
+      } else {
+        onEndEvent(details);
+      }
     }
   }
 
@@ -702,6 +710,11 @@ class ReaderContentViewState
 
   void _disposeDrag() {
     _drag = null;
+  }
+
+  /// 翻页结束, 绘制完成, 重置pixels
+  void _disposePageDraw() {
+    position.correctPixels(0);
   }
 
   GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>
@@ -816,11 +829,14 @@ class ReaderContentViewState
 
   void onPagePaintMetaUpdate() {
     print('flutter翻页行为, position更新: $position');
-    _contentPainter?.onPagePaintMetaUpdate(PagePaintMetaData(
-      position.pixels,
-      position.page!,
-      position.userScrollDirection,
-    ));
-    invalidateContent();
+    if (newScroll) {
+      _contentPainter?.onPagePaintMetaUpdate(PagePaintMetaData(
+        pixels: position.pixels,
+        page: position.page!,
+        userScrollDirection: position.userScrollDirection,
+        onPageCentered: _disposePageDraw,
+      ));
+      invalidateContent();
+    }
   }
 }

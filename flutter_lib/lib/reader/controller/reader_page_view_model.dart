@@ -13,6 +13,7 @@ import '../../interface/content_selection_delegate.dart';
 import '../../widget/content_painter.dart';
 import '../animation/base_animation_page.dart';
 import '../animation/slide_animation_page.dart';
+import '../reader_content_view.dart';
 import 'touch_event.dart';
 
 mixin ReaderPageViewModelDelegate {
@@ -177,9 +178,16 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
   void setPageSize(Size size) => currentAnimationPage.setSize(size);
 
   /// 新翻页实现
-  void onPagePreDraw(PagePaintMetaData data) => currentAnimationPage.onPagePreDraw(data);
+  void onPagePreDraw(PagePaintMetaData data) =>
+      currentAnimationPage.onPagePreDraw(data);
 
-  void onPageDraw(Canvas canvas) => currentAnimationPage.onDraw(canvas);
+  void onPageDraw(Canvas canvas) {
+    if (ReaderContentViewState.newScroll) {
+      currentAnimationPage.onPageDraw(canvas);
+    } else {
+      currentAnimationPage.onDraw(canvas);
+    }
+  }
 
   void _setCurrentAnimation(int animationType, ReaderViewModel viewModel) {
     // currentAnimationType = animationType;

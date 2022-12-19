@@ -42,6 +42,8 @@ abstract class BaseAnimationPage {
 
   void onPagePreDraw(PagePaintMetaData metaData) {}
 
+  void onPageDraw(Canvas canvas) {}
+
   // void setAnimationController(AnimationController controller) {
   //   animationController = controller;
   // }
@@ -80,9 +82,5 @@ abstract class BaseAnimationPage {
 
   Offset getCachedTouchData() {
     return _mTouch;
-  }
-
-  bool isAnimationCloseToEnd() {
-    return false;
   }
 }
