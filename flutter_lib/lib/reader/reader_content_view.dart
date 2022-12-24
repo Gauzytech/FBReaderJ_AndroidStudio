@@ -702,7 +702,16 @@ class ReaderContentViewState
     }
   }
 
-  void _handleDragCancel() {}
+  void _handleDragCancel() {
+    print("flutter动画流程[onDragCancel]");
+    if (newScroll) {
+      assert(_hold == null || _drag == null);
+      _hold?.cancel();
+      _drag?.cancel();
+      assert(_hold == null);
+      assert(_drag == null);
+    }
+  }
 
   void _disposeHold() {
     _hold = null;
@@ -714,6 +723,7 @@ class ReaderContentViewState
 
   /// 翻页结束, 绘制完成, 重置pixels
   void _disposePageDraw() {
+    print('flutter翻页行为, 重置坐标');
     position.correctPixels(0);
   }
 
@@ -815,10 +825,14 @@ class ReaderContentViewState
   void initialize(int width, int height) {
     switch (pageMode) {
       case PageMode.verticalPageScroll:
-        position.applyViewportDimension(height.toDouble());
+        double h = height.toDouble();
+        position.applyViewportDimension(h);
+        position.applyContentDimensions(-h, h);
         break;
       case PageMode.horizontalPageTurn:
-        position.applyViewportDimension(width.toDouble());
+        double w = width.toDouble();
+        position.applyViewportDimension(w);
+        position.applyContentDimensions(-w, w);
         break;
     }
     // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
@@ -830,6 +844,7 @@ class ReaderContentViewState
   void onPagePaintMetaUpdate() {
     print('flutter翻页行为, position更新: $position');
     if (newScroll) {
+      print('flutter翻页行为, 执行pixels = ${position.pixels}');
       _contentPainter?.onPagePaintMetaUpdate(PagePaintMetaData(
         pixels: position.pixels,
         page: position.page!,

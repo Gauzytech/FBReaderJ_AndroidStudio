@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
@@ -14,6 +15,17 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   /// 阅读图书内容界面View, 就是[ReaderBookContentViewState].
   BookPageScrollContext context;
   BookPagePhysics physics;
+
+  @override
+  double get minScrollExtent => _minScrollExtent!;
+  double? _minScrollExtent;
+
+  @override
+  double get maxScrollExtent => _maxScrollExtent!;
+  double? _maxScrollExtent;
+
+  @override
+  bool get hasContentDimensions => _minScrollExtent != null && _maxScrollExtent != null;
 
   @override
   double get pixels => _pixels!;
@@ -69,6 +81,10 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   void absorb(ReaderScrollPosition other) {
     assert(other.context == context);
     assert(_pixels == null);
+    if(other.hasContentDimensions) {
+      _minScrollExtent = other.minScrollExtent;
+      _maxScrollExtent = other.maxScrollExtent;
+    }
     if (other.hasPixels) {
       _pixels = other.pixels;
     }
@@ -95,7 +111,9 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
         SchedulerBinding.instance.schedulerPhase !=
             SchedulerPhase.persistentCallbacks,
         "滚动position不能在build, layout, 和paint时改变, 不然图书page页面的渲染会被混淆.");
-    if (newPixels != pixels) {
+
+    // todo 现在暂时忽略了快速连续滑动导致pixels累加 > 1080的情况
+    if (newPixels.abs() <= maxScrollExtent && newPixels != pixels) {
       _pixels = newPixels;
       // todo 通知刷新ui
       notifyListeners();
@@ -140,6 +158,14 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     if(_viewportDimension != viewportDimension) {
       _viewportDimension = viewportDimension;
     }
+    return true;
+  }
+
+  @override
+  bool applyContentDimensions(double minScrollExtent, double maxScrollExtent) {
+    assert(minScrollExtent <= maxScrollExtent);
+    _minScrollExtent = minScrollExtent;
+    _maxScrollExtent = maxScrollExtent;
     return true;
   }
 

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show precisionErrorTolerance;
+import 'package:flutter/foundation.dart'
+    show clampDouble, precisionErrorTolerance;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position_with_single_context.dart';
 
@@ -35,9 +36,10 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
   /// -1.0 上一页
   /// 1.0 下一页
   double getPageFromPixels(double pixels, double viewportDimension) {
+    print('计算page, pixels = $pixels');
     assert(viewportDimension > 0.0);
-    final double actual = (pixels - _initialPageOffset) /
-        (viewportDimension * viewportFraction);
+    final double actual =
+        (pixels - _initialPageOffset) / (viewportDimension * viewportFraction);
     final double round = actual.roundToDouble();
     if ((actual - round).abs() < precisionErrorTolerance) {
       return round;
@@ -71,6 +73,15 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
     // todo 初始化书页渲染的坐标, 暂时写个0
     correctPixels(0);
     return false;
+  }
+
+  @override
+  bool applyContentDimensions(double minScrollExtent, double maxScrollExtent) {
+    final double newMinScrollExtent = minScrollExtent + _initialPageOffset;
+    return super.applyContentDimensions(
+      newMinScrollExtent,
+      math.max(newMinScrollExtent, maxScrollExtent - _initialPageOffset),
+    );
   }
 
   @override

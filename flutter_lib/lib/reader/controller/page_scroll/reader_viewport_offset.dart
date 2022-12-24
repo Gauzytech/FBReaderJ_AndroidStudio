@@ -6,14 +6,23 @@ abstract class ReaderViewportOffset extends ChangeNotifier {
 
   ReaderViewportOffset();
 
-  /// todo 写注释
-  /// 图书每一页内容渲染的偏移值，从左上角开始计算, 比如: 左上角[0, 0]
-  /// The number of pixels to offset the children in the opposite of the axis direction.
+  /// [pixels]滚动范围的最小值.
   ///
-  /// For example, if the axis direction is down, then the pixel value
-  /// represents the number of logical pixels to move the children _up_ the
-  /// screen. Similarly, if the axis direction is left, then the pixels value
-  /// represents the number of logical pixels to move the children to _right_.
+  /// 实际[pixels]值可能会超出范围.
+  ///
+  /// 该值必须非空以及小于[maxScrollExtent], 它可以是负无穷，如果用户视窗滚动范围没有边界.
+  double get minScrollExtent;
+
+  /// [pixels]滚动范围的最小值.
+  ///
+  /// 实际[pixels]值可能会超出范围.
+  ///
+  /// 该值必须非空以及大于[minScrollExtent], 它可以是正无穷，如果用户视窗滚动范围没有边界.
+  double get maxScrollExtent;
+
+  /// 本次drag事件累计的滚动距离. 单位: pixels
+  /// drag事件流程:
+  /// onDown -> onStart -> onUpdate -> onEnd 或者 onDown -> onCancel
   ///
   /// This object notifies its listeners when this value changes (except when
   /// the value changes due to [correctBy]).
@@ -21,6 +30,9 @@ abstract class ReaderViewportOffset extends ChangeNotifier {
 
   /// [pixels] 是否存在.
   bool get hasPixels;
+
+  /// [minScrollExtent]和[maxScrollExtent]是否可用.
+  bool get hasContentDimensions;
 
   /// 图书每一页内容的显示范围in pixel
   /// 横向翻页: 屏幕宽度
@@ -30,31 +42,15 @@ abstract class ReaderViewportOffset extends ChangeNotifier {
   /// [viewportDimension] 是否存在.
   bool get hasViewportDimension;
 
-  /// todo 写注释
-  /// Called when the viewport's extents are established.
+  /// 在视窗被建立时调用.
   ///
-  /// The argument is the dimension of the [RenderViewport] in the main axis
-  /// (e.g. the height, for a vertical viewport).
-  ///
-  /// This may be called redundantly, with the same value, each frame. This is
-  /// called during layout for the [RenderViewport]. If the viewport is
-  /// configured to shrink-wrap its contents, it may be called several times,
-  /// since the layout is repeated each time the scroll offset is corrected.
-  ///
-  /// If this is called, it is called before [applyContentDimensions]. If this
-  /// is called, [applyContentDimensions] will be called soon afterwards in the
-  /// same layout phase. If the viewport is not configured to shrink-wrap its
-  /// contents, then this will only be called when the viewport recomputes its
-  /// size (i.e. when its parent lays out), and not during normal scrolling.
-  ///
-  /// If applying the viewport dimensions changes the scroll offset, return
-  /// false. Otherwise, return true. If you return false, the [RenderViewport]
-  /// will be laid out again with the new scroll offset. This is expensive. (The
-  /// return value is answering the question "did you accept these viewport
-  /// dimensions unconditionally?"; if the new dimensions change the
-  /// [ViewportOffset]'s actual [pixels] value, then the viewport will need to
-  /// be laid out again.)
+  /// 在[applyContentDimensions]之前调用.
   bool applyViewportDimension(double viewportDimension);
+
+  /// 在视窗被建立时调用.
+  ///
+  /// 如果[applyViewportDimension]被调用了，本方法也要被再次调用.
+  bool applyContentDimensions(double minScrollExtent, double maxScrollExtent);
 
   /// 用户当前滚动的方向, [pixels], 与viewport's [RenderViewportBase.axisDirection]有关.
   ///

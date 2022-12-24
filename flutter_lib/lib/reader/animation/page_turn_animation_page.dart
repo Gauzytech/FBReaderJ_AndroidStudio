@@ -373,24 +373,16 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onPagePreDraw(PagePaintMetaData metaData) {
-    print('flutter动画流程:onPagePreDraw');
+    print('flutter翻页行为:翻页调整, $metaData');
     _metaData.apply(metaData);
-    switch (metaData.userScrollDirection) {
-      case ScrollDirection.forward:
-        if (metaData.page == -1.0) {
-          print('flutter动画流程:onPagePreDraw, shift上一页');
-          readerViewModel.shiftPage(PageIndex.prev);
-          readerViewModel.onScrollingFinished(PageIndex.prev);
-        }
-        break;
-      case ScrollDirection.reverse:
-        if (metaData.page == 1.0) {
-          print('flutter动画流程:onPagePreDraw, shift下一页');
-          readerViewModel.shiftPage(PageIndex.next);
-          readerViewModel.onScrollingFinished(PageIndex.next);
-        }
-        break;
-      default:
+    if (metaData.page == -1.0) {
+      print('flutter翻页行为:翻页调整, shift上一页');
+      readerViewModel.shiftPage(PageIndex.prev);
+      readerViewModel.onScrollingFinished(PageIndex.prev);
+    } else if (metaData.page == 1.0) {
+      print('flutter翻页行为:翻页调整, shift下一页');
+      readerViewModel.shiftPage(PageIndex.next);
+      readerViewModel.onScrollingFinished(PageIndex.next);
     }
     // todo 在这里刷新contentPainter
   }
@@ -462,8 +454,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         }
       }
     } else {
-      print('flutter动画流程:onDraw[只绘制current], '
-          'actualOffsetX = $actualOffsetX, ');
+      print('flutter动画流程:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
       _resetData();
       _metaData.onPageCentered?.call();
       readerViewModel.preloadAdjacentPage();
