@@ -244,7 +244,7 @@ class ReaderContentViewState
     viewModel?.dispose();
     _cancelTimer();
     _pageRepository?.tearDown();
-    _position?.removeListener(onPagePaintMetaUpdate);
+    _position?.removeListener(_onPagePaintMetaUpdate);
     super.dispose();
   }
 
@@ -807,7 +807,7 @@ class ReaderContentViewState
     _physics = widget.physics;
     final BookPagePosition? oldPosition = _position;
     if (oldPosition != null) {
-      oldPosition.removeListener(onPagePaintMetaUpdate);
+      oldPosition.removeListener(_onPagePaintMetaUpdate);
       _effectiveController.detach(oldPosition);
       // It's important that we not dispose the old position until after the
       // viewport has had a chance to unregister its listeners from the old
@@ -817,7 +817,7 @@ class ReaderContentViewState
     _position = _effectiveController.createBookPagePosition(
         _physics!, this, oldPosition);
     assert(_position != null);
-    position.addListener(onPagePaintMetaUpdate);
+    position.addListener(_onPagePaintMetaUpdate);
     _effectiveController.attach(position);
   }
 
@@ -841,17 +841,21 @@ class ReaderContentViewState
     print('flutter翻页行为, 初始化数据完毕: ${position.toString()}');
   }
 
-  void onPagePaintMetaUpdate() {
-    print('flutter翻页行为, position更新: $position');
+  Future<void> _onPagePaintMetaUpdate() async {
+    assert(_contentPainter != null);
+    // await _contentPainter!.canScroll(position.userScrollDirection)
     if (newScroll) {
       print('flutter翻页行为, 执行pixels = ${position.pixels}');
-      _contentPainter?.onPagePaintMetaUpdate(PagePaintMetaData(
+      _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
         pixels: position.pixels,
         page: position.page!,
         userScrollDirection: position.userScrollDirection,
         onPageCentered: _disposePageDraw,
       ));
       invalidateContent();
+    } else {
+      print('flutter翻页行为, 忽略, 此处需要重置坐标');
+      // _disposePageDraw();
     }
   }
 }

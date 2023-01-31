@@ -105,6 +105,29 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
     }
   }
 
+  Future<bool> canScrollNew(ScrollDirection scrollDirection) async {
+    switch(scrollDirection) {
+      case ScrollDirection.idle:
+        return false;
+      case ScrollDirection.forward:
+        bool canScroll = await readerViewModel.canScroll(PageIndex.prev);
+        // 判断上一页是否存在
+        bool prevExist = readerViewModel.pageExist(PageIndex.prev);
+        if (!prevExist) {
+          readerViewModel.buildPageAsync(PageIndex.prev);
+        }
+        return canScroll && prevExist;
+      case ScrollDirection.reverse:
+        bool canScroll = await readerViewModel.canScroll(PageIndex.next);
+        // 判断下一页是否存在
+        bool nextExist = readerViewModel.pageExist(PageIndex.next);
+        if (!nextExist) {
+          readerViewModel.buildPageAsync(PageIndex.next);
+        }
+        return canScroll && nextExist;
+    }
+  }
+
   bool setCurrentTouchEvent(TouchEvent event) {
     /// 如果正在执行动画，判断是否需要中止动画
     switch (currentAnimationType) {

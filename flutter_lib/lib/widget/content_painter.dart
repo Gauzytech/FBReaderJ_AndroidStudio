@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
 import '../reader/controller/reader_page_view_model.dart';
@@ -15,6 +16,8 @@ mixin BookContentPainter {
   Offset lastTouchPosition();
 
   void onPagePaintMetaUpdate(PagePaintMetaData data);
+
+  Future<bool> canScroll(ScrollDirection scrollDirection);
 }
 
 class ContentPainter extends CustomPainter with BookContentPainter {
@@ -44,8 +47,9 @@ class ContentPainter extends CustomPainter with BookContentPainter {
     return _pageViewModel.shouldRepaint(oldDelegate, this);
   }
 
-  Future<bool> canScroll(TouchEvent event) async {
-    return await _pageViewModel.canScroll(event);
+  @override
+  Future<bool> canScroll(ScrollDirection scrollDirection) async {
+    return await _pageViewModel.canScrollNew(scrollDirection);
   }
 
   /// 缓存触摸事件判断滑动方向

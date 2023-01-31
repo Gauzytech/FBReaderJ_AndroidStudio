@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -49,15 +50,18 @@ class PageTurnAnimation extends BaseAnimationPage {
   AnimationData? progressAnimation;
 
   final Paint _paint = Paint();
+  final Paint _linePaint = Paint()
+    ..color = Colors.red
+    ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 10;
 
   final PagePaintMetaData _metaData = PagePaintMetaData();
 
-  PageTurnAnimation(
-    ReaderViewModel viewModel,
-    AnimationController animationController,
-  ) : super(
-            readerViewModel: viewModel,
-            animationController: animationController) {
+  PageTurnAnimation(ReaderViewModel viewModel,
+      AnimationController animationController,) : super(
+      readerViewModel: viewModel,
+      animationController: animationController) {
     _setContentViewModel(viewModel);
   }
 
@@ -402,56 +406,62 @@ class PageTurnAnimation extends BaseAnimationPage {
     double actualOffsetX,
   ) {
     canvas.save();
+    double translateX = actualOffsetX + currentSize.width;
     if (actualOffsetX < 0) {
       // 绘制下一页
       // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
       ui.Image? nextPage = readerViewModel.getPage(PageIndex.next);
       if (nextPage != null) {
-        canvas.translate(actualOffsetX + currentSize.width, 0);
+        canvas.translate(translateX, 0);
         canvas.drawImage(nextPage, Offset.zero, _paint);
         print(
           'flutter动画流程:onDraw下一页, '
-          'actualOffsetX = $actualOffsetX, '
-          'translate = ${actualOffsetX - currentSize.width}',
+              'actualOffsetX = $actualOffsetX, '
+              'translate = ${actualOffsetX - currentSize.width}',
         );
       } else {
         print('flutter动画流程:onDraw[无nextPage], actualOffsetX = $actualOffsetX');
         // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
-        if (!isCanGoNext()) {
-          lastIndex = 0;
-          actualOffsetX = 0;
-          currentMoveDx = 0;
+        // if (!isCanGoNext()) {
+        //   lastIndex = 0;
+        //   actualOffsetX = 0;
+        //   currentMoveDx = 0;
+        //
+        //   if (_currentAnimationController?.isCompleted == false) {
+        //     _currentAnimationController?.stop();
+        //   }
+        // }
 
-          if (_currentAnimationController?.isCompleted == false) {
-            _currentAnimationController?.stop();
-          }
-        }
+        _drawUnavailable(canvas, translateX);
       }
     } else if (actualOffsetX > 0) {
       // 绘制上一页
       // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
       ui.Image? prevPage = readerViewModel.getPage(PageIndex.prev);
+      double translateX = actualOffsetX - currentSize.width;
       if (prevPage != null) {
-        canvas.translate(actualOffsetX - currentSize.width, 0);
+        canvas.translate(translateX, 0);
         canvas.drawImage(prevPage, Offset.zero, _paint);
         print(
           'flutter动画流程:onDraw上一页, '
-          'actualOffsetX = $actualOffsetX, '
-          'translate = ${actualOffsetX - currentSize.width}',
+              'actualOffsetX = $actualOffsetX, '
+              'translate = ${actualOffsetX - currentSize.width}',
         );
       } else {
         print('flutter动画流程:onDraw[无prevPage], '
             'actualOffsetX = $actualOffsetX,');
         // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
-        if (!isCanGoPre()) {
-          lastIndex = 0;
-          actualOffsetX = 0;
-          currentMoveDx = 0;
+        // if (!isCanGoPre()) {
+        //   lastIndex = 0;
+        //   actualOffsetX = 0;
+        //   currentMoveDx = 0;
+        //
+        //   if (_currentAnimationController?.isCompleted == false) {
+        //     _currentAnimationController?.stop();
+        //   }
+        // }
 
-          if (_currentAnimationController?.isCompleted == false) {
-            _currentAnimationController?.stop();
-          }
-        }
+        _drawUnavailable(canvas, translateX);
       }
     } else {
       print('flutter动画流程:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
@@ -468,5 +478,14 @@ class PageTurnAnimation extends BaseAnimationPage {
       canvas.drawImage(currentPage, Offset.zero, _paint);
     }
     canvas.restore();
+  }
+
+  void _drawUnavailable(ui.Canvas canvas, double translateX) {
+    Offset center = Offset(currentSize.width / 2, currentSize.height / 2); //  坐标中心
+    double radius = min(currentSize.width / 5, currentSize.height / 5); //  半径
+
+    canvas.translate(translateX, 0);
+    canvas.drawColor(Colors.white, BlendMode.color);
+    canvas.drawCircle(center, radius, _linePaint);
   }
 }
