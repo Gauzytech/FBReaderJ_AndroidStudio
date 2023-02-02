@@ -141,26 +141,12 @@ class ReaderViewModel extends BaseViewModel {
     if (imageSrc.img == null) {
       // 如果没有通知过native绘制
       if (!imageSrc.processing) {
-        print('flutter动画, ----------------未找到next pageImage, 通知native进行绘制');
+        print('flutter翻页行为, ----------------未找到$index, 通知native进行绘制');
         repository.buildPageOnly(index);
       } else {
-        print('flutter动画, ----------------已经通知了native, 不用重新绘制');
+        print('flutter翻页行为, ----------------已经通知了native, 不用重新绘制');
       }
     }
-  }
-
-  Future<ui.Image?> getNextPageAsync() async {
-    // 查看下一页image是否存在
-    ImageSrc? nextPageImage = repository.getPage(PageIndex.next);
-    if(nextPageImage.img == null) {
-      if(!nextPageImage.processing) {
-        print('flutter动画, ----------------未找到next pageImage, 通知native进行绘制');
-        return await repository.buildPageOnly(PageIndex.next);
-      } else {
-        print('flutter动画, ----------------已经通知了native, 不用重新绘制');
-      }
-    }
-    return nextPageImage.img;
   }
 
   ui.Image? getNextPage() {

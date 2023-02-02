@@ -22,6 +22,6 @@ class PagePaintMetaData {
 
   @override
   String toString() {
-    return 'MetaData{pixels: $pixels, page: $page, $userScrollDirection}';
+    return 'MetaData{pixels: ${pixels.toStringAsFixed(6)}, page: ${page.toStringAsFixed(6)}, $userScrollDirection}';
   }
 }

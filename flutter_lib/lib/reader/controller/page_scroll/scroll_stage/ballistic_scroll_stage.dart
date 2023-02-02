@@ -41,12 +41,10 @@ class BallisticScrollStage extends ReaderScrollStage {
 
   @protected
   bool applyMoveTo(double value) {
-    print('flutter翻页行为, 模拟动画progress, $value');
     return delegate.setPixels(value).abs() < precisionErrorTolerance;
   }
 
   void _end() {
-    print('flutter翻页行为, 模拟动画结束');
     delegate.goBallistic(0.0);
   }
 

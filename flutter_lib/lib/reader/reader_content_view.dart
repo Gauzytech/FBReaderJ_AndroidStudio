@@ -845,7 +845,7 @@ class ReaderContentViewState
     assert(_contentPainter != null);
     // await _contentPainter!.canScroll(position.userScrollDirection)
     if (newScroll) {
-      print('flutter翻页行为, 执行pixels = ${position.pixels}');
+      // print('flutter翻页行为, 执行pixels = ${position.pixels}');
       _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
         pixels: position.pixels,
         page: position.page!,

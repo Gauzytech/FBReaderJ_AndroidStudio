@@ -36,7 +36,6 @@ class BookPagePosition extends ReaderScrollPositionWithSingleContext {
   /// -1.0 上一页
   /// 1.0 下一页
   double getPageFromPixels(double pixels, double viewportDimension) {
-    print('计算page, pixels = $pixels');
     assert(viewportDimension > 0.0);
     final double actual =
         (pixels - _initialPageOffset) / (viewportDimension * viewportFraction);
