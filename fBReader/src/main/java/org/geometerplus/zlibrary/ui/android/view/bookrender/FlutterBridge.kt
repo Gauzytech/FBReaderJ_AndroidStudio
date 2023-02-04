@@ -71,6 +71,7 @@ class FlutterBridge(
                 // 绘制内容的bitmap
                 val bitmap = drawBitmap(pageIndex, width, height)
                 // 回调结果
+                // todo toByteArray这一步太耗时了, 要将绘制bitmap逻辑移到flutter
                 if (DebugHelper.SAVE_BITMAP) {
                     debugSave(bitmap.toByteArray(), "图书内容bitmap_current.png")
                 } else {

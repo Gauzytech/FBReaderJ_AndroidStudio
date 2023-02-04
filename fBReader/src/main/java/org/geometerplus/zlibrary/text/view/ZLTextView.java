@@ -468,8 +468,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
         Timber.v("渲染流程:Bitmap绘制, ================================ 开始paint: %s================================", pageIndex.name());
         Timber.v("长按选中流程, 绘制");
+        // 1. 更新绘制画笔信息
         setContext(paintContext);
-        // 绘制背景
+        // 2. 绘制背景
         final ZLFile wallpaper = getWallpaperFile();
         if (wallpaper != null) {
             paintContext.clear(wallpaper, getFillMode());
@@ -485,7 +486,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         Timber.v("渲染流程:Bitmap绘制, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
 
-        // 先根据pageIndex选择page
+        // 3. 先根据pageIndex选择page
         ZLTextPage page;
         switch (pageIndex) {
             default:
@@ -511,8 +512,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
         }
 
+        // 4. 清空TextElementMap老数据
         page.TextElementMap.clear();
 
+        // 5. 计算本页数据并更新page
         // 从定位指定段落后得到的ZLTextPage类中取出
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
         preparePaintInfo(page, "paint." + pageIndex.name());
@@ -531,6 +534,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         int y = getTopMargin();
         int columnIndex = 0;
         ZLTextLineInfo prevLineInfo = null;
+        // 6. 计算每一行每个字的位置
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
             info.adjust(prevLineInfo);
@@ -550,11 +554,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
             prevLineInfo = info;
         }
 
+        // 7. 绘制高亮
         // 笔记效果: 计算需要高亮的文字
         // 长按选中效果见findHighlightingList()
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
         Timber.v("长按选中流程[绘制], text highlight = %s", highlightingList.size());
-        // todo 把这个逻辑直接移到flutter
+        // FLUTTER: 这个逻辑已经移到flutter
         if (!DebugHelper.ENABLE_FLUTTER) {
             for (ZLTextHighlighting h : highlightingList) {
                 int mode = Hull.DrawMode.None;
@@ -573,7 +578,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     mode |= Hull.DrawMode.Outline;
                 }
 
-                // 进行高亮绘制
+                // 7a 绘制划选高亮和笔记高亮
                 if (mode != Hull.DrawMode.None) {
                     h.hull(page).draw(getContext(), mode);
                     Timber.v("长按选中流程[绘制高亮], hull = %s", h.hull(page).getClass().getSimpleName());
@@ -583,6 +588,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         x = getLeftMargin();
         y = getTopMargin();
+        // 7b 绘制每行文字
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
@@ -595,8 +601,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
-        // 绘制outline: 长按图片或者超链接, 会有一个描边效果
+        // FLUTTER: 这个逻辑已经移到flutter
         if (!DebugHelper.ENABLE_FLUTTER) {
+            // 7c 绘制outline: 长按图片或者超链接, 会有一个描边效果
             final ZLTextRegion outlinedElementRegion = getOutlinedRegion(page);
             if (outlinedElementRegion != null && myShowOutline) {
                 Timber.v("长按选中流程[绘制],  绘制outline, %s, %s", getSelectionBackgroundColor(), outlinedElementRegion.hull().getClass().getSimpleName());
@@ -604,16 +611,16 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 outlinedElementRegion.hull().draw(paintContext, Hull.DrawMode.Outline);
             }
 
-            // 绘制选中的左右光标
+            // 7d 绘制选中的左右光标
             drawSelectionCursor(paintContext, page, SelectionCursor.Which.Left);
             drawSelectionCursor(paintContext, page, SelectionCursor.Which.Right);
         }
 
-        // 左上角标题效果: 绘制头部（章节标题）
+        // 8. 左上角标题效果: 绘制头部（章节标题）
         paintContext.setExtraFoot((int) (getTopMargin() * 0.375), getExtraColor());
         paintContext.drawHeader(getLeftMargin(), (int) (getTopMargin() / 1.6), getTocText(page.startCursor));
 
-        // 右下角总页码效果: 绘制底部（总页码）
+        // 9. 右下角总页码效果: 绘制底部（总页码）
         // TODO: 总页码计算不准确
         if (DebugHelper.FOOTER_PAGE_COUNT_ENABLE) {
             String progressText = getPageProgress();
@@ -622,7 +629,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             paintContext.drawFooter(footerX, footerY, progressText);
         }
 
-        // 书签效果: 绘制书签
+        // 10. 书签效果: 绘制书签
         final List<ZLTextHighlighting> bookMarkList = findBookMarkList(page);
         paintContext.setFillColor(getBookMarkColor());
         if (!bookMarkList.isEmpty()) {
