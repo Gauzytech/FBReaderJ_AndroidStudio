@@ -19,7 +19,6 @@
 
 package org.geometerplus.zlibrary.text.view;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.geometerplus.DebugHelper;
@@ -59,7 +58,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public static final int SCROLLBAR_SHOW_AS_PROGRESS = 2;
     private static final char[] ourDefaultLetters = "System developers have used modeling languages for decades to specify, visualize, construct, and document systems. The Unified Modeling Language (UML) is one of those languages. UML makes it possible for team members to collaborate by providing a common language that applies to a multitude of different systems. Essentially, it enables you to communicate solutions in a consistent, tool-supported language.".toCharArray();
     private static final char[] SPACE = new char[]{' '};
-    private final HashMap<ZLTextLineInfo, ZLTextLineInfo> myLineInfoCache = new HashMap<ZLTextLineInfo, ZLTextLineInfo>();
+    private final HashMap<ZLTextLineInfo, ZLTextLineInfo> myLineInfoCache = new HashMap<>();
     public final ZLTextSelection mySelection = new ZLTextSelection(this);
     private final Set<ZLTextHighlighting> myHighlightingList = Collections.synchronizedSet(new TreeSet<>());
     private final Set<ZLTextHighlighting> myBookMarkList = Collections.synchronizedSet(new TreeSet<>());
@@ -460,7 +459,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public synchronized void preparePage(ZLPaintContext context, PageIndex pageIndex) {
         setContext(context);
         ZLTextPage page = getPage(pageIndex);
-        Timber.v("渲染流程[preparePage], %s: %s, %s, %s", pageIndex.name(), page.startCursor, page.endCursor, DebugHelper.getPatinStateStr(page.paintState));
+        Timber.v("渲染流程[preparePage], %s: %s, %s, %s", pageIndex.name(), page.startCursor, page.endCursor, DebugHelper.patinStateToString(page.paintState));
         preparePaintInfo(page, "preparePage");
     }
 
@@ -496,7 +495,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case PREV:
                 page = myPreviousPage;
                 if (myPreviousPage.isClearPaintState()) {
-                    Timber.v("渲染流程:Bitmap绘制, 更新myPreviousPage, currentState= %s", DebugHelper.getPatinStateStr(myCurrentPage.paintState));
+                    Timber.v("渲染流程:分页, 选择myPreviousPage, currentState= %s", DebugHelper.patinStateToString(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.PREV");
                     myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
                     myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
@@ -505,7 +504,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case NEXT:
                 page = myNextPage;
                 if (myNextPage.isClearPaintState()) {
-                    Timber.v("渲染流程:Bitmap绘制, 更新myNextPage, currentState= %s", DebugHelper.getPatinStateStr(myCurrentPage.paintState));
+                    Timber.v("渲染流程:分页, 选择myNextPage, currentState= %s", DebugHelper.patinStateToString(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.NEXT");
                     myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
                     myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
@@ -1200,13 +1199,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
     // 这个是分页算法: 根据可绘制区域高度往里填充textLine,
     // startCursor/endCursor确定填充几个段落
     private void buildInfos(ZLTextPage page, ZLTextWordCursor startCursor, ZLTextWordCursor endCursor, String from) {
-        if (DebugHelper.filterTag(from, "paint")){
-            Timber.v("渲染流程:分页[%s], 开始分页 -> start = %s, \nend = %s", from, startCursor, endCursor);
+        if (DebugHelper.filterTag(from, "paint", "gotoPosition")){
+            Timber.v("渲染流程:分页[%s], 开始分页 -> \nstart = %s, \nend = %s", from, startCursor, endCursor);
         }
         endCursor.setCursor(startCursor);
         // 屏幕能显示的总高度
         int textAreaHeight = page.getTextHeight();
-        if (DebugHelper.filterTag(from, "paint")) {
+        if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
             Timber.v("渲染流程:分页, 0. 可渲染高度, %d", textAreaHeight);
         }
         page.lineInfos.clear();
@@ -1222,26 +1221,22 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final int wordIndex = endCursor.getElementIndex();
             applyStyleChanges(endParagraphCursor, 0, wordIndex, from);
             currentLineInfo = new ZLTextLineInfo(endParagraphCursor, wordIndex, endCursor.getCharIndex(), getTextStyle());
-            if (DebugHelper.filterTag(from, "paint")) {
-                Timber.v("渲染流程:分页, 1. 准备配置style, %s, wordIndex = %d",
-                        endParagraphCursor,
-                        wordIndex);
-            }
-            // endIdx就是elementSize
-            final int lastElementIndex = currentLineInfo.paragraphCursorLength;
-            while (currentLineInfo.endElementIndex != lastElementIndex) {
+            // 当前cursor的长度
+            final int cursorLength = currentLineInfo.paragraphCursorLength;
+            while (currentLineInfo.endElementIndex != cursorLength) {
+                Timber.v("渲染流程:分页[%s], 开始处理endElementIndex = %s", from, currentLineInfo.endElementIndex);
                 // 获取该行的信息，包括行高，左右缩进，包含哪些字等信息
 
                 int debugElementIdx = currentLineInfo.endElementIndex;
                 int debugCharIdx = currentLineInfo.endCharIndex;
                 currentLineInfo = processTextLine(page, endParagraphCursor,
-                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex, lastElementIndex, previousLineInfo, from);
-//                if (DebugHelper.filterTag(from, "paint")) {
+                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex, cursorLength, previousLineInfo, from);
+                if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
                     Timber.v("渲染流程:分页[%s], 2. element in textLine processed {endElementIndex = %d -> %d, endCharIndex = %d -> %d}",
                             from,
                             debugElementIdx, currentLineInfo.endElementIndex,
                             debugCharIdx, currentLineInfo.endCharIndex);
-//                }
+                }
                 // textAreaHeight递减，代表屏幕上能显示的总高度在不断减小
                 textAreaHeight -= currentLineInfo.height + currentLineInfo.descent;
                 // 当textAreaHeight < 0, 就代表屏幕y已经被填充满了
@@ -1307,7 +1302,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             String from
     ) {
         // 新建一个ZLTextLineInfo类，代表这一行的信息
-        // 当前在ArrayList中的偏移量startIndex会被存储到RealStartElementIndex属性中去
+        // 当前在List中的偏移量startIndex会被存储到RealStartElementIndex属性中去
         // 用来代表这一行的第一个字位置
         final ZLTextLineInfo info = processTextLineInternal(
                 page, paragraphCursor, startIndex, startCharIndex, endIndex, previousInfo, from
@@ -1768,7 +1763,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             ", \n{startCursor= " + page.startCursor +
                             ", \nendCursor= " + page.endCursor +
                             ", \nlineInfoSize= " + page.lineInfos.size() +
-                            ", \npaintState= " + DebugHelper.getPatinStateStr(page.paintState) +
+                            ", \npaintState= " + DebugHelper.patinStateToString(page.paintState) +
                             '}'
                     );
         }
@@ -1787,6 +1782,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             myLineInfoCache.put(info, info);
         }
 
+        Timber.v("渲染流程:分页[prepare], paintState = %s", DebugHelper.patinStateToString(page.paintState));
         // 根据paint state计算page的startCursor和endCursor
         switch (page.paintState) {
             default:
@@ -1894,7 +1890,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
         if (from.contains("paint")) {
             Timber.v("渲染流程:lineInfo[%s], 分页完成 for [%s, %s]",
-                    DebugHelper.getPatinStateStr(page.paintState),
+                    DebugHelper.patinStateToString(page.paintState),
                     page.startCursor.getParagraphIndex(),
                     page.endCursor.getParagraphIndex());
         }

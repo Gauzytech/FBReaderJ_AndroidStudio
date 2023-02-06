@@ -25,9 +25,11 @@ import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
 public final class ZLTextWordCursor extends ZLTextPosition {
+	// 代表当前需要显示的段落的ZLTextParagraphCursor类
 	private ZLTextParagraphCursor myParagraphCursor;
 	// 每个element代表一个word或者一个标签元素, 所以elementIndex就是wordIndex
 	private int myElementIndex;
+	// 针对英文单词中的字母, 从第一个字母开始
 	private int myCharIndex;
 
 //	private int myModelIndex;
@@ -50,11 +52,9 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	}
 
 	public void setCursor(ZLTextParagraphCursor paragraphCursor) {
-		// 代表当前需要显示的段落的ZLTextParagraphCursor类
 		myParagraphCursor = paragraphCursor;
 		// 从当前段落的第一个字开始
 		myElementIndex = 0;
-		// 针对英文单词中的字母, 从第一个字母开始
 		myCharIndex = 0;
 	}
 

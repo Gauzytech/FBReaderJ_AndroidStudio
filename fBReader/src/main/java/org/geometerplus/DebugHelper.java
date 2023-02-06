@@ -22,7 +22,7 @@ public class DebugHelper {
    public static boolean SAVE_BITMAP = false;
    public static boolean ENABLE_SAF = false;
 
-   public static String getPatinStateStr(int paintState) {
+   public static String patinStateToString(int paintState) {
 
       if (paintState == PaintStateEnum.NOTHING_TO_PAINT) {
          return "NOTHING_TO_PAINT";
@@ -41,8 +41,13 @@ public class DebugHelper {
       return null;
    }
 
-   public static boolean filterTag(String source, String tag) {
-      return source.contains(tag);
+   public static boolean filterTag(String source, String... tags) {
+      for (String tag : tags) {
+         if (source.contains(tag)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    public static ZLColor outlineColor() {

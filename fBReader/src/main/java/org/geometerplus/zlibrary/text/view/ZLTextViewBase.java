@@ -19,6 +19,7 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
@@ -185,8 +186,8 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     void applyStyleChanges(ZLTextParagraphCursor cursor, int index, int end, String from) {
-        if (from.equals("gotoPosition")) {
-            Timber.v("渲染流程:分页, 1.1 配置style, [%d, %d]", index, end);
+        if (DebugHelper.filterTag(from, "gotoPosition")) {
+            Timber.v("渲染流程:分页[%s], 1 配置style: cursor = %s, [%d, %d]", from, cursor, index, end);
         }
         for (; index != end; ++index) {
             applyStyleChangeElement(cursor.getElement(index));

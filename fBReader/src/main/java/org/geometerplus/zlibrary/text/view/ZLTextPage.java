@@ -217,7 +217,7 @@ final class ZLTextPage {
                 ", endCursor=" + endCursor +
                 ", lineInfos=" + lineInfos +
                 ", column0Height=" + column0Height +
-                ", paintState=" + DebugHelper.getPatinStateStr(paintState) +
+                ", paintState=" + DebugHelper.patinStateToString(paintState) +
                 ", TextElementMap=" + TextElementMap +
                 ", myColumnWidth=" + myColumnWidth +
                 ", myHeight=" + myHeight +
