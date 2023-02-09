@@ -1220,6 +1220,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final ZLTextParagraphCursor endParagraphCursor = endCursor.getParagraphCursor();
             final int wordIndex = endCursor.getElementIndex();
             applyStyleChanges(endParagraphCursor, 0, wordIndex, from);
+            // startElementIndex, startCharIndex,
+            // realStartElementIndex, realStartCharIndex,
+            // endElementIndex, endCharIndex全部初始化为wordIndex和endCursor.getCharIndex()
             currentLineInfo = new ZLTextLineInfo(endParagraphCursor, wordIndex, endCursor.getCharIndex(), getTextStyle());
             // 当前cursor的长度
             final int cursorLength = currentLineInfo.paragraphCursorLength;
@@ -1229,10 +1232,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
                 int debugElementIdx = currentLineInfo.endElementIndex;
                 int debugCharIdx = currentLineInfo.endCharIndex;
-                currentLineInfo = processTextLine(page, endParagraphCursor,
-                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex, cursorLength, previousLineInfo, from);
+                currentLineInfo = processTextLine(
+                        page, endParagraphCursor,
+                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex,
+                        cursorLength,
+                        previousLineInfo,
+                        from);
                 if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
-                    Timber.v("渲染流程:分页[%s], 2. element in textLine processed {endElementIndex = %d -> %d, endCharIndex = %d -> %d}",
+                    Timber.v("渲染流程:分页[%s], 2. processTextLine完毕, endElementIndex: [%d -> %d], endCharIndex: [%d -> %d]",
                             from,
                             debugElementIdx, currentLineInfo.endElementIndex,
                             debugCharIdx, currentLineInfo.endCharIndex);
@@ -1327,6 +1334,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final ZLTextLineInfo info = new ZLTextLineInfo(paragraphCursor, startIndex, startCharIndex, getTextStyle());
         final ZLTextLineInfo cachedInfo = myLineInfoCache.get(info);
 
+        Timber.v("渲染流程:分页, cachedInfo = %s", cachedInfo);
         if (cachedInfo != null) {
             cachedInfo.adjust(previousInfo);
             applyStyleChanges(paragraphCursor, startIndex, cachedInfo.endElementIndex, "processTextLineInternal");

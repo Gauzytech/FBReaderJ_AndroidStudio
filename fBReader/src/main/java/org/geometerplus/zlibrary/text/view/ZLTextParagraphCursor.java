@@ -40,9 +40,12 @@ import java.util.List;
 import timber.log.Timber;
 
 /**
+ *
  * 本地缓存解析文件类, 包含一个paragraph的解析信息
- * <p>
+ *
  * 通过{@link #getParagraph()}获得paragraph的解析信息, 利用Iterator将paragraph读取每个entry然后加到myElements
+ *
+ * 一组p标签就代表一个段落(Paragraph),
  *
  * @see Processor
  * @see ZLTextPlainModel.EntryIteratorImpl

@@ -26,6 +26,8 @@ import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
 public final class ZLTextWordCursor extends ZLTextPosition {
 	// 代表当前需要显示的段落的ZLTextParagraphCursor类
+	// 一组p标签就代表一个段落
+	// ZLTextParagraphCursor对应一个paragraph的解析信息
 	private ZLTextParagraphCursor myParagraphCursor;
 	// 每个element代表一个word或者一个标签元素, 所以elementIndex就是wordIndex
 	private int myElementIndex;
