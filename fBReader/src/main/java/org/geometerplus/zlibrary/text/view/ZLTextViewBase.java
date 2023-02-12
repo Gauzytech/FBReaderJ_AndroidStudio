@@ -133,7 +133,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     final void setTextStyle(ZLTextStyle style) {
-//        Timber.v("style流程, 初始化style, %s", style);
+        Timber.v("渲染流程:分页, 初始化style, %s", style);
         if (myTextStyle != style) {
             // ZLTextViewBase类的myTextStyle属性将指向代表基本样式的ZLTextBaseStyle类
             myTextStyle = style;
@@ -152,7 +152,7 @@ abstract class ZLTextViewBase extends ZLView {
 
     protected ZLTextMetrics metrics() {
         // this local variable is used to guarantee null will not
-        // be returned from this method enen in multi-thread environment
+        // be returned from this method even in multi-thread environment
         ZLTextMetrics m = myMetrics;
         if (m == null) {
             m = new ZLTextMetrics(
@@ -186,7 +186,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     void applyStyleChanges(ZLTextParagraphCursor cursor, int index, int end, String from) {
-        if (DebugHelper.filterTag(from, "gotoPosition")) {
+        if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
             Timber.v("渲染流程:分页[%s], 1 配置style: cursor = %s, [%d, %d]", from, cursor, index, end);
         }
         for (; index != end; ++index) {
@@ -221,6 +221,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     private void applyStyleClose() {
+        // 标签对结束部分, 就将样式还原
         setTextStyle(myTextStyle.Parent);
     }
 

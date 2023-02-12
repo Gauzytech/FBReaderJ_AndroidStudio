@@ -169,4 +169,25 @@ public class ZLTextBaseStyle extends ZLTextStyle {
 	public boolean allowHyphenations() {
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextBaseStyle{" +
+				"UseCSSTextAlignmentOption=" + UseCSSTextAlignmentOption +
+				", UseCSSMarginsOption=" + UseCSSMarginsOption +
+				", UseCSSFontSizeOption=" + UseCSSFontSizeOption +
+				", UseCSSFontFamilyOption=" + UseCSSFontFamilyOption +
+				", AutoHyphenationOption=" + AutoHyphenationOption +
+				", BoldOption=" + BoldOption +
+				", ItalicOption=" + ItalicOption +
+				", UnderlineOption=" + UnderlineOption +
+				", StrikeThroughOption=" + StrikeThroughOption +
+				", AlignmentOption=" + AlignmentOption +
+				", LineSpaceOption=" + LineSpaceOption +
+				", FontFamilyOption=" + FontFamilyOption +
+				", FontSizeOption=" + FontSizeOption +
+				", myFontFamily='" + myFontFamily + '\'' +
+				", myFontEntries=" + myFontEntries +
+				'}';
+	}
 }

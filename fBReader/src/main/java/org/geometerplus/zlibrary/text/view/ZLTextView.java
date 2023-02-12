@@ -459,7 +459,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     public synchronized void preparePage(ZLPaintContext context, PageIndex pageIndex) {
         setContext(context);
         ZLTextPage page = getPage(pageIndex);
-        Timber.v("渲染流程[preparePage], %s: %s, %s, %s", pageIndex.name(), page.startCursor, page.endCursor, DebugHelper.patinStateToString(page.paintState));
+        Timber.v("渲染流程[preparePage], %s: %s, %s, %s", pageIndex.name(), page.startCursor, page.endCursor, DebugHelper.stringifyPatinState(page.paintState));
         preparePaintInfo(page, "preparePage");
     }
 
@@ -495,7 +495,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case PREV:
                 page = myPreviousPage;
                 if (myPreviousPage.isClearPaintState()) {
-                    Timber.v("渲染流程:分页, 选择myPreviousPage, currentState= %s", DebugHelper.patinStateToString(myCurrentPage.paintState));
+                    Timber.v("渲染流程:分页, 选择myPreviousPage, currentState= %s", DebugHelper.stringifyPatinState(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.PREV");
                     myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
                     myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
@@ -504,7 +504,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             case NEXT:
                 page = myNextPage;
                 if (myNextPage.isClearPaintState()) {
-                    Timber.v("渲染流程:分页, 选择myNextPage, currentState= %s", DebugHelper.patinStateToString(myCurrentPage.paintState));
+                    Timber.v("渲染流程:分页, 选择myNextPage, currentState= %s", DebugHelper.stringifyPatinState(myCurrentPage.paintState));
                     preparePaintInfo(myCurrentPage, "paint.NEXT");
                     myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
                     myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
@@ -1335,6 +1335,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final ZLTextLineInfo cachedInfo = myLineInfoCache.get(info);
 
         Timber.v("渲染流程:分页, cachedInfo = %s", cachedInfo);
+        Timber.v("渲染流程:分页, 当前段落element: \n%s", paragraphCursor.stringifyElements());
         if (cachedInfo != null) {
             cachedInfo.adjust(previousInfo);
             applyStyleChanges(paragraphCursor, startIndex, cachedInfo.endElementIndex, "processTextLineInternal");
@@ -1344,10 +1345,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             int currentElementIndex = startIndex;
             int currentCharIndex = startCharIndex;
-            final boolean isFirstLine = startIndex == 0 && startCharIndex == 0;
+            final boolean isLineStart = startIndex == 0 && startCharIndex == 0;
             // 当startIndex为0时，判断当前位置处于要显示的段落的起始位置
-            // 如果textLine开头
-            if (isFirstLine) {
+            // 如果textLine开头, 一般开头都是style信息, 从左往右遍历开头的style element，并使用element特定的style
+            if (isLineStart) {
                 // 先配置所有的style,
                 // 跳过代表标签信息的ZLTextControlElement类
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
@@ -1362,21 +1363,23 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     }
                     element = paragraphCursor.getElement(currentElementIndex);
                 }
+                // paragraph所有style标签设置好之后，保存style
                 info.startStyle = getTextStyle();
-                // 获取改行的代表第一个字的ZLTextWord类
-                // ZLTextParagraphCursor类中代表当前段落的ArrayList中的偏移量
+                // 保存paragraph中第一个非style的element index
                 info.realStartElementIndex = currentElementIndex;
                 info.realStartCharIndex = currentCharIndex;
             }
 
             ZLTextStyle storedStyle = getTextStyle();
+            Timber.v("渲染流程:分页, 开始处理内容element, realStartElementIndex = %s, style = %s", currentElementIndex, storedStyle);
+
             // getTextWidth: 获取屏幕总宽度
             // getRightIndent: 获取该行右缩进信息
             // maxWidth: 每行能显示的最大宽度
             final int maxWidth = page.getTextWidth() - storedStyle.getRightIndent(metrics());
             // 获取首行的左缩进信息
             info.leftIndent = storedStyle.getLeftIndent(metrics());
-            if (isFirstLine && storedStyle.getAlignment() != ZLTextAlignmentType.ALIGN_CENTER) {
+            if (isLineStart && storedStyle.getAlignment() != ZLTextAlignmentType.ALIGN_CENTER) {
                 info.leftIndent += storedStyle.getFirstLineIndent(metrics());
             }
             if (info.leftIndent > maxWidth - 20) {
@@ -1553,7 +1556,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             setTextStyle(storedStyle);
 
-            if (isFirstLine) {
+            if (isLineStart) {
                 info.VSpaceBefore = info.startStyle.getSpaceBefore(metrics());
                 if (previousInfo != null) {
                     info.previousInfoUsed = true;
@@ -1771,7 +1774,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             ", \n{startCursor= " + page.startCursor +
                             ", \nendCursor= " + page.endCursor +
                             ", \nlineInfoSize= " + page.lineInfos.size() +
-                            ", \npaintState= " + DebugHelper.patinStateToString(page.paintState) +
+                            ", \npaintState= " + DebugHelper.stringifyPatinState(page.paintState) +
                             '}'
                     );
         }
@@ -1790,7 +1793,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             myLineInfoCache.put(info, info);
         }
 
-        Timber.v("渲染流程:分页[prepare], paintState = %s", DebugHelper.patinStateToString(page.paintState));
+        Timber.v("渲染流程:分页[prepare], paintState = %s", DebugHelper.stringifyPatinState(page.paintState));
         // 根据paint state计算page的startCursor和endCursor
         switch (page.paintState) {
             default:
@@ -1898,7 +1901,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
         if (from.contains("paint")) {
             Timber.v("渲染流程:lineInfo[%s], 分页完成 for [%s, %s]",
-                    DebugHelper.patinStateToString(page.paintState),
+                    DebugHelper.stringifyPatinState(page.paintState),
                     page.startCursor.getParagraphIndex(),
                     page.endCursor.getParagraphIndex());
         }

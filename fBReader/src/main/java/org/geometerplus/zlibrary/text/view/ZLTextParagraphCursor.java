@@ -171,6 +171,12 @@ public final class ZLTextParagraphCursor {
 		return cursorManager.get(idx);
 	}
 
+	/**
+	 * 一个paragraph可以有多个elements.
+	 * ZLTextElement可以是ZLTextImageElement, ZLTextWord等
+	 *
+	 * @param index element的坐标
+	 */
 	ZLTextElement getElement(int index) {
 		if (index >= 0 && index < myElements.size()) {
 			return myElements.get(index);
@@ -180,6 +186,15 @@ public final class ZLTextParagraphCursor {
 
 	ZLTextParagraph getParagraph() {
 		return textModel.getParagraph(paragraphIdx);
+	}
+
+	public String stringifyElements() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < myElements.size(); i++) {
+			sb.append(i).append(", ").append(myElements.get(i)).append("\n");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
 	}
 
 	@NonNull

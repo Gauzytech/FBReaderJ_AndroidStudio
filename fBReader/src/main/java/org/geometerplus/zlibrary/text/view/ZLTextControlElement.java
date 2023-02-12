@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import org.geometerplus.DebugHelper;
+
 public class ZLTextControlElement extends ZLTextElement {
 	private final static ZLTextControlElement[] myStartElements = new ZLTextControlElement[256];
 	private final static ZLTextControlElement[] myEndElements = new ZLTextControlElement[256];
@@ -46,7 +48,7 @@ public class ZLTextControlElement extends ZLTextElement {
 	@Override
 	public String toString() {
 		return "ZLTextControlElement{" +
-				"Kind=" + Kind +
+				"Kind=" + DebugHelper.stringifyControlKind(Kind) +
 				", IsStart=" + IsStart +
 				'}';
 	}
