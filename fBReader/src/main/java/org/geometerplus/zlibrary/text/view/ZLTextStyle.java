@@ -60,5 +60,6 @@ public abstract class ZLTextStyle {
 	public abstract int getSpaceAfter(ZLTextMetrics metrics);
 	public abstract byte getAlignment();
 
+	/** 允许自动断字 */
 	public abstract boolean allowHyphenations();
 }

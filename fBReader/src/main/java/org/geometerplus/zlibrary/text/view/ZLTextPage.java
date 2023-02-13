@@ -32,7 +32,9 @@ final class ZLTextPage {
 
     final ZLTextWordCursor startCursor = new ZLTextWordCursor();
     final ZLTextWordCursor endCursor = new ZLTextWordCursor();
-    final ArrayList<ZLTextLineInfo> lineInfos = new ArrayList<>();
+    private final ArrayList<ZLTextLineInfo> lineInfos = new ArrayList<>();
+    // 0: 单列
+    // lineInfos.size: 双列
     int column0Height;
     int paintState = PaintStateEnum.NOTHING_TO_PAINT;
 
@@ -116,7 +118,7 @@ final class ZLTextPage {
         }
         endCursor.moveToParagraph(paragraphIndex);
         if ((paragraphIndex > 0) && (wordIndex == 0) && (charIndex == 0)) {
-            endCursor.previousParagraph();
+            endCursor.jumpToPrevParagraph();
             endCursor.moveToParagraphEnd();
         } else {
             endCursor.moveTo(wordIndex, charIndex);
@@ -136,6 +138,10 @@ final class ZLTextPage {
 
     protected boolean twoColumnView() {
         return myTwoColumnView;
+    }
+
+    public boolean isTwoColumnView() {
+        return column0Height == 0 && myTwoColumnView;
     }
 
     protected boolean isEmptyPage() {
@@ -207,6 +213,10 @@ final class ZLTextPage {
         }
         cursor.setCursor(info.paragraphCursor);
         cursor.moveTo(info.endElementIndex, info.endCharIndex);
+    }
+
+    public ArrayList<ZLTextLineInfo> getLineInfos() {
+        return lineInfos;
     }
 
     @NonNull

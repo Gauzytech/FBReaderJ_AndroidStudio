@@ -214,7 +214,7 @@ abstract public class ZLPaintContext {
     }
 
     /**
-     * 获取字符串宽度
+     * 使用{@link org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext.myTextPaint}获取字符串宽度
      *
      * @param string 字符串数组
      * @param offset 偏移量
@@ -300,6 +300,10 @@ abstract public class ZLPaintContext {
         return descent;
     }
 
+    /**
+     * 字符baseline到bottom到距离.
+     * 见https://www.jianshu.com/p/71cf11c120f0
+     */
     abstract protected int getDescentInternal();
 
     /**
@@ -363,6 +367,7 @@ abstract public class ZLPaintContext {
         LIGHTEN_TO_BACKGROUND
     }
 
+    /** 获得书页中的插图, 耗时操作 */
     abstract public Size imageSize(ZLImageData image, Size maxSize, ScalingType scaling);
 
     abstract public void drawImage(int x, int y, ZLImageData image, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode);

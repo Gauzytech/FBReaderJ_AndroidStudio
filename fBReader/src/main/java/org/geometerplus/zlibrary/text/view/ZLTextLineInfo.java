@@ -36,6 +36,8 @@ final class ZLTextLineInfo {
 	int leftIndent;
 	int width;
 	int height;
+	// 字符baseline到bottom到距离
+	// https://www.jianshu.com/p/71cf11c120f0
 	int descent;
 	int VSpaceBefore;
 	int VSpaceAfter;

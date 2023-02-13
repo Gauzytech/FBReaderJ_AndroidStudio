@@ -50,7 +50,7 @@ public final class AutoTextSnippet implements TextSnippet {
 mainLoop:
 		while (buffer.Builder.length() + sentenceBuffer.Builder.length() + phraseBuffer.Builder.length() < maxChars && sentenceCounter < maxChars / 20) {
 			while (cursor.isEndOfParagraph()) {
-				if (!cursor.nextParagraph()) {
+				if (!cursor.jumpToNextParagraph()) {
 					break mainLoop;
 				}
 				if (!buffer.isEmpty() && cursor.getParagraphCursor().isLikeEndOfSection()) {

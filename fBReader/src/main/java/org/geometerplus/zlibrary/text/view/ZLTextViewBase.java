@@ -150,6 +150,13 @@ abstract class ZLTextViewBase extends ZLView {
 
     public abstract ZLTextStyleCollection getTextStyleCollection();
 
+    /**
+     * @return 书页内容渲染的metrics:
+     * 1. 屏幕dpi
+     * 2. 屏幕宽度
+     * 3. 屏幕高度
+     * 4. 字体大小
+     */
     protected ZLTextMetrics metrics() {
         // this local variable is used to guarantee null will not
         // be returned from this method even in multi-thread environment
@@ -239,6 +246,7 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
+    /** 获得element渲染所需要的宽度 */
     final int getElementWidth(ZLTextElement element, int charIndex) {
         if (element instanceof ZLTextWord) {
             return getWordWidth((ZLTextWord) element, charIndex);
@@ -264,6 +272,7 @@ abstract class ZLTextViewBase extends ZLView {
         return 0;
     }
 
+    /** 获得element渲染所需要的高度 */
     final int getElementHeight(ZLTextElement element) {
         if (element == ZLTextElement.NBSpace ||
                 element instanceof ZLTextWord ||
@@ -290,6 +299,9 @@ abstract class ZLTextViewBase extends ZLView {
         return element instanceof ZLTextWord ? getContext().getDescent() : 0;
     }
 
+    /**
+     * 获得ZLTextWord所包含字符串渲染的宽度
+     */
     final int getWordWidth(ZLTextWord word, int start) {
         return start == 0 ?
                         word.getWidth(getContext()) :

@@ -20,7 +20,9 @@
 package org.geometerplus.zlibrary.text.view;
 
 public abstract class ZLTextElement {
+	// 空格, 正常space
 	public final static ZLTextElement HSpace = new ZLTextElement() {};
+	// NON_BREAKABLE_SPACE
 	public final static ZLTextElement NBSpace = new ZLTextElement() {};
 	public final static ZLTextElement AfterParagraph = new ZLTextElement() {};
 	public final static ZLTextElement Indent = new ZLTextElement() {};

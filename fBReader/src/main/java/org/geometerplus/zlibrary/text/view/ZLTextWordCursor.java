@@ -24,6 +24,10 @@ import androidx.annotation.NonNull;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 
+import java.util.Objects;
+
+import timber.log.Timber;
+
 public final class ZLTextWordCursor extends ZLTextPosition {
 	// 代表当前需要显示的段落的ZLTextParagraphCursor类
 	// 一组p标签就代表一个段落
@@ -131,8 +135,9 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 		myCharIndex = 0;
 	}
 
-	public boolean nextParagraph() {
+	public boolean jumpToNextParagraph() {
 		if (!isNull()) {
+			Timber.v("渲染流程:分页, paragraphIdx = %d, paragraphNum = %d", myParagraphCursor.paragraphIdx, myParagraphCursor.textModel.getParagraphsNumber());
 			if (!myParagraphCursor.isLast()) {
 				myParagraphCursor = myParagraphCursor.next();
 				moveToParagraphStart();
@@ -142,7 +147,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 		return false;
 	}
 
-	public boolean previousParagraph() {
+	public boolean jumpToPrevParagraph() {
 		if (!isNull()) {
 			if (!myParagraphCursor.isFirst()) {
 				myParagraphCursor = myParagraphCursor.previous();
@@ -183,21 +188,20 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	}
 
 	public void moveTo(int wordIndex, int charIndex) {
-		if (!isNull()) {
-			if (wordIndex == 0 && charIndex == 0) {
-				myElementIndex = 0;
+		Objects.requireNonNull(myParagraphCursor);
+		if (wordIndex == 0 && charIndex == 0) {
+			myElementIndex = 0;
+			myCharIndex = 0;
+		} else {
+			wordIndex = Math.max(0, wordIndex);
+			int elementSize = myParagraphCursor.getParagraphLength();
+			if (wordIndex > elementSize) {
+				myElementIndex = elementSize;
 				myCharIndex = 0;
 			} else {
-				wordIndex = Math.max(0, wordIndex);
-				int elementSize = myParagraphCursor.getParagraphLength();
-				if (wordIndex > elementSize) {
-					myElementIndex = elementSize;
-					myCharIndex = 0;
-				} else {
-					// 将代表上一行最后一个字位置的wordIndex赋值给myElementIndex
-					myElementIndex = wordIndex;
-					setCharIndex(charIndex);
-				}
+				// 将代表上一行最后一个字位置的wordIndex赋值给myElementIndex
+				myElementIndex = wordIndex;
+				setCharIndex(charIndex);
 			}
 		}
 	}
@@ -205,6 +209,7 @@ public final class ZLTextWordCursor extends ZLTextPosition {
 	public void setCharIndex(int charIndex) {
 		charIndex = Math.max(0, charIndex);
 		myCharIndex = 0;
+		// 断字操作, 把断字后指向其他部分字的charIndex保存
 		if (charIndex > 0) {
 			ZLTextElement element = myParagraphCursor.getElement(myElementIndex);
 			if (element instanceof ZLTextWord) {

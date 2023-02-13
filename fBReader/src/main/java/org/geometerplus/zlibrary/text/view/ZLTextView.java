@@ -275,7 +275,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         if (!myCurrentPage.isClearPaintState()) {
-            myCurrentPage.lineInfos.clear();
+            myCurrentPage.getLineInfos().clear();
             if (!myCurrentPage.startCursor.isNull()) {
                 myCurrentPage.startCursor.rebuild();
                 myCurrentPage.endCursor.reset();
@@ -523,11 +523,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return;
         }
 
-        Timber.v("渲染流程:Bitmap绘制[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.lineInfos.size());
+        Timber.v("渲染流程:Bitmap绘制[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.getLineInfos().size());
         /*
          * 内容 + 高亮的绘制
          */
-        final List<ZLTextLineInfo> lineInfoList = page.lineInfos;
+        final List<ZLTextLineInfo> lineInfoList = page.getLineInfos();
         final int[] labels = new int[lineInfoList.size() + 1];
         int x = getLeftMargin();
         int y = getTopMargin();
@@ -1208,84 +1208,95 @@ public abstract class ZLTextView extends ZLTextViewBase {
         if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
             Timber.v("渲染流程:分页, 0. 可渲染高度, %d", textAreaHeight);
         }
-        page.lineInfos.clear();
+        page.getLineInfos().clear();
         page.column0Height = 0;
-        boolean nextParagraph;
+        boolean nextParagraphExist;
         ZLTextLineInfo currentLineInfo = null;
         do {
             final ZLTextLineInfo previousLineInfo = currentLineInfo;
             // 恢复到基本样式
             resetTextStyle();
             // 要处理的paragraph数据
+            // endCursor就是startCursor， 见1205行
             final ZLTextParagraphCursor endParagraphCursor = endCursor.getParagraphCursor();
-            final int wordIndex = endCursor.getElementIndex();
-            applyStyleChanges(endParagraphCursor, 0, wordIndex, from);
+            final int elementIndex = endCursor.getElementIndex();
+            final int charIndex = endCursor.getCharIndex();
+            applyStyleChanges(endParagraphCursor, 0, elementIndex, from);
             // startElementIndex, startCharIndex,
             // realStartElementIndex, realStartCharIndex,
-            // endElementIndex, endCharIndex全部初始化为wordIndex和endCursor.getCharIndex()
-            currentLineInfo = new ZLTextLineInfo(endParagraphCursor, wordIndex, endCursor.getCharIndex(), getTextStyle());
-            // 当前cursor的长度
-            final int cursorLength = currentLineInfo.paragraphCursorLength;
-            while (currentLineInfo.endElementIndex != cursorLength) {
+            // endElementIndex, endCharIndex全部初始化为elementIndex和charIndex
+            currentLineInfo = new ZLTextLineInfo(endParagraphCursor, elementIndex, charIndex, getTextStyle());
+            // 当前段落的长度
+            final int elementSize = currentLineInfo.paragraphCursorLength;
+            while (currentLineInfo.endElementIndex != elementSize) {
                 Timber.v("渲染流程:分页[%s], 开始处理endElementIndex = %s", from, currentLineInfo.endElementIndex);
                 // 获取该行的信息，包括行高，左右缩进，包含哪些字等信息
-
                 int debugElementIdx = currentLineInfo.endElementIndex;
                 int debugCharIdx = currentLineInfo.endCharIndex;
+                // 填充paragraph的行信息, 一个段落中可能只有一行， 也可能是多行
                 currentLineInfo = processTextLine(
-                        page, endParagraphCursor,
+                        page,
+                        endParagraphCursor,
                         currentLineInfo.endElementIndex, currentLineInfo.endCharIndex,
-                        cursorLength,
+                        elementSize,
                         previousLineInfo,
                         from);
                 if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
-                    Timber.v("渲染流程:分页[%s], 2. processTextLine完毕, endElementIndex: [%d -> %d], endCharIndex: [%d -> %d]",
+                    Timber.v("渲染流程:分页[%s], 2. processTextLine完毕, endElementIndex: [%d -> %d], endCharIndex: [%d -> %d], heightUsed: %d, descent: %d",
                             from,
                             debugElementIdx, currentLineInfo.endElementIndex,
-                            debugCharIdx, currentLineInfo.endCharIndex);
+                            debugCharIdx, currentLineInfo.endCharIndex,
+                            currentLineInfo.height,
+                            currentLineInfo.descent
+                            );
                 }
                 // textAreaHeight递减，代表屏幕上能显示的总高度在不断减小
                 textAreaHeight -= currentLineInfo.height + currentLineInfo.descent;
                 // 当textAreaHeight < 0, 就代表屏幕y已经被填充满了
-                if (textAreaHeight < 0 && page.lineInfos.size() > page.column0Height) {
+                if (textAreaHeight < 0 && page.getLineInfos().size() > page.column0Height) {
                     // 处理双列的情况
-                    if (page.column0Height == 0 && page.twoColumnView()) {
+                    if (page.isTwoColumnView()) {
                         textAreaHeight = page.getTextHeight();
                         textAreaHeight -= currentLineInfo.height + currentLineInfo.descent;
-                        page.column0Height = page.lineInfos.size();
+                        page.column0Height = page.getLineInfos().size();
                     } else {
                         break;
                     }
                 }
                 textAreaHeight -= currentLineInfo.VSpaceAfter;
+                // 重置endCursor准备下一轮遍历
                 // 每一行的字就是下一行的第一个字
                 endCursor.moveTo(currentLineInfo.endElementIndex, currentLineInfo.endCharIndex);
                 // 保存每一行的ZLTextLineInfo类将被加入到ZLTextPage类的LineInfos属性中去
-                page.lineInfos.add(currentLineInfo);
+
+                page.getLineInfos().add(currentLineInfo);
                 if (textAreaHeight < 0) {
-                    if (page.column0Height == 0 && page.twoColumnView()) {
+                    if (page.isTwoColumnView()) {
                         textAreaHeight = page.getTextHeight();
-                        page.column0Height = page.lineInfos.size();
+                        page.column0Height = page.getLineInfos().size();
                     } else {
                         break;
                     }
                 }
             }
             // 如果当前段落的内容被全部读完时，代码就自动定位到下一个段落
-            nextParagraph = endCursor.isEndOfParagraph() && endCursor.nextParagraph();
-            if (nextParagraph && endCursor.getParagraphCursor().isEndOfSection()) {
-                if (page.column0Height == 0 && page.twoColumnView() && !page.lineInfos.isEmpty()) {
+            nextParagraphExist = endCursor.isEndOfParagraph() && endCursor.jumpToNextParagraph();
+            if (nextParagraphExist && endCursor.getParagraphCursor().isEndOfSection()) {
+                if (page.isTwoColumnView() && !page.getLineInfos().isEmpty()) {
                     textAreaHeight = page.getTextHeight();
-                    page.column0Height = page.lineInfos.size();
+                    page.column0Height = page.getLineInfos().size();
                 }
             }
-        } while (nextParagraph && textAreaHeight >= 0 &&
+        } while (nextParagraphExist && textAreaHeight >= 0 &&
                 (!endCursor.getParagraphCursor().isEndOfSection() ||
-                        page.lineInfos.size() == page.column0Height)
+                        page.getLineInfos().size() == page.column0Height)
         );
         resetTextStyle();
     }
 
+    /**
+     * 是否允许断字, eg: 英文单词不能2个letter在一行，另外2个letter在下一行
+     */
     private boolean isHyphenationPossible() {
         return getTextStyleCollection().getBaseStyle().AutoHyphenationOption.getValue()
                 && getTextStyle().allowHyphenations();
@@ -1299,6 +1310,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return myCachedInfo;
     }
 
+    /**
+     * 填充一行textLine数据
+     */
     private ZLTextLineInfo processTextLine(
             ZLTextPage page,
             ZLTextParagraphCursor paragraphCursor,
@@ -1322,6 +1336,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return info;
     }
 
+    /**
+     * 填充一行textLine数据
+     */
     private ZLTextLineInfo processTextLineInternal(
             ZLTextPage page,
             ZLTextParagraphCursor paragraphCursor,
@@ -1345,10 +1362,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             int currentElementIndex = startIndex;
             int currentCharIndex = startCharIndex;
-            final boolean isLineStart = startIndex == 0 && startCharIndex == 0;
+            final boolean isFirstParagraph = startIndex == 0 && startCharIndex == 0;
             // 当startIndex为0时，判断当前位置处于要显示的段落的起始位置
             // 如果textLine开头, 一般开头都是style信息, 从左往右遍历开头的style element，并使用element特定的style
-            if (isLineStart) {
+            if (isFirstParagraph) {
                 // 先配置所有的style,
                 // 跳过代表标签信息的ZLTextControlElement类
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
@@ -1373,19 +1390,20 @@ public abstract class ZLTextView extends ZLTextViewBase {
             ZLTextStyle storedStyle = getTextStyle();
             Timber.v("渲染流程:分页, 开始处理内容element, realStartElementIndex = %s, style = %s", currentElementIndex, storedStyle);
 
+            // 根据metrics获得left/right缩进距离
             // getTextWidth: 获取屏幕总宽度
             // getRightIndent: 获取该行右缩进信息
             // maxWidth: 每行能显示的最大宽度
-            final int maxWidth = page.getTextWidth() - storedStyle.getRightIndent(metrics());
+            final int maxRenderWidth = page.getTextWidth() - storedStyle.getRightIndent(metrics());
             // 获取首行的左缩进信息
             info.leftIndent = storedStyle.getLeftIndent(metrics());
-            if (isLineStart && storedStyle.getAlignment() != ZLTextAlignmentType.ALIGN_CENTER) {
+            if (isFirstParagraph && storedStyle.getAlignment() != ZLTextAlignmentType.ALIGN_CENTER) {
                 info.leftIndent += storedStyle.getFirstLineIndent(metrics());
             }
-            if (info.leftIndent > maxWidth - 20) {
-                info.leftIndent = maxWidth * 3 / 4;
+            if (info.leftIndent > maxRenderWidth - 20) {
+                info.leftIndent = maxRenderWidth * 3 / 4;
             }
-
+            Timber.v("渲染流程:分页，宽度计算, textWidth: %d, maxRenderWidth: %d, leftIndent: %d, rightIndent: %d", page.getTextWidth(), maxRenderWidth, info.leftIndent, storedStyle.getRightIndent(metrics()));
             info.width = info.leftIndent;
 
             // 已经到末尾了, 更新endElementIndex和endCharIndex
@@ -1395,48 +1413,51 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 return info;
             }
 
-            int newWidth = info.width;
-            int newHeight = info.height;
+            int contentRenderWidth = info.width;
+            int contentRenderHeight = info.height;
             int newDescent = info.descent;
-            boolean wordOccurred = false;
+            boolean contentOccurred = false;
             boolean isVisible = false;
             int lastSpaceWidth = 0;
             int internalSpaceCounter = 0;
             boolean removeLastSpace = false;
 
             do {
-                // 利用不断递增的currentElementIndex, 从ZLTextParagraphCursor类中的myElements Arraylist中依次读取元素
+                // 利用不断递增的currentElementIndex, 从ZLTextParagraphCursor类中的myElements中依次读取元素
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
                 // 获取每个字将占的宽度, 并将每个字的宽度累加
-                newWidth += getElementWidth(element, currentCharIndex);
-                newHeight = Math.max(newHeight, getElementHeight(element));
+                /* ------------------------------ 开始UI操作 ------------------------------ */
+                contentRenderWidth += getElementWidth(element, currentCharIndex);
+                contentRenderHeight = Math.max(contentRenderHeight, getElementHeight(element));
                 newDescent = Math.max(newDescent, getElementDescent(element));
+                /* ------------------------------ 结束UI操作 ------------------------------ */
                 if (element == ZLTextElement.HSpace) {
-                    if (wordOccurred) {
-                        wordOccurred = false;
+                    if (contentOccurred) {
+                        contentOccurred = false;
                         internalSpaceCounter++;
                         lastSpaceWidth = getContext().getSpaceWidth();
-                        newWidth += lastSpaceWidth;
+                        contentRenderWidth += lastSpaceWidth;
                     }
                 } else if (element == ZLTextElement.NBSpace) {
-                    wordOccurred = true;
+                    contentOccurred = true;
                 } else if (element instanceof ZLTextWord) {
-                    wordOccurred = true;
+                    contentOccurred = true;
                     isVisible = true;
                 } else if (element instanceof ZLTextImageElement) {
-                    wordOccurred = true;
+                    contentOccurred = true;
                     isVisible = true;
                 } else if (element instanceof ZLTextVideoElement) {
-                    wordOccurred = true;
+                    contentOccurred = true;
                     isVisible = true;
                 } else if (element instanceof ExtensionElement) {
-                    wordOccurred = true;
+                    contentOccurred = true;
                     isVisible = true;
                 } else if (isStyleChangeElement(element)) {
                     applyStyleChangeElement(element);
                 }
                 // 当累加的字符长度大于屏幕能显示的宽度时，就代表这一行被填充满了
-                if (newWidth > maxWidth) {
+                if (contentRenderWidth > maxRenderWidth) {
+                    // 循环开始了但是可渲染宽度超过了最大渲染宽度
                     if (info.endElementIndex != startIndex || element instanceof ZLTextWord) {
                         break;
                     }
@@ -1450,41 +1471,40 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     allowBreak =
                             previousElement != ZLTextElement.NBSpace &&
                                     element != ZLTextElement.NBSpace &&
-                                    (!(element instanceof ZLTextWord) || previousElement instanceof ZLTextWord) &&
-                                    !(element instanceof ZLTextImageElement) &&
-                                    !(element instanceof ZLTextControlElement);
+                                    (!(element instanceof ZLTextWord) || previousElement instanceof ZLTextWord)
+                                    && !(element instanceof ZLTextImageElement)
+                                    && !(element instanceof ZLTextControlElement);
                 }
 
                 if (allowBreak) {
                     info.isVisible = isVisible;
-                    info.width = newWidth;
-                    if (info.height < newHeight) {
-                        info.height = newHeight;
-                    }
-                    if (info.descent < newDescent) {
-                        info.descent = newDescent;
-                    }
-                    // 获取这一行的最后一个字
+                    info.width = contentRenderWidth;
+                    info.height = Math.max(info.height, contentRenderHeight);
+                    info.descent = Math.max(info.descent, newDescent);
+                    // 更新末尾element
                     info.endElementIndex = currentElementIndex;
                     info.endCharIndex = currentCharIndex;
                     info.spaceCounter = internalSpaceCounter;
                     storedStyle = getTextStyle();
-                    removeLastSpace = !wordOccurred && (internalSpaceCounter > 0);
+                    removeLastSpace = !contentOccurred && (internalSpaceCounter > 0);
                 }
             } while (currentElementIndex != endIndex);
 
+            // 从这里开始处理可渲染宽度超过最大渲染宽度的情况
             if (currentElementIndex != endIndex &&
                     (isHyphenationPossible() || info.endElementIndex == startIndex)) {
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
+                // 断字操作
                 if (element instanceof ZLTextWord) {
                     final ZLTextWord word = (ZLTextWord) element;
-                    newWidth -= getWordWidth(word, currentCharIndex);
-                    int spaceLeft = maxWidth - newWidth;
-                    if ((word.Length > 3 && spaceLeft > 2 * getContext().getSpaceWidth())
+                    contentRenderWidth -= getWordWidth(word, currentCharIndex);  // UI操作
+                    int spaceLeft = maxRenderWidth - contentRenderWidth;
+                    if ((word.Length > 3
+                            && spaceLeft > 2 * getContext().getSpaceWidth()) // UI操作
                             || info.endElementIndex == startIndex) {
                         ZLTextHyphenationInfo hyphenationInfo = getHyphenationInfo(word);
                         int hyphenationPosition = currentCharIndex;
-                        int subwordWidth = 0;
+                        int subWordWidth = 0;
                         for (int right = word.Length - 1, left = currentCharIndex; right > left; ) {
                             final int mid = (right + left + 1) / 2;
                             int m1 = mid;
@@ -1497,11 +1517,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
                                         currentCharIndex,
                                         m1 - currentCharIndex,
                                         word.Data[word.Offset + m1 - 1] != '-'
-                                );
+                                ); // UI操作
                                 if (w < spaceLeft) {
                                     left = mid;
                                     hyphenationPosition = m1;
-                                    subwordWidth = w;
+                                    subWordWidth = w;
                                 } else {
                                     right = mid - 1;
                                 }
@@ -1510,7 +1530,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             }
                         }
                         if (hyphenationPosition == currentCharIndex && info.endElementIndex == startIndex) {
-                            subwordWidth = getWordWidth(word, currentCharIndex, 1, false);
+                            subWordWidth = getWordWidth(word, currentCharIndex, 1, false);  // UI操作
                             int right = word.Length == currentCharIndex + 1 ? word.Length : word.Length - 1;
                             int left = currentCharIndex + 1;
                             while (right > left) {
@@ -1523,7 +1543,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                                 );
                                 if (w <= spaceLeft) {
                                     left = mid;
-                                    subwordWidth = w;
+                                    subWordWidth = w;
                                 } else {
                                     right = mid - 1;
                                 }
@@ -1532,9 +1552,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         }
                         if (hyphenationPosition > currentCharIndex) {
                             info.isVisible = true;
-                            info.width = newWidth + subwordWidth;
-                            if (info.height < newHeight) {
-                                info.height = newHeight;
+                            info.width = contentRenderWidth + subWordWidth;
+                            if (info.height < contentRenderHeight) {
+                                info.height = contentRenderHeight;
                             }
                             if (info.descent < newDescent) {
                                 info.descent = newDescent;
@@ -1549,6 +1569,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
             }
 
+            // 处理末尾最后一个空格
             if (removeLastSpace) {
                 info.width -= lastSpaceWidth;
                 info.spaceCounter--;
@@ -1556,7 +1577,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             setTextStyle(storedStyle);
 
-            if (isLineStart) {
+            if (isFirstParagraph) {
                 info.VSpaceBefore = info.startStyle.getSpaceBefore(metrics());
                 if (previousInfo != null) {
                     info.previousInfoUsed = true;
@@ -1574,6 +1595,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 myLineInfoCache.put(info, info);
             }
 
+            Timber.v("渲染流程:分页，宽度计算, info.width: %d", info.width);
             return info;
         }
     }
@@ -1773,7 +1795,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             Timber.v("渲染流程:lineInfo, from -> " + from +
                             ", \n{startCursor= " + page.startCursor +
                             ", \nendCursor= " + page.endCursor +
-                            ", \nlineInfoSize= " + page.lineInfos.size() +
+                            ", \nlineInfoSize= " + page.getLineInfos().size() +
                             ", \npaintState= " + DebugHelper.stringifyPatinState(page.paintState) +
                             '}'
                     );
@@ -1789,7 +1811,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         final int oldState = page.paintState;
 
-        for (ZLTextLineInfo info : page.lineInfos) {
+        for (ZLTextLineInfo info : page.getLineInfos()) {
             myLineInfoCache.put(info, info);
         }
 
@@ -1813,7 +1835,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         case ScrollingMode.SCROLL_LINES:
                             page.findLineFromStart(startCursor, myOverlappingValue);
                             if (startCursor.isEndOfParagraph()) {
-                                startCursor.nextParagraph();
+                                startCursor.jumpToNextParagraph();
                             }
                             break;
                         case ScrollingMode.SCROLL_PERCENTAGE:
@@ -1899,7 +1921,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
                 break;
         }
-        if (from.contains("paint")) {
+
+        if (DebugHelper.filterTag(from, "paint")) {
             Timber.v("渲染流程:lineInfo[%s], 分页完成 for [%s, %s]",
                     DebugHelper.stringifyPatinState(page.paintState),
                     page.startCursor.getParagraphIndex(),
@@ -1998,7 +2021,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             if (positionChanged && start.getParagraphCursor().isEndOfSection()) {
                 break;
             }
-            if (!start.previousParagraph()) {
+            if (!start.jumpToPrevParagraph()) {
                 break;
             }
             if (!start.getParagraphCursor().isEndOfSection()) {
@@ -2016,7 +2039,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             boolean sameStart = start.samePositionAs(end);
             if (!sameStart && start.isEndOfParagraph() && end.isStartOfParagraph()) {
                 ZLTextWordCursor startCopy = new ZLTextWordCursor(start);
-                startCopy.nextParagraph();
+                startCopy.jumpToNextParagraph();
                 sameStart = startCopy.samePositionAs(end);
             }
             if (sameStart) {

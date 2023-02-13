@@ -36,7 +36,7 @@ public abstract class BookmarkUtil {
         mainLoop:
         for (int count = bookmark.getLength(); count > 0; cursor.nextWord()) {
             while (cursor.isEndOfParagraph()) {
-                if (!cursor.nextParagraph()) {
+                if (!cursor.jumpToNextParagraph()) {
                     break mainLoop;
                 }
             }
