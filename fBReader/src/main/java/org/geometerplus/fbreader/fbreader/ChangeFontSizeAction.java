@@ -33,7 +33,7 @@ class ChangeFontSizeAction extends FBAction {
 	protected void run(Object ... params) {
 		final ZLIntegerRangeOption option =
 				Reader.ViewOptions.getTextStyleCollection().getBaseStyle().FontSizeOption;
-		option.setValue(option.getValue() + myDelta);
+		option.setValue(option.getValue() + myDelta, "ChangeFontSizeAction.run");
 		Reader.clearTextCaches();
 		Reader.getViewWidget().repaint("ChangeFontSizeAction.run");
 	}

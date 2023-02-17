@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import timber.log.Timber;
+
 final class ZLTextLineInfo {
 	final ZLTextParagraphCursor paragraphCursor;
 	final int paragraphCursorLength;
@@ -66,6 +68,7 @@ final class ZLTextLineInfo {
 	void adjust(ZLTextLineInfo previous) {
 		if (!previousInfoUsed && previous != null) {
 			height -= Math.min(previous.VSpaceAfter, VSpaceBefore);
+			Timber.v("渲染流程:分页, adjust %s, %s", previous.VSpaceAfter, VSpaceBefore);
 			previousInfoUsed = true;
 		}
 	}

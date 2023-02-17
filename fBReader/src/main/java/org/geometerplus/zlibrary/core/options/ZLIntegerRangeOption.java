@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.options;
 
+import timber.log.Timber;
+
 public final class ZLIntegerRangeOption extends ZLOption {
 	private static int valueInRange(int value, int min, int max) {
 		return Math.min(max, Math.max(min, value));
@@ -48,7 +50,8 @@ public final class ZLIntegerRangeOption extends ZLOption {
 		return myValue;
 	}
 
-	public void setValue(int value) {
+	public void setValue(int value, String from) {
+		Timber.v("渲染流程:分页[%s], setValue = %d", from, value);
 		value = valueInRange(value, MinValue, MaxValue);
 		myValue = value;
 		myStringValue = String.valueOf(value);

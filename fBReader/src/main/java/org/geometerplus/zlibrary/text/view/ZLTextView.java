@@ -533,6 +533,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         int y = getTopMargin();
         int columnIndex = 0;
         ZLTextLineInfo prevLineInfo = null;
+        Timber.v("渲染流程:分页, x = %s, y = %s", x, y);
         // 6. 计算每一行每个字的位置
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
@@ -1605,20 +1606,21 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
      */
     private void prepareTextLine(ZLTextPage page, ZLTextLineInfo info, int x, int y, int columnIndex) {
-        // 获取当前行的y坐标, 当前行的每个字都适用这个y坐标
+        // 设置当前行的纵坐标, y坐标是每个字的底部baseline
         y = Math.min(y + info.height, getTopMargin() + page.getTextHeight() - 1);
-
+        Timber.v("渲染流程:分页, y = %s, lineHeight = %s, topMargin = %s, pageHeight = %s ", y, info.height, getTopMargin(), page.getTextHeight());
         final ZLPaintContext context = getContext();
         final ZLTextParagraphCursor paragraphCursor = info.paragraphCursor;
 
         setTextStyle(info.startStyle);
         int spaceCounter = info.spaceCounter;
-        float elementCorrection = 0;
-        final boolean endOfParagraph = info.isEndOfParagraph();
+        // element之间的空白部分
+        float elementIntervalSpace = 0;
+        final boolean isEndOfParagraph = info.isEndOfParagraph();
         boolean wordOccurred = false;
         boolean changeStyle = true;
 
-        // 为了精度不丢失,以float代之
+        // 设置当前行的横坐标坐标
         float fx = x;
         fx += info.leftIndent;
 
@@ -1626,21 +1628,27 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final int paragraphIndex = paragraph.paragraphIdx;
         // 获取当前行最后一个字的位置
         final int endElementIndex = info.endElementIndex;
+        // 获取当前行第一个字第一个letter的位置
         int charIndex = info.realStartCharIndex;
         ZLTextElementArea spaceElement = null;
 
-        final int maxWidth = page.getTextWidth();
-        // 非段尾采用，排齐模式
-        if (!endOfParagraph && (paragraphCursor.getElement(info.endElementIndex) != ZLTextElement.AfterParagraph)) {
+        final int maxRenderWidth = page.getTextWidth();
+        ZLTextElement lastElement = paragraphCursor.getElement(endElementIndex);
+        // 除了最后一行，使用排齐模式(每个字都平均分配空间, 撑满整行)
+        if (!isEndOfParagraph && (lastElement != ZLTextElement.AfterParagraph)) {
             float gapCount = endElementIndex - info.realStartElementIndex;
-            elementCorrection = (maxWidth - getTextStyle().getRightIndent(metrics()) - info.width) / (gapCount - 1);
+            // element之间有几个区间
+            float elementIntervalCount = gapCount - 1;
+            int spaceLeft = maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width;
+            elementIntervalSpace = spaceLeft / elementIntervalCount;
         } else {
+            // 最后一行根据alignment分配每个字的空间
             switch (getTextStyle().getAlignment()) {
                 case ZLTextAlignmentType.ALIGN_RIGHT:
-                    fx += maxWidth - getTextStyle().getRightIndent(metrics()) - info.width;
+                    fx += maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width;
                     break;
                 case ZLTextAlignmentType.ALIGN_CENTER:
-                    fx += (maxWidth - getTextStyle().getRightIndent(metrics()) - info.width) / 2f;
+                    fx += (maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width) / 2f;
                     break;
                 case ZLTextAlignmentType.ALIGN_JUSTIFY:
                 case ZLTextAlignmentType.ALIGN_LEFT:
@@ -1652,7 +1660,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 利用RealStartElementIndex属性获取当前行第一个字的位置，利用for循环读取当前行第一个字到最后一个字之间的内容
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
             final ZLTextElement element = paragraph.getElement(wordIndex);
-            final int width = getElementWidth(element, charIndex);
+            final int width = getElementWidth(element, charIndex); // UI操作
             if (element == ZLTextElement.HSpace) {
                 if (wordOccurred && spaceCounter > 0) {
                     final int spaceLength = context.getSpaceWidth();
@@ -1696,14 +1704,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
 
             // 最后一行不用均匀分布
-            if (endOfParagraph) {
+            if (isEndOfParagraph) {
                 fx += width;
                 continue;
             }
             // 累加每个字的宽度，以获取下一个字的x坐标
-            fx += width + elementCorrection;
+            fx += width + elementIntervalSpace;
         }
-        if (!endOfParagraph) {
+        if (!isEndOfParagraph) {
             final int len = info.endCharIndex;
             if (len > 0) {
                 final int wordIndex = info.endElementIndex;

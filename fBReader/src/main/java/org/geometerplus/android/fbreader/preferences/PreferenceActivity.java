@@ -274,7 +274,7 @@ public class PreferenceActivity extends ZLPreferenceActivity {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				androidLibrary.ScreenBrightnessLevelOption.setValue(isChecked() ? myLevel : 0);
+				androidLibrary.ScreenBrightnessLevelOption.setValue(isChecked() ? myLevel : 0, "addPreference.onClick");
 			}
 		});
 		appearanceScreen.addPreference(new BatteryLevelToTurnScreenOffPreference(

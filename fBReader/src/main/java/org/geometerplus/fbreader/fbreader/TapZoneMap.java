@@ -62,8 +62,8 @@ public class TapZoneMap {
         }
 
         final TapZoneMap map = zoneMap(name);
-        map.myWidth.setValue(width);
-        map.myHeight.setValue(height);
+        map.myWidth.setValue(width, "createZoneMap");
+        map.myHeight.setValue(height, "createZoneMap");
         final List<String> lst = new LinkedList<String>(ourMapsOption.getValue());
         lst.add(name);
         ourMapsOption.setValue(lst);
@@ -244,11 +244,11 @@ public class TapZoneMap {
                 } else if ("tapZones".equals(localName)) {
                     final String v = attributes.getValue("v");
                     if (v != null) {
-                        myHeight.setValue(Integer.parseInt(v));
+                        myHeight.setValue(Integer.parseInt(v), "tapZones");
                     }
                     final String h = attributes.getValue("h");
                     if (h != null) {
-                        myWidth.setValue(Integer.parseInt(h));
+                        myWidth.setValue(Integer.parseInt(h), "tapZones");
                     }
                 }
             } catch (Throwable e) {

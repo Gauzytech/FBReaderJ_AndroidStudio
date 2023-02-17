@@ -39,6 +39,8 @@ import org.geometerplus.fbreader.fbreader.*;
 
 import org.geometerplus.android.fbreader.*;
 
+import timber.log.Timber;
+
 public class ApiServerImplementation extends ApiInterface.Stub implements Api, ApiMethods {
 	public static void sendEvent(ContextWrapper context, String eventType) {
 		context.sendBroadcast(
@@ -486,7 +488,7 @@ public class ApiServerImplementation extends ApiInterface.Stub implements Api, A
 	}
 
 	public void setBottomMargin(int value) {
-		getReader().ViewOptions.BottomMargin.setValue(value);
+		getReader().ViewOptions.BottomMargin.setValue(value, "setBottomMargin");
 	}
 
 	public int getTopMargin() {
@@ -494,7 +496,7 @@ public class ApiServerImplementation extends ApiInterface.Stub implements Api, A
 	}
 
 	public void setTopMargin(int value) {
-		getReader().ViewOptions.TopMargin.setValue(value);
+		getReader().ViewOptions.TopMargin.setValue(value, "setTopMargin");
 	}
 
 	public int getLeftMargin() {
@@ -502,7 +504,7 @@ public class ApiServerImplementation extends ApiInterface.Stub implements Api, A
 	}
 
 	public void setLeftMargin(int value) {
-		getReader().ViewOptions.LeftMargin.setValue(value);
+		getReader().ViewOptions.LeftMargin.setValue(value, "setLeftMargin");
 	}
 
 	public int getRightMargin() {
@@ -510,7 +512,7 @@ public class ApiServerImplementation extends ApiInterface.Stub implements Api, A
 	}
 
 	public void setRightMargin(int value) {
-		getReader().ViewOptions.RightMargin.setValue(value);
+		getReader().ViewOptions.RightMargin.setValue(value, "setRightMargin");
 	}
 
 	public int getParagraphsNumber() {

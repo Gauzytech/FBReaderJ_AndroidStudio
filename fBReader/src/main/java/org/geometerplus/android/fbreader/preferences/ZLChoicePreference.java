@@ -41,6 +41,6 @@ class ZLChoicePreference extends ZLStringListPreference {
 	@Override
 	protected void onDialogClosed(boolean result) {
 		super.onDialogClosed(result);
-		myOption.setValue(myOption.MinValue + findIndexOfValue(getValue()));
+		myOption.setValue(myOption.MinValue + findIndexOfValue(getValue()), "ZLChoice.onDialogClosed");
 	}
 }

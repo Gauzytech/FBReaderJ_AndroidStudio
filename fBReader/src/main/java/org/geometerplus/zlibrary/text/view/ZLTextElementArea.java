@@ -21,6 +21,9 @@ package org.geometerplus.zlibrary.text.view;
 
 import androidx.annotation.NonNull;
 
+/**
+ * 用来辅助定位划选内容
+ */
 public final class ZLTextElementArea extends ZLTextFixedPosition {
 	public final int XStart;
 	public final int XEnd;
@@ -67,7 +70,7 @@ public final class ZLTextElementArea extends ZLTextFixedPosition {
 	}
 
 	@NonNull
-    @Override
+	@Override
 	public String toString() {
 		return "ZLTextElementArea{" +
 				"XStart=" + XStart +

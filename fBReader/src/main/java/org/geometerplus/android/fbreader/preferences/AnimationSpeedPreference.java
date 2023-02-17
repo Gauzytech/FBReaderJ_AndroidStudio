@@ -65,7 +65,7 @@ class AnimationSpeedPreference extends DialogPreference {
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		if (which == DialogInterface.BUTTON_POSITIVE) {
-			myOption.setValue(myOption.MinValue + mySlider.getProgress());
+			myOption.setValue(myOption.MinValue + mySlider.getProgress(), "onClick");
 		}
 	}
 

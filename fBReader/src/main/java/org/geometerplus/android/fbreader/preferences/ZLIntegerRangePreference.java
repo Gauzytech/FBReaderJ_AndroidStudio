@@ -48,7 +48,7 @@ class ZLIntegerRangePreference extends ListPreference {
 		if (result) {
 			final String value = getValue();
 			setSummary(value);
-			myOption.setValue(myOption.MinValue + findIndexOfValue(value));
+			myOption.setValue(myOption.MinValue + findIndexOfValue(value), "ZLIntegerRange.onDialogClosed");
 		}
 	}
 }

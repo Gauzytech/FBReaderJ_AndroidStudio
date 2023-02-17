@@ -49,7 +49,7 @@ class BatteryLevelToTurnScreenOffPreference extends ZLStringListPreference {
 	protected void onDialogClosed(boolean result) {
 		super.onDialogClosed(result);
 		try {
-			myOption.setValue(Integer.parseInt(getValue()));
+			myOption.setValue(Integer.parseInt(getValue()), "BatteryLevel.onDialogClosed");
 		} catch (NumberFormatException e) {
 		}
 	}

@@ -45,7 +45,7 @@ final class ZLTextPage {
     private boolean myTwoColumnView;
 
     protected void setSize(int columnWidth, int height, boolean twoColumnView, boolean keepEndNotStart) {
-        if (myColumnWidth == columnWidth && myHeight == height && myColumnWidth == columnWidth) {
+        if (myColumnWidth == columnWidth && myHeight == height) {
             return;
         }
         myColumnWidth = columnWidth;
