@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter_lib/modal/page_index.dart';
+import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 
 mixin BitmapManager {

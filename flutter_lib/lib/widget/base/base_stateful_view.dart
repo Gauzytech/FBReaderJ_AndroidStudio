@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/base_view_model.dart';
+import 'package:flutter_lib/model/base_view_model.dart';
 import 'package:provider/provider.dart';
 
 abstract class BaseStatefulView<M extends BaseViewModel>

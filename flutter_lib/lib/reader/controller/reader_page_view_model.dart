@@ -1,8 +1,8 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
-import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';

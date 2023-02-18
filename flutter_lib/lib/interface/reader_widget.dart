@@ -1,5 +1,5 @@
-import '../modal/direction.dart';
-import '../modal/page_index.dart';
+import '../model/direction.dart';
+import '../model/page_index.dart';
 
 mixin IReaderWidget {
   /// 重置缓存索引

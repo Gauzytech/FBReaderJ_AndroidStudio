@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/model/view_model_reader.dart';
 
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';

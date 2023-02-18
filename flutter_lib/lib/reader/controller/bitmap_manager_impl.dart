@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/bitmap_manager.dart';
-import 'package:flutter_lib/modal/page_index.dart';
+import 'package:flutter_lib/model/page_index.dart';
 
 /// Bitmap管理（绘制后的图）的实现
 class BitmapManagerImpl with BitmapManager {

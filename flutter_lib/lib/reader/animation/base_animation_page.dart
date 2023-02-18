@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
-import '../../modal/view_model_reader.dart';
+import '../../model/view_model_reader.dart';
 import '../../utils/screen_util.dart';
 import '../controller/touch_event.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/reader_book_info.dart';
-import 'package:flutter_lib/modal/reader_config_model.dart';
-import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/model/reader_book_info.dart';
+import 'package:flutter_lib/model/reader_config_model.dart';
+import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
 import 'package:flutter_lib/reader/reader_content_view.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';

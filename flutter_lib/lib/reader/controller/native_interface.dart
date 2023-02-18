@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/utils/common_util.dart';
 
-import '../../modal/page_index.dart';
+import '../../model/page_index.dart';
 
 enum NativeScript {
   dragStart('on_selection_drag_start'),

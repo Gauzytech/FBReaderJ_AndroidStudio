@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/modal/view_model_reader.dart';
+import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/base_animation_page.dart';
 import 'package:flutter_lib/reader/animation/controller_animation_with_listener_number.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';

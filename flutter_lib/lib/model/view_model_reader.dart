@@ -1,11 +1,11 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_lib/modal/base_view_model.dart';
-import 'package:flutter_lib/modal/page_index.dart';
-import 'package:flutter_lib/modal/reader_book_info.dart';
-import 'package:flutter_lib/modal/reader_config_model.dart';
-import 'package:flutter_lib/modal/reader_progress_manager.dart';
+import 'package:flutter_lib/model/base_view_model.dart';
+import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/model/reader_book_info.dart';
+import 'package:flutter_lib/model/reader_config_model.dart';
+import 'package:flutter_lib/model/reader_progress_manager.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 

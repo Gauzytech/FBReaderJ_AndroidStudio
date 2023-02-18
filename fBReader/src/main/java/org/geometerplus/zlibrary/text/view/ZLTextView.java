@@ -529,26 +529,26 @@ public abstract class ZLTextView extends ZLTextViewBase {
          */
         final List<ZLTextLineInfo> lineInfoList = page.getLineInfos();
         final int[] labels = new int[lineInfoList.size() + 1];
-        int x = getLeftMargin();
-        int y = getTopMargin();
+        int pageX = getLeftMargin();
+        int pageY = getTopMargin();
         int columnIndex = 0;
         ZLTextLineInfo prevLineInfo = null;
-        Timber.v("渲染流程:分页, x = %s, y = %s", x, y);
+        Timber.v("渲染流程:分页, x = %s, y = %s", pageX, pageY);
         // 6. 计算每一行每个字的位置
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
             info.adjust(prevLineInfo);
             // 进一步计算出每一行中的每一个字在屏幕上的绝对位置
             // 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
-            prepareTextLine(page, info, x, y, columnIndex);
-            // 累加每行的行高，以获取下一行的y坐标
-            y += info.height + info.descent + info.VSpaceAfter;
+            prepareTextLine(page, info, pageX, pageY, columnIndex);
+            // 累加每行的行高，以获取下一行的初始y坐标
+            pageY += info.height + info.descent + info.VSpaceAfter;
             // labels指向的int数组将被用于迭代ZLTextPage类TextElementMap属性
             labels[i + 1] = page.TextElementMap.size();
             if (i + 1 == page.column0Height) {
                 // 获取顶部页边距, 作为屏幕上第一行的y坐标
-                y = getTopMargin();
-                x += page.getTextWidth() + getSpaceBetweenColumns();
+                pageY = getTopMargin();
+                pageX += page.getTextWidth() + getSpaceBetweenColumns();
                 columnIndex = 1;
             }
             prevLineInfo = info;
@@ -586,18 +586,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
-        x = getLeftMargin();
-        y = getTopMargin();
+        pageX = getLeftMargin();
+        pageY = getTopMargin();
         // 7b 绘制每行文字
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
             // 将文字内容和高亮一起绘制
             drawTextLine(page, highlightingList, info, labels[i], labels[i + 1]);
-            y += info.height + info.descent + info.VSpaceAfter;
+            pageY += info.height + info.descent + info.VSpaceAfter;
             if (i + 1 == page.column0Height) {
-                y = getTopMargin();
-                x += page.getTextWidth() + getSpaceBetweenColumns();
+                pageY = getTopMargin();
+                pageX += page.getTextWidth() + getSpaceBetweenColumns();
             }
         }
 
@@ -1606,12 +1606,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
      */
     private void prepareTextLine(ZLTextPage page, ZLTextLineInfo info, int x, int y, int columnIndex) {
+        // 1. 初始化y坐标
         // 设置当前行的纵坐标, y坐标是每个字的底部baseline
-        y = Math.min(y + info.height, getTopMargin() + page.getTextHeight() - 1);
-        Timber.v("渲染流程:分页, y = %s, lineHeight = %s, topMargin = %s, pageHeight = %s ", y, info.height, getTopMargin(), page.getTextHeight());
+        int textLineYCoord = Math.min(y + info.height, getTopMargin() + page.getTextHeight() - 1);
+        Timber.v("渲染流程:分页, y = %s, lineHeight = %s, topMargin = %s, pageHeight = %s ", textLineYCoord, info.height, getTopMargin(), page.getTextHeight());
         final ZLPaintContext context = getContext();
         final ZLTextParagraphCursor paragraphCursor = info.paragraphCursor;
 
+        // 2. 初始化当TextLine所在段落的startStyle
         setTextStyle(info.startStyle);
         int spaceCounter = info.spaceCounter;
         // element之间的空白部分
@@ -1620,9 +1622,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
         boolean wordOccurred = false;
         boolean changeStyle = true;
 
+        // 3. 初始化x坐标
         // 设置当前行的横坐标坐标
-        float fx = x;
-        fx += info.leftIndent;
+        float textLineXCoord = x;
+        textLineXCoord += info.leftIndent;
 
         final ZLTextParagraphCursor paragraph = info.paragraphCursor;
         final int paragraphIndex = paragraph.paragraphIdx;
@@ -1633,6 +1636,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         final int maxRenderWidth = page.getTextWidth();
         ZLTextElement lastElement = paragraphCursor.getElement(endElementIndex);
+        // 4. 计算alignment参数
         // 除了最后一行，使用排齐模式(每个字都平均分配空间, 撑满整行)
         if (!isEndOfParagraph && (lastElement != ZLTextElement.AfterParagraph)) {
             float gapCount = endElementIndex - info.realStartElementIndex;
@@ -1644,10 +1648,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
             // 最后一行根据alignment分配每个字的空间
             switch (getTextStyle().getAlignment()) {
                 case ZLTextAlignmentType.ALIGN_RIGHT:
-                    fx += maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width;
+                    textLineXCoord += maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width;
                     break;
                 case ZLTextAlignmentType.ALIGN_CENTER:
-                    fx += (maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width) / 2f;
+                    textLineXCoord += (maxRenderWidth - getTextStyle().getRightIndent(metrics()) - info.width) / 2f;
                     break;
                 case ZLTextAlignmentType.ALIGN_JUSTIFY:
                 case ZLTextAlignmentType.ALIGN_LEFT:
@@ -1657,7 +1661,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         ZLTextElementArea spaceElement = null;
-
+        // 5.
         // 利用RealStartElementIndex属性获取当前行第一个字的位置，利用for循环读取当前行第一个字到最后一个字之间的内容
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
             final ZLTextElement element = paragraph.getElement(wordIndex);
@@ -1673,12 +1677,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
                                 true, // is last in element
                                 false, // add hyphenation sign
                                 false, // changed style
-                                getTextStyle(), element, (int) fx, (int) fx + spaceLength, y, y, columnIndex
+                                getTextStyle(), element, (int) textLineXCoord, (int) textLineXCoord + spaceLength, textLineYCoord, textLineYCoord, columnIndex
                         );
                     } else {
                         spaceElement = null;
                     }
-                    fx += spaceLength;
+                    textLineXCoord += spaceLength;
                     wordOccurred = false;
                     --spaceCounter;
                 }
@@ -1697,7 +1701,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         true, // is last in element
                         false, // add hyphenation sign
                         changeStyle, getTextStyle(), element,
-                        (int) fx, (int) fx + elementWidth - 1, y - height + 1, y + descent, columnIndex
+                        (int) textLineXCoord, (int) textLineXCoord + elementWidth - 1, textLineYCoord - height + 1, textLineYCoord + descent, columnIndex
                 ));
                 changeStyle = false;
                 wordOccurred = true;
@@ -1707,14 +1711,16 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 changeStyle = true;
             }
 
-            // 最后一行不用均匀分布
+            // LTR, 累加每个字的宽度，以获取下一个字的x坐标
             if (isEndOfParagraph) {
-                fx += elementWidth;
-                continue;
+                // 最后一行不用均匀分布
+                textLineXCoord += elementWidth;
+            } else {
+                textLineXCoord += elementWidth + elementIntervalSpace;
             }
-            // 累加每个字的宽度，以获取下一个字的x坐标
-            fx += elementWidth + elementIntervalSpace;
         }
+
+        // 6. 处理断字
         if (!isEndOfParagraph) {
             final int len = info.endCharIndex;
             if (len > 0) {
@@ -1724,7 +1730,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 final int width = getWordWidth(word, 0, len, addHyphenationSign);
                 final int height = getElementHeight(word);
                 final int descent = context.getDescent();
-                // 将新建的ZLTextElementArea类加入ZLTextPage类的TextElementMap属性中
                 page.TextElementMap.add(
                         // 根据当前字的x坐标与y坐标以及使用的样式生成一个ZLTextElementArea类
                         new ZLTextElementArea(
@@ -1733,7 +1738,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                                 false, // is last in element
                                 addHyphenationSign,
                                 changeStyle, getTextStyle(), word,
-                                (int) fx, (int) fx + width - 1, y - height + 1, y + descent, columnIndex
+                                (int) textLineXCoord, (int) textLineXCoord + width - 1, textLineYCoord - height + 1, textLineYCoord + descent, columnIndex
                         )
                 );
             }

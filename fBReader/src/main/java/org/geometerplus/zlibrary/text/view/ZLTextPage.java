@@ -38,6 +38,7 @@ final class ZLTextPage {
     int column0Height;
     int paintState = PaintStateEnum.NOTHING_TO_PAINT;
 
+    // 用来辅助定位划选高亮区域
     final ZLTextElementAreaVector TextElementMap = new ZLTextElementAreaVector();
 
     private int myColumnWidth;
