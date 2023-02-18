@@ -1630,7 +1630,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
         final int endElementIndex = info.endElementIndex;
         // 获取当前行第一个字第一个letter的位置
         int charIndex = info.realStartCharIndex;
-        ZLTextElementArea spaceElement = null;
 
         final int maxRenderWidth = page.getTextWidth();
         ZLTextElement lastElement = paragraphCursor.getElement(endElementIndex);
@@ -1657,11 +1656,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
+        ZLTextElementArea spaceElement = null;
+
         // 利用RealStartElementIndex属性获取当前行第一个字的位置，利用for循环读取当前行第一个字到最后一个字之间的内容
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
             final ZLTextElement element = paragraph.getElement(wordIndex);
-            final int width = getElementWidth(element, charIndex); // UI操作
+            final int elementWidth = getElementWidth(element, charIndex); // UI操作
             if (element == ZLTextElement.HSpace) {
+                // 处理空格元素
                 if (wordOccurred && spaceCounter > 0) {
                     final int spaceLength = context.getSpaceWidth();
                     if (getTextStyle().isUnderline()) {
@@ -1681,6 +1683,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     --spaceCounter;
                 }
             } else if (element instanceof ZLTextWord || element instanceof ZLTextImageElement || element instanceof ZLTextVideoElement || element instanceof ExtensionElement) {
+                // 处理内容元素: 文字, 图片，视频, 超链接
                 final int height = getElementHeight(element);
                 final int descent = getElementDescent(element);
                 final int length = element instanceof ZLTextWord ? ((ZLTextWord) element).Length : 0;
@@ -1694,22 +1697,23 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         true, // is last in element
                         false, // add hyphenation sign
                         changeStyle, getTextStyle(), element,
-                        (int) fx, (int) fx + width - 1, y - height + 1, y + descent, columnIndex
+                        (int) fx, (int) fx + elementWidth - 1, y - height + 1, y + descent, columnIndex
                 ));
                 changeStyle = false;
                 wordOccurred = true;
             } else if (isStyleChangeElement(element)) {
+                // 处理style元素
                 applyStyleChangeElement(element);
                 changeStyle = true;
             }
 
             // 最后一行不用均匀分布
             if (isEndOfParagraph) {
-                fx += width;
+                fx += elementWidth;
                 continue;
             }
             // 累加每个字的宽度，以获取下一个字的x坐标
-            fx += width + elementIntervalSpace;
+            fx += elementWidth + elementIntervalSpace;
         }
         if (!isEndOfParagraph) {
             final int len = info.endCharIndex;
