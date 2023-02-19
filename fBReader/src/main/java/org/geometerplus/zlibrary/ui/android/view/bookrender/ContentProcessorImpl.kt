@@ -19,12 +19,12 @@ import java.util.concurrent.Executors
  * @Author Created by fengchengding
  * @Description FBReaderJ_AndroidStudio
  */
-class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: SystemInfo?) :
+class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: SystemInfo) :
     ContentProcessor {
     // 预加载线程
     private val prepareService = Executors.newSingleThreadExecutor()
     private var drawService = Executors.newFixedThreadPool(4)
-    private val bookPageProvider: BookPageProvider = BookPageProvider(systemInfo)
+    private val bookPageProvider = BookPageProvider(systemInfo)
 
     private val targetContentView = fbReaderApp.textView
 

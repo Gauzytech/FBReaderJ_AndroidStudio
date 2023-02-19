@@ -80,6 +80,8 @@ abstract public class ZLView implements ZLViewEnums {
 
     abstract public void paint(ZLPaintContext context, PageIndex pageIndex);
 
+    abstract public void processPage(ZLPaintContext paintContext, PageIndex pageIndex);
+
     abstract public void onScrollingFinished(PageIndex pageIndex);
 
     public abstract void onFingerPress(int x, int y);

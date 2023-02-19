@@ -639,6 +639,97 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     @Override
+    public synchronized void processPage(ZLPaintContext paintContext, PageIndex pageIndex) {
+        Timber.v("渲染流程:分页, ================================ processPage %s================================", pageIndex.name());
+        // 1. 更新绘制画笔信息
+        setContext(paintContext);
+        // 2. 绘制背景
+        final ZLFile wallpaper = getWallpaperFile();
+        if (wallpaper != null) {
+            paintContext.clear(wallpaper, getFillMode());
+        } else {
+            paintContext.clear(getBackgroundColor());
+        }
+
+        // 还没有图书数据就不绘制
+        if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
+            Timber.v("渲染流程:分页, myTextModel不存在, 图书没解析, paint结束");
+            return;
+        }
+
+        Timber.v("渲染流程:分页, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
+
+        // 3. 先根据pageIndex选择page
+        ZLTextPage page;
+        switch (pageIndex) {
+            default:
+            case CURRENT:
+                page = myCurrentPage;
+                break;
+            case PREV:
+                page = myPreviousPage;
+                if (myPreviousPage.isClearPaintState()) {
+                    Timber.v("渲染流程:分页, 选择myPreviousPage, currentState= %s", DebugHelper.stringifyPatinState(myCurrentPage.paintState));
+                    preparePaintInfo(myCurrentPage, "paint.PREV");
+                    myPreviousPage.endCursor.setCursor(myCurrentPage.startCursor);
+                    myPreviousPage.paintState = PaintStateEnum.END_IS_KNOWN;
+                }
+                break;
+            case NEXT:
+                page = myNextPage;
+                if (myNextPage.isClearPaintState()) {
+                    Timber.v("渲染流程:分页, 选择myNextPage, currentState= %s", DebugHelper.stringifyPatinState(myCurrentPage.paintState));
+                    preparePaintInfo(myCurrentPage, "paint.NEXT");
+                    myNextPage.startCursor.setCursor(myCurrentPage.endCursor);
+                    myNextPage.paintState = PaintStateEnum.START_IS_KNOWN;
+                }
+        }
+
+        // 4. 清空TextElementMap老数据
+        page.TextElementMap.clear();
+
+        // 5. 计算本页数据并更新page
+        // 从定位指定段落后得到的ZLTextPage类中取出
+        // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
+        preparePaintInfo(page, "paint." + pageIndex.name());
+
+        if (page.startCursor.isNull() || page.endCursor.isNull()) {
+            return;
+        }
+
+        Timber.v("渲染流程:分页[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.getLineInfos().size());
+        /*
+         * 内容 + 高亮的绘制
+         */
+        final List<ZLTextLineInfo> lineInfoList = page.getLineInfos();
+        final int[] labels = new int[lineInfoList.size() + 1];
+        int pageX = getLeftMargin();
+        int pageY = getTopMargin();
+        int columnIndex = 0;
+        ZLTextLineInfo prevLineInfo = null;
+        Timber.v("渲染流程:分页, x = %s, y = %s", pageX, pageY);
+        // 6. 计算每一行每个字的位置
+        for (int i = 0; i < lineInfoList.size(); i++) {
+            ZLTextLineInfo info = lineInfoList.get(i);
+            info.adjust(prevLineInfo);
+            // 进一步计算出每一行中的每一个字在屏幕上的绝对位置
+            // 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
+            prepareTextLine(page, info, pageX, pageY, columnIndex);
+            // 累加每行的行高，以获取下一行的初始y坐标
+            pageY += info.height + info.descent + info.VSpaceAfter;
+            // labels指向的int数组将被用于迭代ZLTextPage类TextElementMap属性
+            labels[i + 1] = page.TextElementMap.size();
+            if (i + 1 == page.column0Height) {
+                // 获取顶部页边距, 作为屏幕上第一行的y坐标
+                pageY = getTopMargin();
+                pageX += page.getTextWidth() + getSpaceBetweenColumns();
+                columnIndex = 1;
+            }
+            prevLineInfo = info;
+        }
+    }
+
+    @Override
     public synchronized void onScrollingFinished(PageIndex pageIndex) {
         Timber.v("渲染流程:Bitmap绘制, onScrollingFinished: %s", pageIndex.name());
         switch (pageIndex) {
