@@ -41,6 +41,13 @@ public class ZLTextControlElement extends ZLTextElement {
 	public final boolean IsStart;
 
 	protected ZLTextControlElement(byte kind, boolean isStart) {
+		super("ZLTextControlElement");
+		Kind = kind;
+		IsStart = isStart;
+	}
+
+	protected ZLTextControlElement(byte kind, boolean isStart, String type) {
+		super(type);
 		Kind = kind;
 		IsStart = isStart;
 	}

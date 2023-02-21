@@ -25,6 +25,7 @@ public final class ZLTextVideoElement extends ZLTextElement {
 	public final Map<String,String> Sources;
 
 	ZLTextVideoElement(Map<String,String> sources) {
+		super("ZLTextVideoElement");
 		Sources = sources;
 	}
 }

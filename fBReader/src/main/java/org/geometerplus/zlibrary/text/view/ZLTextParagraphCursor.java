@@ -341,7 +341,7 @@ public final class ZLTextParagraphCursor {
 						myElements.add(new ZLTextStyleElement(it.getStyleEntry()));
 						break;
 					case ZLTextParagraph.Entry.STYLE_CLOSE:
-						myElements.add(ZLTextElement.StyleClose);
+						myElements.add(ZLTextElement.Companion.styleClose());
 						break;
 					case ZLTextParagraph.Entry.FIXED_HSPACE:
 						myElements.add(ZLTextFixedHSpaceElement.getElement(it.getFixedHSpaceLength()));
@@ -387,7 +387,7 @@ public final class ZLTextParagraphCursor {
 							ZLTextWord word = createWord(myElements.size(), data, offset + wordStart, index - wordStart, myOffset + wordStart, hyperlink);
 							myElements.add(word);
 						}
-						myElements.add(ZLTextElement.NBSpace);
+						myElements.add(ZLTextElement.Companion.nbSpace());
 						// 正常space > NON_BREAKABLE_SPACE, 如果两种space连在一起, 继续当做正常space
 						if (spaceState != SPACE) {
 							spaceState = NON_BREAKABLE_SPACE;
@@ -398,7 +398,7 @@ public final class ZLTextParagraphCursor {
 							case SPACE:
 								//if (breaks[index - 1] == LineBreak.NOBREAK || previousChar == '-') {
 								//}
-								myElements.add(ZLTextElement.HSpace);
+								myElements.add(ZLTextElement.Companion.hSpace());
 								wordStart = index;
 								break;
 							case NON_BREAKABLE_SPACE:
@@ -428,10 +428,10 @@ public final class ZLTextParagraphCursor {
 				}
 				switch (spaceState) {
 					case SPACE:
-						myElements.add(ZLTextElement.HSpace);
+						myElements.add(ZLTextElement.Companion.hSpace());
 						break;
 					case NON_BREAKABLE_SPACE:
-						myElements.add(ZLTextElement.NBSpace);
+						myElements.add(ZLTextElement.Companion.nbSpace());
 						break;
 					case NO_SPACE:
 						ZLTextWord word = createWord(myElements.size(), data, offset + wordStart, length - wordStart, myOffset + wordStart, hyperlink);

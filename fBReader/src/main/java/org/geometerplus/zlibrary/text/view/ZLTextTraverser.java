@@ -42,9 +42,9 @@ public abstract class ZLTextTraverser {
 
 			for (int j = fromElement; j <= toElement; j++) {
 				final ZLTextElement element = cursor.getElement(j);
-				if (element == ZLTextElement.HSpace) {
+				if (element instanceof HSpaceElement) {
 					processSpace();
-				} else if (element == ZLTextElement.NBSpace) {
+				} else if (element instanceof NBSpaceElement) {
 					processNbSpace();
 				} else if (element instanceof ZLTextWord) {
 					processWord((ZLTextWord)element);

@@ -176,13 +176,13 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     boolean isStyleChangeElement(ZLTextElement element) {
-        return element == ZLTextElement.StyleClose ||
+        return element instanceof StyleCloseElement ||
                 element instanceof ZLTextStyleElement ||
                 element instanceof ZLTextControlElement;
     }
 
     void applyStyleChangeElement(ZLTextElement element) {
-        if (element == ZLTextElement.StyleClose) {
+        if (element instanceof StyleCloseElement) {
             applyStyleClose();
         } else if (element instanceof ZLTextStyleElement) {
             applyStyle((ZLTextStyleElement) element);
@@ -262,9 +262,9 @@ abstract class ZLTextViewBase extends ZLView {
             return Math.min(300, getTextColumnWidth());
         } else if (element instanceof ExtensionElement) {
             return ((ExtensionElement) element).getWidth();
-        } else if (element == ZLTextElement.NBSpace) {
+        } else if (element instanceof NBSpaceElement) {
             return getContext().getSpaceWidth();
-        } else if (element == ZLTextElement.Indent) {
+        } else if (element instanceof IndentElement) {
             return myTextStyle.getFirstLineIndent(metrics());
         } else if (element instanceof ZLTextFixedHSpaceElement) {
             return getContext().getSpaceWidth() * ((ZLTextFixedHSpaceElement) element).Length;
@@ -274,7 +274,7 @@ abstract class ZLTextViewBase extends ZLView {
 
     /** 获得element渲染所需要的高度 */
     final int getElementHeight(ZLTextElement element) {
-        if (element == ZLTextElement.NBSpace ||
+        if (element instanceof NBSpaceElement ||
                 element instanceof ZLTextWord ||
                 element instanceof ZLTextFixedHSpaceElement) {
             return getWordHeight();

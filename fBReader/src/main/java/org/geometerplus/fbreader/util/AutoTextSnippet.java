@@ -20,6 +20,8 @@
 package org.geometerplus.fbreader.util;
 
 import org.geometerplus.fbreader.bookmodel.FBTextKind;
+import org.geometerplus.zlibrary.text.view.HSpaceElement;
+import org.geometerplus.zlibrary.text.view.NBSpaceElement;
 import org.geometerplus.zlibrary.text.view.ZLTextControlElement;
 import org.geometerplus.zlibrary.text.view.ZLTextElement;
 import org.geometerplus.zlibrary.text.view.ZLTextFixedPosition;
@@ -73,11 +75,11 @@ mainLoop:
 				}
 			}
 			final ZLTextElement element = cursor.getElement();
-			if (element == ZLTextElement.HSpace) {
+			if (element instanceof HSpaceElement) {
 				if (lineIsNonEmpty) {
 					phraseBuffer.append(" ");
 				}
-			} else if (element == ZLTextElement.NBSpace) {
+			} else if (element instanceof NBSpaceElement) {
 				if (lineIsNonEmpty) {
 					phraseBuffer.append("\240");
 				}

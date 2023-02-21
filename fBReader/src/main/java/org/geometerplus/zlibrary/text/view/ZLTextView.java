@@ -928,7 +928,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         final float charWidth = computeCharWidth();
 
-        final int indentWidth = getElementWidth(ZLTextElement.Indent, 0);
+        final int indentWidth = getElementWidth(ZLTextElement.Companion.indent(), 0);
         final float effectiveWidth = textWidth - (indentWidth + 0.5f * textWidth) / charsPerParagraph;
         float charsPerLine = Math.min(effectiveWidth / charWidth,
                 charsPerParagraph * 1.2f);
@@ -1241,7 +1241,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     context.fillPolygon(new int[]{l, l, r}, new int[]{t, b, c});
                 } else if (element instanceof ExtensionElement) {
                     ((ExtensionElement) element).draw(context, area);
-                } else if (element == ZLTextElement.HSpace || element == ZLTextElement.NBSpace) {
+                } else if (element instanceof HSpaceElement || element instanceof NBSpaceElement) {
                     final int cw = context.getSpaceWidth();
                     for (int len = 0; len < area.XEnd - area.XStart; len += cw) {
                         context.drawString(areaX + len, areaY, SPACE, 0, 1);
@@ -1523,14 +1523,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 contentRenderHeight = Math.max(contentRenderHeight, getElementHeight(element));
                 newDescent = Math.max(newDescent, getElementDescent(element));
                 /* ------------------------------ 结束UI操作 ------------------------------ */
-                if (element == ZLTextElement.HSpace) {
+                if (element instanceof HSpaceElement) {
                     if (contentOccurred) {
                         contentOccurred = false;
                         internalSpaceCounter++;
                         lastSpaceWidth = getContext().getSpaceWidth();
                         contentRenderWidth += lastSpaceWidth;
                     }
-                } else if (element == ZLTextElement.NBSpace) {
+                } else if (element instanceof NBSpaceElement) {
                     contentOccurred = true;
                 } else if (element instanceof ZLTextWord) {
                     contentOccurred = true;
@@ -1561,8 +1561,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 if (!allowBreak) {
                     element = paragraphCursor.getElement(currentElementIndex);
                     allowBreak =
-                            previousElement != ZLTextElement.NBSpace &&
-                                    element != ZLTextElement.NBSpace &&
+                            !(previousElement instanceof NBSpaceElement) &&
+                                    !(element instanceof NBSpaceElement) &&
                                     (!(element instanceof ZLTextWord) || previousElement instanceof ZLTextWord)
                                     && !(element instanceof ZLTextImageElement)
                                     && !(element instanceof ZLTextControlElement);
@@ -1729,7 +1729,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         ZLTextElement lastElement = paragraphCursor.getElement(endElementIndex);
         // 4. 计算alignment参数
         // 除了最后一行，使用排齐模式(每个字都平均分配空间, 撑满整行)
-        if (!isEndOfParagraph && (lastElement != ZLTextElement.AfterParagraph)) {
+        if (!isEndOfParagraph && !(lastElement instanceof AfterParagraphElement)) {
             float gapCount = endElementIndex - info.realStartElementIndex;
             // element之间有几个区间
             float elementIntervalCount = gapCount - 1;
@@ -1757,7 +1757,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
             final ZLTextElement element = paragraph.getElement(wordIndex);
             final int elementWidth = getElementWidth(element, charIndex); // UI操作
-            if (element == ZLTextElement.HSpace) {
+            if (element instanceof HSpaceElement) {
                 // 处理空格元素
                 if (wordOccurred && spaceCounter > 0) {
                     final int spaceLength = context.getSpaceWidth();

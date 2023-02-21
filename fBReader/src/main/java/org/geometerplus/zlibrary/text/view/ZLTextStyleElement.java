@@ -27,6 +27,7 @@ public class ZLTextStyleElement extends ZLTextElement {
 	public final ZLTextStyleEntry Entry;
 
 	ZLTextStyleElement(ZLTextStyleEntry entry) {
+		super("ZLTextStyleElement");
 		Entry = entry;
 	}
 

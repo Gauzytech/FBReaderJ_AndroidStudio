@@ -16,14 +16,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+package org.geometerplus.zlibrary.text.view
 
-package org.geometerplus.zlibrary.text.view;
+abstract class ZLTextElement constructor(val type: String) {
 
-import org.geometerplus.zlibrary.core.view.ZLPaintContext;
-
-public abstract class ExtensionElement extends ZLTextElement {
-	protected abstract int getWidth();
-	protected abstract int getHeight();
-
-	protected abstract void draw(ZLPaintContext context, ZLTextElementArea area);
+    companion object {
+        fun hSpace() = HSpaceElement()
+        fun nbSpace() = NBSpaceElement()
+        fun afterParagraph() = AfterParagraphElement()
+        fun indent() = IndentElement()
+        fun styleClose() = StyleCloseElement()
+    }
 }
+
+// 空格, 正常space
+class HSpaceElement : ZLTextElement("HSpaceElement")
+// NON_BREAKABLE_SPACE
+class NBSpaceElement : ZLTextElement("NBSpaceElement")
+class AfterParagraphElement : ZLTextElement("AfterParagraphElement")
+class IndentElement : ZLTextElement("IndentElement")
+class StyleCloseElement : ZLTextElement("StyleCloseElement")

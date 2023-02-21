@@ -38,6 +38,7 @@ public class ZLTextFixedHSpaceElement extends ZLTextElement {
 	public final short Length;
 
 	private ZLTextFixedHSpaceElement(short length) {
+		super("ZLTextFixedHSpaceElement");
 		Length = length;
 	}
 

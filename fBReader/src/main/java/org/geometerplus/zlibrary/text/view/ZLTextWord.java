@@ -73,6 +73,7 @@ public final class ZLTextWord extends ZLTextElement {
     }
 
     ZLTextWord(char[] data, int offset, int length, int paragraphOffset) {
+        super("ZLTextWord");
         Data = data;
         Offset = offset;
         Length = length;

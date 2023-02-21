@@ -19,6 +19,8 @@
 
 package org.geometerplus.fbreader.fbreader;
 
+import androidx.annotation.NonNull;
+
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.image.ZLImageManager;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
@@ -38,6 +40,7 @@ public final class BookElement extends ExtensionElement {
 	private NetworkImage myCover;
 
 	BookElement(FBView view) {
+		super("BookElement");
 		myView = view;
 	}
 
@@ -85,7 +88,7 @@ public final class BookElement extends ExtensionElement {
 	}
 
 	@Override
-	protected void draw(ZLPaintContext context, ZLTextElementArea area) {
+	protected void draw(@NonNull ZLPaintContext context, @NonNull ZLTextElementArea area) {
 		final int vMargin = ZLibrary.Instance().getDisplayDPI() / 15;
 		final int hMargin = ZLibrary.Instance().getDisplayDPI() / 10;
 		final ZLImageData imageData = getImageData();
