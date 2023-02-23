@@ -9,7 +9,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import org.geometerplus.DebugHelper
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
@@ -25,6 +24,7 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_TA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.PREPARE_PAGE
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTED_TEXT
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTION_CLEAR
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -66,17 +66,26 @@ class FlutterBridge(
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val pageIndex = PageIndex.getPageIndex(index)
-                Timber.v("$TAG 收到了: $pageIndex, [$width, $height]")
+                Timber.v("$TAG 请求数据: pageIndex = $pageIndex, size = [$width, $height]")
 
                 // 绘制内容的bitmap
-                val bitmap = drawBitmap(pageIndex, width, height)
+                val pageResult = contentProcessor.processPageData(
+                    pageIndex,
+                    width,
+                    height,
+                    0)
+                when(pageResult) {
+                    ContentPageResult.NoOp ->  Timber.v("$TAG, no draw")
+                    is ContentPageResult.Paint ->  Timber.v("$TAG, $pageResult")
+                }
+
                 // 回调结果
                 // todo toByteArray这一步太耗时了, 要将绘制bitmap逻辑移到flutter
-                if (DebugHelper.SAVE_BITMAP) {
-                    debugSave(bitmap.toByteArray(), "图书内容bitmap_current.png")
-                } else {
-                    result.success(bitmap.toByteArray())
-                }
+//                if (DebugHelper.SAVE_BITMAP) {
+//                    debugSave(bitmap.toByteArray(), "图书内容bitmap_current.png")
+//                } else {
+//                    result.success(bitmap.toByteArray())
+//                }
             }
             PREPARE_PAGE -> {
                 val width = call.argument<Int>("width")!!
@@ -207,17 +216,22 @@ class FlutterBridge(
         }
     }
 
-    private fun drawBitmap(pageInt: PageIndex, width: Int, height: Int): Bitmap {
+    private fun drawBitmap(pageIdx: PageIndex, width: Int, height: Int): ContentPageResult {
         // 绘制内容的bitmap
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        contentProcessor.drawOnBitmap(
-            bitmap,
-            pageInt,
+//        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+//        contentProcessor.drawOnBitmap(
+//            bitmap,
+//            pageIdx,
+//            width,
+//            height,
+//            0
+//        )
+
+        return contentProcessor.processPageData(
+            pageIdx,
             width,
             height,
-            0
-        )
-        return bitmap
+            0)
     }
 
     private fun getTestNativeImage(result: MethodChannel.Result) {
@@ -265,7 +279,7 @@ class FlutterBridge(
                         )
                     }
                     SelectionResult.NoMenu,
-                    SelectionResult.None -> result.success(mapOf("page" to img))
+                    SelectionResult.NoOp -> result.success(mapOf("page" to img))
                     SelectionResult.OpenDirectory,
                     SelectionResult.OpenImage -> Timber.v("时间测试, outline行为 ${selectionResult.javaClass.simpleName}, 功能待实现")
                 }

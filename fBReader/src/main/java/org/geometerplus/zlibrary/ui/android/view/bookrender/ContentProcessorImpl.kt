@@ -8,6 +8,7 @@ import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.util.concurrent.Executors
@@ -46,15 +47,22 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         )
     }
 
-    override fun drawOnBitmapFlutter(
+    override fun processPageData(
         index: PageIndex,
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int
-    ): ByteArray {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        drawOnBitmap(bitmap, index, width, height, 0)
-        return bitmap.toByteArray()
+    ): ContentPageResult {
+//        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+//        drawOnBitmap(bitmap, index, width, height, 0)
+
+        return bookPageProvider.processPageData(
+            targetContentView, index,
+            width,
+            height,
+            getMainAreaHeight(height),
+            verticalScrollbarWidth
+        )
     }
 
     override fun onScrollingFinished(index: PageIndex) {

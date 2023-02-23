@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import org.geometerplus.fbreader.util.TextSnippet
 import org.geometerplus.zlibrary.core.view.ZLViewEnums
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
 
 /**
  * @Package org.geometerplus.zlibrary.ui.android.view.bookrender
@@ -21,12 +22,15 @@ interface ContentProcessor {
         verticalScrollbarWidth: Int
     )
 
-    fun drawOnBitmapFlutter(
+    /**
+     * 获得[index]相关page的绘制数据
+     */
+    fun processPageData(
         index: PageIndex,
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int
-    ): ByteArray
+    ): ContentPageResult
 
     fun prepareAdjacentPage(width: Int, height: Int, verticalScrollbarWidth: Int)
     fun prepareAdjacentPage(

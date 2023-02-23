@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import timber.log.Timber;
 
 
-final class ZLTextPage {
+public final class ZLTextPage {
 
     final ZLTextWordCursor startCursor = new ZLTextWordCursor();
     final ZLTextWordCursor endCursor = new ZLTextWordCursor();
@@ -224,15 +224,15 @@ final class ZLTextPage {
     @Override
     public String toString() {
         return "ZLTextPage{" +
-                "startCursor=" + startCursor +
-                ", endCursor=" + endCursor +
-                ", lineInfos=" + lineInfos +
-                ", column0Height=" + column0Height +
-                ", paintState=" + DebugHelper.stringifyPatinState(paintState) +
-                ", TextElementMap=" + TextElementMap +
-                ", myColumnWidth=" + myColumnWidth +
-                ", myHeight=" + myHeight +
-                ", myTwoColumnView=" + myTwoColumnView +
+                "\nstartCursor=" + startCursor +
+                ", \nendCursor=" + endCursor +
+                ", \nlineInfos=" + lineInfos +
+                ", \ncolumn0Height=" + column0Height +
+                ", \npaintState=" + DebugHelper.stringifyPatinState(paintState) +
+                ", \nTextElementMap=" + TextElementMap +
+                ", \nmyColumnWidth=" + myColumnWidth +
+                ", \nmyHeight=" + myHeight +
+                ", \nmyTwoColumnView=" + myTwoColumnView +
                 '}';
     }
 }

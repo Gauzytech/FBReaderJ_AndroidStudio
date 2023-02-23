@@ -19,9 +19,8 @@
 
 package org.geometerplus.zlibrary.core.view;
 
-import androidx.annotation.Nullable;
-
 import org.geometerplus.zlibrary.core.application.ZLApplication;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 abstract public class ZLView implements ZLViewEnums {
@@ -80,7 +79,7 @@ abstract public class ZLView implements ZLViewEnums {
 
     abstract public void paint(ZLPaintContext context, PageIndex pageIndex);
 
-    abstract public void processPage(ZLPaintContext paintContext, PageIndex pageIndex);
+    abstract public ContentPageResult processPage(ZLPaintContext paintContext, PageIndex pageIndex);
 
     abstract public void onScrollingFinished(PageIndex pageIndex);
 

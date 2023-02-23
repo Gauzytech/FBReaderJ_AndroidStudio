@@ -6,6 +6,7 @@ import org.geometerplus.zlibrary.core.util.SystemInfo
 import org.geometerplus.zlibrary.core.view.ZLView
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
 
 /**
  * @Package org.geometerplus.zlibrary.ui.android.view.bookrender
@@ -48,9 +49,32 @@ class BookPageProvider(private val mySystemInfo: SystemInfo) {
         view.paint(context, index)
     }
 
-    /**
-     * 准备上一页/下一页
-     */
+    fun processPageData(
+        view: ZLView,
+        pageIdx: PageIndex?,
+        width: Int,
+        height: Int,
+        mainAreaHeight: Int,
+        verticalScrollbarWidth: Int
+    ): ContentPageResult {
+        val context = ZLAndroidPaintContext(
+            mySystemInfo,  // 以bitmap类为参数创建一个Canvas类
+            // 代码通过Canvas类对bitmap类进行操作
+            null,
+            ZLAndroidPaintContext.Geometry(
+                width,
+                height,
+                width,
+                mainAreaHeight,
+                0,
+                0
+            ),
+            if (view.isScrollbarShown) verticalScrollbarWidth else 0
+        )
+        return view.processPage(context, pageIdx)
+    }
+
+    /** 准备上一页/下一页 */
     fun preparePage(
         view: ZLView,
         index: PageIndex?,

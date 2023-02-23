@@ -38,4 +38,5 @@ class ContentPage {
         _contentColumnWidth = json['myColumnWidth'],
         _contentAreaHeight = json['myHeight'],
         _columnMode = ColumnMode.create(json['myTwoColumnView']);
+
 }

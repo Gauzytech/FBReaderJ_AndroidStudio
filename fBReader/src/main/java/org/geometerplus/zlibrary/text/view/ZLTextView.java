@@ -37,6 +37,7 @@ import org.geometerplus.zlibrary.text.model.ZLTextAlignmentType;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 
 import java.util.ArrayList;
@@ -639,7 +640,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     @Override
-    public synchronized void processPage(ZLPaintContext paintContext, PageIndex pageIndex) {
+    public synchronized ContentPageResult processPage(ZLPaintContext paintContext, PageIndex pageIndex) {
         Timber.v("渲染流程:分页, ================================ processPage %s================================", pageIndex.name());
         // 1. 更新绘制画笔信息
         setContext(paintContext);
@@ -654,7 +655,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 还没有图书数据就不绘制
         if (myTextModel == null || myTextModel.getParagraphsNumber() == 0) {
             Timber.v("渲染流程:分页, myTextModel不存在, 图书没解析, paint结束");
-            return;
+            return ContentPageResult.NoOp.INSTANCE;
         }
 
         Timber.v("渲染流程:分页, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
@@ -694,7 +695,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         preparePaintInfo(page, "paint." + pageIndex.name());
 
         if (page.startCursor.isNull() || page.endCursor.isNull()) {
-            return;
+            return ContentPageResult.NoOp.INSTANCE;
         }
 
         Timber.v("渲染流程:分页[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.getLineInfos().size());
@@ -727,6 +728,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
             prevLineInfo = info;
         }
+
+        return new ContentPageResult.Paint(page, labels);
     }
 
     @Override

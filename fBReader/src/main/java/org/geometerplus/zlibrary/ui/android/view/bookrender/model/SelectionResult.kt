@@ -21,7 +21,7 @@ sealed class SelectionResult {
     /**
      * 没有选中内容
      */
-    object None : SelectionResult()
+    object NoOp : SelectionResult()
 
     object OpenDirectory : SelectionResult()
     object OpenImage : SelectionResult()

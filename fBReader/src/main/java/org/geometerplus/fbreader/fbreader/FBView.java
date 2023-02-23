@@ -128,7 +128,7 @@ public final class FBView extends ZLTextView {
         if (getCountOfSelectedWords() > 0) {
             return new SelectionResult.ShowMenu(getSelectionStartY(), getSelectionEndY());
         }
-        return SelectionResult.None.INSTANCE;
+        return SelectionResult.NoOp.INSTANCE;
     }
 
     @Override
@@ -1100,7 +1100,7 @@ public final class FBView extends ZLTextView {
                                 region.getDrawCoordinates(Hull.DrawMode.Outline)));
             }
         }
-        return SelectionResult.None.INSTANCE;
+        return SelectionResult.NoOp.INSTANCE;
     }
 
     /**
@@ -1143,7 +1143,7 @@ public final class FBView extends ZLTextView {
             }
         }
 
-        return SelectionResult.None.INSTANCE;
+        return SelectionResult.NoOp.INSTANCE;
     }
 
     /**
@@ -1306,7 +1306,7 @@ public final class FBView extends ZLTextView {
             // 长按之后，向下拖动，页面滚动的效果
 //        startManualScrolling(x, y);
 
-            return SelectionResult.None.INSTANCE;
+            return SelectionResult.NoOp.INSTANCE;
         }
     }
 
@@ -1353,7 +1353,7 @@ public final class FBView extends ZLTextView {
 
         }
 
-        return SelectionResult.None.INSTANCE;
+        return SelectionResult.NoOp.INSTANCE;
     }
 
     /**

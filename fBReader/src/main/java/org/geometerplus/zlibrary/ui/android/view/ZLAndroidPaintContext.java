@@ -34,6 +34,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import org.geometerplus.DebugHelper;
@@ -134,7 +135,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     private ZLColor myBackgroundColor = new ZLColor(0, 0, 0);
 
-    public ZLAndroidPaintContext(SystemInfo systemInfo, Canvas canvas, Geometry geometry, int scrollbarWidth) {
+    public ZLAndroidPaintContext(SystemInfo systemInfo, @Nullable Canvas canvas, Geometry geometry, int scrollbarWidth) {
         super(systemInfo);
 
         myCanvas = canvas;
@@ -182,6 +183,8 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void clear(ZLFile wallpaperFile, FillMode mode) {
         Timber.v("%s, clear", TAG);
+        if (myCanvas == null) return;
+
         if (!wallpaperFile.equals(ourWallpaperFile) || mode != ourFillMode) {
             ourWallpaperFile = wallpaperFile;
             ourFillMode = mode;
@@ -300,7 +303,9 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         myBackgroundColor = color;
         myFillPaint.setColor(ZLAndroidColorUtil.rgb(color));
         if (DebugHelper.ENABLE_FLUTTER) {
-            myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, transparentPaint);
+            if (myCanvas != null) {
+                myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, transparentPaint);
+            }
         } else {
             myCanvas.drawRect(0, 0, myGeometry.AreaSize.Width, myGeometry.AreaSize.Height, myFillPaint);
         }
@@ -314,6 +319,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     public void fillPolygon(int[] xs, int[] ys) {
         Timber.v("%s, fillPolygon", TAG);
+        if (myCanvas == null) return;
         final Path path = new Path();
         final int last = xs.length - 1;
         path.moveTo(xs[last], ys[last]);
@@ -325,6 +331,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     public void drawPolygonalLine(int[] xs, int[] ys) {
         Timber.v("%s, drawPolygonalLine", TAG);
+        if (myCanvas == null) return;
         final Path path = new Path();
         final int last = xs.length - 1;
         path.moveTo(xs[last], ys[last]);
@@ -336,6 +343,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     public void drawOutline(int[] xs, int[] ys) {
         Timber.v("%s", TAG);
+        if (myCanvas == null) return;
         final int last = xs.length - 1;
         int xStart = (xs[0] + xs[last]) / 2;
         int yStart = (ys[0] + ys[last]) / 2;
@@ -506,6 +514,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void drawString(int x, int y, char[] string, int offset, int length) {
         Timber.v("%s, drawString", TAG);
+        if (myCanvas == null) return;
         boolean containsSoftHyphen = false;
         for (int i = offset; i < offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
@@ -539,6 +548,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void drawImage(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
         Timber.v("%s, drawImage", TAG);
+        if (myCanvas == null) return;
         final Bitmap bitmap = ((ZLAndroidImageData) imageData).getBitmap(maxSize, scaling);
         if (bitmap != null && !bitmap.isRecycled()) {
             switch (adjustingMode) {
@@ -559,6 +569,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void drawLine(int x0, int y0, int x1, int y1) {
         Timber.v("%s, drawLine", TAG);
+        if (myCanvas == null) return;
         final Canvas canvas = myCanvas;
         final Paint paint = myLinePaint;
         paint.setAntiAlias(false);
@@ -571,6 +582,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void fillRectangle(int x0, int y0, int x1, int y1) {
         Timber.v("%s, fillRectangle", TAG);
+        if (myCanvas == null) return;
         if (x1 < x0) {
             int swap = x1;
             x1 = x0;
@@ -587,24 +599,28 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public void drawHeader(int x, int y, String title) {
         Timber.v("%s, drawHeader", TAG);
+        if (myCanvas == null) return;
         myCanvas.drawText(title, x, y, myExtraPaint);
     }
 
     @Override
     public void drawFooter(int x, int y, String progress) {
         Timber.v("%s, drawFooter", TAG);
+        if (myCanvas == null) return;
         myCanvas.drawText(progress, x, y, myExtraPaint);
     }
 
     @Override
     public void fillCircle(int x, int y, int radius) {
         Timber.v("%s, fillCircle", TAG);
+        if (myCanvas == null) return;
         myCanvas.drawCircle(x, y, radius, myFillPaint);
     }
 
     @Override
     public void drawBookMark(int x0, int y0, int x1, int y1) {
         Timber.v("%s, drawBookMark", TAG);
+        if (myCanvas == null) return;
         myPath.reset();
         myPath.moveTo(x0, y0);
         myPath.lineTo(x1, y0);

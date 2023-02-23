@@ -1,5 +1,5 @@
 
-import 'package:flutter_lib/book_content/content_element.dart';
+import 'package:flutter_lib/book_content/model/elements/content_element.dart';
 
 /// 对应ZLTextParagraphCursor
 class ContentParagraphCursor {
