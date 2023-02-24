@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.text.view.ZLTextPage
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.DRAW_ON_BITMAP
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_END
@@ -66,17 +67,22 @@ class FlutterBridge(
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val pageIndex = PageIndex.getPageIndex(index)
-                Timber.v("$TAG 请求数据: pageIndex = $pageIndex, size = [$width, $height]")
+                Timber.v("$TAG[${System.currentTimeMillis()}] 请求数据: pageIndex = $pageIndex, size = [$width, $height")
 
                 // 绘制内容的bitmap
-                val pageResult = contentProcessor.processPageData(
+                contentProcessor.processPageData(
                     pageIndex,
                     width,
                     height,
-                    0)
-                when(pageResult) {
-                    ContentPageResult.NoOp ->  Timber.v("$TAG, no draw")
-                    is ContentPageResult.Paint ->  Timber.v("$TAG, $pageResult")
+                    0
+                ).also { pageResult ->
+                    when (pageResult) {
+                        ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
+                        is ContentPageResult.Paint -> {
+                            Timber.v("$TAG, 发送: $pageResult")
+                            result.success(mapOf("page_data" to gson.toJson(pageResult)))
+                        }
+                    }
                 }
 
                 // 回调结果

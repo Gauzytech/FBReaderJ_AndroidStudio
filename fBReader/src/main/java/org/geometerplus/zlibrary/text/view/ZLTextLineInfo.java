@@ -19,10 +19,14 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.Nullable;
+
+import java.util.List;
+
 import timber.log.Timber;
 
-final class ZLTextLineInfo {
-	final ZLTextParagraphCursor paragraphCursor;
+public final class ZLTextLineInfo {
+	ZLTextParagraphCursor paragraphCursor;
 	final int paragraphCursorLength;
 
 	final int startElementIndex;
@@ -46,6 +50,10 @@ final class ZLTextLineInfo {
 	boolean previousInfoUsed;
 	int spaceCounter;
 	ZLTextStyle startStyle;
+
+	// flutter绘制数据
+	List<ZLTextElement> lineElements;
+	ZLTextWord endElement;
 
 	ZLTextLineInfo(ZLTextParagraphCursor paragraphCursor, int elementIndex, int charIndex, ZLTextStyle style) {
 		this.paragraphCursor = paragraphCursor;
@@ -71,6 +79,12 @@ final class ZLTextLineInfo {
 			Timber.v("渲染流程:分页, adjust %s, %s", previous.VSpaceAfter, VSpaceBefore);
 			previousInfoUsed = true;
 		}
+	}
+
+	public void prepareElementFlutter(List<ZLTextElement> elements, @Nullable  ZLTextWord endElement) {
+		this.paragraphCursor = null;
+		this.lineElements = elements;
+		this.endElement = endElement;
 	}
 
 	@Override

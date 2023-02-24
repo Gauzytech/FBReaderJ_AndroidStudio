@@ -10,6 +10,7 @@ import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
+import '../../book_content/content_page.dart';
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
@@ -64,19 +65,26 @@ class PageRepository with PageRepositoryDelegate {
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     try {
       // 调用native方法，将绘制当前page
-      Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
+      Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.drawOnBitmap,
         {'page_index': pageIndex.index},
       );
 
-      final image = await imgBytes.toImage();
+      String pageData = result['page_data'];
+      Map<String, dynamic> pageDataJson = jsonDecode(pageData);
+      // var contentPage = ContentPage.fromJson(pageDataJson['page']);
+      var labels =
+          (pageDataJson['labels'] as List).map((item) => item as int).toList();
+
+      print('flutter_bridge, ${now()}, 收到了: $labels');
+      // final image = await imgBytes.toImage();
 
       // _bitmapManager缓存img
-      _bitmapManager.setSize(image.width, image.height);
-      _bitmapManager.cacheBitmap(internalIdx, image);
+      // _bitmapManager.setSize(image.width, image.height);
+      // _bitmapManager.cacheBitmap(internalIdx, image);
 
       // 初始化page滚动相关的数据并通知页面刷新
-      _readerPageViewModelDelegate!.initialize(image.width, image.height);
+      // _readerPageViewModelDelegate!.initialize(image.width, image.height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }

@@ -587,19 +587,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
-        pageX = getLeftMargin();
-        pageY = getTopMargin();
         // 7b 绘制每行文字
         for (int i = 0; i < lineInfoList.size(); i++) {
-            ZLTextLineInfo info = lineInfoList.get(i);
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
             // 将文字内容和高亮一起绘制
-            drawTextLine(page, highlightingList, info, labels[i], labels[i + 1]);
-            pageY += info.height + info.descent + info.VSpaceAfter;
-            if (i + 1 == page.column0Height) {
-                pageY = getTopMargin();
-                pageX += page.getTextWidth() + getSpaceBetweenColumns();
-            }
+            drawTextLine(page, highlightingList, lineInfoList.get(i), labels[i], labels[i + 1]);
         }
 
         // FLUTTER: 这个逻辑已经移到flutter
@@ -727,6 +719,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 columnIndex = 1;
             }
             prevLineInfo = info;
+        }
+
+        // 7. 移除paragraphCursor, 只保存相关element
+        final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
+        for (int i = 0; i < lineInfoList.size(); i++) {
+            // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
+            // 将文字内容和高亮一起绘制
+            prepareDrawTextLine(page, highlightingList, lineInfoList.get(i), labels[i], labels[i + 1]);
         }
 
         return new ContentPageResult.Paint(page, labels);
@@ -1204,7 +1204,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
                     // 文本位置信息
-                    final ZLTextPosition pos = new ZLTextFixedPosition(info.paragraphCursor.paragraphIdx, wordIndex, 0);
+                    final ZLTextPosition pos = new ZLTextFixedPosition(paragraph.paragraphIdx, wordIndex, 0);
                     // 文本高亮信息
                     final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
                     // 高亮前景色
@@ -1262,7 +1262,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final int len = info.endCharIndex - start;
             final ZLTextWord word = (ZLTextWord) paragraph.getElement(info.endElementIndex);
             final ZLTextPosition pos =
-                    new ZLTextFixedPosition(info.paragraphCursor.paragraphIdx, info.endElementIndex, 0);
+                    new ZLTextFixedPosition(paragraph.paragraphIdx, info.endElementIndex, 0);
             final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
             drawWord(
@@ -1270,6 +1270,24 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     word, start, len, area.AddHyphenationSign,
                     hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
             );
+        }
+    }
+
+    private void prepareDrawTextLine(ZLTextPage page, List<ZLTextHighlighting> highlightingList, ZLTextLineInfo info, int from, int to) {
+        final ZLTextParagraphCursor paragraph = info.paragraphCursor;
+        int index = from;
+        final int endElementIndex = info.endElementIndex;
+        int charIndex = info.realStartCharIndex;
+        final List<ZLTextElementArea> pageAreas = page.TextElementMap.areas();
+        List<ZLTextElement> lineElement = new ArrayList<>();
+        if (to > pageAreas.size()) {
+            // 清空textline中所有element数据
+            info.prepareElementFlutter(lineElement, null);
+            return;
+        }
+        for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex && index < to; ++wordIndex, charIndex = 0) {
+            final ZLTextElement element = paragraph.getElement(wordIndex);
+            lineElement.add(element);
         }
     }
 
