@@ -21,11 +21,8 @@ package org.geometerplus.zlibrary.ui.android.view;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.CornerPathEffect;
-import android.graphics.EmbossMaskFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -35,7 +32,6 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
 import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -45,9 +41,14 @@ import org.geometerplus.zlibrary.core.options.ZLBooleanOption;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
+import org.geometerplus.zlibrary.ui.android.image.InputStreamImageData;
 import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageData;
 import org.geometerplus.zlibrary.ui.android.util.ZLAndroidColorUtil;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.BitmapUtilsKt;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
+import java.io.InputStream;
 import java.util.List;
 
 import timber.log.Timber;
@@ -538,6 +539,32 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     @Override
+    public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length) {
+        boolean containsSoftHyphen = false;
+        for (int i = offset; i < offset + length; ++i) {
+            if (string[i] == (char) 0xAD) {
+                containsSoftHyphen = true;
+                break;
+            }
+        }
+        if (!containsSoftHyphen) {
+            myCanvas.drawText(string, offset, length, x, y, myTextPaint);
+            return new TextBlock(string, offset, length, x, y);
+        } else {
+            final char[] corrected = new char[length];
+            int len = 0;
+            for (int o = offset; o < offset + length; ++o) {
+                final char chr = string[o];
+                if (chr != (char) 0xAD) {
+                    corrected[len++] = chr;
+                }
+            }
+            myCanvas.drawText(corrected, 0, len, x, y, myTextPaint);
+            return new TextBlock(corrected, 0, len, x, y);
+        }
+    }
+
+    @Override
     public Size imageSize(ZLImageData imageData, Size maxSize, ScalingType scaling) {
         Timber.v("%s, imageSize", TAG);
         final Bitmap bitmap = ((ZLAndroidImageData) imageData).getBitmap(maxSize, scaling);
@@ -564,6 +591,25 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             myCanvas.drawBitmap(bitmap, x, y - bitmap.getHeight(), myFillPaint);
             myFillPaint.setXfermode(null);
         }
+    }
+
+    @Override
+    public ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
+        if (imageData instanceof InputStreamImageData) {
+            InputStream inputStream = ((InputStreamImageData) imageData).getStream();
+            String imgSrc = BitmapUtilsKt.convertToString(inputStream);
+            if (imgSrc != null) {
+                return new ElementPaintData.Image.Builder()
+                        .left(x)
+                        .top(y)
+                        .imageSrc(imgSrc)
+                        .maxSize(maxSize)
+                        .scalingType(scaling.name())
+                        .adjustingModeForImages(adjustingMode.name())
+                        .build();
+            }
+        }
+        return null;
     }
 
     @Override

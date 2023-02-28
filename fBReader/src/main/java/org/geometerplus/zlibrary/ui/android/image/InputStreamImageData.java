@@ -26,11 +26,15 @@ import android.graphics.*;
 
 import org.geometerplus.zlibrary.core.image.ZLStreamImage;
 
-final class InputStreamImageData extends ZLAndroidImageData {
+final public class InputStreamImageData extends ZLAndroidImageData {
 	private final ZLStreamImage myImage;
 
 	InputStreamImageData(ZLStreamImage image) {
 		myImage = image;
+	}
+
+	public InputStream getStream() {
+		return myImage.inputStream();
 	}
 
 	protected Bitmap decodeWithOptions(BitmapFactory.Options options) {

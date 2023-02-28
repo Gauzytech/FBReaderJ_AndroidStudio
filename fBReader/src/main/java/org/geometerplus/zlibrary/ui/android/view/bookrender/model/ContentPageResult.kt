@@ -11,6 +11,6 @@ import org.geometerplus.zlibrary.text.view.ZLTextPage
  */
 sealed class ContentPageResult {
 
-    data class Paint(val page: ZLTextPage, val labels: IntArray) : ContentPageResult()
+    data class Paint(val linePaintDataList: List<LinePaintData>) : ContentPageResult()
     object NoOp : ContentPageResult()
 }

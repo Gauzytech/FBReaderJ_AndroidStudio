@@ -39,7 +39,7 @@ public final class ZLTextWord extends ZLTextElement {
     /**
      * 标记
      */
-    static class Mark {
+    public static class Mark {
         /**
          * 起始
          */

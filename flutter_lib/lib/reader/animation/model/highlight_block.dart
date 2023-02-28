@@ -1,13 +1,13 @@
 import 'dart:ui';
 
 class HighlightBlock {
-  NeatColor color;
+  ColorData color;
   List<BlockCoordinate> coordinates;
 
   HighlightBlock(this.color, this.coordinates);
 
   HighlightBlock.fromJson(Map<String, dynamic> json)
-      : color = NeatColor.fromJson(json['color']),
+      : color = ColorData.fromJson(json['color']),
         coordinates = (json['coordinates'] as List)
             .map((item) => BlockCoordinate.fromJson(item))
             .toList();
@@ -66,18 +66,18 @@ class BlockCoordinate {
   }
 }
 
-class NeatColor {
+class ColorData {
   final int red;
   final int green;
   final int blue;
 
-  NeatColor(this.red, this.green, this.blue);
+  ColorData(this.red, this.green, this.blue);
 
   Color toColor() {
     return Color.fromRGBO(red, green, blue, 1.0);
   }
 
-  NeatColor.fromJson(Map<String, dynamic> json)
+  ColorData.fromJson(Map<String, dynamic> json)
       : red = json['Red'],
         green = json['Green'],
         blue = json['Blue'];

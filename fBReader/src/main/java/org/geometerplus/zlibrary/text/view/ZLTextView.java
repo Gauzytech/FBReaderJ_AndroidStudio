@@ -38,7 +38,11 @@ import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementType;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -587,11 +591,19 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
+        pageX = getLeftMargin();
+        pageY = getTopMargin();
         // 7b 绘制每行文字
         for (int i = 0; i < lineInfoList.size(); i++) {
+            ZLTextLineInfo info = lineInfoList.get(i);
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
             // 将文字内容和高亮一起绘制
-            drawTextLine(page, highlightingList, lineInfoList.get(i), labels[i], labels[i + 1]);
+            drawTextLine(page, highlightingList, info, labels[i], labels[i + 1]);
+            pageY += info.height + info.descent + info.VSpaceAfter;
+            if (i + 1 == page.column0Height) {
+                pageY = getTopMargin();
+                pageX += page.getTextWidth() + getSpaceBetweenColumns();
+            }
         }
 
         // FLUTTER: 这个逻辑已经移到flutter
@@ -723,13 +735,17 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         // 7. 移除paragraphCursor, 只保存相关element
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
+        List<LinePaintData> linePaintDataList = new ArrayList<>();
         for (int i = 0; i < lineInfoList.size(); i++) {
             // 利用ZLTextElementArea类中的信息最终将字一个一个画到画布上去
             // 将文字内容和高亮一起绘制
-            prepareDrawTextLine(page, highlightingList, lineInfoList.get(i), labels[i], labels[i + 1]);
+            LinePaintData linePaintData = prepareDrawTextLine(page, highlightingList, lineInfoList.get(i), labels[i], labels[i + 1]);
+            if (linePaintData != null) {
+                linePaintDataList.add(linePaintData);
+            }
         }
 
-        return new ContentPageResult.Paint(page, labels);
+        return new ContentPageResult.Paint(linePaintDataList);
     }
 
     @Override
@@ -1273,22 +1289,138 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
     }
 
-    private void prepareDrawTextLine(ZLTextPage page, List<ZLTextHighlighting> highlightingList, ZLTextLineInfo info, int from, int to) {
+    private @Nullable
+    LinePaintData prepareDrawTextLine(ZLTextPage page, List<ZLTextHighlighting> highlightingList, ZLTextLineInfo info, int from, int to) {
+        final ZLPaintContext context = getContext();
+
         final ZLTextParagraphCursor paragraph = info.paragraphCursor;
         int index = from;
         final int endElementIndex = info.endElementIndex;
         int charIndex = info.realStartCharIndex;
         final List<ZLTextElementArea> pageAreas = page.TextElementMap.areas();
-        List<ZLTextElement> lineElement = new ArrayList<>();
         if (to > pageAreas.size()) {
-            // 清空textline中所有element数据
-            info.prepareElementFlutter(lineElement, null);
-            return;
+            return null;
         }
+
+        List<ElementPaintData> lineElements = new ArrayList<>();
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex && index < to; ++wordIndex, charIndex = 0) {
+            // 获取对应当前字的ZLTextWord类
             final ZLTextElement element = paragraph.getElement(wordIndex);
-            lineElement.add(element);
+            // 获取对应当前字的ZLTextElementArea类
+            final ZLTextElementArea area = pageAreas.get(index);
+            // 当ZLTextWord类与ZLTextElementArea类对应时进行操作
+            // 保证跳过代表标签的ZLTextControlElement类
+            if (element == area.Element) {
+                ++index;
+                if (area.ChangeStyle) {
+                    setTextStyle(area.Style);
+                }
+                // 起始X坐标
+                final int areaX = area.XStart;
+                // 起始Y坐标
+                final int areaY = area.YEnd - getElementDescent(element) - getTextStyle().getVerticalAlign(metrics());
+                // 根据元素类型处理
+                if (element instanceof ZLTextWord) { // 文本文字
+                    // 文本位置信息
+                    final ZLTextPosition pos = new ZLTextFixedPosition(paragraph.paragraphIdx, wordIndex, 0);
+                    // 文本高亮信息
+                    final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
+                    // 高亮前景色
+                    final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
+                    // 绘制文字
+                    ElementPaintData.Word wordPaintData = getDrawWordPaintData(
+                            areaX, areaY, (ZLTextWord) element, charIndex, -1, false,
+                            hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
+                    );
+                    // 保存wordElement绘制信息
+                    lineElements.add(wordPaintData);
+                } else if (element instanceof ZLTextImageElement) {
+                    final ZLTextImageElement imageElement = (ZLTextImageElement) element;
+                    ElementPaintData.Image imagePaintData = context.getDrawImagePaintData(
+                            areaX, areaY,
+                            imageElement.ImageData,
+                            getTextAreaSize(),
+                            getScalingType(imageElement),
+                            getAdjustingModeForImages()
+                    );
+                    // todo 弄一个根据uri获取image的方法，方便flutter直接获取image，传bitmap效率太低
+                    if (imagePaintData != null) {
+                        lineElements.add(imagePaintData);
+                    }
+                } else if (element instanceof ZLTextVideoElement) {
+                    ElementPaintData.Video.Builder videoPaintDataBuilder = new ElementPaintData.Video.Builder();
+//                    context.setLineColor(getTextColor(ZLTextHyperlink.NO_LINK));
+                    videoPaintDataBuilder.lineColor(getTextColor(ZLTextHyperlink.NO_LINK));
+//                    context.setFillColor(new ZLColor(127, 127, 127));
+                    final int xStart = area.XStart + 10;
+                    final int xEnd = area.XEnd - 10;
+                    final int yStart = area.YStart + 10;
+                    final int yEnd = area.YEnd - 10;
+                    videoPaintDataBuilder
+                            .xStart(xStart)
+                            .xEnd(xEnd)
+                            .yStart(yStart)
+                            .yEnd(yEnd);
+                    lineElements.add(videoPaintDataBuilder.build());
+//                    context.fillRectangle(xStart, yStart, xEnd, yEnd);
+//                    context.drawLine(xStart, yStart, xStart, yEnd);
+//                    context.drawLine(xStart, yEnd, xEnd, yEnd);
+//                    context.drawLine(xEnd, yEnd, xEnd, yStart);
+//                    context.drawLine(xEnd, yStart, xStart, yStart);
+//                    final int l = xStart + (xEnd - xStart) * 7 / 16;
+//                    final int r = xStart + (xEnd - xStart) * 10 / 16;
+//                    final int t = yStart + (yEnd - yStart) * 2 / 6;
+//                    final int b = yStart + (yEnd - yStart) * 4 / 6;
+//                    final int c = yStart + (yEnd - yStart) / 2;
+//                    context.setFillColor(new ZLColor(196, 196, 196));
+//                    context.fillPolygon(new int[]{l, l, r}, new int[]{t, b, c});
+                } else if (element instanceof ExtensionElement) {
+                    ElementPaintData.Extension extensionPaintData = ((ExtensionElement) element).getDrawData(context, area);
+                    if (extensionPaintData != null) {
+                        lineElements.add(extensionPaintData);
+                    }
+                } else if (element instanceof HSpaceElement || element instanceof NBSpaceElement) {
+                    ElementPaintData.Space.Builder spaceDataBuilder = new ElementPaintData.Space.Builder();
+                    final int spaceWidth = context.getSpaceWidth();
+                    spaceDataBuilder.spaceWidth(spaceWidth);
+                    List<TextBlock> blocks = new ArrayList<>();
+                    for (int len = 0; len < area.XEnd - area.XStart; len += spaceWidth) {
+//                        context.getDrawStringData(areaX + len, areaY, SPACE, 0, 1);
+                        blocks.add(context.getDrawStringData(areaX + len, areaY, SPACE, 0, 1));
+                    }
+                    spaceDataBuilder.textBlocks(blocks);
+                    lineElements.add(spaceDataBuilder.build());
+                }
+            }
         }
+
+        // 特殊情况，index还没到终点to, endElementIndex肯定是Word, 进行绘制
+        if (index != to) {
+            ZLTextElementArea area = pageAreas.get(index++);
+            if (area.ChangeStyle) {
+                setTextStyle(area.Style);
+            }
+
+            final int start = info.startElementIndex == info.endElementIndex
+                    ? info.startCharIndex : 0;
+            final int len = info.endCharIndex - start;
+            final ZLTextWord word = (ZLTextWord) paragraph.getElement(info.endElementIndex);
+            final ZLTextPosition pos =
+                    new ZLTextFixedPosition(paragraph.paragraphIdx, info.endElementIndex, 0);
+            final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
+            final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
+
+            ElementPaintData.Word wordPaintData = getDrawWordPaintData(
+                    area.XStart, area.YEnd - context.getDescent() - getTextStyle().getVerticalAlign(metrics()),
+                    word, start, len, area.AddHyphenationSign,
+                    hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
+            );
+            // 保存wordElement绘制信息
+            lineElements.add(wordPaintData);
+        }
+
+        // 保存本行的绘制信息, 传给flutter绘制
+        return new LinePaintData(lineElements);
     }
 
     /**

@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.view;
 
+import androidx.annotation.Nullable;
+
 import java.util.*;
 
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -26,6 +28,8 @@ import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 /**
  * 画笔上下文（绘制相关）
@@ -47,7 +51,7 @@ abstract public class ZLPaintContext {
         tileHorizontally
     }
 
-    protected final SystemInfo getSystemInfo() {
+    public final SystemInfo getSystemInfo() {
         return mySystemInfo;
     }
 
@@ -328,6 +332,8 @@ abstract public class ZLPaintContext {
      */
     abstract public void drawString(int x, int y, char[] string, int offset, int length);
 
+    abstract public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length);
+
     public static final class Size {
         public final int Width;
         public final int Height;
@@ -371,6 +377,8 @@ abstract public class ZLPaintContext {
     abstract public Size imageSize(ZLImageData image, Size maxSize, ScalingType scaling);
 
     abstract public void drawImage(int x, int y, ZLImageData image, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode);
+
+    abstract public @Nullable ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode);
 
     /**
      * 绘制线（抽象）

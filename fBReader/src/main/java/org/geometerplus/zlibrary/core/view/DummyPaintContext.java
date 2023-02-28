@@ -21,6 +21,8 @@ package org.geometerplus.zlibrary.core.view;
 
 import android.content.Context;
 
+import androidx.annotation.Nullable;
+
 import java.util.List;
 
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -28,6 +30,8 @@ import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 final class DummyPaintContext extends ZLPaintContext {
 
@@ -131,12 +135,23 @@ final class DummyPaintContext extends ZLPaintContext {
     }
 
     @Override
+    public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length) {
+        return null;
+    }
+
+    @Override
     public Size imageSize(ZLImageData image, Size maxSize, ScalingType scaling) {
         return null;
     }
 
     @Override
     public void drawImage(int x, int y, ZLImageData image, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
+    }
+
+    @Nullable
+    @Override
+    public ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
+        return null;
     }
 
     @Override

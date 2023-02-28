@@ -21,17 +21,18 @@ package org.geometerplus.fbreader.fbreader;
 
 import androidx.annotation.NonNull;
 
+import org.geometerplus.fbreader.network.NetworkImage;
+import org.geometerplus.fbreader.network.opds.OPDSBookItem;
+import org.geometerplus.fbreader.network.urlInfo.UrlInfo;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.image.ZLImageManager;
 import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
-
-import org.geometerplus.zlibrary.text.view.*;
-
-import org.geometerplus.fbreader.network.NetworkImage;
-import org.geometerplus.fbreader.network.opds.OPDSBookItem;
-import org.geometerplus.fbreader.network.urlInfo.UrlInfo;
+import org.geometerplus.zlibrary.text.view.ExtensionElement;
+import org.geometerplus.zlibrary.text.view.ZLTextElementArea;
+import org.geometerplus.zlibrary.text.view.ZLTextHyperlink;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 
 public final class BookElement extends ExtensionElement {
 	private final FBView myView;
@@ -117,5 +118,56 @@ public final class BookElement extends ExtensionElement {
 			context.drawLine(xEnd, yEnd, xEnd, yStart);
 			context.drawLine(xEnd, yStart, xStart, yStart);
 		}
+	}
+
+	@Override
+	protected ElementPaintData.Extension getDrawData(@NonNull ZLPaintContext context, @NonNull ZLTextElementArea area) {
+		final int vMargin = ZLibrary.Instance().getDisplayDPI() / 15;
+		final int hMargin = ZLibrary.Instance().getDisplayDPI() / 10;
+		final ZLImageData imageData = getImageData();
+		if (imageData != null) {
+			ElementPaintData.Extension.Builder extensionBuilder = new ElementPaintData.Extension.Builder();
+			ElementPaintData.Image imagePaintData = context.getDrawImagePaintData(
+					area.XStart + hMargin, area.YEnd - vMargin,
+					imageData,
+					new ZLPaintContext.Size(
+							area.XEnd - area.XStart - 2 * hMargin + 1,
+							area.YEnd - area.YStart - 2 * vMargin + 1
+					),
+					ZLPaintContext.ScalingType.FitMaximum,
+					ZLPaintContext.ColorAdjustingMode.NONE
+			);
+			if (imagePaintData != null) {
+				return extensionBuilder.imagePaintData(imagePaintData)
+						.build();
+			}
+
+		} else {
+			ElementPaintData.Video.Builder videoPaintDataBuilder = new ElementPaintData.Video.Builder();
+
+			final ZLColor color = myView.getTextColor(ZLTextHyperlink.NO_LINK);
+			context.setLineColor(color);
+			videoPaintDataBuilder.lineColor(color);
+			context.setFillColor(color, 0x33);
+			final int xStart = area.XStart + hMargin;
+			final int xEnd = area.XEnd - hMargin;
+			final int yStart = area.YStart + vMargin;
+			final int yEnd = area.YEnd - vMargin;
+			videoPaintDataBuilder.xStart(xStart)
+					.xEnd(xEnd)
+					.yStart(yStart)
+					.yEnd(yEnd);
+			ElementPaintData.Extension.Builder extensionBuilder = new ElementPaintData.Extension.Builder();
+			return extensionBuilder
+					.videoPaintData(videoPaintDataBuilder.build())
+					.build();
+//			context.fillRectangle(xStart, yStart, xEnd, yEnd);
+//			context.drawLine(xStart, yStart, xStart, yEnd);
+//			context.drawLine(xStart, yEnd, xEnd, yEnd);
+//			context.drawLine(xEnd, yEnd, xEnd, yStart);
+//			context.drawLine(xEnd, yStart, xStart, yStart);
+		}
+
+		return null;
 	}
 }

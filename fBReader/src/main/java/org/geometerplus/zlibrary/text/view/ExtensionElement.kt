@@ -19,9 +19,11 @@
 package org.geometerplus.zlibrary.text.view
 
 import org.geometerplus.zlibrary.core.view.ZLPaintContext
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData
 
 abstract class ExtensionElement(type: String) : ZLTextElement(type) {
     protected abstract val width: Int
     protected abstract val height: Int
     protected abstract fun draw(context: ZLPaintContext, area: ZLTextElementArea)
+    protected abstract fun getDrawData(context: ZLPaintContext, area: ZLTextElementArea): ElementPaintData.Extension?
 }

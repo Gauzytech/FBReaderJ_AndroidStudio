@@ -31,6 +31,7 @@ import org.geometerplus.zlibrary.text.view.style.ZLTextExplicitlyDecoratedStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyleDescription;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 
 import timber.log.Timber;
 
@@ -382,6 +383,65 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
+    final ElementPaintData.Word getDrawWordPaintData(int x, int y, ZLTextWord word, int start, int length, boolean addHyphenationSign, ZLColor color) {
+        ElementPaintData.Word.Builder wordDataBuilder = new ElementPaintData.Word.Builder();
+        wordDataBuilder.textStyle(getTextStyle());
+
+//        final ZLPaintContext context = getContext();
+        if (start == 0 && length == -1) { // 绘制整个
+//            drawString(context, x, y, word.Data, word.Offset, word.Length, word.getMark(), color, 0);
+
+            return wordDataBuilder
+                    .x(x)
+                    .y(y)
+                    .data(word.Data)
+                    .offset(word.Offset)
+                    .length(word.Length)
+                    .mark(word.getMark())
+                    .color(color)
+                    .shift(0)
+                    .build();
+        } else {
+            if (length == -1) {
+                length = word.Length - start;
+            }
+            if (!addHyphenationSign) { // 无断字连接
+//                drawString(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start);
+                wordDataBuilder
+                        .x(x)
+                        .y(y)
+                        .data(word.Data)
+                        .offset(word.Offset + start)
+                        .length(length)
+                        .mark(word.getMark())
+                        .color(color)
+                        .shift(start);
+            } else { // 有断字连接
+                char[] part = myWordPartArray;
+                if (length + 1 > part.length) {
+                    part = new char[length + 1];
+                    myWordPartArray = part;
+                }
+                // 添加断字连接符
+                System.arraycopy(word.Data, word.Offset + start, part, 0, length);
+                part[length] = '-';
+//                drawString(context, x, y, part, 0, length + 1, word.getMark(), color, start);
+                wordDataBuilder
+                        .x(x)
+                        .y(y)
+                        .data(part)
+                        .offset(0)
+                        .length(length + 1)
+                        .mark(word.getMark())
+                        .color(color)
+                        .shift(start);
+            }
+
+            return wordDataBuilder.build();
+        }
+    }
+
+
     /**
      * 绘制字符串
      *
@@ -395,7 +455,7 @@ abstract class ZLTextViewBase extends ZLView {
      * @param color   高亮前景色
      * @param shift   变换
      */
-    private void drawString(ZLPaintContext context, int x, int y, char[] str, int offset, int length, ZLTextWord.Mark mark, ZLColor color, int shift) {
+    protected void drawString(ZLPaintContext context, int x, int y, char[] str, int offset, int length, ZLTextWord.Mark mark, ZLColor color, int shift) {
         if (mark == null) { // 无标记
             context.setTextColor(color);
             context.drawString(x, y, str, offset, length);

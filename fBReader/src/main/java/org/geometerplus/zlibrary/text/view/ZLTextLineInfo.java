@@ -81,12 +81,6 @@ public final class ZLTextLineInfo {
 		}
 	}
 
-	public void prepareElementFlutter(List<ZLTextElement> elements, @Nullable  ZLTextWord endElement) {
-		this.paragraphCursor = null;
-		this.lineElements = elements;
-		this.endElement = endElement;
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		ZLTextLineInfo info = (ZLTextLineInfo)o;

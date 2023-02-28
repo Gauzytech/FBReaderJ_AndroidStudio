@@ -1,7 +1,7 @@
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 
 class SelectionCursor {
-  final NeatColor color;
+  final ColorData color;
   final CursorPoint point;
   int dpi;
   CursorDirection direction;
@@ -9,7 +9,7 @@ class SelectionCursor {
   SelectionCursor(this.color, this.point, this.dpi, this.direction);
 
   SelectionCursor.fromJson(this.direction, Map<String, dynamic> json)
-      : color = NeatColor.fromJson(json['color']),
+      : color = ColorData.fromJson(json['color']),
         point = CursorPoint.fromJson(json['point']),
         dpi = json['dpi'];
 
