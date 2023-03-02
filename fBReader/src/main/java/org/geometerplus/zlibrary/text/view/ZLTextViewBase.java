@@ -32,6 +32,7 @@ import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyleDescription;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 import timber.log.Timber;
 
@@ -392,11 +393,7 @@ abstract class ZLTextViewBase extends ZLView {
 //            drawString(context, x, y, word.Data, word.Offset, word.Length, word.getMark(), color, 0);
 
             return wordDataBuilder
-                    .x(x)
-                    .y(y)
-                    .data(word.Data)
-                    .offset(word.Offset)
-                    .length(word.Length)
+                    .textBlock(new TextBlock(word.Data, word.Offset, word.Length, x, y))
                     .mark(word.getMark())
                     .color(color)
                     .shift(0)
@@ -408,11 +405,7 @@ abstract class ZLTextViewBase extends ZLView {
             if (!addHyphenationSign) { // 无断字连接
 //                drawString(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start);
                 wordDataBuilder
-                        .x(x)
-                        .y(y)
-                        .data(word.Data)
-                        .offset(word.Offset + start)
-                        .length(length)
+                        .textBlock(new TextBlock(word.Data, word.Offset + start, length, x, y))
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);
@@ -427,11 +420,7 @@ abstract class ZLTextViewBase extends ZLView {
                 part[length] = '-';
 //                drawString(context, x, y, part, 0, length + 1, word.getMark(), color, start);
                 wordDataBuilder
-                        .x(x)
-                        .y(y)
-                        .data(part)
-                        .offset(0)
-                        .length(length + 1)
+                        .textBlock(new TextBlock(part, 0, length + 1, x, y))
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);

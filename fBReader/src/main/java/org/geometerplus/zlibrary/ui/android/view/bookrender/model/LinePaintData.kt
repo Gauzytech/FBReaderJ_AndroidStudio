@@ -16,51 +16,33 @@ enum class ElementType {
 /** 保存绘制一行所需要的所有信息 */
 data class LinePaintData(val elementPaintData: List<ElementPaintData>)
 
-sealed class ElementPaintData(
-    open val elementType: Int,
-    open val textStyle: ZLTextStyle?,
-) {
+sealed class ElementPaintData {
 
     data class Word(
-        override val elementType: Int,
-        override val textStyle: ZLTextStyle,
-        val x: Int,
-        val y: Int,
-        val data: CharArray,
-        val offset: Int,
-        val length: Int,
+        val elementType: Int = ElementType.WORD.ordinal,
+        val textStyle: ZLTextStyle,
+        var textBlock: TextBlock,
         val mark: ZLTextWord.Mark,
         val color: ZLColor,
-        val shift: Int
-    ) : ElementPaintData(elementType, textStyle) {
+        val shift: Int,
+    ) : ElementPaintData() {
 
-        internal class Builder : ElementPaintData.Builder() {
-            private var x: Int? = null
-            private var y: Int? = null
-            private var data: CharArray? = null
-            private var offset: Int? = null
-            private var length: Int? = null
+        internal class Builder  {
+            private var textStyle: ZLTextStyle? = null
+            private var textBlock: TextBlock? = null
             private var mark: ZLTextWord.Mark? = null
             private var color: ZLColor? = null
             private var shift: Int? = null
 
-            fun x(x: Int) = apply { this.x = x }
-            fun y(y: Int) = apply { this.y = y }
-            fun data(data: CharArray) = apply { this.data = data }
-            fun offset(offset: Int) = apply { this.offset = offset }
-            fun length(length: Int) = apply { this.length = length }
+            fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
+            fun textBlock(textBlock: TextBlock) = apply { this.textBlock = textBlock }
             fun mark(mark: ZLTextWord.Mark) = apply { this.mark = mark }
             fun color(color: ZLColor) = apply { this.color = color }
             fun shift(shift: Int) = apply { this.shift = shift }
 
             fun build() = Word(
-                elementType = ElementType.WORD.ordinal,
                 textStyle = requireNotNull(textStyle),
-                x = requireNotNull(x),
-                y = requireNotNull(y),
-                data = requireNotNull(data),
-                offset = requireNotNull(offset),
-                length = requireNotNull(length),
+                textBlock = requireNotNull(textBlock),
                 mark = requireNotNull(mark),
                 color = requireNotNull(color),
                 shift = requireNotNull(shift)
@@ -69,15 +51,16 @@ sealed class ElementPaintData(
     }
 
     data class Image(
-        override val elementType: Int,
-        override val textStyle: ZLTextStyle?,
+        val elementType: Int = ElementType.IMAGE.ordinal,
         val left: Float,
         val top: Float,
         val imageSrc: String,
+        val maxSize: Size,
+        val scalingType: String,
         val adjustingModeForImages: String,
-    ) : ElementPaintData(elementType, textStyle) {
+    ) : ElementPaintData() {
 
-        internal class Builder : ElementPaintData.Builder() {
+        internal class Builder {
             private var left: Float? = null
             private var top: Float? = null
             private var imageSrc: String? = null
@@ -94,26 +77,26 @@ sealed class ElementPaintData(
                 apply { this.adjustingModeForImages = adjustingModeForImages }
 
             fun build() = Image(
-                elementType = ElementType.IMAGE.ordinal,
-                textStyle = textStyle,
                 left = requireNotNull(left),
                 top = requireNotNull(top),
                 imageSrc = requireNotNull(imageSrc),
+                maxSize = requireNotNull(maxSize),
+                scalingType = requireNotNull(scalingType),
                 adjustingModeForImages = requireNotNull(adjustingModeForImages),
             )
         }
     }
 
     data class Video(
-        override val elementType: Int,
-        override val textStyle: ZLTextStyle?,
+        val elementType: Int = ElementType.VIDEO.ordinal,
+        var lineColor: ZLColor,
         var xStart: Int,
         val xEnd: Int,
         var yStart: Int,
         var yEnd: Int
-    ) : ElementPaintData(elementType, textStyle) {
+    ) : ElementPaintData() {
 
-        internal class Builder : ElementPaintData.Builder() {
+        internal class Builder {
             private var lineColor: ZLColor? = null
             private var xStart: Int? = null
             private var xEnd: Int? = null
@@ -127,8 +110,7 @@ sealed class ElementPaintData(
             fun yEnd(yEnd: Int) = apply { this.yEnd = yEnd }
 
             fun build() = Video(
-                elementType = ElementType.VIDEO.ordinal,
-                textStyle = textStyle,
+                lineColor = requireNotNull(lineColor),
                 xStart = requireNotNull(xStart),
                 xEnd = requireNotNull(xEnd),
                 yStart = requireNotNull(yEnd),
@@ -138,13 +120,12 @@ sealed class ElementPaintData(
     }
 
     data class Extension(
-        override val elementType: Int,
-        override val textStyle: ZLTextStyle?,
+        val elementType: Int = ElementType.EXTENSION.ordinal,
         val imagePaintData: Image?,
         val videoPaintData: Video?,
-    ) : ElementPaintData(elementType, textStyle) {
+    ) : ElementPaintData() {
 
-        internal class Builder : ElementPaintData.Builder() {
+        internal class Builder {
             private var imagePaintData: Image? = null
             private var videoPaintData: Video? = null
 
@@ -152,8 +133,6 @@ sealed class ElementPaintData(
             fun videoPaintData(data: Video) = apply { this.videoPaintData = data }
 
             fun build() = Extension(
-                elementType = ElementType.EXTENSION.ordinal,
-                textStyle = textStyle,
                 imagePaintData = imagePaintData,
                 videoPaintData = videoPaintData
             )
@@ -161,13 +140,12 @@ sealed class ElementPaintData(
     }
 
     data class Space(
-        override val elementType: Int,
-        override val textStyle: ZLTextStyle?,
+        val elementType: Int = ElementType.SPACE.ordinal,
         val spaceWidth: Int,
         val textBlocks: List<TextBlock>
-    ) : ElementPaintData(elementType, textStyle) {
+    ) : ElementPaintData() {
 
-        internal class Builder : ElementPaintData.Builder() {
+        internal class Builder {
             private var spaceWidth: Int? = null
             private var textBlocks: List<TextBlock>? = null
 
@@ -176,17 +154,9 @@ sealed class ElementPaintData(
                 apply { this.textBlocks = textBlocks.toList() }
 
             fun build() = Space(
-                elementType = ElementType.SPACE.ordinal,
-                textStyle = textStyle,
                 spaceWidth = requireNotNull(spaceWidth),
                 textBlocks = requireNotNull(textBlocks)
             )
         }
-    }
-
-    internal open class Builder {
-        protected var textStyle: ZLTextStyle? = null
-
-        fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
     }
 }

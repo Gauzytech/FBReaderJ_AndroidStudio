@@ -79,7 +79,7 @@ class FlutterBridge(
                     when (pageResult) {
                         ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
                         is ContentPageResult.Paint -> {
-                            Timber.v("$TAG, 发送: $pageResult")
+                            Timber.v("$TAG, 发送")
                             result.success(mapOf("page_data" to gson.toJson(pageResult)))
                         }
                     }

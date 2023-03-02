@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
@@ -70,13 +71,18 @@ class PageRepository with PageRepositoryDelegate {
         {'page_index': pageIndex.index},
       );
 
-      String pageData = result['page_data'];
-      Map<String, dynamic> pageDataJson = jsonDecode(pageData);
-      // var contentPage = ContentPage.fromJson(pageDataJson['page']);
-      var labels =
-          (pageDataJson['labels'] as List).map((item) => item as int).toList();
+      Map<String, dynamic> pageData = jsonDecode(result['page_data']);
+      List<LinePaintData> linePaintDataList =
+          (pageData['linePaintDataList'] as List)
+              .map((item) => LinePaintData.fromJson(item))
+              .toList();
 
-      print('flutter_bridge, ${now()}, 收到了: $labels');
+      for (var element in linePaintDataList) {
+        print('flutter_bridge[${now()}], 收到了: $element');
+        for (var data in element.elementPaintDataList) {
+          print('flutter_bridge: $data');
+        }
+      }
       // final image = await imgBytes.toImage();
 
       // _bitmapManager缓存img
