@@ -41,14 +41,11 @@ import org.geometerplus.zlibrary.core.options.ZLBooleanOption;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
-import org.geometerplus.zlibrary.ui.android.image.InputStreamImageData;
 import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageData;
 import org.geometerplus.zlibrary.ui.android.util.ZLAndroidColorUtil;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.BitmapUtilsKt;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
-import java.io.InputStream;
 import java.util.List;
 
 import timber.log.Timber;
@@ -591,25 +588,6 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             myCanvas.drawBitmap(bitmap, x, y - bitmap.getHeight(), myFillPaint);
             myFillPaint.setXfermode(null);
         }
-    }
-
-    @Override
-    public ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
-        if (imageData instanceof InputStreamImageData) {
-            InputStream inputStream = ((InputStreamImageData) imageData).getStream();
-            String imgSrc = BitmapUtilsKt.convertToString(inputStream);
-            if (imgSrc != null) {
-                return new ElementPaintData.Image.Builder()
-                        .left(x)
-                        .top(y)
-                        .imageSrc(imgSrc)
-                        .maxSize(maxSize)
-                        .scalingType(scaling.name())
-                        .adjustingModeForImages(adjustingMode.name())
-                        .build();
-            }
-        }
-        return null;
     }
 
     @Override

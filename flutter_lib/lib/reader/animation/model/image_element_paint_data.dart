@@ -1,11 +1,29 @@
 import 'dart:core';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
-
 import 'element_paint_data.dart';
 
+enum ImageSourceType {
+  network('network'),
+  file('file');
+
+  final String name;
+
+  const ImageSourceType(this.name);
+
+  static ImageSourceType fromName(String name) {
+    if (name == ImageSourceType.network.name) {
+      return ImageSourceType.network;
+    } else if (name == ImageSourceType.file.name) {
+      return ImageSourceType.file;
+    } else {
+      throw Exception('Unknown name: $name');
+    }
+  }
+}
+
 class ImageElementPaintData extends ElementPaintData {
+  ImageSourceType sourceType;
   double left;
   double top;
   String imageSrc;
@@ -14,7 +32,8 @@ class ImageElementPaintData extends ElementPaintData {
   String adjustingModeForImages;
 
   ImageElementPaintData.fromJson(Map<String, dynamic> json)
-      : left = json['left'],
+      : sourceType = ImageSourceType.fromName(json['sourceType']),
+        left = json['left'],
         top = json['top'],
         imageSrc = json['imageSrc'],
         maxSize = Size(

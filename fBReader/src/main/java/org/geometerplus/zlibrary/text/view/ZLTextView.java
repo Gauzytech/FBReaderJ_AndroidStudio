@@ -26,6 +26,7 @@ import org.geometerplus.fbreader.book.Bookmark;
 import org.geometerplus.fbreader.fbreader.BookmarkHighlighting;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
+import org.geometerplus.zlibrary.core.image.ZLImageProxy;
 import org.geometerplus.zlibrary.core.util.RationalNumber;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.Hull;
@@ -1336,17 +1337,17 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     lineElements.add(wordPaintData);
                 } else if (element instanceof ZLTextImageElement) {
                     final ZLTextImageElement imageElement = (ZLTextImageElement) element;
-                    ElementPaintData.Image imagePaintData = context.getDrawImagePaintData(
-                            areaX, areaY,
-                            imageElement.ImageData,
-                            getTextAreaSize(),
-                            getScalingType(imageElement),
-                            getAdjustingModeForImages()
-                    );
-                    // todo 弄一个根据uri获取image的方法，方便flutter直接获取image，传bitmap效率太低
-                    if (imagePaintData != null) {
-                        lineElements.add(imagePaintData);
-                    }
+                    ElementPaintData.Image imagePaintData = new ElementPaintData.Image.Builder()
+                            .sourceType(ZLImageProxy.SourceType.FILE.name())
+                            .left(areaX)
+                            .top(areaY)
+                            .imageSrc(imageElement.cachePath)
+                            .maxSize(getTextAreaSize())
+                            .scalingType(getScalingType(imageElement).name())
+                            .adjustingModeForImages(getAdjustingModeForImages().name())
+                            .build();
+
+                    lineElements.add(imagePaintData);
                 } else if (element instanceof ZLTextVideoElement) {
                     ElementPaintData.Video.Builder videoPaintDataBuilder = new ElementPaintData.Video.Builder();
 //                    context.setLineColor(getTextColor(ZLTextHyperlink.NO_LINK));

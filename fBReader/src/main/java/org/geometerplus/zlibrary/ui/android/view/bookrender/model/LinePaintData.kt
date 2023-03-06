@@ -1,5 +1,6 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
+import org.geometerplus.zlibrary.core.image.ZLImageProxy.SourceType
 import org.geometerplus.zlibrary.core.util.ZLColor
 import org.geometerplus.zlibrary.core.view.ZLPaintContext.Size
 import org.geometerplus.zlibrary.text.view.ZLTextStyle
@@ -52,6 +53,7 @@ sealed class ElementPaintData {
 
     data class Image(
         val elementType: Int = ElementType.IMAGE.ordinal,
+        val sourceType: String,
         val left: Float,
         val top: Float,
         val imageSrc: String,
@@ -61,6 +63,7 @@ sealed class ElementPaintData {
     ) : ElementPaintData() {
 
         internal class Builder {
+            private var sourceType: String? = null
             private var left: Float? = null
             private var top: Float? = null
             private var imageSrc: String? = null
@@ -68,6 +71,7 @@ sealed class ElementPaintData {
             private var scalingType: String? = null
             private var adjustingModeForImages: String? = null
 
+            fun sourceType(sourceType: String) = apply { this.sourceType = sourceType }
             fun left(left: Float) = apply { this.left = left }
             fun top(top: Float) = apply { this.top = top }
             fun imageSrc(src: String) = apply { this.imageSrc = src }
@@ -77,6 +81,7 @@ sealed class ElementPaintData {
                 apply { this.adjustingModeForImages = adjustingModeForImages }
 
             fun build() = Image(
+                sourceType = requireNotNull(sourceType),
                 left = requireNotNull(left),
                 top = requireNotNull(top),
                 imageSrc = requireNotNull(imageSrc),

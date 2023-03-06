@@ -46,11 +46,11 @@ public abstract class ZLImageProxy implements ZLImage {
 		synchronizer.startImageLoading(this, postAction);
 	}
 
-	public static enum SourceType {
+	public enum SourceType {
 		FILE,
 		NETWORK,
-		SERVICE;
-	};
+		SERVICE
+	}
 	public abstract SourceType sourceType();
 
 	public abstract ZLImage getRealImage();

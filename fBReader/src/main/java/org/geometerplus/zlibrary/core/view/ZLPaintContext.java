@@ -21,8 +21,6 @@ package org.geometerplus.zlibrary.core.view;
 
 import androidx.annotation.Nullable;
 
-import java.util.*;
-
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
@@ -30,6 +28,10 @@ import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 画笔上下文（绘制相关）
@@ -377,8 +379,6 @@ abstract public class ZLPaintContext {
     abstract public Size imageSize(ZLImageData image, Size maxSize, ScalingType scaling);
 
     abstract public void drawImage(int x, int y, ZLImageData image, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode);
-
-    abstract public @Nullable ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode);
 
     /**
      * 绘制线（抽象）

@@ -25,5 +25,5 @@ data class ZLTextImageElement constructor(
     @JvmField val ImageData: ZLImageData,
     @JvmField val URL: String,
     @JvmField val IsCover: Boolean,
-    @JvmField val cachePath: String?
+    @JvmField val cachePath: String
 ) : ZLTextElement("ZLTextImageElement")

@@ -148,12 +148,6 @@ final class DummyPaintContext extends ZLPaintContext {
     public void drawImage(int x, int y, ZLImageData image, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
     }
 
-    @Nullable
-    @Override
-    public ElementPaintData.Image getDrawImagePaintData(int x, int y, ZLImageData imageData, Size maxSize, ScalingType scaling, ColorAdjustingMode adjustingMode) {
-        return null;
-    }
-
     @Override
     public void drawLine(int x0, int y0, int x1, int y1) {
     }
