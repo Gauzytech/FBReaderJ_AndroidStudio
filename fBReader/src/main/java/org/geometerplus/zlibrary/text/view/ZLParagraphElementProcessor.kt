@@ -1,5 +1,6 @@
 package org.geometerplus.zlibrary.text.view
 
+import org.geometerplus.DebugHelper
 import org.geometerplus.zlibrary.core.image.ZLImageManager
 import org.geometerplus.zlibrary.text.model.ZLTextMark
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph
@@ -24,6 +25,7 @@ class ZLParagraphElementProcessor(
     private val myMarks: List<ZLTextMark>,
     private var myOffset: Int,
     paragraphIndex: Int,
+    private var imageCacheRootPath: String,
 ) {
 
     private var ourBreaks = ByteArray(1024)
@@ -125,13 +127,19 @@ class ZLParagraphElementProcessor(
                     if (image != null) {
                         val data = ZLImageManager.Instance().getImageData(image)
                         if (data != null) {
+                            val cachePath = if (DebugHelper.ENABLE_FLUTTER) {
+                                Timber.v("解析缓存流程 entryId = ${imageEntry.Id}")
+                                ZLImageManager.Instance().writeImageToCache(imageCacheRootPath, imageEntry.Id, image)
+                            } else null
+
                             hyperlink?.addElementIndex(elements.size)
                             elements.add(
                                 ZLTextImageElement(
                                     imageEntry.Id,
                                     data,
                                     image.uri,
-                                    imageEntry.IsCover
+                                    imageEntry.IsCover,
+                                    cachePath
                                 )
                             )
                         }

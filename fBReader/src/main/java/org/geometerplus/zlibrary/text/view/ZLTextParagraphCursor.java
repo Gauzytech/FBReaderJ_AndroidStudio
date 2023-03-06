@@ -60,6 +60,7 @@ public final class ZLTextParagraphCursor {
 	private final CursorManager cursorManager;
 	public final ZLTextModel textModel;
 	private final ArrayList<ZLTextElement> myElements;
+	private String imgCacheRootPath;
 
 	public ZLTextParagraphCursor(ZLTextModel textModel, int paragraphIndex) {
 		this(new CursorManager(textModel, null), textModel, paragraphIndex);
@@ -113,7 +114,9 @@ public final class ZLTextParagraphCursor {
 						lineBreaker,
 						marks,
 						0,
-						paragraphIdx);
+						paragraphIdx,
+						textModel.getImageCacheRootPath()
+						);
 				myElements.addAll(processor.fillElements());
 				break;
 			case ZLTextParagraph.Kind.EMPTY_LINE_PARAGRAPH:

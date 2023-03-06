@@ -16,27 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+package org.geometerplus.zlibrary.text.model
 
-package org.geometerplus.zlibrary.text.model;
+import org.geometerplus.zlibrary.core.image.ZLImage
 
-import java.util.Map;
-
-import org.geometerplus.zlibrary.core.image.ZLImage;
-
-public final class ZLImageEntry {
-	private final Map<String,ZLImage> myImageMap;
-	public final String Id;
-	public final short VOffset;
-	public final boolean IsCover;
-
-	ZLImageEntry(Map<String,ZLImage> imageMap, String id, short vOffset, boolean isCover) {
-		myImageMap = imageMap;
-		Id = id;
-		VOffset = vOffset;
-		IsCover = isCover;
-	}
-
-	public ZLImage getImage() {
-		return myImageMap.get(Id);
-	}
+data class ZLImageEntry(
+    private val myImageMap: Map<String, ZLImage>,
+    val Id: String,
+    val VOffset: Short,
+    val IsCover: Boolean
+) {
+    val image: ZLImage?
+        get() = myImageMap[Id]
 }

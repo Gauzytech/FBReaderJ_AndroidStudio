@@ -48,4 +48,6 @@ public interface ZLTextModel {
 	int findParagraphByTextLength(int length);
 
 	int search(final String text, int startIndex, int endIndex, boolean ignoreCase);
+
+	String getImageCacheRootPath();
 }

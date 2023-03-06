@@ -21,16 +21,14 @@ package org.geometerplus.zlibrary.text.model;
 
 import androidx.annotation.VisibleForTesting;
 
-import org.geometerplus.zlibrary.core.util.SystemInfo;
+import org.geometerplus.DebugHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,11 +41,13 @@ public final class CachedCharStorage {
 	// 对应cpp中的mPool, 每个char[]在cpp中称为row
 	protected final ArrayList<WeakReference<char[]>> myArray = new ArrayList<>();
 
+	private final String root;
 	private final String myDirectoryName;
 	private final String myFileExtension;
 
 	public CachedCharStorage(String directoryName, String fileExtension, int blocksNumber) {
 		Timber.v("解析缓存流程, 创建: dir = %s ext = %s blocksNumber = %d", directoryName, fileExtension, blocksNumber);
+		root = directoryName.substring(0, directoryName.lastIndexOf("/"));
 		myDirectoryName = directoryName + '/';
 		myFileExtension = '.' + fileExtension;
 		myArray.addAll(Collections.nCopies(blocksNumber, new WeakReference<>(null)));
@@ -59,6 +59,14 @@ public final class CachedCharStorage {
 
 	public int size() {
 		return myArray.size();
+	}
+
+	/**
+	 * 获得私有目录中图片缓存目录
+	 * @return eg: /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/image_cache
+	 */
+	public String getImageCacheDirectory() {
+		return root + File.separator + "image_cache";
 	}
 
 	private String exceptionMessage(int index, String extra) {
@@ -119,7 +127,9 @@ public final class CachedCharStorage {
 				reader.close();
 
 				// 测试, 输出utf8解析文件缓存
-				outputDebugBlockFile(index, parseFileData.clone(), false);
+				if (DebugHelper.ENABLE_FLUTTER) {
+					outputDebugBlockFile(index, parseFileData.clone(), false);
+				}
 			} catch (IOException e) {
 				throw new CachedCharStorageException(exceptionMessage(index, null), e);
 			}

@@ -63,9 +63,9 @@ public final class BookModel {
 	public final FontManager FontManager = new FontManager();
 
 	protected CachedCharStorage myInternalHyperlinks;
-	protected final HashMap<String,ZLImage> myImageMap = new HashMap<String,ZLImage>();
+	protected final HashMap<String,ZLImage> myImageMap = new HashMap<>();
 	protected ZLTextModel myBookTextModel;
-	protected final HashMap<String,ZLTextModel> myFootnotes = new HashMap<String,ZLTextModel>();
+	protected final HashMap<String,ZLTextModel> myFootnotes = new HashMap<>();
 
 	public static final class Label {
 		public final String ModelId;

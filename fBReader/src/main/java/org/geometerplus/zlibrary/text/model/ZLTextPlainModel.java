@@ -58,7 +58,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	// key: 图片文件名, value: 图片对象
 	private final Map<String, ZLImage> myImageMap;
 
-	private ArrayList<ZLTextMark> myMarks;
+	private ArrayList<ZLTextMark> myMarks = new ArrayList<ZLTextMark>();
 	// 保存字体list
 	private final FontManager myFontManager;
 
@@ -144,10 +144,10 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 		return mark;
 	}
 
-	public final int search(final String text, int startIndex, int endIndex, boolean ignoreCase) {
+	public int search(final String text, int startIndex, int endIndex, boolean ignoreCase) {
 		int count = 0;
 		ZLSearchPattern pattern = new ZLSearchPattern(text, ignoreCase);
-		myMarks = new ArrayList<ZLTextMark>();
+		myMarks = new ArrayList<>();
 		if (startIndex > myParagraphsNumber) {
 			startIndex = myParagraphsNumber;
 		}
@@ -177,6 +177,11 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 			it.reset(index);
 		}
 		return count;
+	}
+
+	@Override
+	public String getImageCacheRootPath() {
+		return myStorage.getImageCacheDirectory();
 	}
 
 	public final List<ZLTextMark> getMarks() {

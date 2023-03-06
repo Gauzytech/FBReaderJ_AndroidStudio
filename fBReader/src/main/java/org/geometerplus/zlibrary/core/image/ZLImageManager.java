@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.image;
 
+import androidx.annotation.NonNull;
+
 public abstract class ZLImageManager {
 	private static ZLImageManager ourInstance;
 
@@ -31,6 +33,8 @@ public abstract class ZLImageManager {
 	}
 
 	public abstract ZLImageData getImageData(ZLImage image);
+
+	public abstract String writeImageToCache(@NonNull String path, @NonNull String entryId, ZLImage image);
 
 	protected final static class PalmImageHeader {
 		public final int Width;

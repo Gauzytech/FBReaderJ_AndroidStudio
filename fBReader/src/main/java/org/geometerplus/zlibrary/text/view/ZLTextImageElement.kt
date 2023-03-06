@@ -16,32 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+package org.geometerplus.zlibrary.text.view
 
-package org.geometerplus.zlibrary.text.view;
+import org.geometerplus.zlibrary.core.image.ZLImageData
 
-import org.geometerplus.zlibrary.core.image.ZLImageData;
-
-public final class ZLTextImageElement extends ZLTextElement {
-	public final String Id;
-	public final ZLImageData ImageData;
-	public final String URL;
-	public final boolean IsCover;
-
-	ZLTextImageElement(String id, ZLImageData imageData, String url, boolean isCover) {
-		super("ZLTextImageElement");
-		Id = id;
-		ImageData = imageData;
-		URL = url;
-		IsCover = isCover;
-	}
-
-	@Override
-	public String toString() {
-		return "ZLTextImageElement{" +
-				"Id='" + Id + '\'' +
-				", ImageData=" + ImageData +
-				", URL='" + URL + '\'' +
-				", IsCover=" + IsCover +
-				'}';
-	}
-}
+data class ZLTextImageElement constructor(
+    @JvmField val Id: String,
+    @JvmField val ImageData: ZLImageData,
+    @JvmField val URL: String,
+    @JvmField val IsCover: Boolean,
+    @JvmField val cachePath: String?
+) : ZLTextElement("ZLTextImageElement")
