@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:ele_progress/ele_progress.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:flutter_lib/widget/highlight_painter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
@@ -136,7 +138,6 @@ class ReaderContentViewState
 
   @override
   void loadData(BuildContext context, ReaderViewModel? viewModel) {
-    print('flutter内容绘制流程, loadData');
     assert(viewModel != null, 'ReaderViewModel cannot be null');
 
     switch (viewModel!.getConfigData().currentAnimationMode) {
@@ -157,8 +158,6 @@ class ReaderContentViewState
     }
 
     if (animationController != null) {
-      print('flutter内容绘制流程, create pageManager');
-
       // todo 这里要分两种情况，要重置整个viewTree的方法走viewModel, 只刷新特定CustomPainter的方法走pageManger
       _readerPageViewModel = ReaderPageViewModel(
           contentKey: contentKey,
@@ -180,9 +179,11 @@ class ReaderContentViewState
   @override
   Widget onBuildView(BuildContext context, ReaderViewModel? viewModel) {
     assert(viewModel != null, 'ReaderViewModel cannot be null');
-    print("flutter内容绘制流程, onBuildView");
+
     _setGestureRecognizers(viewModel!);
     final contentSize = viewModel.contentSize;
+    print("flutter内容绘制流程, onBuildView, $contentSize");
+
     return FittedBox(
       // GestureDetector需要放在fittedBox里，
       // 不然触摸事件的localPosition没有通过density转化为真正的屏幕坐标系
@@ -194,8 +195,8 @@ class ReaderContentViewState
           children: <Widget>[
             _buildHighlightLayer(contentSize.width, contentSize.height),
             SizedBox(
-              width: contentSize.width,
-              height: contentSize.height,
+              width: 1080,
+              height: 2038,
               child: RepaintBoundary(
                 child: CustomPaint(
                   key: contentKey,
@@ -838,14 +839,14 @@ class ReaderContentViewState
     // 因为ContentSize更新了, ViewModel变更了, 通知onBuildView重绘
     assert(viewModel != null);
     viewModel!.notify();
-    print('flutter翻页行为, 初始化数据完毕: ${position.toString()}');
+    print('flutter内容绘制流程, 初始化数据完毕: $position');
   }
 
   Future<void> _onPagePaintMetaUpdate() async {
     assert(_contentPainter != null);
     // await _contentPainter!.canScroll(position.userScrollDirection)
     if (newScroll) {
-      // print('flutter翻页行为, 执行pixels = ${position.pixels}');
+      print('flutter翻页行为, 执行pixels = ${position.pixels}');
       _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
         pixels: position.pixels,
         page: position.page!,

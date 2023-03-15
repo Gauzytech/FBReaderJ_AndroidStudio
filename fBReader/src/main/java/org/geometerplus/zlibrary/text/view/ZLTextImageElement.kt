@@ -26,4 +26,10 @@ data class ZLTextImageElement constructor(
     @JvmField val URL: String,
     @JvmField val IsCover: Boolean,
     @JvmField val cachePath: String
-) : ZLTextElement("ZLTextImageElement")
+) : ZLTextElement("ZLTextImageElement") {
+
+    fun cacheDirectoryWithFileName(): String {
+        val arr = cachePath.split("/");
+        return arr[arr.size - 2] + "/" + arr[arr.size - 1]
+    }
+}

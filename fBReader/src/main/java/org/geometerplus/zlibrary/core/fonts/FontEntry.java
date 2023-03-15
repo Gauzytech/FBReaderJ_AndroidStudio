@@ -19,10 +19,10 @@
 
 package org.geometerplus.zlibrary.core.fonts;
 
+import org.fbreader.util.ComparisonUtil;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.fbreader.util.ComparisonUtil;
 
 public final class FontEntry {
 	private static Map<String,FontEntry> ourSystemEntries = new HashMap<String,FontEntry>();

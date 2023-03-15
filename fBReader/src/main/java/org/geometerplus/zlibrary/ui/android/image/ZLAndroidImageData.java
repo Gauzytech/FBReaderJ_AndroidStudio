@@ -54,6 +54,7 @@ public abstract class ZLAndroidImageData implements ZLImageData {
 		if (maxSize == null) {
 			maxSize = new ZLPaintContext.Size(-1, -1);
 		}
+		// size一样 有myBitmap缓存就直接返回
 		if (!maxSize.equals(myLastRequestedSize) || scaling != myLastRequestedScaling) {
 			myLastRequestedSize = maxSize;
 			myLastRequestedScaling = scaling;

@@ -36,7 +36,6 @@ class ZLAndroidImageManager : ZLImageManager() {
         if (targetFile.parentFile?.exists() == false) {
             targetFile.parentFile?.mkdirs()
         }
-        Timber.v("解析缓存流程: fileName = $cacheFilePath")
         check(image is ZLStreamImage) { "$image 不是ZLStreamImage" }
         if (!targetFile.exists()) {
             targetFile.createNewFile()

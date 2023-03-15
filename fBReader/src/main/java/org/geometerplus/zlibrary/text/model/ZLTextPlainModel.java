@@ -185,7 +185,7 @@ public final class ZLTextPlainModel implements ZLTextModel, ZLTextStyleEntry.Fea
 	}
 
 	public final List<ZLTextMark> getMarks() {
-		return myMarks != null ? myMarks : Collections.<ZLTextMark>emptyList();
+		return myMarks != null ? myMarks : Collections.emptyList();
 	}
 
 	public final void removeAllMarks() {

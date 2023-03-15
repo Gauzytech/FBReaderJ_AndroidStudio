@@ -40,7 +40,6 @@ import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementType;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
@@ -746,7 +745,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
-        return new ContentPageResult.Paint(linePaintDataList);
+        return new ContentPageResult.Paint(linePaintDataList, getContext().getGeometry());
     }
 
     @Override
@@ -1291,7 +1290,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     private @Nullable
-    LinePaintData prepareDrawTextLine(ZLTextPage page, List<ZLTextHighlighting> highlightingList, ZLTextLineInfo info, int from, int to) {
+    LinePaintData prepareDrawTextLine(ZLTextPage page,
+                                      List<ZLTextHighlighting> highlightingList,
+                                      ZLTextLineInfo info,
+                                      int from,
+                                      int to) {
         final ZLPaintContext context = getContext();
 
         final ZLTextParagraphCursor paragraph = info.paragraphCursor;
@@ -1338,13 +1341,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 } else if (element instanceof ZLTextImageElement) {
                     final ZLTextImageElement imageElement = (ZLTextImageElement) element;
                     ElementPaintData.Image imagePaintData = new ElementPaintData.Image.Builder()
-                            .sourceType(ZLImageProxy.SourceType.FILE.name())
+                            .sourceType(ZLImageProxy.SourceType.FILE.ordinal())
                             .left(areaX)
                             .top(areaY)
-                            .imageSrc(imageElement.cachePath)
+                            .imageSrc(imageElement.cacheDirectoryWithFileName())
                             .maxSize(getTextAreaSize())
-                            .scalingType(getScalingType(imageElement).name())
-                            .adjustingModeForImages(getAdjustingModeForImages().name())
+                            .scalingType(getScalingType(imageElement).ordinal())
+                            .adjustingModeForImages(getAdjustingModeForImages().ordinal())
                             .build();
 
                     lineElements.add(imagePaintData);

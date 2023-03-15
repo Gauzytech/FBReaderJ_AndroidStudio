@@ -3,10 +3,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 
 /// Bitmap管理（绘制后的图）的实现
 class BitmapManagerImpl with BitmapManager {
-
   final List<ui.Image?> _imageCache =
       List.filled(BitmapManager.cacheSize, null, growable: false);
 
@@ -16,6 +17,13 @@ class BitmapManagerImpl with BitmapManager {
       List.filled(BitmapManager.cacheSize, null, growable: false);
   int _contentWidth = 0;
   int _contentHeight = 0;
+
+  final List<List<LinePaintData>?> paintDataCollections =
+      List.filled(BitmapManager.cacheSize, null, growable: false);
+
+  bool get hasGeometry => _geometry != null;
+  Geometry get geometry => _geometry!;
+  Geometry? _geometry;
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
@@ -27,6 +35,10 @@ class BitmapManagerImpl with BitmapManager {
       _contentHeight = height;
       // clear();
     }
+  }
+
+  void setGeometry(Geometry geometry) {
+    _geometry = geometry;
   }
 
   @override
@@ -77,6 +89,18 @@ class BitmapManagerImpl with BitmapManager {
     print(
         "flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}], idx = $internalCacheIndex");
     _imageCache[internalCacheIndex] = image;
+  }
+
+  void cachePagePaintData(
+      int internalCacheIndex, List<LinePaintData> linePaintDataList) {
+    // todo 现在就默认第一个
+    print('flutter内容绘制流程, cachePagePaintData: ${linePaintDataList.length}');
+    paintDataCollections[0] = linePaintDataList;
+  }
+
+  List<LinePaintData>? getPagePaintData(PageIndex pageIndex) {
+    // todo 现在就默认第一个
+    return paintDataCollections[0];
   }
 
   void replaceBitmapCache(PageIndex index, ui.Image image) {

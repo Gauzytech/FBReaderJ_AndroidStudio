@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/animation/model/image_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
+import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/utils/time_util.dart';
+import 'package:path_provider/path_provider.dart';
 
-import '../../book_content/content_page.dart';
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
@@ -44,6 +47,14 @@ class PageRepository with PageRepositoryDelegate {
 
   ReaderPageViewModelDelegate? _readerPageViewModelDelegate;
 
+  Directory? _rootDirectory;
+
+  Directory get rootDirectory => _rootDirectory!;
+
+  bool get hasGeometry => _bitmapManager.hasGeometry;
+
+  Geometry get geometry => _bitmapManager.geometry;
+
   PageRepository({required MethodChannel methodChannel}) {
     _nativeInterface =
         NativeInterface(methodChannel: methodChannel, delegate: this);
@@ -53,15 +64,25 @@ class PageRepository with PageRepositoryDelegate {
     return _bitmapManager.getBitmap(index);
   }
 
+  List<LinePaintData>? getPagePaintData(PageIndex pageIndex) {
+    return _bitmapManager.getPagePaintData(pageIndex);
+  }
+
   @override
   void refreshContent() {
     // viewState.viewModel?.notify();
     _readerPageViewModelDelegate!.scrollContext.invalidateContent();
   }
 
+  Future<void> fetchRootPath() async {
+    // todo 区分安卓和iOS的私有文件夹目录
+    _rootDirectory ??= await getExternalStorageDirectory();
+  }
+
   @override
   Future<void> initialize(PageIndex pageIndex) async {
     print('flutter内容绘制流程[initialize], $pageIndex');
+    fetchRootPath();
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     try {
@@ -74,15 +95,27 @@ class PageRepository with PageRepositoryDelegate {
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
       List<LinePaintData> linePaintDataList =
           (pageData['linePaintDataList'] as List)
-              .map((item) => LinePaintData.fromJson(item))
+              .map((item) => LinePaintData.fromJson(
+                    rootDirectory.parent.path,
+                    item,
+                  ))
               .toList();
+      int width = result['width'];
+      int height = result['height'];
 
+      print('flutter内容绘制流程, 收到了: ${linePaintDataList.length}');
       for (var element in linePaintDataList) {
-        print('flutter_bridge[${now()}], 收到了: $element');
         for (var data in element.elementPaintDataList) {
-          print('flutter_bridge: $data');
+          if (data is ImageElementPaintData) {
+            await data.fetchImage(rootDirectory.parent.path);
+            print(
+                'flutter内容绘制流程, cache image src = ${_rootDirectory!.parent.path}/${data.imageSrc}');
+          }
         }
       }
+      // todo fetch图片太耗时了, 要重新处理一下
+      print('flutter_perf[${now()}], fetch图片完毕');
+
       // final image = await imgBytes.toImage();
 
       // _bitmapManager缓存img
@@ -91,6 +124,12 @@ class PageRepository with PageRepositoryDelegate {
 
       // 初始化page滚动相关的数据并通知页面刷新
       // _readerPageViewModelDelegate!.initialize(image.width, image.height);
+
+      _bitmapManager.setSize(width, height);
+      _bitmapManager.setGeometry(Geometry.fromJson(pageData['geometry']));
+      _bitmapManager.cachePagePaintData(
+          internalIdx, linePaintDataList.toList());
+      _readerPageViewModelDelegate!.initialize(width, height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
@@ -322,12 +361,10 @@ class PageRepository with PageRepositoryDelegate {
   }
 
   void attach(ReaderPageViewModelDelegate pageManagerDelegate) {
-    print('flutter内容绘制流程 repository attach');
     _readerPageViewModelDelegate = pageManagerDelegate;
   }
 
   void detach() {
-    print('flutter内容绘制流程 repository detach');
     _readerPageViewModelDelegate = null;
   }
 }

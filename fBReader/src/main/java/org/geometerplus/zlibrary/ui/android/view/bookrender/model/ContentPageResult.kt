@@ -1,6 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
 import org.geometerplus.zlibrary.text.view.ZLTextPage
+import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext.Geometry
 
 /**
  * @Package org.geometerplus.zlibrary.ui.android.view.bookrender.model
@@ -11,6 +12,6 @@ import org.geometerplus.zlibrary.text.view.ZLTextPage
  */
 sealed class ContentPageResult {
 
-    data class Paint(val linePaintDataList: List<LinePaintData>) : ContentPageResult()
+    data class Paint(val linePaintDataList: List<LinePaintData>, val geometry: Geometry) : ContentPageResult()
     object NoOp : ContentPageResult()
 }

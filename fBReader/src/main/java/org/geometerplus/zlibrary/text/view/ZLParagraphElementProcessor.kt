@@ -128,9 +128,9 @@ class ZLParagraphElementProcessor(
                         val data = ZLImageManager.Instance().getImageData(image)
                         if (data != null) {
                             val cachePath = if (DebugHelper.ENABLE_FLUTTER) {
-                                Timber.v("解析缓存流程 entryId = ${imageEntry.Id}")
+                                Timber.v("解析缓存流程 entryId = ${imageEntry.Id} imageCacheRootPath = $imageCacheRootPath")
                                 ZLImageManager.Instance().writeImageToCache(imageCacheRootPath, imageEntry.Id, image)
-                            } else null
+                            } else ""
 
                             hyperlink?.addElementIndex(elements.size)
                             elements.add(

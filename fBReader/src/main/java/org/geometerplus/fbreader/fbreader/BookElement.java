@@ -140,7 +140,7 @@ public final class BookElement extends ExtensionElement {
 		if (imageUrl != null) {
 			ElementPaintData.Extension.Builder extensionBuilder = new ElementPaintData.Extension.Builder();
 			ElementPaintData.Image imagePaintData = new ElementPaintData.Image.Builder()
-					.sourceType(ZLImageProxy.SourceType.NETWORK.name())
+					.sourceType(ZLImageProxy.SourceType.NETWORK.ordinal())
 					.left(area.XStart + hMargin)
 					.top(area.YEnd - vMargin)
 					.imageSrc(imageUrl)
@@ -148,8 +148,8 @@ public final class BookElement extends ExtensionElement {
 							area.XEnd - area.XStart - 2 * hMargin + 1,
 							area.YEnd - area.YStart - 2 * vMargin + 1
 					))
-					.scalingType(ZLPaintContext.ScalingType.FitMaximum.name())
-					.adjustingModeForImages(ZLPaintContext.ColorAdjustingMode.NONE.name())
+					.scalingType(ZLPaintContext.ScalingType.FitMaximum.ordinal())
+					.adjustingModeForImages(ZLPaintContext.ColorAdjustingMode.NONE.ordinal())
 					.build();
 			return extensionBuilder.imagePaintData(imagePaintData)
 					.build();

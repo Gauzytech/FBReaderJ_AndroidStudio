@@ -26,6 +26,7 @@ import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
@@ -194,6 +195,8 @@ abstract public class ZLPaintContext {
      * @param alpha 透明度
      */
     abstract public void setFillColor(ZLColor color, int alpha);
+
+    abstract public ZLAndroidPaintContext.Geometry getGeometry();
 
     /**
      * 获取宽度

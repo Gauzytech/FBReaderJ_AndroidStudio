@@ -353,9 +353,10 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
 
   bool shouldRepaint(
       CustomPainter oldDelegate, ContentPainter currentDelegate) {
-    print('flutter内容绘制流程, shouldRepaint');
     if (currentState == RenderState.ANIMATING ||
-        currentTouchData?.action == EventAction.dragStart) {
+        currentTouchData?.action == EventAction.dragStart ||
+        currentDelegate.currentTouchData == null) {
+      print('flutter内容绘制流程, shouldRepaint = true');
       return true;
     }
 

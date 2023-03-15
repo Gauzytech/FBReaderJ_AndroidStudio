@@ -43,7 +43,6 @@ import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageData;
 import org.geometerplus.zlibrary.ui.android.util.ZLAndroidColorUtil;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 import java.util.List;
@@ -420,6 +419,11 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         if (color != null) {
             myFillPaint.setColor(ZLAndroidColorUtil.rgba(color, alpha));
         }
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        return myGeometry;
     }
 
     public int getWidth() {

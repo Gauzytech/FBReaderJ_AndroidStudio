@@ -30,6 +30,7 @@ import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
@@ -88,6 +89,11 @@ final class DummyPaintContext extends ZLPaintContext {
 
     @Override
     public void setFillColor(ZLColor color, int alpha) {
+    }
+
+    @Override
+    public ZLAndroidPaintContext.Geometry getGeometry() {
+        return null;
     }
 
     @Override

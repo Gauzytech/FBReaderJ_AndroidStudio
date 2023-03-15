@@ -31,13 +31,12 @@ class ContentPainter extends CustomPainter with BookContentPainter {
       : _pageViewModel = pageViewModel;
 
   @override
-  Future paint(Canvas canvas, Size size) async {
+  void paint(Canvas canvas, Size size) {
     if (!_pageViewModel.readerViewModel.isPageDataEmpty()) {
-      print('flutter内容绘制流程, 开始绘制');
       _pageViewModel.setPageSize(size);
       _pageViewModel.onPageDraw(canvas);
     } else {
-      print('flutter内容绘制流程, 没有bitmap缓存数据, 绘制空白');
+      print('flutter内容绘制流程, 没有bitmap缓存数据, 空白, 不绘制');
     }
   }
 

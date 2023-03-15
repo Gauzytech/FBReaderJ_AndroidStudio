@@ -2,17 +2,19 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
+import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
+import 'package:flutter_lib/utils/time_util.dart';
 
+import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
+import 'model/image_element_paint_data.dart';
 
 /// 滑动动画 ///
 /// ps 正在研究怎么加上惯性 (ScrollPhysics:可滑动组件的滑动控制器,android 对应：ClampingScrollPhysics，ScrollController呢？)
@@ -218,6 +220,8 @@ class PageTurnAnimation extends BaseAnimationPage {
   @override
   void onDraw(Canvas canvas) {
     print('flutter动画流程 onDraw, currentMoveDx = $currentMoveDx');
+    final PagePaintContext pagePaintContext =
+        PagePaintContext(canvas, readerViewModel.repository.geometry, 0);
     // currentMoveDy 负数: 往右滚动, 正数: 往左滚动
     double actualOffsetX = currentMoveDx < 0
         ? -(currentMoveDx.abs() % currentSize.width)
@@ -229,7 +233,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   void onTouchEvent(TouchEvent event) {
     switch (event.action) {
       case EventAction.dragStart:
-        // 手指按下, 保存起点
+      // 手指按下, 保存起点
         if (!mStartDx.isNaN && !mStartDx.isInfinite) {
           print('flutter动画流程:onTouchEvent${event.touchPoint}, 保存dragStart的坐标, '
               'mStartDx = $currentMoveDx');
@@ -237,7 +241,7 @@ class PageTurnAnimation extends BaseAnimationPage {
           mStartDx = currentMoveDx;
         }
         break;
-      // 手指移动，或者抬起
+    // 手指移动，或者抬起
       case EventAction.move:
       case EventAction.flingReleased:
         print(
@@ -263,7 +267,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         break;
       case EventAction.dragEnd:
       case EventAction.cancel:
-        // 这里不会执行, 见setCurrentTouchEvent
+    // 这里不会执行, 见setCurrentTouchEvent
         break;
       default:
         break;
@@ -404,10 +408,10 @@ class PageTurnAnimation extends BaseAnimationPage {
     _onPageDrawInternal(canvas, actualOffsetX);
   }
 
-  void _onPageDrawInternal(
-    ui.Canvas canvas,
-    double actualOffsetX,
-  ) {
+  void _onPageDrawInternal(ui.Canvas canvas, double actualOffsetX) {
+    if (!readerViewModel.repository.hasGeometry) return;
+    PagePaintContext pagePaintContext =
+        PagePaintContext(canvas, readerViewModel.repository.geometry, 0);
     canvas.save();
     if (actualOffsetX < 0) {
       // 绘制下一页
@@ -418,8 +422,8 @@ class PageTurnAnimation extends BaseAnimationPage {
         canvas.drawImage(nextPage, Offset.zero, _paint);
         print(
           'flutter翻页行为:onDraw[有nextPage], '
-              'actualOffsetX = $actualOffsetX, '
-              'translate = ${actualOffsetX - currentSize.width}',
+          'actualOffsetX = $actualOffsetX, '
+          'translate = ${actualOffsetX - currentSize.width}',
         );
       } else {
         print('flutter翻页行为:onDraw[无nextPage], actualOffsetX = $actualOffsetX');
@@ -468,20 +472,42 @@ class PageTurnAnimation extends BaseAnimationPage {
       print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
       _resetData();
       _metaData.onPageCentered?.call();
-      readerViewModel.preloadAdjacentPage();
+      // readerViewModel.preloadAdjacentPage();
     }
 
     canvas.restore();
     canvas.save();
-    ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
+    // ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
+    List<LinePaintData>? currentPageData =
+        readerViewModel.getPagePaintData(PageIndex.current);
     canvas.translate(actualOffsetX, 0);
-    if (currentPage != null) {
-      canvas.drawImage(currentPage, Offset.zero, _paint);
+    // if (currentPage != null) {
+    //   canvas.drawImage(currentPage, Offset.zero, _paint);
+    // } else {
+    //   print('flutter翻页行为, currentPage不存在');
+    //   _drawUnavailable(canvas);
+    // }
+    if (currentPageData != null) {
+      print('flutter内容绘制流程, currentPage存在, 开始绘制');
+      for (var lineInfo in currentPageData) {
+        for (var elementPaintData in lineInfo.elementPaintDataList) {
+          print('flutter内容绘制流程, $elementPaintData');
+          if (elementPaintData is ImageElementPaintData) {
+            pagePaintContext.drawImage(
+                canvas,
+                elementPaintData.left,
+                elementPaintData.top,
+                elementPaintData,
+                elementPaintData.adjustingModeForImages);
+          }
+        }
+      }
     } else {
-      print('flutter翻页行为, currentPage不存在');
+      print('flutter内容绘制流程, currentPage不存在');
       _drawUnavailable(canvas);
     }
     canvas.restore();
+    print('flutter_perf, 绘制完毕: ${now()}');
   }
 
   void _drawUnavailable(ui.Canvas canvas) {

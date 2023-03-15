@@ -9,6 +9,8 @@ import 'package:flutter_lib/model/reader_progress_manager.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 
+import '../reader/animation/model/line_paint_data.dart';
+
 /// 提供所有图书数据, 用于阅读界面menu联动
 class ReaderViewModel extends BaseViewModel {
   ReaderBookInfo bookInfo;
@@ -164,6 +166,10 @@ class ReaderViewModel extends BaseViewModel {
   ui.Image? getPage(PageIndex pageIndex) {
     ImageSrc imageSrc = repository.getPage(pageIndex);
     return imageSrc.img;
+  }
+
+  List<LinePaintData>? getPagePaintData(PageIndex pageIndex) {
+    return repository.getPagePaintData(pageIndex);
   }
 
   bool pageExist(PageIndex pageIndex) {

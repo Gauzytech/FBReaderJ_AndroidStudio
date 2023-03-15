@@ -53,31 +53,31 @@ sealed class ElementPaintData {
 
     data class Image(
         val elementType: Int = ElementType.IMAGE.ordinal,
-        val sourceType: String,
+        val sourceType: Int,
         val left: Float,
         val top: Float,
         val imageSrc: String,
         val maxSize: Size,
-        val scalingType: String,
-        val adjustingModeForImages: String,
+        val scalingType: Int,
+        val adjustingModeForImages: Int,
     ) : ElementPaintData() {
 
         internal class Builder {
-            private var sourceType: String? = null
+            private var sourceType: Int? = null
             private var left: Float? = null
             private var top: Float? = null
             private var imageSrc: String? = null
             private var maxSize: Size? = null
-            private var scalingType: String? = null
-            private var adjustingModeForImages: String? = null
+            private var scalingType: Int? = null
+            private var adjustingModeForImages: Int? = null
 
-            fun sourceType(sourceType: String) = apply { this.sourceType = sourceType }
+            fun sourceType(sourceType: Int) = apply { this.sourceType = sourceType }
             fun left(left: Float) = apply { this.left = left }
             fun top(top: Float) = apply { this.top = top }
             fun imageSrc(src: String) = apply { this.imageSrc = src }
             fun maxSize(maxSize: Size) = apply { this.maxSize = maxSize }
-            fun scalingType(scalingType: String) = apply { this.scalingType = scalingType }
-            fun adjustingModeForImages(adjustingModeForImages: String) =
+            fun scalingType(scalingType: Int) = apply { this.scalingType = scalingType }
+            fun adjustingModeForImages(adjustingModeForImages: Int) =
                 apply { this.adjustingModeForImages = adjustingModeForImages }
 
             fun build() = Image(

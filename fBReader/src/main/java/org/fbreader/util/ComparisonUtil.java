@@ -19,9 +19,12 @@
 
 package org.fbreader.util;
 
+import java.util.Objects;
+
 public class ComparisonUtil {
+	
 	public static boolean equal(Object o1, Object o2) {
-		return o1 == null ? o2 == null : o1.equals(o2);
+		return Objects.equals(o1, o2);
 	}
 
 	public static int hashCode(Object o) {

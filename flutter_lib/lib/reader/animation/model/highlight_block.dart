@@ -73,8 +73,8 @@ class ColorData {
 
   ColorData(this.red, this.green, this.blue);
 
-  Color toColor() {
-    return Color.fromRGBO(red, green, blue, 1.0);
+  Color toColor([double opacity = 1.0]) {
+    return Color.fromRGBO(red, green, blue, opacity);
   }
 
   ColorData.fromJson(Map<String, dynamic> json)

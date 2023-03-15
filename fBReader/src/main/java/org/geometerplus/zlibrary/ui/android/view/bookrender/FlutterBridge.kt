@@ -11,7 +11,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
-import org.geometerplus.zlibrary.text.view.ZLTextPage
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.DRAW_ON_BITMAP
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_END
@@ -79,8 +78,14 @@ class FlutterBridge(
                     when (pageResult) {
                         ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
                         is ContentPageResult.Paint -> {
-                            Timber.v("$TAG, 发送")
-                            result.success(mapOf("page_data" to gson.toJson(pageResult)))
+                            Timber.v("flutter_perf, 发送, ${System.currentTimeMillis()}")
+                            result.success(
+                                mapOf(
+                                    "page_data" to gson.toJson(pageResult),
+                                    "width" to width,
+                                    "height" to height
+                                )
+                            )
                         }
                     }
                 }
