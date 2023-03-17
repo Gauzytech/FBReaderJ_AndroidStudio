@@ -13,6 +13,13 @@ class ExtensionElementPaintData extends ElementPaintData {
             VideoElementPaintData.fromJson(json['videoPaintData']);
 
   @override
+  void tearDown() {
+    super.tearDown();
+    imagePaintData.tearDown();
+    videoElementPaintData.tearDown();
+  }
+
+  @override
   void debugFillDescription(List<String> description) {
     super.debugFillDescription(description);
     description.add("$runtimeType");

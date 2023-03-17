@@ -4,11 +4,12 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_lib/interface/disposable_paint_data.dart';
 import 'package:image/image.dart' as lib;
 
 import 'element_paint_data.dart';
 
-class ImageElementPaintData extends ElementPaintData {
+class ImageElementPaintData extends ElementPaintData with DisposablePaintData {
   ImageSourceType sourceType;
   double left;
   double top;
@@ -21,7 +22,7 @@ class ImageElementPaintData extends ElementPaintData {
   ui.Image? _image;
 
   bool get hasImage => _image != null;
-  VoidCallback? onImageLoaded;
+  VoidCallback? _onImageLoaded;
 
   ImageElementPaintData.fromJson(Map<String, dynamic> json)
       : sourceType = ImageSourceType.fromOrdinal(json['sourceType']),
@@ -36,11 +37,11 @@ class ImageElementPaintData extends ElementPaintData {
         adjustingModeForImages =
             ColorAdjustingMode.fromOrdinal(json['adjustingModeForImages']);
 
-  ImageStreamListener? listener;
-  ImageStream? stream;
+  ImageStreamListener? _listener;
+  ImageStream? _stream;
 
   Future<void> fetchImage(String rootPath, {VoidCallback? callback}) async {
-    onImageLoaded = callback;
+    _onImageLoaded = callback;
     switch (sourceType) {
       case ImageSourceType.file:
         var path = "$rootPath/$imageSrc";
@@ -52,7 +53,7 @@ class ImageElementPaintData extends ElementPaintData {
         _image = baseSizeImage != null
             ? await _resizeImage(baseSizeImage, maxSize, scalingType)
             : null;
-        onImageLoaded?.call();
+        _onImageLoaded?.call();
         break;
       case ImageSourceType.network:
         throw Exception('not implemented');
@@ -107,24 +108,26 @@ class ImageElementPaintData extends ElementPaintData {
     ImageConfiguration config = ImageConfiguration.empty,
   }) async {
     Completer<ui.Image> completer = Completer<ui.Image>();
-    stream = provider.resolve(config);
-    listener = ImageStreamListener(
+    _stream = provider.resolve(config);
+    _listener = ImageStreamListener(
       (ImageInfo frame, bool sync) {
         final ui.Image baseSizeImage = frame.image;
         completer.complete(baseSizeImage);
-        stream?.removeListener(listener!);
+        _stream?.removeListener(_listener!);
       },
     );
-    stream?.addListener(listener!);
+    _stream?.addListener(_listener!);
     return completer.future;
   }
 
+  @override
   void tearDown() {
-    if (listener != null) {
-      stream?.removeListener(listener!);
+    if (_listener != null) {
+      _stream?.removeListener(_listener!);
     }
-    onImageLoaded = null;
-    image?.dispose();
+    _onImageLoaded = null;
+    _image?.dispose();
+    _image = null;
   }
 
   @override

@@ -1,0 +1,5 @@
+
+mixin DisposablePaintData {
+
+  void tearDown();
+}

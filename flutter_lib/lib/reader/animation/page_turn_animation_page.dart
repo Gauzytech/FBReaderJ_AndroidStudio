@@ -15,6 +15,7 @@ import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
 import 'model/image_element_paint_data.dart';
+import 'model/page_paint_data.dart';
 
 /// 滑动动画 ///
 /// ps 正在研究怎么加上惯性 (ScrollPhysics:可滑动组件的滑动控制器,android 对应：ClampingScrollPhysics，ScrollController呢？)
@@ -478,7 +479,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     canvas.restore();
     canvas.save();
     // ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
-    List<LinePaintData>? currentPageData =
+    PagePaintData? currentPageData =
         readerViewModel.getPagePaintData(PageIndex.current);
     canvas.translate(actualOffsetX, 0);
     // if (currentPage != null) {
@@ -489,7 +490,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     // }
     if (currentPageData != null) {
       print('flutter内容绘制流程, currentPage存在, 开始绘制');
-      for (var lineInfo in currentPageData) {
+      for (var lineInfo in currentPageData.linePaintDataCollection) {
         for (var elementPaintData in lineInfo.elementPaintDataList) {
           print('flutter内容绘制流程, $elementPaintData');
           if (elementPaintData is ImageElementPaintData) {

@@ -15,6 +15,7 @@ import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../animation/model/page_paint_data.dart';
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
@@ -64,7 +65,7 @@ class PageRepository with PageRepositoryDelegate {
     return _bitmapManager.getBitmap(index);
   }
 
-  List<LinePaintData>? getPagePaintData(PageIndex pageIndex) {
+  PagePaintData? getPagePaintData(PageIndex pageIndex) {
     return _bitmapManager.getPagePaintData(pageIndex);
   }
 
@@ -107,14 +108,12 @@ class PageRepository with PageRepositoryDelegate {
       // for (var element in linePaintDataList) {
       //   for (var data in element.elementPaintDataList) {
       //     if (data is ImageElementPaintData) {
-      //       await data.fetchImage(rootDirectory.parent.path);
       //       print(
       //           'flutter内容绘制流程, cache image src = ${_rootDirectory!.parent.path}/${data.imageSrc}');
       //     }
       //   }
       // }
-      // todo fetch图片太耗时了, 要重新处理一下
-      print('flutter_perf[${now()}], fetch图片完毕');
+
 
       // final image = await imgBytes.toImage();
 
@@ -127,8 +126,7 @@ class PageRepository with PageRepositoryDelegate {
 
       _bitmapManager.setSize(width, height);
       _bitmapManager.setGeometry(Geometry.fromJson(pageData['geometry']));
-      _bitmapManager.cachePagePaintData(
-          internalIdx, linePaintDataList.toList());
+      _bitmapManager.cachePagePaintData(internalIdx, linePaintDataList);
       _readerPageViewModelDelegate!.initialize(width, height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
@@ -225,14 +223,13 @@ class PageRepository with PageRepositoryDelegate {
     }
   }
 
-  Size getContentSize() {
-    return _bitmapManager.getContentSize();
-  }
+  Size getContentSize() => _bitmapManager.contentSize;
 
   void shift(bool forward) {
     _bitmapManager.shift(forward);
   }
 
+  /// debug use
   PageIndex getPageIndex(bool forward) {
     return PageIndex.current;
   }

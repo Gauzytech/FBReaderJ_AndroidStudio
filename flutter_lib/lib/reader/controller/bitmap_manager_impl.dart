@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 
 /// Bitmap管理（绘制后的图）的实现
@@ -18,12 +19,17 @@ class BitmapManagerImpl with BitmapManager {
   int _contentWidth = 0;
   int _contentHeight = 0;
 
-  final List<List<LinePaintData>?> paintDataCollections =
+  final List<PagePaintData?> _pageDataCache =
       List.filled(BitmapManager.cacheSize, null, growable: false);
 
   bool get hasGeometry => _geometry != null;
+
   Geometry get geometry => _geometry!;
   Geometry? _geometry;
+
+  @override
+  Size get contentSize =>
+      Size(_contentWidth.toDouble(), _contentHeight.toDouble());
 
   /// 设置绘制Bitmap的宽高（即阅读器内容区域）
   ///
@@ -46,6 +52,7 @@ class BitmapManagerImpl with BitmapManager {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
       _imageCache[i]?.dispose();
       _imageCache[i] = null;
+      _pageDataCache[i]?.dispose();
       _pageIndexCache[i] = null;
     }
   }
@@ -71,36 +78,34 @@ class BitmapManagerImpl with BitmapManager {
   int findInternalCacheIndex(PageIndex pageIndex) {
     print(
         "flutter内容绘制流程[findInternalCacheIndex], $pageIndex, $indexCacheDebugDescription}");
-    final int internalCacheIndex = getInternalIndex(pageIndex);
+    final int internalCacheIndex = _findInternalIndex(pageIndex);
     // 找到内部index先把位置占住
     _pageIndexCache[internalCacheIndex] = pageIndex;
 
-    if (_imageCache[internalCacheIndex] == null) {
+    // if (_imageCache[internalCacheIndex] == null) {
+    //   return internalCacheIndex;
+    // } else {
+    //   // 如果已经存在一个image, 直接清掉
+    //   _imageCache[internalCacheIndex]!.dispose();
+    //   _imageCache[internalCacheIndex] = null;
+    //   return internalCacheIndex;
+    // }
+
+    if (_pageDataCache[internalCacheIndex] == null) {
       return internalCacheIndex;
     } else {
       // 如果已经存在一个image, 直接清掉
-      _imageCache[internalCacheIndex]!.dispose();
-      _imageCache[internalCacheIndex] = null;
+      _pageDataCache[internalCacheIndex]!.dispose();
+      _pageDataCache[internalCacheIndex] = null;
       return internalCacheIndex;
     }
   }
 
+  @override
   void cacheBitmap(int internalCacheIndex, ui.Image image) {
     print(
         "flutter内容绘制流程, 收到了图片并缓存[${image.width}, ${image.height}], idx = $internalCacheIndex");
     _imageCache[internalCacheIndex] = image;
-  }
-
-  void cachePagePaintData(
-      int internalCacheIndex, List<LinePaintData> linePaintDataList) {
-    // todo 现在就默认第一个
-    print('flutter内容绘制流程, cachePagePaintData: ${linePaintDataList.length}');
-    paintDataCollections[0] = linePaintDataList;
-  }
-
-  List<LinePaintData>? getPagePaintData(PageIndex pageIndex) {
-    // todo 现在就默认第一个
-    return paintDataCollections[0];
   }
 
   void replaceBitmapCache(PageIndex index, ui.Image image) {
@@ -117,7 +122,9 @@ class BitmapManagerImpl with BitmapManager {
   }
 
   @override
-  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {}
+  void drawBitmap(Canvas canvas, int x, int y, PageIndex index, Paint paint) {
+    // TODO: implement drawBitmap
+  }
 
   @override
   void drawPreviewBitmap(
@@ -128,7 +135,7 @@ class BitmapManagerImpl with BitmapManager {
   /// 获取一个内部索引位置，用于存储Bitmap（原则是：先寻找空的，再寻找非当前使用的）
   ///
   /// @return 索引位置
-  int getInternalIndex(PageIndex index) {
+  int _findInternalIndex(PageIndex index) {
     // 寻找没有存储内容的位置
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
       if (_pageIndexCache[i] == null) {
@@ -178,18 +185,36 @@ class BitmapManagerImpl with BitmapManager {
     }
   }
 
-  Size getContentSize() {
-    return Size(_contentWidth.toDouble(), _contentHeight.toDouble());
-  }
-
   String get indexCacheDebugDescription => '$_pageIndexCache';
 
   bool isEmpty() {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
       if (_pageIndexCache[i] != null) return false;
-      if (_imageCache[i] != null) return false;
+      // if (_imageCache[i] != null) return false;
+      if (_pageDataCache[i] != null) return false;
     }
     return true;
+  }
+
+  @override
+  void cachePagePaintData(
+    int internalCacheIndex,
+    List<LinePaintData> linePaintDataList,
+  ) {
+    print('flutter内容绘制流程[cachePagePaintData],: $internalCacheIndex to ${linePaintDataList.length}');
+    _pageDataCache[internalCacheIndex] =
+        PagePaintData(linePaintDataCollection: linePaintDataList.toList());
+  }
+
+  @override
+  PagePaintData? getPagePaintData(PageIndex pageIndex) {
+    print('flutter内容绘制流程[getPagePaintData], $_pageIndexCache');
+    for (int i = 0; i < BitmapManager.cacheSize; i++) {
+      if (_pageIndexCache[i] == pageIndex) {
+        return _pageDataCache[i];
+      }
+    }
+    return null;
   }
 }
 
