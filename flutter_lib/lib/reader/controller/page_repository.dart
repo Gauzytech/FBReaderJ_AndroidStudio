@@ -103,16 +103,16 @@ class PageRepository with PageRepositoryDelegate {
       int width = result['width'];
       int height = result['height'];
 
-      print('flutter内容绘制流程, 收到了: ${linePaintDataList.length}');
-      for (var element in linePaintDataList) {
-        for (var data in element.elementPaintDataList) {
-          if (data is ImageElementPaintData) {
-            await data.fetchImage(rootDirectory.parent.path);
-            print(
-                'flutter内容绘制流程, cache image src = ${_rootDirectory!.parent.path}/${data.imageSrc}');
-          }
-        }
-      }
+      print('flutter内容绘制流程, 收到了PaintData: ${linePaintDataList.length}');
+      // for (var element in linePaintDataList) {
+      //   for (var data in element.elementPaintDataList) {
+      //     if (data is ImageElementPaintData) {
+      //       await data.fetchImage(rootDirectory.parent.path);
+      //       print(
+      //           'flutter内容绘制流程, cache image src = ${_rootDirectory!.parent.path}/${data.imageSrc}');
+      //     }
+      //   }
+      // }
       // todo fetch图片太耗时了, 要重新处理一下
       print('flutter_perf[${now()}], fetch图片完毕');
 

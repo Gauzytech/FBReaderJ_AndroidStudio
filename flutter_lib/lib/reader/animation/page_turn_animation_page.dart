@@ -493,12 +493,24 @@ class PageTurnAnimation extends BaseAnimationPage {
         for (var elementPaintData in lineInfo.elementPaintDataList) {
           print('flutter内容绘制流程, $elementPaintData');
           if (elementPaintData is ImageElementPaintData) {
-            pagePaintContext.drawImage(
-                canvas,
-                elementPaintData.left,
-                elementPaintData.top,
-                elementPaintData,
-                elementPaintData.adjustingModeForImages);
+            if (elementPaintData.hasImage) {
+              print('flutter内容绘制流程, image存在, 开始绘制');
+              pagePaintContext.drawImage(
+                  canvas,
+                  elementPaintData.left,
+                  elementPaintData.top,
+                  elementPaintData,
+                  elementPaintData.adjustingModeForImages);
+            } else {
+              print('flutter内容绘制流程, image不存在, 开始异步加载');
+              elementPaintData.fetchImage(
+                readerViewModel.repository.rootDirectory.parent.path,
+                callback: () {
+                  print('flutter内容绘制流程, 异步加载完毕, 刷新');
+                  readerViewModel.notify();
+                },
+              );
+            }
           }
         }
       }

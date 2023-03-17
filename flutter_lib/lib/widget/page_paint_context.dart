@@ -12,9 +12,6 @@ import '../reader/animation/model/user_settings/geometry.dart';
 class PagePaintContext extends PaintContext {
   final String _tag = "[PaintContext], 画笔context]";
 
-  /// 画布
-  final Canvas _myCanvas;
-
   /// 文字画笔
   Paint _myTextPaint = Paint()..isAntiAlias = true;
 
@@ -52,8 +49,7 @@ class PagePaintContext extends PaintContext {
   double get height => _myGeometry.areaSize.height;
 
   PagePaintContext(Canvas canvas, Geometry geometry, int scrollbarWidth)
-      : _myCanvas = canvas,
-        _myGeometry = geometry,
+      : _myGeometry = geometry,
         _myScrollbarWidth = scrollbarWidth {
     Paint.enableDithering = true;
   }
@@ -64,10 +60,10 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  void clearColor(ColorData colorData) {
+  void clearColor(ui.Canvas canvas, ColorData colorData) {
     _myBackgroundColor = colorData;
     _myFillPaint = _myFillPaint.withColor(colorData.toColor());
-    _myCanvas.drawRect(
+    canvas.drawRect(
       Rect.fromLTRB(
           0, 0, _myGeometry.areaSize.width, _myGeometry.areaSize.height),
       _transparentPaint,
@@ -75,7 +71,7 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  void drawBookMark(double x0, double y0, double x1, double y1) {
+  void drawBookMark(ui.Canvas canvas, double x0, double y0, double x1, double y1) {
     _myPath.reset();
     _myPath.moveTo(x0, y0);
     _myPath.lineTo(x1, y0);
@@ -83,7 +79,7 @@ class PagePaintContext extends PaintContext {
     _myPath.lineTo((x1 + x0) / 2, y1 - (y1 - y0) / 5);
     _myPath.lineTo(x0, y1);
     _myPath.close();
-    _myCanvas.drawPath(_myPath, _myFillPaint);
+    canvas.drawPath(_myPath, _myFillPaint);
   }
 
   @override
@@ -119,16 +115,16 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  void drawLine(double x0, double y0, double x1, double y1) {
+  void drawLine(ui.Canvas canvas, double x0, double y0, double x1, double y1) {
     _myLinePaint = _myLinePaint.withAntiAlias(false);
-    _myCanvas.drawLine(Offset(x0, y0), Offset(x1, y1), _myLinePaint);
+    canvas.drawLine(Offset(x0, y0), Offset(x1, y1), _myLinePaint);
     final points = [Offset(x0, y0), Offset(x1, y1)];
-    _myCanvas.drawPoints(ui.PointMode.points, points, _myLinePaint);
+    canvas.drawPoints(ui.PointMode.points, points, _myLinePaint);
     _myLinePaint = _myLinePaint.withAntiAlias(true);
   }
 
   @override
-  void drawOutline(List<double> xs, List<double> ys) {
+  void drawOutline(ui.Canvas canvas, List<double> xs, List<double> ys) {
     final int last = xs.length - 1;
     double xStart = (xs[0] + xs[last]) / 2;
     double yStart = (ys[0] + ys[last]) / 2;
@@ -158,38 +154,38 @@ class PagePaintContext extends PaintContext {
       path.lineTo(xs[i].toDouble(), ys[i].toDouble());
     }
     path.lineTo(xEnd, yEnd);
-    _myCanvas.drawPath(path, _myOutlinePaint);
+    canvas.drawPath(path, _myOutlinePaint);
   }
 
   @override
-  void fillCircle(double x, double y, double radius) {
-    _myCanvas.drawCircle(Offset(x, y), radius, _myFillPaint);
+  void fillCircle(ui.Canvas canvas, double x, double y, double radius) {
+    canvas.drawCircle(Offset(x, y), radius, _myFillPaint);
   }
 
   @override
-  void fillPolygon(List<double> xs, List<double> ys) {
+  void fillPolygon(ui.Canvas canvas, List<double> xs, List<double> ys) {
     final Path path = Path();
     final int last = xs.length - 1;
     path.moveTo(xs[last], ys[last]);
     for (int i = 0; i <= last; ++i) {
       path.lineTo(xs[i], ys[i]);
     }
-    _myCanvas.drawPath(path, _myFillPaint);
+    canvas.drawPath(path, _myFillPaint);
   }
 
   @override
-  void drawPolygonalLine(List<double> xs, List<double> ys) {
+  void drawPolygonalLine(ui.Canvas canvas, List<double> xs, List<double> ys) {
     final Path path = Path();
     final int last = xs.length - 1;
     path.moveTo(xs[last], ys[last]);
     for (int i = 0; i <= last; ++i) {
       path.lineTo(xs[i], ys[i]);
     }
-    _myCanvas.drawPath(path, _myLinePaint);
+    canvas.drawPath(path, _myLinePaint);
   }
 
   @override
-  void fillRectangle(double x0, double y0, double x1, double y1) {
+  void fillRectangle(ui.Canvas canvas, double x0, double y0, double x1, double y1) {
     if (x1 < x0) {
       double swap = x1;
       x1 = x0;
@@ -200,7 +196,7 @@ class PagePaintContext extends PaintContext {
       y1 = y0;
       y0 = swap;
     }
-    _myCanvas.drawRect(Rect.fromLTRB(x0, y0, x1 + 1, y1 + 1), _myFillPaint);
+    canvas.drawRect(Rect.fromLTRB(x0, y0, x1 + 1, y1 + 1), _myFillPaint);
   }
 
   @override

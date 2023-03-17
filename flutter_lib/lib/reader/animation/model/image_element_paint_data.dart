@@ -20,6 +20,9 @@ class ImageElementPaintData extends ElementPaintData {
   ui.Image? get image => _image;
   ui.Image? _image;
 
+  bool get hasImage => _image != null;
+  VoidCallback? onImageLoaded;
+
   ImageElementPaintData.fromJson(Map<String, dynamic> json)
       : sourceType = ImageSourceType.fromOrdinal(json['sourceType']),
         left = json['left'],
@@ -36,7 +39,8 @@ class ImageElementPaintData extends ElementPaintData {
   ImageStreamListener? listener;
   ImageStream? stream;
 
-  Future<void> fetchImage(String rootPath) async {
+  Future<void> fetchImage(String rootPath, {VoidCallback? callback}) async {
+    onImageLoaded = callback;
     switch (sourceType) {
       case ImageSourceType.file:
         var path = "$rootPath/$imageSrc";
@@ -48,6 +52,7 @@ class ImageElementPaintData extends ElementPaintData {
         _image = baseSizeImage != null
             ? await _resizeImage(baseSizeImage, maxSize, scalingType)
             : null;
+        onImageLoaded?.call();
         break;
       case ImageSourceType.network:
         throw Exception('not implemented');
@@ -118,6 +123,7 @@ class ImageElementPaintData extends ElementPaintData {
     if (listener != null) {
       stream?.removeListener(listener!);
     }
+    onImageLoaded = null;
     image?.dispose();
   }
 

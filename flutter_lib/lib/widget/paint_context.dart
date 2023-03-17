@@ -29,7 +29,7 @@ abstract class PaintContext {
 
   void clear(ColorData wallpaperFile, FillMode mode);
 
-  void clearColor(ColorData colorData);
+  void clearColor(ui.Canvas canvas, ColorData colorData);
 
   /// 获取背景色
   ///
@@ -277,7 +277,7 @@ abstract class PaintContext {
   /// @param y0 起始Y
   /// @param x1 结束X
   /// @param y1 结束Y
-  void drawLine(double x0, double y0, double x1, double y1);
+  void drawLine(ui.Canvas canvas, double x0, double y0, double x1, double y1);
 
   /// 绘制实心矩形（抽象）
   ///
@@ -285,7 +285,7 @@ abstract class PaintContext {
   /// @param y0 起始Y
   /// @param x1 结束X
   /// @param y1 结束Y
-  void fillRectangle(double x0, double y0, double x1, double y1);
+  void fillRectangle(ui.Canvas canvas, double x0, double y0, double x1, double y1);
 
   void drawHeader(int x, int y, String title);
 
@@ -295,26 +295,26 @@ abstract class PaintContext {
   ///
   /// @param xs X坐标集合
   /// @param ys Y坐标集合
-  void drawPolygonalLine(List<double> xs, List<double> ys);
+  void drawPolygonalLine(ui.Canvas canvas, List<double> xs, List<double> ys);
 
   /// 绘制实心多边形（抽象）
   ///
   /// @param xs X坐标集合
   /// @param ys Y坐标集合
-  void fillPolygon(List<double> xs, List<double> ys);
+  void fillPolygon(ui.Canvas canvas, List<double> xs, List<double> ys);
 
   /// 绘制轮廓线
   ///
   /// @param xs X坐标集合
   /// @param ys Y坐标集合
-  void drawOutline(List<double> xs, List<double> ys);
+  void drawOutline(ui.Canvas canvas, List<double> xs, List<double> ys);
 
   /// 绘制实心圆（抽象）
   ///
   /// @param x      圆心X
   /// @param y      圆心Y
   /// @param radius 圆半径
-  void fillCircle(double x, double y, double radius);
+  void fillCircle(ui.Canvas canvas, double x, double y, double radius);
 
   /// 绘制书签（抽象）
   ///
@@ -322,5 +322,5 @@ abstract class PaintContext {
   /// @param y0 起始Y
   /// @param x1 结束X
   /// @param y1 结束Y
-  void drawBookMark(double x0, double y0, double x1, double y1);
+  void drawBookMark(ui.Canvas canvas, double x0, double y0, double x1, double y1);
 }
