@@ -108,14 +108,20 @@ class ImageElementPaintData extends ElementPaintData with DisposablePaintData {
     ImageConfiguration config = ImageConfiguration.empty,
   }) async {
     Completer<ui.Image> completer = Completer<ui.Image>();
-    _stream = provider.resolve(config);
     _listener = ImageStreamListener(
       (ImageInfo frame, bool sync) {
+        _stream?.removeListener(_listener!);
         final ui.Image baseSizeImage = frame.image;
         completer.complete(baseSizeImage);
-        _stream?.removeListener(_listener!);
       },
+      onError: (dynamic exception, StackTrace? stackTrace) {
+        _stream?.removeListener(_listener!);
+        if (!completer.isCompleted) {
+          completer.completeError(exception, stackTrace);
+        }
+      }
     );
+    _stream = provider.resolve(config);
     _stream?.addListener(_listener!);
     return completer.future;
   }

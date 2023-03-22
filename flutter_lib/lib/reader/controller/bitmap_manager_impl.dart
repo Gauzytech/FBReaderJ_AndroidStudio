@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/model/page_index.dart';
-import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 
 /// Bitmap管理（绘制后的图）的实现

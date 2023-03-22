@@ -1,4 +1,4 @@
-import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 
 class PagePaintData {
   List<LinePaintData> linePaintDataCollection;

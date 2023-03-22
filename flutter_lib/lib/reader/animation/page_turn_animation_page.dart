@@ -6,7 +6,7 @@ import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
-import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/utils/time_util.dart';
@@ -14,8 +14,8 @@ import 'package:flutter_lib/utils/time_util.dart';
 import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
-import 'model/image_element_paint_data.dart';
-import 'model/page_paint_data.dart';
+import 'model/paint/image_element_paint_data.dart';
+import 'model/paint/page_paint_data.dart';
 
 /// 滑动动画 ///
 /// ps 正在研究怎么加上惯性 (ScrollPhysics:可滑动组件的滑动控制器,android 对应：ClampingScrollPhysics，ScrollController呢？)
@@ -98,7 +98,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     double velocity = details.velocity.pixelsPerSecond.dx;
     double startDx = getCachedTouchData().dx;
 
-    Pair direction = getAnimationDirection(eventStartPoint.dx, velocity);
+    Pair<bool, bool> direction = getAnimationDirection(eventStartPoint.dx, velocity);
     bool animateToNewPage = direction.left;
     bool goNextPage = direction.right;
     double endDx = 0;
@@ -192,7 +192,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   /// 判断动画方向，上/下一页或者回弹
-  Pair getAnimationDirection(double downEventDx, double velocity) {
+  Pair<bool, bool> getAnimationDirection(double downEventDx, double velocity) {
     final double moveDistance = getCachedTouchData().dx - downEventDx;
     // 通过最短移动距离和手指滑过的速度判断是上/下一页还是回弹
     bool animationForward =

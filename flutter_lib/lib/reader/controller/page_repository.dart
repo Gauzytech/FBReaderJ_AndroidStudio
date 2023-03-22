@@ -6,8 +6,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
-import 'package:flutter_lib/reader/animation/model/image_element_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/image_element_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
@@ -15,7 +15,7 @@ import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../animation/model/page_paint_data.dart';
+import '../animation/model/paint/page_paint_data.dart';
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 

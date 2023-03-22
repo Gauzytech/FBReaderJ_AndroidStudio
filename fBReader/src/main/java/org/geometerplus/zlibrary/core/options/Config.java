@@ -19,7 +19,12 @@
 
 package org.geometerplus.zlibrary.core.options;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class Config {
 	protected final static class NotAvailableException extends Exception {
@@ -38,10 +43,9 @@ public abstract class Config {
 		ourInstance = this;
 	}
 
-	private final String myNullString = new String("__NULL__");
-	private final Map<StringPair,String> myCache =
-		Collections.synchronizedMap(new HashMap<StringPair,String>());
-	private final Set<String> myCachedGroups = new HashSet<String>();
+	private final String myNullString = "__NULL__";
+	private final Map<StringPair, String> myCache = Collections.synchronizedMap(new HashMap<>());
+	private final Set<String> myCachedGroups = new HashSet<>();
 
 	public final String getValue(StringPair id, String defaultValue) {
 		String value = myCache.get(id);

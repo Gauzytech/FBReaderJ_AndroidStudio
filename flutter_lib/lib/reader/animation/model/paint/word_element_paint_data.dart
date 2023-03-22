@@ -1,7 +1,7 @@
 import 'dart:core';
 
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
-import 'package:flutter_lib/reader/animation/model/space_element_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/space_element_paint_data.dart';
 
 import 'element_paint_data.dart';
 

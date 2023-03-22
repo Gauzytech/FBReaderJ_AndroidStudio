@@ -9,8 +9,8 @@ import 'package:flutter_lib/model/reader_progress_manager.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 
-import '../reader/animation/model/line_paint_data.dart';
-import '../reader/animation/model/page_paint_data.dart';
+import '../reader/animation/model/paint/line_paint_data.dart';
+import '../reader/animation/model/paint/page_paint_data.dart';
 
 /// 提供所有图书数据, 用于阅读界面menu联动
 class ReaderViewModel extends BaseViewModel {

@@ -12,6 +12,12 @@ class FileEncryptionInfo {
       required this.algorithm,
       required this.contentId});
 
+  FileEncryptionInfo.fromJson(Map<String, dynamic> json)
+      : uri = json['Uri'],
+        method = json['Method'],
+        algorithm = json['Algorithm'],
+        contentId = json['ContentId'];
+
   @override
   int get hashCode {
     return CompareHelper.createHashCode(uri) +

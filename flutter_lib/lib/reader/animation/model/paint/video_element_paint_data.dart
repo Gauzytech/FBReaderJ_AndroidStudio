@@ -1,4 +1,4 @@
-import 'package:flutter_lib/reader/animation/model/element_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 
 class VideoElementPaintData extends ElementPaintData {

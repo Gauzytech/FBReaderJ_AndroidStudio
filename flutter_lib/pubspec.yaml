@@ -31,6 +31,7 @@ dependencies:
   ele_progress: ^0.0.1
   path_provider: ^2.0.13
   image: ^4.0.15
+  shared_preferences: ^2.0.8
 
 dev_dependencies:
   flutter_test:

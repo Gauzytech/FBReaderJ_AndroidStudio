@@ -6,7 +6,7 @@ import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart
 import 'package:flutter_lib/utils/paint_modify.dart';
 import 'package:flutter_lib/widget/paint_context.dart';
 
-import '../reader/animation/model/image_element_paint_data.dart';
+import '../reader/animation/model/paint/image_element_paint_data.dart';
 import '../reader/animation/model/user_settings/geometry.dart';
 
 class PagePaintContext extends PaintContext {
