@@ -1,46 +1,46 @@
-import 'package:flutter_lib/reader/animation/model/paint/style/content_text_base_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/content_text_hyper_link.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
-abstract class ContentTextStyle {
-  late ContentTextStyle _parent;
-  late ContentTextHyperLink _hyperlink;
+abstract class NRTextStyle {
+  late NRTextStyle parent;
+  late NRTextHyperLink hyperlink;
 
-  ContentTextStyle(
-    ContentTextStyle? textStyle,
-    ContentTextHyperLink hyperLink,
+  NRTextStyle(
+    NRTextStyle? textStyle,
+    NRTextHyperLink hyperLink,
   ) {
-    _parent = textStyle ?? this;
-    _hyperlink = hyperLink;
+    parent = textStyle ?? this;
+    hyperlink = hyperLink;
   }
 
-  ContentTextStyle.fromJson(Map<String, dynamic> json)
-      : _parent = ContentTextStyle.create(json['Parent']),
-        _hyperlink = ContentTextHyperLink.fromJson(json['Hyperlink']);
+  NRTextStyle.fromJson(Map<String, dynamic> json)
+      : parent = NRTextStyle.create(json['Parent']),
+        hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']);
 
-  static ContentTextStyle create(Map<String, dynamic> json) {
+  static NRTextStyle create(Map<String, dynamic> json) {
     String className = json['className'];
     switch(className) {
       case 'TextBaseStyle':
-        return ContentTextBaseStyle.fromJson(json);
+        return NRTextBaseStyle.fromJson(json);
     }
     throw Exception('Unknown class name: $className');
   }
 
-  List<FontEntry> get fontEntries;
+  List<FontEntry> getFontEntries();
 
   int getFontSize(TextMetrics metrics);
 
-  bool get isBold;
+  bool isBold();
 
-  bool get isItalic;
+  bool isItalic();
 
-  bool get isUnderline;
+  bool isUnderline();
 
-  bool get isStrikeThrough;
+  bool isStrikeThrough();
 
-  bool get isVerticallyAligned;
+  bool isVerticallyAligned();
 
   int getLeftIndent(TextMetrics metrics) {
     return getLeftMargin(metrics) + getLeftPadding(metrics);
@@ -68,8 +68,8 @@ abstract class ContentTextStyle {
 
   int getSpaceAfter(TextMetrics metrics);
 
-  // byte getAlignment();
+  int getAlignment();
 
-  /** 允许自动断字 */
+  /// 允许自动断字
   bool allowHyphenations();
 }

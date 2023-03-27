@@ -20,6 +20,7 @@
 package org.geometerplus.zlibrary.text.model;
 
 public final class ZLTextCSSStyleEntry extends ZLTextStyleEntry {
+	private String entryType = "ZLTextCSSStyleEntry";
 	public ZLTextCSSStyleEntry(short depth) {
 		super(depth);
 	}

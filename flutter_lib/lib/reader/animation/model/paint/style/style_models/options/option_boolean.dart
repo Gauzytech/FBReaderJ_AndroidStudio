@@ -1,5 +1,6 @@
-import 'package:flutter_lib/reader/animation/model/paint/style/base_option.dart';
 import 'package:flutter_lib/utils/config.dart';
+
+import 'base_option.dart';
 
 class OptionBoolean extends BaseOption {
   final bool _defaultValue;

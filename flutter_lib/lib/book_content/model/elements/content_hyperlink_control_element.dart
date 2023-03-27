@@ -1,11 +1,11 @@
 
 import 'package:flutter_lib/book_content/model/elements/content_element.dart';
-import 'package:flutter_lib/book_content/model/elements/content_hyperlink.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 
 /// 对应ZLTextHyperlinkControlElement
 class ContentHyperlinkControlElement extends ContentElement {
-  ContentHyperlink hyperlink;
+  NRTextHyperLink hyperlink;
 
   ContentHyperlinkControlElement.fromJson(Map<String, dynamic> json)
-      : hyperlink = ContentHyperlink.fromJson(json['Hyperlink']);
+      : hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']);
 }

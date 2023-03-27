@@ -47,7 +47,7 @@ public abstract class ZLTextStyleEntry {
 	}
 
 	public interface FontModifier {
-		byte FONT_MODIFIER_BOLD               = 1 << 0;
+		byte FONT_MODIFIER_BOLD               = 1;
 		byte FONT_MODIFIER_ITALIC             = 1 << 1;
 		byte FONT_MODIFIER_UNDERLINED         = 1 << 2;
 		byte FONT_MODIFIER_STRIKEDTHROUGH     = 1 << 3;

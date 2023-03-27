@@ -1,11 +1,12 @@
-import 'package:flutter_lib/reader/animation/model/paint/style/content_text_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/option_boolean.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/option_integer_range.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/option_string.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/options/option_string.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
-class ContentTextBaseStyle extends ContentTextStyle {
+import 'style_models/options/option_boolean.dart';
+import 'style_models/options/option_integer_range.dart';
+
+class NRTextBaseStyle extends NRTextStyle {
   static const String _group = "Style";
   static const String _options = "Options";
 
@@ -37,7 +38,7 @@ class ContentTextBaseStyle extends ContentTextStyle {
   String _fontFamily;
   final List<FontEntry> _fontEntries;
 
-  ContentTextBaseStyle.fromJson(Map<String, dynamic> json)
+  NRTextBaseStyle.fromJson(Map<String, dynamic> json)
       : fontFamilyOption = OptionString.fromJson(json['FontFamilyOption']),
         fontSizeOption = OptionIntegerRange.fromJson(json['FontSizeOption']),
         boldOption = OptionBoolean.fromJson(json['BoldOption']),
@@ -59,7 +60,9 @@ class ContentTextBaseStyle extends ContentTextStyle {
   }
 
   @override
-  List<FontEntry> get fontEntries => _fontEntries;
+  List<FontEntry> getFontEntries() {
+    return _fontEntries;
+  }
 
   @override
   int getFirstLineIndent(TextMetrics metrics) {
@@ -116,17 +119,32 @@ class ContentTextBaseStyle extends ContentTextStyle {
   }
 
   @override
-  bool get isBold => boldOption.getValue();
+  bool isBold() {
+    return boldOption.getValue();
+  }
 
   @override
-  bool get isItalic => italicOption.getValue();
+  bool isItalic() {
+    return italicOption.getValue();
+  }
 
   @override
-  bool get isStrikeThrough => strikeThroughOption.getValue();
+  bool isStrikeThrough() {
+    return strikeThroughOption.getValue();
+  }
 
   @override
-  bool get isUnderline => underlineOption.getValue();
+  bool isUnderline() {
+    return underlineOption.getValue();
+  }
 
   @override
-  bool get isVerticallyAligned => false;
+  bool isVerticallyAligned() {
+    return false;
+  }
+
+  @override
+  int getAlignment() {
+    return alignmentOption.getValue();
+  }
 }

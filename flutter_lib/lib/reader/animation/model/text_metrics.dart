@@ -8,6 +8,7 @@ class TextMetrics {
   int get fullHeight => _fullHeight;
   final int _fullHeight;
 
+  int get fontSize => _fontSize;
   final int _fontSize;
 
   TextMetrics(int dpi, int fullWidth, int fullHeight, int fontSize)
@@ -15,6 +16,12 @@ class TextMetrics {
         _fullWidth = fullWidth,
         _fullHeight = fullHeight,
         _fontSize = fontSize;
+
+  TextMetrics.fromJson(Map<String, dynamic> json)
+      : _dpi = json['DPI'],
+        _fullWidth = json['FullWidth'],
+        _fullHeight = json['FullHeight'],
+        _fontSize = json['FontSize'];
 
   @override
   bool operator ==(Object other) {

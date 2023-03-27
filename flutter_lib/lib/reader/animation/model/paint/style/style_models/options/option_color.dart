@@ -1,5 +1,6 @@
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/base_option.dart';
+
+import 'base_option.dart';
 
 class OptionColor extends BaseOption {
   ColorData _value;

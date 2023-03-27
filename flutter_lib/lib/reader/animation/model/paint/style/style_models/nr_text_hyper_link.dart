@@ -1,16 +1,16 @@
-class ContentTextHyperLink {
+class NRTextHyperLink {
   final int _type;
   final String? _id;
 
   List<int>? _elementIndexes;
 
-  static final ContentTextHyperLink noLink = ContentTextHyperLink(0, null);
+  static final NRTextHyperLink noLink = NRTextHyperLink(0, null);
 
-  ContentTextHyperLink(int type, String? id)
+  NRTextHyperLink(int type, String? id)
       : _type = type,
         _id = id;
 
-  ContentTextHyperLink.fromJson(Map<String, dynamic> json)
+  NRTextHyperLink.fromJson(Map<String, dynamic> json)
       : _type = json['Type'],
         _id = json['Id'],
         _elementIndexes = json['myElementIndexes'];

@@ -1,6 +1,6 @@
 import 'dart:core';
 
-import 'package:flutter_lib/reader/animation/model/paint/style/base_option.dart';
+import 'base_option.dart';
 
 class OptionInteger extends BaseOption {
   int _value;

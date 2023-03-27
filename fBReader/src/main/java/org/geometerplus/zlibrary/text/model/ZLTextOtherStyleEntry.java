@@ -20,6 +20,8 @@
 package org.geometerplus.zlibrary.text.model;
 
 public final class ZLTextOtherStyleEntry extends ZLTextStyleEntry {
+	private String entryType = "ZLTextOtherStyleEntry";
+
 	public ZLTextOtherStyleEntry() {
 		super((short)0);
 	}

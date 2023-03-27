@@ -1,4 +1,5 @@
-import 'package:flutter_lib/reader/animation/model/paint/style/base_option.dart';
+
+import 'base_option.dart';
 
 class OptionEnum<T> extends BaseOption {
   T _value;

@@ -1,6 +1,7 @@
 import 'dart:math';
 
-import 'package:flutter_lib/reader/animation/model/paint/style/base_option.dart';
+import 'base_option.dart';
+
 
 class OptionIntegerRange extends BaseOption {
   final int _minValue;
