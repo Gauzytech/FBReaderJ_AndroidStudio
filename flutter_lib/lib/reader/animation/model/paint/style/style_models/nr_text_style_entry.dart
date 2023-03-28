@@ -7,10 +7,12 @@ import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart
 
 abstract class NRTextStyleEntry {
   int get depth => _depth;
-  int _depth;
+  final int _depth;
 
   int _featureMask = 0;
-  List<TextStyleEntryLength> _lengths = [];
+  List<NRTextStyleEntryLength> _lengths = [];
+
+  int get alignmentType => _alignmentType;
   int _alignmentType = 0;
 
   List<FontEntry> get fontEntries => _fontEntries;
@@ -18,6 +20,8 @@ abstract class NRTextStyleEntry {
 
   int _supportedFontModifiers = 0;
   int _fontModifiers = 0;
+
+  int get verticalAlignCode => _verticalAlignCode;
   int _verticalAlignCode = 0;
 
   NRTextStyleEntry(int depth) : _depth = depth;
@@ -53,8 +57,21 @@ abstract class NRTextStyleEntry {
   }
 
   int getLength(Feature feature, TextMetrics metrics, int fontSize) {
-    return TextStyleEntryLength.compute(
+    return NRTextStyleEntryLength.compute(
         _lengths[feature.id], metrics, fontSize, feature);
+  }
+
+  Boolean3 getFontModifier(int modifier) {
+    if ((_supportedFontModifiers & modifier) == 0) {
+      return Boolean3.UNDEFINED;
+    }
+    return (_supportedFontModifiers & modifier) == 0
+        ? Boolean3.FALSE
+        : Boolean3.TRUE;
+  }
+
+  bool hasNonZeroLength(Feature feature) {
+    return _lengths[feature.id].size != 0;
   }
 }
 
@@ -91,15 +108,19 @@ enum Feature {
   final int id;
 }
 
-mixin FontModifier {
-  int FONT_MODIFIER_BOLD = 1 << 0;
-  int FONT_MODIFIER_ITALIC = 1 << 1;
-  int FONT_MODIFIER_UNDERLINED = 1 << 2;
-  int FONT_MODIFIER_STRIKEDTHROUGH = 1 << 3;
-  int FONT_MODIFIER_SMALLCAPS = 1 << 4;
-  int FONT_MODIFIER_INHERIT = 1 << 5;
-  int FONT_MODIFIER_SMALLER = 1 << 6;
-  int FONT_MODIFIER_LARGER = 1 << 7;
+enum FontModifier {
+  bold(1 << 0),
+  italic(1 << 1),
+  underline(1 << 2),
+  strikeThrough(1 << 3),
+  smallCaps(1 << 4),
+  inherit(1 << 5),
+  smaller(1 << 6),
+  larger(1 << 7);
+
+  const FontModifier(this.value);
+
+  final int value;
 }
 
 enum Boolean3 {
@@ -108,24 +129,14 @@ enum Boolean3 {
   UNDEFINED;
 }
 
-// mixin SizeUnit {
-//     int PIXEL                            = 0;
-//     int POINT                            = 1;
-//     int EM_100                           = 2;
-//     int REM_100                          = 3;
-//     int EX_100                           = 4;
-//     int PERCENT                          = 5;
-//     // TODO: add IN, CM, MM, PICA ("pc", = 12 POINT)
-// }
-
-class TextStyleEntryLength {
+class NRTextStyleEntryLength {
   int size;
   SizeUnit unit;
 
-  TextStyleEntryLength({required this.size, required this.unit});
+  NRTextStyleEntryLength({required this.size, required this.unit});
 
   static int compute(
-    TextStyleEntryLength length,
+    NRTextStyleEntryLength length,
     TextMetrics metrics,
     int fontSize,
     Feature feature,
@@ -183,107 +194,3 @@ enum ContentTextAlignmentType {
   // left for LTR languages and right for RTL
   alignLineStart;
 }
-
-//  short Depth;
-//  short myFeatureMask;
-//
-//  Length[] myLengths = Length[Feature.NUMBER_OF_LENGTHS];
-//  byte myAlignmentType;
-//  List<FontEntry> myFontEntries;
-//  byte mySupportedFontModifiers;
-//  byte myFontModifiers;
-//  byte myVerticalAlignCode;
-//
-// static bool isFeatureSupported(short mask, int featureId) {
-// return (mask & (1 << featureId)) != 0;
-// }
-//
-// protected ZLTextStyleEntry(short depth) {
-//   Depth = depth;
-// }
-//
-//  bool isFeatureSupported(int featureId) {
-// return isFeatureSupported(myFeatureMask, featureId);
-// }
-//
-//  setLength(int featureId, short size, byte unit) {
-// myFeatureMask |= 1 << featureId;
-// myLengths[featureId] = new Length(size, unit);
-// }
-//
-//
-//  int getLength(int featureId, ZLTextMetrics metrics, int fontSize) {
-// return compute(myLengths[featureId], metrics, fontSize, featureId);
-// }
-//
-//  bool hasNonZeroLength(int featureId) {
-// return myLengths[featureId].Size != 0;
-// }
-
-//
-//  setAlignmentType(byte alignmentType) {
-// myFeatureMask |= 1 << Feature.ALIGNMENT_TYPE;
-// myAlignmentType = alignmentType;
-// }
-//
-//  byte getAlignmentType() {
-// return myAlignmentType;
-// }
-//
-//  setFontFamilies(FontManager fontManager, int fontFamiliesIndex) {
-// myFeatureMask |= 1 << Feature.FONT_FAMILY;
-// myFontEntries = fontManager.getFamilyEntries(fontFamiliesIndex);
-// }
-//
-//  List<FontEntry> getFontEntries() {
-// return myFontEntries;
-// }
-//
-//  setFontModifiers(byte supported, byte values) {
-// myFeatureMask |= 1 << Feature.FONT_STYLE_MODIFIER;
-// mySupportedFontModifiers = supported;
-// myFontModifiers = values;
-// }
-//
-//  void setFontModifier(byte modifier, bool on) {
-// myFeatureMask |= 1 << Feature.FONT_STYLE_MODIFIER;
-// mySupportedFontModifiers |= modifier;
-// if (on) {
-// myFontModifiers |= modifier;
-// } else {
-// myFontModifiers &= ~modifier;
-// }
-// }
-//
-//  bool3 getFontModifier(byte modifier) {
-// if ((mySupportedFontModifiers & modifier) == 0) {
-// return bool3.UNDEFINED;
-// }
-// return (myFontModifiers & modifier) == 0 ? bool3.FALSE : bool3.TRUE;
-// }
-//
-//  void setVerticalAlignCode(byte code) {
-// myFeatureMask |= 1 << Feature.NON_LENGTH_VERTICAL_ALIGN;
-// myVerticalAlignCode = code;
-// }
-//
-//  byte getVerticalAlignCode() {
-// return myVerticalAlignCode;
-// }
-//
-// @Override
-// public String toString() {
-//   final StringBuilder buffer = new StringBuilder("StyleEntry[");
-//   buffer.append("features: ").append(myFeatureMask).append(";");
-//   if (isFeatureSupported(Feature.LENGTH_SPACE_BEFORE)) {
-//     buffer.append(" ")
-//         .append("space-before: ").append(myLengths[Feature.LENGTH_SPACE_BEFORE]).append(";");
-//   }
-//   if (isFeatureSupported(Feature.LENGTH_SPACE_AFTER)) {
-//     buffer.append(" ")
-//         .append("space-after: ").append(myLengths[Feature.LENGTH_SPACE_AFTER]).append(";");
-//   }
-//   buffer.append("]");
-//   return buffer.toString();
-// }
-// }
