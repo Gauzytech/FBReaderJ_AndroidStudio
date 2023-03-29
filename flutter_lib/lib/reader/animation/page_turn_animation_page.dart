@@ -6,7 +6,6 @@ import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/utils/time_util.dart';
@@ -409,125 +408,169 @@ class PageTurnAnimation extends BaseAnimationPage {
     _onPageDrawInternal(canvas, actualOffsetX);
   }
 
+  final bool _dataPaint = true;
+
   void _onPageDrawInternal(ui.Canvas canvas, double actualOffsetX) {
     if (!readerViewModel.repository.hasGeometry) return;
-    PagePaintContext pagePaintContext =
-        PagePaintContext(canvas, readerViewModel.repository.geometry, 0);
-    canvas.save();
-    if (actualOffsetX < 0) {
-      // 绘制下一页
-      // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
-      canvas.translate(actualOffsetX + currentSize.width, 0);
-      ui.Image? nextPage = readerViewModel.getPage(PageIndex.next);
-      if (nextPage != null) {
-        canvas.drawImage(nextPage, Offset.zero, _paint);
-        print(
-          'flutter翻页行为:onDraw[有nextPage], '
-          'actualOffsetX = $actualOffsetX, '
-          'translate = ${actualOffsetX - currentSize.width}',
-        );
-      } else {
-        print('flutter翻页行为:onDraw[无nextPage], actualOffsetX = $actualOffsetX');
-        // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
-        // if (!isCanGoNext()) {
-        //   lastIndex = 0;
-        //   actualOffsetX = 0;
-        //   currentMoveDx = 0;
-        //
-        //   if (_currentAnimationController?.isCompleted == false) {
-        //     _currentAnimationController?.stop();
-        //   }
-        // }
 
-        _drawUnavailable(canvas);
-      }
-    } else if (actualOffsetX > 0) {
-      // 绘制上一页
-      // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
-      ui.Image? prevPage = readerViewModel.getPage(PageIndex.prev);
-      canvas.translate(actualOffsetX - currentSize.width, 0);
-      if (prevPage != null) {
-        canvas.drawImage(prevPage, Offset.zero, _paint);
-        print(
-          'flutter翻页行为:onDraw[有prevPage], '
-              'actualOffsetX = $actualOffsetX, '
-              'translate = ${actualOffsetX - currentSize.width}',
-        );
-      } else {
-        print('flutter翻页行为:onDraw[无prevPage], '
-            'actualOffsetX = $actualOffsetX,');
-        // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
-        // if (!isCanGoPre()) {
-        //   lastIndex = 0;
-        //   actualOffsetX = 0;
-        //   currentMoveDx = 0;
-        //
-        //   if (_currentAnimationController?.isCompleted == false) {
-        //     _currentAnimationController?.stop();
-        //   }
-        // }
-
-        _drawUnavailable(canvas);
-      }
-    } else {
-      print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
-      _resetData();
-      _metaData.onPageCentered?.call();
-      // readerViewModel.preloadAdjacentPage();
-    }
-
-    canvas.restore();
-    canvas.save();
-    // ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
-    PagePaintData? currentPageData =
-        readerViewModel.getPagePaintData(PageIndex.current);
-    canvas.translate(actualOffsetX, 0);
-    // if (currentPage != null) {
-    //   canvas.drawImage(currentPage, Offset.zero, _paint);
-    // } else {
-    //   print('flutter翻页行为, currentPage不存在');
-    //   _drawUnavailable(canvas);
-    // }
-    if (currentPageData != null) {
-      print('flutter内容绘制流程, currentPage存在, 开始绘制');
-      for (var lineInfo in currentPageData.linePaintDataCollection) {
-        for (var elementPaintData in lineInfo.elementPaintDataList) {
-          print('flutter内容绘制流程, $elementPaintData');
-          if (elementPaintData is ImageElementPaintData) {
-            if (elementPaintData.hasImage) {
-              print('flutter内容绘制流程, image存在, 开始绘制');
-              pagePaintContext.drawImage(
-                  canvas,
-                  elementPaintData.left,
-                  elementPaintData.top,
-                  elementPaintData,
-                  elementPaintData.adjustingModeForImages);
-            } else {
-              print('flutter内容绘制流程, image不存在, 开始异步加载');
-              elementPaintData.fetchImage(
-                readerViewModel.repository.rootDirectory.parent.path,
-                callback: () {
-                  print('flutter内容绘制流程, 异步加载完毕, 刷新');
-                  readerViewModel.notify();
-                },
-              );
-            }
-          }
+    if (_dataPaint) {
+      PagePaintContext pagePaintContext =
+          PagePaintContext(canvas, readerViewModel.repository.geometry, 0);
+      canvas.save();
+      if (actualOffsetX < 0) {
+        // 绘制下一页
+        // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
+        canvas.translate(actualOffsetX + currentSize.width, 0);
+        PagePaintData? nextPageData =
+            readerViewModel.getPagePaintData(PageIndex.next);
+        if (nextPageData != null) {
+          _drawPageData(canvas, pagePaintContext, nextPageData);
+          print(
+            'flutter翻页行为:onDraw[有nextPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'translate = ${actualOffsetX - currentSize.width}',
+          );
+        } else {
+          print('flutter内容绘制流程:onDraw[无nextPage], 需要加载nextPage');
+          readerViewModel.buildPageAsync(PageIndex.next);
+          _drawUnavailable(canvas);
         }
+      } else if (actualOffsetX > 0) {
+        // 绘制上一页
+        // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
+        PagePaintData? prevPageData =
+            readerViewModel.getPagePaintData(PageIndex.prev);
+        canvas.translate(actualOffsetX - currentSize.width, 0);
+        if (prevPageData != null) {
+          _drawPageData(canvas, pagePaintContext, prevPageData);
+          print(
+            'flutter翻页行为:onDraw[有prevPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'translate = ${actualOffsetX - currentSize.width}',
+          );
+        } else {
+          print('flutter内容绘制流程:onDraw[无prevPage], 需要加载prevPage');
+          // readerViewModel.buildPageAsync(PageIndex.prev);
+          _drawUnavailable(canvas);
+        }
+      } else {
+        print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
+        _resetData();
+        _metaData.onPageCentered?.call();
+        // readerViewModel.preloadAdjacentPage();
       }
+
+      canvas.restore();
+      canvas.save();
+      PagePaintData? currentPageData =
+          readerViewModel.getPagePaintData(PageIndex.current);
+      canvas.translate(actualOffsetX, 0);
+
+      if (currentPageData != null) {
+        print('flutter内容绘制流程, currentPage存在, 开始绘制');
+        _drawPageData(canvas, pagePaintContext, currentPageData);
+      } else {
+        print('flutter内容绘制流程, currentPage不存在');
+        _drawUnavailable(canvas);
+      }
+      canvas.restore();
     } else {
-      print('flutter内容绘制流程, currentPage不存在');
-      _drawUnavailable(canvas);
+      canvas.save();
+      if (actualOffsetX < 0) {
+        // 绘制下一页
+        // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
+        canvas.translate(actualOffsetX + currentSize.width, 0);
+        ui.Image? nextPage = readerViewModel.getPage(PageIndex.next);
+        if (nextPage != null) {
+          canvas.drawImage(nextPage, Offset.zero, _paint);
+          print(
+            'flutter翻页行为:onDraw[有nextPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'translate = ${actualOffsetX - currentSize.width}',
+          );
+        } else {
+          print(
+              'flutter翻页行为:onDraw[无nextPage], actualOffsetX = $actualOffsetX');
+          _drawUnavailable(canvas);
+        }
+      } else if (actualOffsetX > 0) {
+        // 绘制上一页
+        // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
+        ui.Image? prevPage = readerViewModel.getPage(PageIndex.prev);
+        canvas.translate(actualOffsetX - currentSize.width, 0);
+        if (prevPage != null) {
+          canvas.drawImage(prevPage, Offset.zero, _paint);
+          print(
+            'flutter翻页行为:onDraw[有prevPage], '
+            'actualOffsetX = $actualOffsetX, '
+            'translate = ${actualOffsetX - currentSize.width}',
+          );
+        } else {
+          print(
+              'flutter翻页行为:onDraw[无prevPage], actualOffsetX = $actualOffsetX,');
+          // todo 移除这部分逻辑, 因为页面是否存在的检查已经在触摸事件的canScroll中进行了
+          _drawUnavailable(canvas);
+        }
+      } else {
+        print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
+        _resetData();
+        _metaData.onPageCentered?.call();
+        readerViewModel.preloadAdjacentPage();
+      }
+
+      canvas.restore();
+      canvas.save();
+      ui.Image? currentPage = readerViewModel.getPage(PageIndex.current);
+      canvas.translate(actualOffsetX, 0);
+      if (currentPage != null) {
+        canvas.drawImage(currentPage, Offset.zero, _paint);
+      } else {
+        print('flutter翻页行为, currentPage不存在');
+        _drawUnavailable(canvas);
+      }
+      canvas.restore();
     }
-    canvas.restore();
+
     print('flutter_perf, 绘制完毕: ${now()}');
   }
 
   void _drawUnavailable(ui.Canvas canvas) {
-    Offset center = Offset(currentSize.width / 2, currentSize.height / 2); //  坐标中心
+    Offset center =
+        Offset(currentSize.width / 2, currentSize.height / 2); //  坐标中心
     double radius = min(currentSize.width / 5, currentSize.height / 5); //  半径
 
     canvas.drawColor(Colors.white, BlendMode.srcOver);
     canvas.drawCircle(center, radius, _linePaint);
+  }
+
+  void _drawPageData(
+    ui.Canvas canvas,
+    PagePaintContext pagePaintContext,
+    PagePaintData pagePaintData,
+  ) {
+    for (var lineInfo in pagePaintData.data) {
+      for (var elementPaintData in lineInfo.elementPaintDataList) {
+        // print('flutter内容绘制流程, $elementPaintData');
+        if (elementPaintData is ImageElementPaintData) {
+          if (elementPaintData.hasImage) {
+            pagePaintContext.drawImage(
+                canvas,
+                elementPaintData.left,
+                elementPaintData.top,
+                elementPaintData,
+                elementPaintData.adjustingModeForImages);
+          } else {
+            print('flutter内容绘制流程, image不存在, 开始异步加载');
+            elementPaintData.fetchImage(
+              readerViewModel.repository.rootDirectory.parent.path,
+              callback: () {
+                print('flutter内容绘制流程, 异步加载完毕, 刷新');
+                readerViewModel.notify();
+              },
+            );
+          }
+        }
+      }
+    }
   }
 }

@@ -5,6 +5,6 @@ class LinePaintData {
 
   LinePaintData.fromJson(String rootPath, Map<String, dynamic> json)
       : elementPaintDataList = (json['elementPaintData'] as List)
-            .map((item) => ElementPaintData.fromJson(item))
+            .map((item) => ElementPaintData.create(item))
             .toList();
 }

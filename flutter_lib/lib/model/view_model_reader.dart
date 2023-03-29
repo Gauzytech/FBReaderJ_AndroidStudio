@@ -152,6 +152,15 @@ class ReaderViewModel extends BaseViewModel {
     }
   }
 
+  void preparePagePaintData(PageIndex pageIndex) {
+    PagePaintData? pagePaintData = repository.getPagePaintData(pageIndex);
+    if(pagePaintData?.isProcessing == false) {
+      repository.preparePageData(pageIndex);
+    } else {
+      print('flutter翻页行为, ----------------已经通知了native, 不用重新绘制');
+    }
+  }
+
   ui.Image? getNextPage() {
     // 查看下一页image是否存在
     ImageSrc? nextPageImage = repository.getPage(PageIndex.next);

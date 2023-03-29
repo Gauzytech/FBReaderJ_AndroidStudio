@@ -10,7 +10,7 @@ import 'image_element_paint_data.dart';
 enum ElementType { word, image, video, extension, space }
 
 abstract class ElementPaintData with DisposablePaintData {
-  static ElementPaintData fromJson(Map<String, dynamic> json) {
+  static ElementPaintData create(Map<String, dynamic> json) {
     int elementType = json['elementType'];
     if (elementType == ElementType.word.index) {
       return WordElementPaintData.fromJson(json);

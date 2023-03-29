@@ -1,31 +1,39 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_explicitly_decorated_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_ng_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 abstract class NRTextStyle {
   late NRTextStyle parent;
-  late NRTextHyperLink hyperlink;
+
+  NRTextHyperLink get hyperlink => _hyperlink;
+  final NRTextHyperLink _hyperlink;
 
   NRTextStyle(
     NRTextStyle? textStyle,
     NRTextHyperLink hyperLink,
-  ) {
+  ) : _hyperlink = hyperLink {
     parent = textStyle ?? this;
-    hyperlink = hyperLink;
   }
 
   NRTextStyle.fromJson(Map<String, dynamic> json)
       : parent = NRTextStyle.create(json['Parent']),
-        hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']);
+        _hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']);
 
   static NRTextStyle create(Map<String, dynamic> json) {
     String className = json['className'];
-    switch(className) {
-      case 'TextBaseStyle':
+    switch (className) {
+      case 'ZLTextBaseStyle':
         return NRTextBaseStyle.fromJson(json);
+      case 'ZLTextExplicitlyDecoratedStyle':
+        return NRTextExplicitlyDecoratedStyle.fromJson(json);
+      case 'ZLTextNGStyle':
+        return NRTextNGStyle.fromJson(json);
+      default:
+        throw Exception('Unknown class name: $className');
     }
-    throw Exception('Unknown class name: $className');
   }
 
   List<FontEntry> getFontEntries();

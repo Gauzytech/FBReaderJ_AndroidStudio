@@ -174,9 +174,7 @@ class BitmapManagerImpl with BitmapManager {
   /// next, current, next2, null
   void shift(bool forward) {
     for (int i = 0; i < BitmapManager.cacheSize; ++i) {
-      if (_pageIndexCache[i] == null) {
-        continue;
-      }
+      if (_pageIndexCache[i] == null) continue;
       if (forward) {
         _pageIndexCache[i] = _pageIndexCache[i]!.getPrevious();
       } else {
@@ -201,14 +199,14 @@ class BitmapManagerImpl with BitmapManager {
     int internalCacheIndex,
     List<LinePaintData> linePaintDataList,
   ) {
-    print('flutter内容绘制流程[cachePagePaintData],: $internalCacheIndex to ${linePaintDataList.length}');
+    print('flutter内容绘制流程[cachePagePaintData], $internalCacheIndex -> length = ${linePaintDataList.length}');
     _pageDataCache[internalCacheIndex] =
-        PagePaintData(linePaintDataCollection: linePaintDataList.toList());
+        PagePaintData(linePaintDataList.toList());
   }
 
   @override
   PagePaintData? getPagePaintData(PageIndex pageIndex) {
-    print('flutter内容绘制流程[getPagePaintData], $_pageIndexCache');
+    print('flutter内容绘制流程[getPagePaintData], $_pageIndexCache, pageIndex = $pageIndex');
     for (int i = 0; i < BitmapManager.cacheSize; i++) {
       if (_pageIndexCache[i] == pageIndex) {
         return _pageDataCache[i];

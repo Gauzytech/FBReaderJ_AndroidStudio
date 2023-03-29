@@ -27,10 +27,12 @@ import java.util.List;
 public abstract class ZLTextStyle {
 	public final ZLTextStyle Parent;
 	public final ZLTextHyperlink Hyperlink;
+	private final String className;
 
-	protected ZLTextStyle(ZLTextStyle parent, ZLTextHyperlink hyperlink) {
+	protected ZLTextStyle(ZLTextStyle parent, ZLTextHyperlink hyperlink, String className) {
 		Parent = parent != null ? parent : this;
 		Hyperlink = hyperlink;
+		this.className = className;
 	}
 
 	public abstract List<FontEntry> getFontEntries();

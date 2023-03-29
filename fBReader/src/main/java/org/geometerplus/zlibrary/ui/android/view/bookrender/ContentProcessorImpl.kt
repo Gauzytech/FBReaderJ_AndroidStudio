@@ -47,7 +47,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         )
     }
 
-    override fun processPageData(
+    override fun buildPageData(
         index: PageIndex,
         width: Int,
         height: Int,

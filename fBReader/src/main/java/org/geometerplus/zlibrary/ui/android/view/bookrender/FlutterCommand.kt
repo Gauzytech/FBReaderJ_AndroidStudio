@@ -23,4 +23,5 @@ object FlutterCommand {
     const val SELECTION_CLEAR = "selection_clear"
     const val SELECTED_TEXT = "selected_text"
     const val TEAR_DOWN = "tear_down"
+    const val BUILD_PAGE_PAINT_DATA = "build_page_paint_data"
 }

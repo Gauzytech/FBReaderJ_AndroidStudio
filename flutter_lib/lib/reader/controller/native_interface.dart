@@ -17,6 +17,7 @@ enum NativeScript {
   selectionClear('selection_clear'),
   selectedText('selected_text'),
   drawOnBitmap('draw_on_bitmap'),
+  buildPagePaintData('build_page_paint_data'),
   preparePage('prepare_page'),
   canScroll('can_scroll'),
   onScrollingFinished('on_scrolling_finished');

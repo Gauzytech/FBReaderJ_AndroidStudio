@@ -1,20 +1,22 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_decorated_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_ng_style_description.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
-class ContentTextNGStyle extends NRTextDecoratedStyle {
+class NRTextNGStyle extends NRTextDecoratedStyle {
   final ContentTextNGStyleDescription _myDescription;
 
-  ContentTextNGStyle(NRTextStyle parent,
-      ContentTextNGStyleDescription description, NRTextHyperLink hyperlink)
-      : _myDescription = description,
+  NRTextNGStyle(
+    NRTextStyle parent,
+    ContentTextNGStyleDescription description,
+    NRTextHyperLink hyperlink,
+  )   : _myDescription = description,
         super(parent, hyperlink);
 
-  ContentTextNGStyle.fromJson(Map<String, dynamic> json)
+  NRTextNGStyle.fromJson(Map<String, dynamic> json)
       : _myDescription = json['myDescription'],
         super.fromJson(json);
 
@@ -22,32 +24,33 @@ class ContentTextNGStyle extends NRTextDecoratedStyle {
   List<FontEntry> getFontEntriesInternal() {
     final List<FontEntry> parentEntries = parent.getFontEntries();
     final String decoratedValue = _myDescription.fontFamilyOption.getValue();
-    if ("" == decoratedValue) {
+    if (decoratedValue == '') {
       return parentEntries;
     }
-    // final FontEntry e = FontEntry.systemEntry(decoratedValue);
-    // if (parentEntries.isNotEmpty && e == parentEntries[0]) {
-    //   return parentEntries;
-    // }
+
+    final FontEntry e = FontEntry.systemEntry(decoratedValue);
+    if (parentEntries.isNotEmpty && e == parentEntries[0]) {
+      return parentEntries;
+    }
     final List<FontEntry> entries = [];
-    // entries.add(e);
+    entries.add(e);
     entries.addAll(parentEntries);
     return entries;
   }
 
   @override
-  int getFontSizeInternal(TextMetrics metrics) {
-    return _myDescription.getFontSize(metrics, parent.getFontSize(metrics));
-  }
+  int getFontSizeInternal(TextMetrics metrics) =>
+      _myDescription.getFontSize(metrics, parent.getFontSize(metrics));
 
   @override
   bool isBoldInternal() {
-    if (_myDescription.isBold() == Boolean3.TRUE) {
-      return true;
-    } else if (_myDescription.isBold() == Boolean3.FALSE) {
-      return false;
-    } else {
-      return parent.isBold();
+    switch(_myDescription.isBold()) {
+      case Boolean3.TRUE:
+        return true;
+      case Boolean3.FALSE:
+        return false;
+      default:
+        return parent.isBold();
     }
   }
 

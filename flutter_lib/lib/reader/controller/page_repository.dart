@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
-import 'package:flutter_lib/reader/animation/model/paint/image_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
@@ -105,15 +104,12 @@ class PageRepository with PageRepositoryDelegate {
       int height = result['height'];
 
       print('flutter内容绘制流程, 收到了PaintData: ${linePaintDataList.length}');
-      // for (var element in linePaintDataList) {
-      //   for (var data in element.elementPaintDataList) {
-      //     if (data is ImageElementPaintData) {
-      //       print(
-      //           'flutter内容绘制流程, cache image src = ${_rootDirectory!.parent.path}/${data.imageSrc}');
-      //     }
-      //   }
-      // }
-
+      for (var element in linePaintDataList) {
+        // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
+        for (var data in element.elementPaintDataList) {
+          print('flutter内容绘制流程, data = $data');
+        }
+      }
 
       // final image = await imgBytes.toImage();
 
@@ -148,6 +144,11 @@ class PageRepository with PageRepositoryDelegate {
     return await drawOnBitmap(internalIdx, pageIndex, false);
   }
 
+  Future<List<LinePaintData>> preparePageData(PageIndex pageIndex) async {
+    int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
+    return await preparePagePaintData(internalIdx, pageIndex);
+  }
+
   /* ---------------------------------------- Flutter调用Native方法 ----------------------------------------------*/
   // 方法通道的方法是异步的
   /// 通知native绘制当前页img
@@ -180,6 +181,33 @@ class PageRepository with PageRepositoryDelegate {
     }
 
     return null;
+  }
+
+  Future<List<LinePaintData>> preparePagePaintData(
+    int internalCacheIndex,
+    PageIndex pageIndex,
+  ) async {
+    try {
+      // 调用native方法，将绘制当前page
+      Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
+        NativeScript.buildPagePaintData,
+        {'page_index': pageIndex.index},
+      );
+
+      // 将imageBytes转成img
+      // var image = await imgBytes.toImage();
+      // _bitmapManager缓存img
+      // _bitmapManager.setSize(image.width, image.height);
+      // _bitmapManager.cacheBitmap(internalCacheIndex, image);
+
+      // 刷新content painter
+      // refreshContent();
+      return List.empty();
+    } on PlatformException catch (e) {
+      print("flutter内容绘制流程, $e");
+    }
+
+    return List.empty();
   }
 
   /// 到达当前页页之后, 事先缓存2页：上一页/下一页

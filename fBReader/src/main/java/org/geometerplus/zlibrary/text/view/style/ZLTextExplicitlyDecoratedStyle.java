@@ -32,7 +32,7 @@ public class ZLTextExplicitlyDecoratedStyle extends ZLTextDecoratedStyle impleme
 	private final ZLTextStyleEntry myEntry;
 
 	public ZLTextExplicitlyDecoratedStyle(ZLTextStyle parent, ZLTextStyleEntry entry) {
-		super(parent, parent.Hyperlink);
+		super(parent, parent.Hyperlink, "ZLTextExplicitlyDecoratedStyle");
 		myEntry = entry;
 	}
 

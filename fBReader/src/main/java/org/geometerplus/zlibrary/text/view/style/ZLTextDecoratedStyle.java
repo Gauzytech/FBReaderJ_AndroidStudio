@@ -51,8 +51,8 @@ public abstract class ZLTextDecoratedStyle extends ZLTextStyle {
 	private int myFirstLineIndent;
 	private ZLTextMetrics myMetrics;
 
-	protected ZLTextDecoratedStyle(ZLTextStyle base, ZLTextHyperlink hyperlink) {
-		super(base, (hyperlink != null) ? hyperlink : base.Hyperlink);
+	protected ZLTextDecoratedStyle(ZLTextStyle base, ZLTextHyperlink hyperlink, String className) {
+		super(base, (hyperlink != null) ? hyperlink : base.Hyperlink, className);
 		// 缓存上一层级的base style
 		BaseStyle = base instanceof ZLTextBaseStyle
 			? (ZLTextBaseStyle)base

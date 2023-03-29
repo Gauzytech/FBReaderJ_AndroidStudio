@@ -32,7 +32,7 @@ public class ZLTextNGStyle extends ZLTextDecoratedStyle {
 	private final ZLTextNGStyleDescription myDescription;
 
 	public ZLTextNGStyle(ZLTextStyle parent, ZLTextNGStyleDescription description, ZLTextHyperlink hyperlink) {
-		super(parent, hyperlink);
+		super(parent, hyperlink, "ZLTextNGStyle");
 		myDescription = description;
 	}
 

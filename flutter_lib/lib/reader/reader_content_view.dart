@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/interface/content_selection_delegate.dart';
@@ -21,7 +19,6 @@ import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:flutter_lib/widget/highlight_painter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
@@ -795,8 +792,8 @@ class ReaderContentViewState
 
   @override
   void invalidateContent([String? tag]) {
-    print(
-        'flutter内容绘制流程[invalidateContent], tag = $tag, contentKey exist = ${contentKey.currentContext != null}');
+    // print(
+    //     'flutter内容绘制流程[invalidateContent], tag = $tag, contentKey exist = ${contentKey.currentContext != null}');
     // markNeedsPaint不会调用shouldRepaint
     // onBuildView会调用shouldRepaint
     contentKey.currentContext?.findRenderObject()?.markNeedsPaint();
@@ -844,16 +841,17 @@ class ReaderContentViewState
 
   Future<void> _onPagePaintMetaUpdate() async {
     assert(_contentPainter != null);
-    // await _contentPainter!.canScroll(position.userScrollDirection)
     if (newScroll) {
       print('flutter翻页行为, 执行pixels = ${position.pixels}');
-      _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
-        pixels: position.pixels,
-        page: position.page!,
-        userScrollDirection: position.userScrollDirection,
-        onPageCentered: _disposePageDraw,
-      ));
-      invalidateContent();
+      if (await _contentPainter!.canScroll(position.userScrollDirection)) {
+        _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
+          pixels: position.pixels,
+          page: position.page!,
+          userScrollDirection: position.userScrollDirection,
+          onPageCentered: _disposePageDraw,
+        ));
+        invalidateContent();
+      }
     } else {
       print('flutter翻页行为, 忽略, 此处需要重置坐标');
       // _disposePageDraw();

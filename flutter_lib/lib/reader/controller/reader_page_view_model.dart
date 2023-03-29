@@ -128,6 +128,17 @@ class ReaderPageViewModel with ReaderPageViewModelDelegate {
     }
   }
 
+  Future<bool> canScrollPage(ScrollDirection scrollDirection) async {
+    switch(scrollDirection) {
+      case ScrollDirection.idle:
+        return false;
+      case ScrollDirection.forward:
+        return readerViewModel.canScroll(PageIndex.prev);
+      case ScrollDirection.reverse:
+        return readerViewModel.canScroll(PageIndex.next);
+    }
+  }
+
   bool setCurrentTouchEvent(TouchEvent event) {
     /// 如果正在执行动画，判断是否需要中止动画
     switch (currentAnimationType) {

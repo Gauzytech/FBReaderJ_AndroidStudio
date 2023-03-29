@@ -25,7 +25,7 @@ interface ContentProcessor {
     /**
      * 获得[index]相关page的绘制数据
      */
-    fun processPageData(
+    fun buildPageData(
         index: PageIndex,
         width: Int,
         height: Int,

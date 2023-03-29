@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.fbreader.fbreader.FBReaderApp
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
+import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.BUILD_PAGE_PAINT_DATA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.DRAW_ON_BITMAP
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.LONG_PRESS_END
@@ -69,7 +70,7 @@ class FlutterBridge(
                 Timber.v("$TAG[${System.currentTimeMillis()}] 请求数据: pageIndex = $pageIndex, size = [$width, $height")
 
                 // 绘制内容的bitmap
-                contentProcessor.processPageData(
+                contentProcessor.buildPageData(
                     pageIndex,
                     width,
                     height,
@@ -97,6 +98,10 @@ class FlutterBridge(
 //                } else {
 //                    result.success(bitmap.toByteArray())
 //                }
+            }
+            BUILD_PAGE_PAINT_DATA -> {
+                val index = call.argument<Int>("page_index")!!
+
             }
             PREPARE_PAGE -> {
                 val width = call.argument<Int>("width")!!
@@ -238,7 +243,7 @@ class FlutterBridge(
 //            0
 //        )
 
-        return contentProcessor.processPageData(
+        return contentProcessor.buildPageData(
             pageIdx,
             width,
             height,
