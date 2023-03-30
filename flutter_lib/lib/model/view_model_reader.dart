@@ -6,10 +6,10 @@ import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/reader_book_info.dart';
 import 'package:flutter_lib/model/reader_config_model.dart';
 import 'package:flutter_lib/model/reader_progress_manager.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 
-import '../reader/animation/model/paint/line_paint_data.dart';
 import '../reader/animation/model/paint/page_paint_data.dart';
 
 /// 提供所有图书数据, 用于阅读界面menu联动
@@ -152,10 +152,9 @@ class ReaderViewModel extends BaseViewModel {
     }
   }
 
-  void preparePagePaintData(PageIndex pageIndex) {
-    PagePaintData? pagePaintData = repository.getPagePaintData(pageIndex);
-    if(pagePaintData?.isProcessing == false) {
-      repository.preparePageData(pageIndex);
+  void preparePagePaintData(PaintDataSrc paintDataSrc, PageIndex pageIndex) {
+    if(!paintDataSrc.pending) {
+      repository.preparePagePaintData(pageIndex);
     } else {
       print('flutter翻页行为, ----------------已经通知了native, 不用重新绘制');
     }
@@ -169,7 +168,8 @@ class ReaderViewModel extends BaseViewModel {
 
   ui.Image? getNextOrPrevPageDebug(bool forward) {
     // 查看下一页image是否存在
-    ImageSrc? nextPageImage = repository.getPage(repository.getPageIndex(forward));
+    ImageSrc? nextPageImage =
+        repository.getPage(repository.getPageIndex(forward));
     return nextPageImage.img;
   }
 
@@ -178,9 +178,8 @@ class ReaderViewModel extends BaseViewModel {
     return imageSrc.img;
   }
 
-  PagePaintData? getPagePaintData(PageIndex pageIndex) {
-    return repository.getPagePaintData(pageIndex);
-  }
+  PaintDataSrc getPagePaintData(PageIndex pageIndex) =>
+      repository.getPagePaintData(pageIndex);
 
   bool pageExist(PageIndex pageIndex) {
     ImageSrc imageSrc = repository.getPage(pageIndex);

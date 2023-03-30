@@ -23,7 +23,7 @@ mixin BitmapManager {
     List<LinePaintData> linePaintDataList,
   );
 
-  PagePaintData? getPagePaintData(PageIndex pageIndex);
+  PaintDataSrc getPagePaintData(PageIndex pageIndex);
 
   void drawBitmap(
     ui.Canvas canvas,

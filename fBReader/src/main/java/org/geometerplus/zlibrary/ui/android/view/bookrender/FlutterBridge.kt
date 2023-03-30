@@ -61,7 +61,8 @@ class FlutterBridge(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Timber.v("$TAG, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
         when (call.method) {
-            DRAW_ON_BITMAP -> {
+            DRAW_ON_BITMAP,
+            BUILD_PAGE_PAINT_DATA -> {
                 // 获取Flutter传递的参数
                 val index = call.argument<Int>("page_index")!!
                 val width = call.argument<Int>("width")!!
@@ -81,11 +82,7 @@ class FlutterBridge(
                         is ContentPageResult.Paint -> {
                             Timber.v("flutter_perf, 发送, ${System.currentTimeMillis()}")
                             result.success(
-                                mapOf(
-                                    "page_data" to gson.toJson(pageResult),
-                                    "width" to width,
-                                    "height" to height
-                                )
+                                mapOf("page_data" to gson.toJson(pageResult))
                             )
                         }
                     }
@@ -98,10 +95,6 @@ class FlutterBridge(
 //                } else {
 //                    result.success(bitmap.toByteArray())
 //                }
-            }
-            BUILD_PAGE_PAINT_DATA -> {
-                val index = call.argument<Int>("page_index")!!
-
             }
             PREPARE_PAGE -> {
                 val width = call.argument<Int>("width")!!

@@ -14,7 +14,6 @@ import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../animation/model/paint/page_paint_data.dart';
 import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
@@ -56,17 +55,16 @@ class PageRepository with PageRepositoryDelegate {
   Geometry get geometry => _bitmapManager.geometry;
 
   PageRepository({required MethodChannel methodChannel}) {
-    _nativeInterface =
-        NativeInterface(methodChannel: methodChannel, delegate: this);
+    _nativeInterface = NativeInterface(
+      methodChannel: methodChannel,
+      delegate: this,
+    );
   }
 
-  ImageSrc getPage(PageIndex index) {
-    return _bitmapManager.getBitmap(index);
-  }
+  ImageSrc getPage(PageIndex index) => _bitmapManager.getBitmap(index);
 
-  PagePaintData? getPagePaintData(PageIndex pageIndex) {
-    return _bitmapManager.getPagePaintData(pageIndex);
-  }
+  PaintDataSrc getPagePaintData(PageIndex pageIndex) =>
+      _bitmapManager.getPagePaintData(pageIndex);
 
   @override
   void refreshContent() {
@@ -86,25 +84,21 @@ class PageRepository with PageRepositoryDelegate {
     // 如果没有找到缓存的Image, 回调native, 通知画一个新的
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
     try {
-      // 调用native方法，将绘制当前page
+      // 调用native方法，获取page的绘制数据
       Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.drawOnBitmap,
         {'page_index': pageIndex.index},
       );
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      List<LinePaintData> linePaintDataList =
-          (pageData['linePaintDataList'] as List)
-              .map((item) => LinePaintData.fromJson(
-                    rootDirectory.parent.path,
-                    item,
-                  ))
-              .toList();
-      int width = result['width'];
-      int height = result['height'];
+      List<LinePaintData> lineData = (pageData['linePaintDataList'] as List)
+          .map((item) => LinePaintData.fromJson(item))
+          .toList();
+      int width = ui.window.physicalSize.width.toInt();
+      int height = ui.window.physicalSize.height.toInt();
 
-      print('flutter内容绘制流程, 收到了PaintData: ${linePaintDataList.length}');
-      for (var element in linePaintDataList) {
+      print('flutter内容绘制流程, 收到了PaintData: ${lineData.length}');
+      for (var element in lineData) {
         // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
         for (var data in element.elementPaintDataList) {
           print('flutter内容绘制流程, data = $data');
@@ -122,7 +116,7 @@ class PageRepository with PageRepositoryDelegate {
 
       _bitmapManager.setSize(width, height);
       _bitmapManager.setGeometry(Geometry.fromJson(pageData['geometry']));
-      _bitmapManager.cachePagePaintData(internalIdx, linePaintDataList);
+      _bitmapManager.cachePagePaintData(internalIdx, lineData);
       _readerPageViewModelDelegate!.initialize(width, height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
@@ -144,9 +138,10 @@ class PageRepository with PageRepositoryDelegate {
     return await drawOnBitmap(internalIdx, pageIndex, false);
   }
 
-  Future<List<LinePaintData>> preparePageData(PageIndex pageIndex) async {
+  Future<List<LinePaintData>> preparePagePaintData(PageIndex pageIndex) async {
+    // 找一个缓存slot先占位
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
-    return await preparePagePaintData(internalIdx, pageIndex);
+    return _preparePagePaintData(internalIdx, pageIndex);
   }
 
   /* ---------------------------------------- Flutter调用Native方法 ----------------------------------------------*/
@@ -183,25 +178,41 @@ class PageRepository with PageRepositoryDelegate {
     return null;
   }
 
-  Future<List<LinePaintData>> preparePagePaintData(
+  Future<List<LinePaintData>> _preparePagePaintData(
     int internalCacheIndex,
     PageIndex pageIndex,
   ) async {
     try {
-      // 调用native方法，将绘制当前page
-      Uint8List imgBytes = await nativeInterface.evaluateNativeFunc(
+      // 调用native方法，获取page的绘制数据
+      Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.buildPagePaintData,
         {'page_index': pageIndex.index},
       );
 
-      // 将imageBytes转成img
-      // var image = await imgBytes.toImage();
       // _bitmapManager缓存img
       // _bitmapManager.setSize(image.width, image.height);
       // _bitmapManager.cacheBitmap(internalCacheIndex, image);
 
       // 刷新content painter
       // refreshContent();
+
+      Map<String, dynamic> pageData = jsonDecode(result['page_data']);
+      List<LinePaintData> lineData = (pageData['linePaintDataList'] as List)
+          .map((item) => LinePaintData.fromJson(item))
+          .toList();
+      _bitmapManager.cachePagePaintData(
+        internalCacheIndex,
+        lineData.toList(),
+      );
+
+      print(
+          'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');
+      for (var element in lineData) {
+        // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
+        for (var data in element.elementPaintDataList) {
+          print('flutter内容绘制流程[preparePagePaintData], data = $data');
+        }
+      }
       return List.empty();
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
@@ -210,7 +221,7 @@ class PageRepository with PageRepositoryDelegate {
     return List.empty();
   }
 
-  /// 到达当前页页之后, 事先缓存2页：上一页/下一页
+  /// 到达当前页之后, 事先缓存2页：上一页/下一页
   Future<void> preloadAdjacentPages() async {
     int? prevIdx = getPage(PageIndex.prev).shouldDrawImage()
         ? _bitmapManager.findInternalCacheIndex(PageIndex.prev)

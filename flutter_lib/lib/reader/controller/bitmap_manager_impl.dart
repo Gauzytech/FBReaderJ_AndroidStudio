@@ -205,14 +205,19 @@ class BitmapManagerImpl with BitmapManager {
   }
 
   @override
-  PagePaintData? getPagePaintData(PageIndex pageIndex) {
-    print('flutter内容绘制流程[getPagePaintData], $_pageIndexCache, pageIndex = $pageIndex');
+  PaintDataSrc getPagePaintData(PageIndex index) {
+    print(
+        'flutter内容绘制流程[getPagePaintData], $_pageIndexCache, pageIndex = $index');
     for (int i = 0; i < BitmapManager.cacheSize; i++) {
-      if (_pageIndexCache[i] == pageIndex) {
-        return _pageDataCache[i];
+      if (_pageIndexCache[i] == index) {
+        PagePaintData? pagePaintData = _pageDataCache[i];
+        return PaintDataSrc(
+          data: pagePaintData?.data,
+          pending: pagePaintData == null,
+        );
       }
     }
-    return null;
+    return PaintDataSrc(data: null, pending: false);
   }
 }
 
@@ -230,4 +235,14 @@ class ImageSrc {
   String toString() {
     return 'img = ${img != null}, processing = $processing';
   }
+}
+
+class PaintDataSrc {
+  List<LinePaintData>? data;
+  bool pending;
+
+  PaintDataSrc({required this.data, required this.pending});
+
+  @override
+  String toString() => 'data = ${data != null}, pending = $pending';
 }

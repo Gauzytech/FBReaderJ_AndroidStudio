@@ -61,6 +61,7 @@ class NativeInterface {
     final metrics = ui.window.physicalSize;
     switch (script) {
       case NativeScript.drawOnBitmap:
+      case NativeScript.buildPagePaintData:
         return channel.invokeMethod(
           script.name,
           {

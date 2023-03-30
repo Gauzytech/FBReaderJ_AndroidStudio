@@ -7,14 +7,15 @@ import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
+import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
+import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 
 import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
 import 'model/paint/image_element_paint_data.dart';
-import 'model/paint/page_paint_data.dart';
 
 /// 滑动动画 ///
 /// ps 正在研究怎么加上惯性 (ScrollPhysics:可滑动组件的滑动控制器,android 对应：ClampingScrollPhysics，ScrollController呢？)
@@ -421,10 +422,10 @@ class PageTurnAnimation extends BaseAnimationPage {
         // 绘制下一页
         // 在触摸事件发生时, 已经检查过nextPage是否存在, 所以nextPage肯定不为null
         canvas.translate(actualOffsetX + currentSize.width, 0);
-        PagePaintData? nextPageData =
+        PaintDataSrc nextPage =
             readerViewModel.getPagePaintData(PageIndex.next);
-        if (nextPageData != null) {
-          _drawPageData(canvas, pagePaintContext, nextPageData);
+        if (nextPage.data != null) {
+          _drawPageData(canvas, pagePaintContext, nextPage.data!);
           print(
             'flutter翻页行为:onDraw[有nextPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -432,17 +433,17 @@ class PageTurnAnimation extends BaseAnimationPage {
           );
         } else {
           print('flutter内容绘制流程:onDraw[无nextPage], 需要加载nextPage');
-          readerViewModel.buildPageAsync(PageIndex.next);
+          readerViewModel.preparePagePaintData(nextPage, PageIndex.next);
           _drawUnavailable(canvas);
         }
       } else if (actualOffsetX > 0) {
         // 绘制上一页
         // 在触摸事件发生时, 已经检查过prevPage是否存在, 所以prevPage肯定不为null
-        PagePaintData? prevPageData =
+        PaintDataSrc prevPage =
             readerViewModel.getPagePaintData(PageIndex.prev);
         canvas.translate(actualOffsetX - currentSize.width, 0);
-        if (prevPageData != null) {
-          _drawPageData(canvas, pagePaintContext, prevPageData);
+        if (prevPage.data != null) {
+          _drawPageData(canvas, pagePaintContext, prevPage.data!);
           print(
             'flutter翻页行为:onDraw[有prevPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -450,7 +451,9 @@ class PageTurnAnimation extends BaseAnimationPage {
           );
         } else {
           print('flutter内容绘制流程:onDraw[无prevPage], 需要加载prevPage');
-          // readerViewModel.buildPageAsync(PageIndex.prev);
+          // if(prevPage.processing) {
+          //   readerViewModel.buildPageAsync(PageIndex.prev);
+          // }
           _drawUnavailable(canvas);
         }
       } else {
@@ -462,13 +465,12 @@ class PageTurnAnimation extends BaseAnimationPage {
 
       canvas.restore();
       canvas.save();
-      PagePaintData? currentPageData =
+      PaintDataSrc currentPage =
           readerViewModel.getPagePaintData(PageIndex.current);
       canvas.translate(actualOffsetX, 0);
 
-      if (currentPageData != null) {
-        print('flutter内容绘制流程, currentPage存在, 开始绘制');
-        _drawPageData(canvas, pagePaintContext, currentPageData);
+      if (currentPage.data != null) {
+        _drawPageData(canvas, pagePaintContext, currentPage.data!);
       } else {
         print('flutter内容绘制流程, currentPage不存在');
         _drawUnavailable(canvas);
@@ -546,9 +548,9 @@ class PageTurnAnimation extends BaseAnimationPage {
   void _drawPageData(
     ui.Canvas canvas,
     PagePaintContext pagePaintContext,
-    PagePaintData pagePaintData,
+    List<LinePaintData> lineData,
   ) {
-    for (var lineInfo in pagePaintData.data) {
+    for (var lineInfo in lineData) {
       for (var elementPaintData in lineInfo.elementPaintDataList) {
         // print('flutter内容绘制流程, $elementPaintData');
         if (elementPaintData is ImageElementPaintData) {
