@@ -104,7 +104,6 @@ class PagePaintContext extends PaintContext {
           break;
       }
 
-      print('flutter内容绘制流程, drawImage = $x, $y, [${image.width}, ${image.height}]');
       canvas.drawImage(
         image,
         Offset(x, y - image.height),

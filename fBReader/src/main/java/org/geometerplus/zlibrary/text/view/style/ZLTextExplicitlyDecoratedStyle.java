@@ -313,4 +313,12 @@ public class ZLTextExplicitlyDecoratedStyle extends ZLTextDecoratedStyle impleme
 		// TODO: implement
 		return Parent.allowHyphenations();
 	}
+
+	@Override
+	public String toString() {
+		return "ZLTextExplicitlyDecoratedStyle{" +
+				"myEntry=" + myEntry +
+				", myTreeParent=" + myTreeParent +
+				'}';
+	}
 }

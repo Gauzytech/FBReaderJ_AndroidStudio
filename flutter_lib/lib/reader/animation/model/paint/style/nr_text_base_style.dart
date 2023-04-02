@@ -35,7 +35,7 @@ class NRTextBaseStyle extends NRTextStyle {
   final OptionString fontFamilyOption;
   final OptionIntegerRange fontSizeOption;
 
-  String _fontFamily;
+  String? _fontFamily;
   final List<FontEntry> _fontEntries;
 
   NRTextBaseStyle.fromJson(Map<String, dynamic> json)
@@ -49,9 +49,7 @@ class NRTextBaseStyle extends NRTextStyle {
         alignmentOption = OptionIntegerRange.fromJson(json['AlignmentOption']),
         lineSpaceOption = OptionIntegerRange.fromJson(json['LineSpaceOption']),
         _fontFamily = json['myFontFamily'],
-        _fontEntries = (json['myFontEntries'] as List)
-            .map((item) => FontEntry.fromJson(item))
-            .toList(),
+        _fontEntries = FontEntry.fromJsonList(json['myFontEntries']),
         super.fromJson(json);
 
   @override

@@ -745,6 +745,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
+        Timber.v("flutter_perf, page data处理完毕, 返回结果, %s", System.currentTimeMillis());
         return new ContentPageResult.Paint(linePaintDataList, getContext().getGeometry());
     }
 

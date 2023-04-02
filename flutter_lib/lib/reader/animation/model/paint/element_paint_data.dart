@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/interface/disposable_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/space_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/video_element_paint_data.dart';
@@ -9,7 +10,7 @@ import 'image_element_paint_data.dart';
 
 enum ElementType { word, image, video, extension, space }
 
-abstract class ElementPaintData with DisposablePaintData {
+abstract class ElementPaintData with DisposablePaintData, DebugInfoProvider {
   static ElementPaintData create(Map<String, dynamic> json) {
     int elementType = json['elementType'];
     if (elementType == ElementType.word.index) {
@@ -27,18 +28,8 @@ abstract class ElementPaintData with DisposablePaintData {
     }
   }
 
-  @mustCallSuper
-  void debugFillDescription(List<String> description) {}
-
   @override
   void tearDown() {
     print('${describeIdentity(this)} tear down');
-  }
-
-  @override
-  String toString() {
-    List<String> description = <String>[];
-    debugFillDescription(description);
-    return '${describeIdentity(this)} (${description.join(", ")})';
   }
 }

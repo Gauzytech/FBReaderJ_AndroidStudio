@@ -13,5 +13,9 @@ class NRTextHyperLink {
   NRTextHyperLink.fromJson(Map<String, dynamic> json)
       : _type = json['Type'],
         _id = json['Id'],
-        _elementIndexes = json['myElementIndexes'];
+        _elementIndexes = json['myElementIndexes'] != null
+            ? (json['myElementIndexes'] as List)
+                .map((item) => item as int)
+                .toList()
+            : null;
 }

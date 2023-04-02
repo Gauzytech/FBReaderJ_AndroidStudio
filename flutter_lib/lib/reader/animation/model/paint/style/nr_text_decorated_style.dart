@@ -1,6 +1,6 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
@@ -39,10 +39,8 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
         super(base, hyperlink ?? base.hyperlink);
 
   NRTextDecoratedStyle.fromJson(Map<String, dynamic> json)
-      : baseStyle = json['BaseStyle'],
-        _fontEntries = (json['myFontEntries'] as List)
-            .map((e) => FontEntry.fromJson(e))
-            .toList(),
+      : baseStyle = NRTextBaseStyle.fromJson(json['BaseStyle']),
+        _fontEntries = FontEntry.fromJsonList(json['myFontEntries']),
         _isItalic = json['myIsItalic'],
         _isBold = json['myIsBold'],
         _isUnderline = json['myIsUnderline'],

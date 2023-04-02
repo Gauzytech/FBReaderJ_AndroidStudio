@@ -19,8 +19,9 @@ abstract class NRTextStyle {
   }
 
   NRTextStyle.fromJson(Map<String, dynamic> json)
-      : parent = NRTextStyle.create(json['Parent']),
-        _hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']);
+      : _hyperlink = NRTextHyperLink.fromJson(json['Hyperlink']) {
+    parent = json['Parent'] != null ? NRTextStyle.create(json['Parent']) : this;
+  }
 
   static NRTextStyle create(Map<String, dynamic> json) {
     String className = json['className'];

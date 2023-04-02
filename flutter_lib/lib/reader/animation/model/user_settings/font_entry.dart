@@ -30,9 +30,17 @@ class FontEntry {
 
   FontEntry.fromJson(Map<String, dynamic> json)
       : family = json['Family'],
-        fileInfos = (json['myFileInfos'] as List)
-            .map((item) => FileInfo.fromJson(item))
-            .toList();
+        fileInfos = json['myFileInfos'] != null
+            ? (json['myFileInfos'] as List)
+                .map((item) => FileInfo.fromJson(item))
+                .toList()
+            : null;
+
+  static List<FontEntry> fromJsonList(dynamic rawData) {
+    return rawData != null
+        ? (rawData as List).map((item) => FontEntry.fromJson(item)).toList()
+        : [];
+  }
 
   bool isSystem() => fileInfos == null;
 

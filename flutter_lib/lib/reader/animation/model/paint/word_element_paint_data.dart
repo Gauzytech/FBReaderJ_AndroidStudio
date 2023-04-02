@@ -9,21 +9,19 @@ import 'element_paint_data.dart';
 class WordElementPaintData extends ElementPaintData {
   final NRTextStyle _textStyle;
   final TextBlock _textBlock;
-  final Mark _mark;
+  final Mark? _mark;
   final ColorData _color;
   final int _shift;
 
   WordElementPaintData.fromJson(Map<String, dynamic> json)
       : _textStyle = NRTextStyle.create(json['textStyle']),
         _textBlock = TextBlock.fromJson(json['textBlock']),
-        _mark = Mark.fromJson(json['mark']),
+        _mark = Mark.fromJsonOrNull(json['mark']),
         _color = ColorData.fromJson(json['color']),
         _shift = json['shift'];
 
   @override
   void debugFillDescription(List<String> description) {
-    super.debugFillDescription(description);
-    description.add("$runtimeType");
     description.add("textStyle: $_textStyle");
     description.add("textBlock: $_textBlock");
     description.add("mark: $_mark");
@@ -41,4 +39,8 @@ class Mark {
       : start = json['Start'],
         length = json['Length'],
         next = Mark.fromJson(json['myNext']);
+
+  static Mark? fromJsonOrNull(Map<String, dynamic>? json) {
+    return json != null ? Mark.fromJson(json) : null;
+  }
 }

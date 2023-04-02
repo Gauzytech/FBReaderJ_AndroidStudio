@@ -1,10 +1,11 @@
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
 
 import 'options/option_string.dart';
 
 /// 标签样式，会覆盖base节点样式
-class ContentTextNGStyleDescription {
+class NrTextNGStyleDescription with DebugInfoProvider{
   String name;
 
   OptionString fontFamilyOption;
@@ -23,7 +24,7 @@ class ContentTextNGStyleDescription {
   OptionString lineHeightOption;
 
   // 标签内属性都会被一一赋值给ZLTextNGStyleDescription类的各个属性
-  ContentTextNGStyleDescription.fromJson(Map<String, dynamic> json)
+  NrTextNGStyleDescription.fromJson(Map<String, dynamic> json)
       : name = json['Name'],
         fontFamilyOption = OptionString.fromJson(json['FontFamilyOption']),
         fontSizeOption = OptionString.fromJson(json['FontSizeOption']),
@@ -253,25 +254,21 @@ class ContentTextNGStyleDescription {
   }
 
   @override
-  String toString() {
-    return "ContentTextNGStyleDescription{" +
-        "Name='" +
-        name +
-        '\'' +
-        ", FontFamilyOption=$fontFamilyOption" +
-        ", FontSizeOption=$fontSizeOption" +
-        ", FontWeightOption=$fontWeightOption" +
-        ", FontStyleOption=$fontStyleOption" +
-        ", TextDecorationOption=$textDecorationOption" +
-        ", HyphenationOption=$hyphenationOption" +
-        ", MarginTopOption=$marginTopOption" +
-        ", MarginBottomOption=$marginBottomOption" +
-        ", MarginLeftOption=$marginLeftOption" +
-        ", MarginRightOption=$marginRightOption" +
-        ", TextIndentOption=$textIndentOption" +
-        ", AlignmentOption=$alignmentOption" +
-        ", VerticalAlignOption=$verticalAlignOption" +
-        ", LineHeightOption=$lineHeightOption" +
-        '}';
+  void debugFillDescription(List<String> description) {
+    description.add("$runtimeType");
+    description.add("name: $name");
+    description.add("fontFamilyOption: $fontFamilyOption");
+    description.add("fontSizeOption: $fontSizeOption");
+    description.add("fontWeightOption: $fontWeightOption");
+    description.add("fontStyleOption: $fontStyleOption");
+    description.add("textDecorationOption: $textDecorationOption");
+    description.add("hyphenationOption: $hyphenationOption");
+    description.add("marginTopOption: $marginTopOption");
+    description.add("marginBottomOption: $marginBottomOption");
+    description.add("marginLeftOption: $marginLeftOption");
+    description.add("marginRightOption: $marginRightOption");
+    description.add("alignmentOption: $alignmentOption");
+    description.add("verticalAlignOption: $verticalAlignOption");
+    description.add("lineHeightOption: $lineHeightOption");
   }
 }

@@ -1,6 +1,5 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
-import org.geometerplus.zlibrary.core.image.ZLImageProxy.SourceType
 import org.geometerplus.zlibrary.core.util.ZLColor
 import org.geometerplus.zlibrary.core.view.ZLPaintContext.Size
 import org.geometerplus.zlibrary.text.view.ZLTextStyle
@@ -23,7 +22,7 @@ sealed class ElementPaintData {
         val elementType: Int = ElementType.WORD.ordinal,
         val textStyle: ZLTextStyle,
         var textBlock: TextBlock,
-        val mark: ZLTextWord.Mark,
+        val mark: ZLTextWord.Mark?,
         val color: ZLColor,
         val shift: Int,
     ) : ElementPaintData() {
@@ -37,14 +36,14 @@ sealed class ElementPaintData {
 
             fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
             fun textBlock(textBlock: TextBlock) = apply { this.textBlock = textBlock }
-            fun mark(mark: ZLTextWord.Mark) = apply { this.mark = mark }
+            fun mark(mark: ZLTextWord.Mark?) = apply { this.mark = mark }
             fun color(color: ZLColor) = apply { this.color = color }
             fun shift(shift: Int) = apply { this.shift = shift }
 
             fun build() = Word(
                 textStyle = requireNotNull(textStyle),
                 textBlock = requireNotNull(textBlock),
-                mark = requireNotNull(mark),
+                mark = mark,
                 color = requireNotNull(color),
                 shift = requireNotNull(shift)
             )

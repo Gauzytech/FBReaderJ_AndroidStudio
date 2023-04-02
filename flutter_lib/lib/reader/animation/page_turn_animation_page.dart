@@ -8,6 +8,7 @@ import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/utils/time_util.dart';
@@ -425,7 +426,8 @@ class PageTurnAnimation extends BaseAnimationPage {
         PaintDataSrc nextPage =
             readerViewModel.getPagePaintData(PageIndex.next);
         if (nextPage.data != null) {
-          _drawPageData(canvas, pagePaintContext, nextPage.data!);
+          _drawPageData(
+              canvas, pagePaintContext, nextPage.data!, 'next', false);
           print(
             'flutter翻页行为:onDraw[有nextPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -443,7 +445,8 @@ class PageTurnAnimation extends BaseAnimationPage {
             readerViewModel.getPagePaintData(PageIndex.prev);
         canvas.translate(actualOffsetX - currentSize.width, 0);
         if (prevPage.data != null) {
-          _drawPageData(canvas, pagePaintContext, prevPage.data!);
+          _drawPageData(
+              canvas, pagePaintContext, prevPage.data!, 'prev', false);
           print(
             'flutter翻页行为:onDraw[有prevPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -451,9 +454,7 @@ class PageTurnAnimation extends BaseAnimationPage {
           );
         } else {
           print('flutter内容绘制流程:onDraw[无prevPage], 需要加载prevPage');
-          // if(prevPage.processing) {
-          //   readerViewModel.buildPageAsync(PageIndex.prev);
-          // }
+          readerViewModel.preparePagePaintData(prevPage, PageIndex.prev);
           _drawUnavailable(canvas);
         }
       } else {
@@ -470,7 +471,8 @@ class PageTurnAnimation extends BaseAnimationPage {
       canvas.translate(actualOffsetX, 0);
 
       if (currentPage.data != null) {
-        _drawPageData(canvas, pagePaintContext, currentPage.data!);
+        _drawPageData(canvas, pagePaintContext, currentPage.data!, 'current',
+            actualOffsetX == 0);
       } else {
         print('flutter内容绘制流程, currentPage不存在');
         _drawUnavailable(canvas);
@@ -549,12 +551,14 @@ class PageTurnAnimation extends BaseAnimationPage {
     ui.Canvas canvas,
     PagePaintContext pagePaintContext,
     List<LinePaintData> lineData,
+    String from,
+    bool isStable,
   ) {
     for (var lineInfo in lineData) {
       for (var elementPaintData in lineInfo.elementPaintDataList) {
-        // print('flutter内容绘制流程, $elementPaintData');
         if (elementPaintData is ImageElementPaintData) {
           if (elementPaintData.hasImage) {
+            print('flutter内容绘制流程, 画$from: ${elementPaintData.imageSrc}');
             pagePaintContext.drawImage(
                 canvas,
                 elementPaintData.left,
@@ -562,15 +566,18 @@ class PageTurnAnimation extends BaseAnimationPage {
                 elementPaintData,
                 elementPaintData.adjustingModeForImages);
           } else {
-            print('flutter内容绘制流程, image不存在, 开始异步加载');
             elementPaintData.fetchImage(
               readerViewModel.repository.rootDirectory.parent.path,
               callback: () {
                 print('flutter内容绘制流程, 异步加载完毕, 刷新');
-                readerViewModel.notify();
+                if (isStable) {
+                  readerViewModel.notify();
+                }
               },
             );
           }
+        } else if (elementPaintData is WordElementPaintData) {
+          print('flutter内容绘制流程, 绘制======$elementPaintData');
         }
       }
     }

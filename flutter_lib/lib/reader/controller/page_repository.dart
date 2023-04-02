@@ -91,9 +91,8 @@ class PageRepository with PageRepositoryDelegate {
       );
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      List<LinePaintData> lineData = (pageData['linePaintDataList'] as List)
-          .map((item) => LinePaintData.fromJson(item))
-          .toList();
+      List<LinePaintData> lineData =
+          LinePaintData.fromJsonList(pageData['linePaintDataList']);
       int width = ui.window.physicalSize.width.toInt();
       int height = ui.window.physicalSize.height.toInt();
 
@@ -138,10 +137,10 @@ class PageRepository with PageRepositoryDelegate {
     return await drawOnBitmap(internalIdx, pageIndex, false);
   }
 
-  Future<List<LinePaintData>> preparePagePaintData(PageIndex pageIndex) async {
+  Future<void> preparePagePaintData(PageIndex pageIndex) async {
     // 找一个缓存slot先占位
     int internalIdx = _bitmapManager.findInternalCacheIndex(pageIndex);
-    return _preparePagePaintData(internalIdx, pageIndex);
+    _preparePagePaintData(internalIdx, pageIndex);
   }
 
   /* ---------------------------------------- Flutter调用Native方法 ----------------------------------------------*/
@@ -178,11 +177,13 @@ class PageRepository with PageRepositoryDelegate {
     return null;
   }
 
-  Future<List<LinePaintData>> _preparePagePaintData(
+  Future<void> _preparePagePaintData(
     int internalCacheIndex,
     PageIndex pageIndex,
   ) async {
     try {
+      print(
+          'flutter_perf[preparePagePaintData], 请求PaintData ${now()}');
       // 调用native方法，获取page的绘制数据
       Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.buildPagePaintData,
@@ -196,10 +197,12 @@ class PageRepository with PageRepositoryDelegate {
       // 刷新content painter
       // refreshContent();
 
+      print(
+          'flutter_perf[preparePagePaintData], 收到了PaintData ${now()}');
+
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      List<LinePaintData> lineData = (pageData['linePaintDataList'] as List)
-          .map((item) => LinePaintData.fromJson(item))
-          .toList();
+      List<LinePaintData> lineData =
+          LinePaintData.fromJsonList(pageData['linePaintDataList']);
       _bitmapManager.cachePagePaintData(
         internalCacheIndex,
         lineData.toList(),
@@ -213,12 +216,9 @@ class PageRepository with PageRepositoryDelegate {
           print('flutter内容绘制流程[preparePagePaintData], data = $data');
         }
       }
-      return List.empty();
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
-
-    return List.empty();
   }
 
   /// 到达当前页之后, 事先缓存2页：上一页/下一页

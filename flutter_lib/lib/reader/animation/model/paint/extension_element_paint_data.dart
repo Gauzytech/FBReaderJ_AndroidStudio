@@ -21,8 +21,6 @@ class ExtensionElementPaintData extends ElementPaintData {
 
   @override
   void debugFillDescription(List<String> description) {
-    super.debugFillDescription(description);
-    description.add("$runtimeType");
     description.add("imagePaintData: $imagePaintData");
     description.add("videoElementPaintData: $videoElementPaintData");
   }

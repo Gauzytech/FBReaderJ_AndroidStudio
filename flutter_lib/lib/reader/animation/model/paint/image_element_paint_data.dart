@@ -41,22 +41,26 @@ class ImageElementPaintData extends ElementPaintData with DisposablePaintData {
   ImageStream? _stream;
 
   Future<void> fetchImage(String rootPath, {VoidCallback? callback}) async {
-    _onImageLoaded = callback;
-    switch (sourceType) {
-      case ImageSourceType.file:
-        var path = "$rootPath/$imageSrc";
-        print('flutter内容绘制流程, 获取图片文件 path = $path');
-        final cmd = lib.Command()..decodeImageFile(path);
-        lib.Command result = await cmd.executeThread();
-        lib.Image? baseSizeImage = result.outputImage;
+    if (_onImageLoaded == null) {
+      print('flutter内容绘制流程, image不存在, 首次加载, 开始异步加载');
+      _onImageLoaded = callback;
+      switch (sourceType) {
+        case ImageSourceType.file:
+          var path = "$rootPath/$imageSrc";
+          print('flutter内容绘制流程, 获取图片文件 path = $path');
+          final cmd = lib.Command()..decodeImageFile(path);
+          lib.Command result = await cmd.executeThread();
+          lib.Image? baseSizeImage = result.outputImage;
 
-        _image = baseSizeImage != null
-            ? await _resizeImage(baseSizeImage, maxSize, scalingType)
-            : null;
-        _onImageLoaded?.call();
-        break;
-      case ImageSourceType.network:
-        throw Exception('not implemented');
+          _image = baseSizeImage != null
+              ? await _resizeImage(baseSizeImage, maxSize, scalingType)
+              : null;
+          _onImageLoaded?.call();
+          _onImageLoaded = null;
+          break;
+        case ImageSourceType.network:
+          throw Exception('not implemented');
+      }
     }
   }
 
@@ -138,8 +142,6 @@ class ImageElementPaintData extends ElementPaintData with DisposablePaintData {
 
   @override
   void debugFillDescription(List<String> description) {
-    super.debugFillDescription(description);
-    description.add("$runtimeType");
     description.add("sourceType: $sourceType");
     description.add("left: $left");
     description.add("top: $top");

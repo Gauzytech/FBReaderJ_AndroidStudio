@@ -6,15 +6,10 @@ class SpaceElementPaintData extends ElementPaintData {
 
   SpaceElementPaintData.fromJson(Map<String, dynamic> json)
       : spaceWidth = json['spaceWidth'],
-        textBlocks = (json['textBlocks'] as List)
-            .map((item) => TextBlock.fromJson(item))
-            .toList();
-
+        textBlocks = TextBlock.fromJsonList(json['textBlocks']);
 
   @override
   void debugFillDescription(List<String> description) {
-    super.debugFillDescription(description);
-    description.add("$runtimeType");
     description.add("spaceWidth: $spaceWidth");
     description.add("textBlocks: $textBlocks");
   }
@@ -33,4 +28,9 @@ class TextBlock {
         data = (json['data'] as List).map((item) => item as String).toList(),
         offset = json['offset'],
         length = json['length'];
+
+  static List<TextBlock> fromJsonList(dynamic rawData) {
+    return (rawData as List).map((item) => TextBlock.fromJson(item))
+        .toList();
+  }
 }

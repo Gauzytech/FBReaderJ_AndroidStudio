@@ -10,7 +10,8 @@ abstract class NRTextStyleEntry {
   final int _depth;
 
   int _featureMask = 0;
-  List<NRTextStyleEntryLength> _lengths = [];
+  List<NRTextStyleEntryLength?> _lengths =
+      List.filled(Feature.numberOfLength.id, null);
 
   int get alignmentType => _alignmentType;
   int _alignmentType = 0;
@@ -29,9 +30,9 @@ abstract class NRTextStyleEntry {
   NRTextStyleEntry.fromJson(Map<String, dynamic> json)
       : _depth = json['Depth'],
         _featureMask = json['myFeatureMask'],
-        _lengths = json['myLengths'],
+        _lengths = NRTextStyleEntryLength.fromJsonList(json['myLengths']),
         _alignmentType = json['myAlignmentType'],
-        _fontEntries = json['myFontEntries'],
+        _fontEntries = FontEntry.fromJsonList(json['myFontEntries']),
         _supportedFontModifiers = json['mySupportedFontModifiers'],
         _fontModifiers = json['myFontModifiers'],
         _verticalAlignCode = json['myVerticalAlignCode'];
@@ -58,7 +59,7 @@ abstract class NRTextStyleEntry {
 
   int getLength(Feature feature, TextMetrics metrics, int fontSize) {
     return NRTextStyleEntryLength.compute(
-        _lengths[feature.id], metrics, fontSize, feature);
+        _lengths[feature.id]!, metrics, fontSize, feature);
   }
 
   Boolean3 getFontModifier(int modifier) {
@@ -71,7 +72,7 @@ abstract class NRTextStyleEntry {
   }
 
   bool hasNonZeroLength(Feature feature) {
-    return _lengths[feature.id].size != 0;
+    return _lengths[feature.id]?.size != 0;
   }
 }
 
@@ -82,7 +83,24 @@ enum SizeUnit {
   em100,
   rem100,
   ex100,
-  percent
+  percent;
+
+  static SizeUnit fromIndex(int value) {
+    switch (value) {
+      case 1:
+        return SizeUnit.point;
+      case 2:
+        return SizeUnit.em100;
+      case 3:
+        return SizeUnit.rem100;
+      case 4:
+        return SizeUnit.ex100;
+      case 5:
+        return SizeUnit.percent;
+      default:
+        return SizeUnit.pixel;
+    }
+  }
 }
 
 enum Feature {
@@ -134,6 +152,16 @@ class NRTextStyleEntryLength {
   SizeUnit unit;
 
   NRTextStyleEntryLength({required this.size, required this.unit});
+
+  NRTextStyleEntryLength.fromJson(Map<String, dynamic> json)
+      : size = json['Size'],
+        unit = SizeUnit.fromIndex(json['Unit']);
+
+  static List<NRTextStyleEntryLength?> fromJsonList(dynamic rawData) {
+    return (rawData as List)
+        .map((e) => e != null ? NRTextStyleEntryLength.fromJson(e) : null)
+        .toList();
+  }
 
   static int compute(
     NRTextStyleEntryLength length,

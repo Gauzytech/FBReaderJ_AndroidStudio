@@ -52,18 +52,14 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int
-    ): ContentPageResult {
-//        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-//        drawOnBitmap(bitmap, index, width, height, 0)
-
-        return bookPageProvider.processPageData(
+    ): ContentPageResult =
+        bookPageProvider.processPageData(
             targetContentView, index,
             width,
             height,
             getMainAreaHeight(height),
             verticalScrollbarWidth
         )
-    }
 
     override fun onScrollingFinished(index: PageIndex) {
         Timber.v("渲染流程, onSizeChanged -> onScrollingFinished")

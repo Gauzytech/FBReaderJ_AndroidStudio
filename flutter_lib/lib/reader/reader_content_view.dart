@@ -192,8 +192,8 @@ class ReaderContentViewState
           children: <Widget>[
             _buildHighlightLayer(contentSize.width, contentSize.height),
             SizedBox(
-              width: 1080,
-              height: 2038,
+              width: contentSize.width,
+              height: contentSize.height,
               child: RepaintBoundary(
                 child: CustomPaint(
                   key: contentKey,
@@ -843,7 +843,9 @@ class ReaderContentViewState
     assert(_contentPainter != null);
     if (newScroll) {
       print('flutter翻页行为, 执行pixels = ${position.pixels}');
-      if (await _contentPainter!.canScroll(position.userScrollDirection)) {
+      bool canScroll = await _contentPainter!.canScroll(
+          position.userScrollDirection);
+      if (canScroll) {
         _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
           pixels: position.pixels,
           page: position.page!,
@@ -851,6 +853,8 @@ class ReaderContentViewState
           onPageCentered: _disposePageDraw,
         ));
         invalidateContent();
+      } else {
+        _disposePageDraw();
       }
     } else {
       print('flutter翻页行为, 忽略, 此处需要重置坐标');

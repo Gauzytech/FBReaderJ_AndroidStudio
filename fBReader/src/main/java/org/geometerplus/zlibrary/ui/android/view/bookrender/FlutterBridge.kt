@@ -26,6 +26,7 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.PREPA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTED_TEXT
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTION_CLEAR
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -68,7 +69,7 @@ class FlutterBridge(
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val pageIndex = PageIndex.getPageIndex(index)
-                Timber.v("$TAG[${System.currentTimeMillis()}] 请求数据: pageIndex = $pageIndex, size = [$width, $height")
+                Timber.v("$TAG[${System.currentTimeMillis()}] 请求数据: $pageIndex, size = [$width, $height]")
 
                 // 绘制内容的bitmap
                 contentProcessor.buildPageData(
@@ -80,7 +81,12 @@ class FlutterBridge(
                     when (pageResult) {
                         ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
                         is ContentPageResult.Paint -> {
-                            Timber.v("flutter_perf, 发送, ${System.currentTimeMillis()}")
+                            Timber.v("flutter_perf, 发送结果, ${System.currentTimeMillis()}")
+//                            pageResult.linePaintDataList.forEach {
+//                                it.elementPaintData.forEach { element ->
+//                                    Timber.v("ceshi123, ${(element as? ElementPaintData.Word)?.textStyle}")
+//                                }
+//                            }
                             result.success(
                                 mapOf("page_data" to gson.toJson(pageResult))
                             )

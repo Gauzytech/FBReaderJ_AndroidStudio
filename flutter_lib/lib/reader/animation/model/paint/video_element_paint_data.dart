@@ -17,8 +17,6 @@ class VideoElementPaintData extends ElementPaintData {
 
   @override
   void debugFillDescription(List<String> description) {
-    super.debugFillDescription(description);
-    description.add("$runtimeType");
     description.add("lineColor: $lineColor");
     description.add("xStart: $xStart");
     description.add("xEnd: $xEnd");

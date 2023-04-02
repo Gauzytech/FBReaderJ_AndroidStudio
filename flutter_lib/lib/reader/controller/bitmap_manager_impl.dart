@@ -205,11 +205,11 @@ class BitmapManagerImpl with BitmapManager {
   }
 
   @override
-  PaintDataSrc getPagePaintData(PageIndex index) {
-    print(
-        'flutter内容绘制流程[getPagePaintData], $_pageIndexCache, pageIndex = $index');
+  PaintDataSrc getPagePaintData(PageIndex pageIndex) {
+    // print(
+    //     'flutter内容绘制流程[getPagePaintData], $_pageIndexCache, pageIndex = $index');
     for (int i = 0; i < BitmapManager.cacheSize; i++) {
-      if (_pageIndexCache[i] == index) {
+      if (_pageIndexCache[i] == pageIndex) {
         PagePaintData? pagePaintData = _pageDataCache[i];
         return PaintDataSrc(
           data: pagePaintData?.data,
