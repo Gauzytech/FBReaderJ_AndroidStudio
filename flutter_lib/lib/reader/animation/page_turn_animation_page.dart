@@ -6,6 +6,7 @@ import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
+import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
@@ -426,15 +427,13 @@ class PageTurnAnimation extends BaseAnimationPage {
         PaintDataSrc nextPage =
             readerViewModel.getPagePaintData(PageIndex.next);
         if (nextPage.data != null) {
-          _drawPageData(
-              canvas, pagePaintContext, nextPage.data!, 'next', false);
+          _performPageDraw(canvas, pagePaintContext, nextPage.data!, 'next');
           print(
             'flutter翻页行为:onDraw[有nextPage], '
             'actualOffsetX = $actualOffsetX, '
             'translate = ${actualOffsetX - currentSize.width}',
           );
         } else {
-          print('flutter内容绘制流程:onDraw[无nextPage], 需要加载nextPage');
           readerViewModel.preparePagePaintData(nextPage, PageIndex.next);
           _drawUnavailable(canvas);
         }
@@ -445,15 +444,13 @@ class PageTurnAnimation extends BaseAnimationPage {
             readerViewModel.getPagePaintData(PageIndex.prev);
         canvas.translate(actualOffsetX - currentSize.width, 0);
         if (prevPage.data != null) {
-          _drawPageData(
-              canvas, pagePaintContext, prevPage.data!, 'prev', false);
+          _performPageDraw(canvas, pagePaintContext, prevPage.data!, 'prev');
           print(
             'flutter翻页行为:onDraw[有prevPage], '
             'actualOffsetX = $actualOffsetX, '
             'translate = ${actualOffsetX - currentSize.width}',
           );
         } else {
-          print('flutter内容绘制流程:onDraw[无prevPage], 需要加载prevPage');
           readerViewModel.preparePagePaintData(prevPage, PageIndex.prev);
           _drawUnavailable(canvas);
         }
@@ -471,8 +468,13 @@ class PageTurnAnimation extends BaseAnimationPage {
       canvas.translate(actualOffsetX, 0);
 
       if (currentPage.data != null) {
-        _drawPageData(canvas, pagePaintContext, currentPage.data!, 'current',
-            actualOffsetX == 0);
+        _performPageDraw(
+          canvas,
+          pagePaintContext,
+          currentPage.data!,
+          'current',
+          isStable: actualOffsetX == 0,
+        );
       } else {
         print('flutter内容绘制流程, currentPage不存在');
         _drawUnavailable(canvas);
@@ -547,39 +549,131 @@ class PageTurnAnimation extends BaseAnimationPage {
     canvas.drawCircle(center, radius, _linePaint);
   }
 
-  void _drawPageData(
-    ui.Canvas canvas,
-    PagePaintContext pagePaintContext,
-    List<LinePaintData> lineData,
-    String from,
-    bool isStable,
-  ) {
+  /// 绘制当前page
+  void _performPageDraw(ui.Canvas canvas, PagePaintContext pagePaintContext,
+      List<LinePaintData> lineData, String from,
+      {bool isStable = false}) {
     for (var lineInfo in lineData) {
-      for (var elementPaintData in lineInfo.elementPaintDataList) {
-        if (elementPaintData is ImageElementPaintData) {
-          if (elementPaintData.hasImage) {
-            print('flutter内容绘制流程, 画$from: ${elementPaintData.imageSrc}');
-            pagePaintContext.drawImage(
-                canvas,
-                elementPaintData.left,
-                elementPaintData.top,
-                elementPaintData,
-                elementPaintData.adjustingModeForImages);
-          } else {
-            elementPaintData.fetchImage(
-              readerViewModel.repository.rootDirectory.parent.path,
-              callback: () {
-                print('flutter内容绘制流程, 异步加载完毕, 刷新');
-                if (isStable) {
-                  readerViewModel.notify();
-                }
-              },
+      for (var lineElement in lineInfo.elementPaintDataList) {
+        switch (lineElement.runtimeType) {
+          case WordElementPaintData:
+            _drawString(
+              pagePaintContext,
+              canvas,
+              lineElement as WordElementPaintData,
             );
-          }
-        } else if (elementPaintData is WordElementPaintData) {
-          print('flutter内容绘制流程, 绘制======$elementPaintData');
+            break;
+          case ImageElementPaintData:
+            _drawImage(
+              pagePaintContext,
+              canvas,
+              lineElement as ImageElementPaintData,
+              isStable,
+              from,
+            );
+            break;
+          default:
         }
       }
+    }
+  }
+
+  /// 绘制文字word
+  void _drawString(
+    PagePaintContext paintContext,
+    ui.Canvas canvas,
+    WordElementPaintData lineElement,
+  ) {
+    print('flutter内容绘制流程, 绘制======$lineElement');
+
+    double x = lineElement.textBlock.x.toDouble();
+    double y = lineElement.textBlock.y.toDouble();
+    int offset = lineElement.textBlock.offset;
+    int length = lineElement.textBlock.length;
+    int shift = lineElement.shift;
+    ColorData color = lineElement.color;
+    List<String> data = lineElement.textBlock.data;
+    var mark = lineElement.mark;
+    if (mark == null) {
+      // 无标记
+      paintContext.setTextColor(color);
+      paintContext.drawString2(canvas, x, y, data, offset, length);
+    } else {
+      // 有标记
+      int pos = 0;
+      for (; (mark != null) && (pos < length); mark = mark.next) {
+        // 标记的起始
+        int markStart = mark.start - shift;
+        // 标记的长度
+        int markLen = mark.length;
+
+        if (markStart < pos) {
+          markLen += markStart - pos;
+          markStart = pos;
+        }
+
+        if (markLen <= 0) {
+          continue;
+        }
+
+        // if (markStart > pos) {
+        //   int endPos = min(markStart, length);
+        //   paintContext.setTextColor(color);
+        //   Size stringSize = paintContext.drawString2(
+        //       canvas, x, y, data, offset + pos, endPos - pos);
+        //   x += paintContext
+        //       .getStringWidth(data, offset + pos, endPos - pos,
+        //           stringSize: stringSize)
+        //       .right;
+        // }
+        //
+        // if (markStart < length) {
+        //   paintContext.setFillColor(getHighlightingBackgroundColor());
+        //   int endPos = min(markStart + markLen, length);
+        //   Pair<TextPainter?, double> result = paintContext.getStringWidth(
+        //       data, offset + markStart, endPos - markStart);
+        //   final double endX = x + result.right;
+        //   paintContext.fillRectangle(x, y - context.getStringHeight(), endX - 1,
+        //       y + context.getDescent());
+        //   paintContext.setTextColor(getHighlightingForegroundColor());
+        //   paintContext.drawString2(
+        //       canvas, x, y, data, offset + markStart, endPos - markStart,
+        //       painter: result.left);
+        //   x = endX;
+        // }
+        pos = markStart + markLen;
+      }
+
+      if (pos < length) {
+        paintContext.setTextColor(color);
+        paintContext.drawString2(
+            canvas, x, y, data, offset + pos, length - pos);
+      }
+    }
+  }
+
+  /// 绘制图片
+  void _drawImage(
+    PagePaintContext pagePaintContext,
+    ui.Canvas canvas,
+    ImageElementPaintData lineElement,
+    bool isStable,
+    String from,
+  ) {
+    if (lineElement.hasImage) {
+      print('flutter内容绘制流程, 画$from: ${lineElement.imageSrc}');
+      pagePaintContext.drawImage(canvas, lineElement.left, lineElement.top,
+          lineElement, lineElement.adjustingModeForImages);
+    } else {
+      lineElement.fetchImage(
+        readerViewModel.repository.rootDirectory.parent.path,
+        callback: () {
+          print('flutter内容绘制流程, 异步加载完毕, 刷新');
+          if (isStable) {
+            readerViewModel.notify();
+          }
+        },
+      );
     }
   }
 }

@@ -61,6 +61,25 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
             verticalScrollbarWidth
         )
 
+    override fun buildPageDataAsync(
+        index: PageIndex,
+        width: Int,
+        height: Int,
+        verticalScrollbarWidth: Int,
+        resultCallBack: FlutterBridge.ResultCallBack
+    ) {
+        prepareService.execute {
+            val result = bookPageProvider.processPageData(
+                targetContentView, index,
+                width,
+                height,
+                getMainAreaHeight(height),
+                verticalScrollbarWidth
+            )
+            resultCallBack.onComplete(result)
+        }
+    }
+
     override fun onScrollingFinished(index: PageIndex) {
         Timber.v("渲染流程, onSizeChanged -> onScrollingFinished")
         targetContentView.onScrollingFinished(index)

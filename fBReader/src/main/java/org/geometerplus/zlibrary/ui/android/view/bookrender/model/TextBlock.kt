@@ -8,32 +8,20 @@ package org.geometerplus.zlibrary.ui.android.view.bookrender.model
  * @Description FBReaderJ_AndroidStudio
  */
 data class TextBlock(
-    val data: CharArray,
+    // ASCII code for char
+    val data: List<Int>,
     val offset: Int,
     val length: Int,
     val x: Int,
     val y: Int
 ) {
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TextBlock) return false
-
-        if (!data.contentEquals(other.data)) return false
-        if (offset != other.offset) return false
-        if (length != other.length) return false
-        if (x != other.x) return false
-        if (y != other.y) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = data.contentHashCode()
-        result = 31 * result + offset
-        result = 31 * result + length
-        result = 31 * result + x
-        result = 31 * result + y
-        return result
+    companion object {
+        @JvmStatic
+        fun create(
+            data: CharArray, offset: Int, length: Int, x: Int, y: Int
+        ): TextBlock {
+            return TextBlock(data.map { it.code }, offset, length, x, y)
+        }
     }
 }

@@ -393,7 +393,7 @@ abstract class ZLTextViewBase extends ZLView {
 //            drawString(context, x, y, word.Data, word.Offset, word.Length, word.getMark(), color, 0);
 
             return wordDataBuilder
-                    .textBlock(new TextBlock(word.Data, word.Offset, word.Length, x, y))
+                    .textBlock(TextBlock.create(word.Data, word.Offset, word.Length, x, y))
                     .mark(word.getMark())
                     .color(color)
                     .shift(0)
@@ -405,7 +405,7 @@ abstract class ZLTextViewBase extends ZLView {
             if (!addHyphenationSign) { // 无断字连接
 //                drawString(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start);
                 wordDataBuilder
-                        .textBlock(new TextBlock(word.Data, word.Offset + start, length, x, y))
+                        .textBlock(TextBlock.create(word.Data, word.Offset + start, length, x, y))
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);
@@ -420,7 +420,7 @@ abstract class ZLTextViewBase extends ZLView {
                 part[length] = '-';
 //                drawString(context, x, y, part, 0, length + 1, word.getMark(), color, start);
                 wordDataBuilder
-                        .textBlock(new TextBlock(part, 0, length + 1, x, y))
+                        .textBlock(TextBlock.create(part, 0, length + 1, x, y))
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);

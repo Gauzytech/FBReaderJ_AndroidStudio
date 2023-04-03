@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 import 'package:flutter_lib/utils/paint_modify.dart';
@@ -219,28 +220,92 @@ class PagePaintContext extends PaintContext {
 
   /// ------------------------ 绘制文字的操作 ------------------------
   @override
-  void drawStringInternal(
-      int x, int y, Characters string, int offset, int length) {
-    // bool containsSoftHyphen = false;
-    // for (int i = offset; i < offset + length; ++i) {
-    //   if (string[i] == (char) 0xAD) {
-    //     containsSoftHyphen = true;
-    //     break;
-    //   }
-    // }
-    // if (!containsSoftHyphen) {
-    //   _myCanvas.drawText(string, offset, length, x, y, _myTextPaint);
-    // } else {
-    //   final char[] corrected = new char[length];
-    //   int len = 0;
-    //   for (int o = offset; o < offset + length; ++o) {
-    //     final char chr = string[o];
-    //     if (chr != (char) 0xAD) {
-    //       corrected[len++] = chr;
-    //     }
-    //   }
-    //   _myCanvas.drawText(corrected, 0, len, x, y, _myTextPaint);
-    // }
+  Size drawString2(
+    ui.Canvas canvas,
+    double x,
+    double y,
+    List<String> chars,
+    int offset,
+    int length, {
+    TextPainter? painter,
+  }) {
+    if (painter != null) {
+      painter.paint(canvas, Offset(x, y));
+      return painter.size;
+    } else {
+      var buffer = StringBuffer();
+      bool containsSoftHyphen = false;
+      for (int i = offset; i < offset + length; ++i) {
+        if (chars[i] == String.fromCharCode(0xAD)) {
+          containsSoftHyphen = true;
+          break;
+        }
+        buffer.write(chars[i]);
+      }
+
+      if (containsSoftHyphen) {
+        StringBuffer corrected = StringBuffer();
+        for (int o = offset; o < offset + length; ++o) {
+          final String chr = chars[o];
+          if (chr != String.fromCharCode(0xAD)) {
+            corrected.write(chr);
+          }
+        }
+        buffer = corrected;
+      }
+
+      TextPainter textPainter = TextPainter(
+        locale: WidgetsBinding.instance.window.locale,
+        text: TextSpan(
+          text: buffer.toString(),
+          style: const TextStyle(color: Colors.black),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(x, y));
+      return textPainter.size;
+    }
+  }
+
+  @override
+  Pair<TextPainter?, double> getStringWidth(
+      List<String> chars,
+      int offset,
+      int length, {
+        Size? stringSize,
+      }) {
+    if (stringSize != null) return Pair(null, stringSize.width + 0.5);
+
+    var buffer = StringBuffer();
+    bool containsSoftHyphen = false;
+    for (int i = offset; i < offset + length; ++i) {
+      if (chars[i] == String.fromCharCode(0xAD)) {
+        containsSoftHyphen = true;
+        break;
+      }
+      buffer.write(chars[i]);
+    }
+
+    if (containsSoftHyphen) {
+      StringBuffer corrected = StringBuffer();
+      for (int o = offset; o < offset + length; ++o) {
+        final String chr = chars[o];
+        if (chr != String.fromCharCode(0xAD)) {
+          corrected.write(chr);
+        }
+      }
+      buffer = corrected;
+    }
+
+    TextPainter textPainter = TextPainter(
+      locale: WidgetsBinding.instance.window.locale,
+      text: TextSpan(
+        text: buffer.toString(),
+        style: const TextStyle(color: Colors.black),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return Pair(textPainter, textPainter.width + 0.5);
   }
 
   @override
@@ -302,11 +367,6 @@ class PagePaintContext extends PaintContext {
 
   @override
   int getStringHeightInternal() {
-    return 0;
-  }
-
-  @override
-  int getStringWidth(Characters string, int offset, int length) {
     return 0;
   }
 

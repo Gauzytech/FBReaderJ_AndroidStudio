@@ -7,26 +7,26 @@ import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dar
 import 'element_paint_data.dart';
 
 class WordElementPaintData extends ElementPaintData {
-  final NRTextStyle _textStyle;
-  final TextBlock _textBlock;
-  final Mark? _mark;
-  final ColorData _color;
-  final int _shift;
+  final NRTextStyle textStyle;
+  final TextBlock textBlock;
+  final Mark? mark;
+  final ColorData color;
+  final int shift;
 
   WordElementPaintData.fromJson(Map<String, dynamic> json)
-      : _textStyle = NRTextStyle.create(json['textStyle']),
-        _textBlock = TextBlock.fromJson(json['textBlock']),
-        _mark = Mark.fromJsonOrNull(json['mark']),
-        _color = ColorData.fromJson(json['color']),
-        _shift = json['shift'];
+      : textStyle = NRTextStyle.create(json['textStyle']),
+        textBlock = TextBlock.fromJson(json['textBlock']),
+        mark = Mark.fromJsonOrNull(json['mark']),
+        color = ColorData.fromJson(json['color']),
+        shift = json['shift'];
 
   @override
   void debugFillDescription(List<String> description) {
-    description.add("textStyle: $_textStyle");
-    description.add("textBlock: $_textBlock");
-    description.add("mark: $_mark");
-    description.add("color: $_color");
-    description.add("shift: $_shift");
+    description.add("textStyle: $textStyle");
+    description.add("textBlock: $textBlock");
+    description.add("mark: $mark");
+    description.add("color: $color");
+    description.add("shift: $shift");
   }
 }
 

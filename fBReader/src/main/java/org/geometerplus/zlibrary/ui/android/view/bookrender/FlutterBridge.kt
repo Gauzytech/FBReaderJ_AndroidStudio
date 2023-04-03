@@ -62,8 +62,7 @@ class FlutterBridge(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Timber.v("$TAG, onMethodCall: ${call.method}, Thread: ${Thread.currentThread().name}")
         when (call.method) {
-            DRAW_ON_BITMAP,
-            BUILD_PAGE_PAINT_DATA -> {
+            DRAW_ON_BITMAP -> {
                 // 获取Flutter传递的参数
                 val index = call.argument<Int>("page_index")!!
                 val width = call.argument<Int>("width")!!
@@ -101,6 +100,36 @@ class FlutterBridge(
 //                } else {
 //                    result.success(bitmap.toByteArray())
 //                }
+            }
+            BUILD_PAGE_PAINT_DATA -> {
+                val index = call.argument<Int>("page_index")!!
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
+                val pageIndex = PageIndex.getPageIndex(index)
+                contentProcessor.buildPageDataAsync(
+                    pageIndex,
+                    width,
+                    height,
+                    0,
+                    object : ResultCallBack {
+                        override fun onComplete(data: Any) {
+                            when (data) {
+                                ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
+                                is ContentPageResult.Paint -> {
+                                    Timber.v("flutter_perf, 发送结果, ${System.currentTimeMillis()}")
+//                                    data.linePaintDataList.forEach {
+//                                        it.elementPaintData.forEach { element ->
+//                                            Timber.v("flutter内容绘制流程, 发送: ${(element as? ElementPaintData.Word)?.textBlock?.data}")
+//                                        }
+//                                    }
+                                    result.success(
+                                        mapOf("page_data" to gson.toJson(data))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
             }
             PREPARE_PAGE -> {
                 val width = call.argument<Int>("width")!!

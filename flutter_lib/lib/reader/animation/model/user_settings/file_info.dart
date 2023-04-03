@@ -13,6 +13,14 @@ class FileInfo {
       : path = json['Path'],
         encryptionInfo = FileEncryptionInfo.fromJson(json['EncryptionInfo']);
 
+  static List<FileInfo>? fromJsonList(dynamic rawData) {
+    return rawData != null
+        ? (rawData as List)
+            .map((item) => FileInfo.fromJson(item))
+            .toList()
+        : null;
+  }
+
   @override
   bool operator ==(Object other) {
     if (this == other) {

@@ -154,8 +154,10 @@ class ReaderViewModel extends BaseViewModel {
 
   void preparePagePaintData(PaintDataSrc paintDataSrc, PageIndex pageIndex) {
     if(!paintDataSrc.pending) {
+      print('flutter内容绘制流程, 需要加载$pageIndex');
       repository.preparePagePaintData(pageIndex);
     } else {
+      print('flutter内容绘制流程, 已经通知了native, 不用重新绘制');
       print('flutter翻页行为, ----------------已经通知了native, 不用重新绘制');
     }
   }

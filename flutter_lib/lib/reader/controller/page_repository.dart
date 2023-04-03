@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
@@ -182,23 +183,14 @@ class PageRepository with PageRepositoryDelegate {
     PageIndex pageIndex,
   ) async {
     try {
-      print(
-          'flutter_perf[preparePagePaintData], 请求PaintData ${now()}');
+      print('flutter_perf[preparePagePaintData], 请求PaintData ${now()}');
       // 调用native方法，获取page的绘制数据
       Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.buildPagePaintData,
         {'page_index': pageIndex.index},
       );
 
-      // _bitmapManager缓存img
-      // _bitmapManager.setSize(image.width, image.height);
-      // _bitmapManager.cacheBitmap(internalCacheIndex, image);
-
-      // 刷新content painter
-      // refreshContent();
-
-      print(
-          'flutter_perf[preparePagePaintData], 收到了PaintData ${now()}');
+      print('flutter_perf[preparePagePaintData], 收到了PaintData ${now()}');
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
       List<LinePaintData> lineData =
@@ -210,10 +202,14 @@ class PageRepository with PageRepositoryDelegate {
 
       print(
           'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');
-      for (var element in lineData) {
+      for (var item in lineData) {
         // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
-        for (var data in element.elementPaintDataList) {
-          print('flutter内容绘制流程[preparePagePaintData], data = $data');
+        for (var lineElement in item.elementPaintDataList) {
+          if(lineElement is WordElementPaintData) {
+            for (var element in lineElement.textBlock.data) {
+              print('flutter内容绘制流程[preparePagePaintData], data = $element');
+            }
+          }
         }
       }
     } on PlatformException catch (e) {

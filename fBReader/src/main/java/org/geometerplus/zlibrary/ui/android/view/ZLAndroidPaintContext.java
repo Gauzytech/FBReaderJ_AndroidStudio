@@ -525,6 +525,11 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             }
         }
         if (!containsSoftHyphen) {
+//            StringBuilder sb = new StringBuilder();
+//            for (int i = offset; i <= offset + length; i++) {
+//                sb.append(string[i]);
+//            }
+//            Timber.v("ceshi123, offset = %s, length = %s : %s", offset, length, sb.toString());
             myCanvas.drawText(string, offset, length, x, y, myTextPaint);
         } else {
             final char[] corrected = new char[length];
@@ -550,7 +555,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         }
         if (!containsSoftHyphen) {
             myCanvas.drawText(string, offset, length, x, y, myTextPaint);
-            return new TextBlock(string, offset, length, x, y);
+            return TextBlock.create(string, offset, length, x, y);
         } else {
             final char[] corrected = new char[length];
             int len = 0;
@@ -561,7 +566,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
                 }
             }
             myCanvas.drawText(corrected, 0, len, x, y, myTextPaint);
-            return new TextBlock(corrected, 0, len, x, y);
+            return TextBlock.create(corrected, 0, len, x, y);
         }
     }
 

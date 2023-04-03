@@ -25,7 +25,9 @@ class TextBlock {
   TextBlock.fromJson(Map<String, dynamic> json)
       : x = json['x'],
         y = json['y'],
-        data = (json['data'] as List).map((item) => item as String).toList(),
+        data = (json['data'] as List)
+            .map((code) => String.fromCharCode(code))
+            .toList(),
         offset = json['offset'],
         length = json['length'];
 

@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/model/pair.dart';
 
 import '../reader/animation/model/highlight_block.dart';
 import '../reader/animation/model/paint/image_element_paint_data.dart';
@@ -165,16 +166,17 @@ abstract class PaintContext {
   /// @param string 字符串
   /// @return 字符串宽度
   int getWordWidth(String string) {
-    return getStringWidth(string.characters, 0, string.length);
+    // return getStringWidth(string.characters, 0, string.length);
+    return 0;
   }
 
   /// 使用{@link org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext.myTextPaint}获取字符串宽度
   ///
-  /// @param string 字符串数组
+  /// @param chars 字符串数组
   /// @param offset 偏移量
   /// @param length 字符长度
   /// @return 字符串宽度
-  int getStringWidth(Characters string, int offset, int length);
+  Pair<TextPainter?, double> getStringWidth(List<String> chars, int offset, int length, {Size? stringSize});
 
   int getExtraWordWidth(String string) {
     return getExtraStringWidth(string.characters, 0, string.length);
@@ -246,8 +248,9 @@ abstract class PaintContext {
   /// @param x      起始X
   /// @param y      起始Y
   /// @param string 字符串
-  void drawString(int x, int y, String string) {
-    drawStringInternal(x, y, string.characters, 0, string.length);
+  Size drawString(
+      ui.Canvas canvas, double x, double y, List<String> chars) {
+    return drawString2(canvas, x, y, chars, 0, chars.length);
   }
 
   /// 绘制字符串（抽象）
@@ -257,8 +260,8 @@ abstract class PaintContext {
   /// @param string 字符串数组
   /// @param offset 偏移（字符串数组的偏移）
   /// @param length 绘制的字符长度
-  void drawStringInternal(
-      int x, int y, Characters string, int offset, int length);
+  Size drawString2(ui.Canvas canvas, double x, double y,
+      List<String> chars, int offset, int length);
 
   /// 获得书页中的插图, 耗时操作
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling);

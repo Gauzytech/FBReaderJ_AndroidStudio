@@ -32,6 +32,14 @@ interface ContentProcessor {
         verticalScrollbarWidth: Int
     ): ContentPageResult
 
+    fun buildPageDataAsync(
+        index: PageIndex,
+        width: Int,
+        height: Int,
+        verticalScrollbarWidth: Int,
+        resultCallBack: FlutterBridge.ResultCallBack,
+    )
+
     fun prepareAdjacentPage(width: Int, height: Int, verticalScrollbarWidth: Int)
     fun prepareAdjacentPage(
         width: Int,
