@@ -202,16 +202,16 @@ class PageRepository with PageRepositoryDelegate {
 
       print(
           'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');
-      for (var item in lineData) {
-        // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
-        for (var lineElement in item.elementPaintDataList) {
-          if(lineElement is WordElementPaintData) {
-            for (var element in lineElement.textBlock.data) {
-              print('flutter内容绘制流程[preparePagePaintData], data = $element');
-            }
-          }
-        }
-      }
+      // for (var item in lineData) {
+      //   // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
+      //   for (var lineElement in item.elementPaintDataList) {
+      //     if(lineElement is WordElementPaintData) {
+      //       for (var element in lineElement.textBlock.data) {
+      //         print('flutter内容绘制流程[preparePagePaintData], data = $element');
+      //       }
+      //     }
+      //   }
+      // }
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }

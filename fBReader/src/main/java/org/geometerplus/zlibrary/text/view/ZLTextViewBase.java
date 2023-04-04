@@ -397,6 +397,8 @@ abstract class ZLTextViewBase extends ZLView {
                     .mark(word.getMark())
                     .color(color)
                     .shift(0)
+                    .highlightBackgroundColor(getHighlightingBackgroundColor())
+                    .highlightForegroundColor(getHighlightingForegroundColor())
                     .build();
         } else {
             if (length == -1) {
@@ -426,7 +428,10 @@ abstract class ZLTextViewBase extends ZLView {
                         .shift(start);
             }
 
-            return wordDataBuilder.build();
+            return wordDataBuilder
+                    .highlightBackgroundColor(getHighlightingBackgroundColor())
+                    .highlightForegroundColor(getHighlightingForegroundColor())
+                    .build();
         }
     }
 

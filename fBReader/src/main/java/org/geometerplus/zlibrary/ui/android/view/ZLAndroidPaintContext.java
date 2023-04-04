@@ -376,7 +376,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     @Override
-    protected void setFontInternal(List<FontEntry> entries, int size, boolean bold, boolean italic, boolean underline, boolean strikeThrought) {
+    protected void setFontInternal(List<FontEntry> entries, int size, boolean bold, boolean italic, boolean underline, boolean strikeThrough) {
         Timber.v("%s, setFontInternal", TAG);
         Typeface typeface = null;
         for (FontEntry e : entries) {
@@ -388,7 +388,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         myTextPaint.setTypeface(typeface);
         myTextPaint.setTextSize(size);
         myTextPaint.setUnderlineText(underline);
-        myTextPaint.setStrikeThruText(strikeThrought);
+        myTextPaint.setStrikeThruText(strikeThrough);
     }
 
     @Override

@@ -13,6 +13,7 @@ import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/utils/time_util.dart';
+import 'package:flutter_lib/widget/paint_context.dart';
 
 import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
@@ -417,7 +418,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     if (!readerViewModel.repository.hasGeometry) return;
 
     if (_dataPaint) {
-      PagePaintContext pagePaintContext =
+      PaintContext paintContext =
           PagePaintContext(canvas, readerViewModel.repository.geometry, 0);
       canvas.save();
       if (actualOffsetX < 0) {
@@ -427,7 +428,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         PaintDataSrc nextPage =
             readerViewModel.getPagePaintData(PageIndex.next);
         if (nextPage.data != null) {
-          _performPageDraw(canvas, pagePaintContext, nextPage.data!, 'next');
+          _performPageDraw(canvas, paintContext, nextPage.data!, 'next');
           print(
             'flutter翻页行为:onDraw[有nextPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -444,7 +445,7 @@ class PageTurnAnimation extends BaseAnimationPage {
             readerViewModel.getPagePaintData(PageIndex.prev);
         canvas.translate(actualOffsetX - currentSize.width, 0);
         if (prevPage.data != null) {
-          _performPageDraw(canvas, pagePaintContext, prevPage.data!, 'prev');
+          _performPageDraw(canvas, paintContext, prevPage.data!, 'prev');
           print(
             'flutter翻页行为:onDraw[有prevPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -470,7 +471,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       if (currentPage.data != null) {
         _performPageDraw(
           canvas,
-          pagePaintContext,
+          paintContext,
           currentPage.data!,
           'current',
           isStable: actualOffsetX == 0,
@@ -550,7 +551,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   /// 绘制当前page
-  void _performPageDraw(ui.Canvas canvas, PagePaintContext pagePaintContext,
+  void _performPageDraw(ui.Canvas canvas, PaintContext paintContext,
       List<LinePaintData> lineData, String from,
       {bool isStable = false}) {
     for (var lineInfo in lineData) {
@@ -558,14 +559,14 @@ class PageTurnAnimation extends BaseAnimationPage {
         switch (lineElement.runtimeType) {
           case WordElementPaintData:
             _drawString(
-              pagePaintContext,
+              paintContext,
               canvas,
               lineElement as WordElementPaintData,
             );
             break;
           case ImageElementPaintData:
             _drawImage(
-              pagePaintContext,
+              paintContext,
               canvas,
               lineElement as ImageElementPaintData,
               isStable,
@@ -580,7 +581,7 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   /// 绘制文字word
   void _drawString(
-    PagePaintContext paintContext,
+    PaintContext paintContext,
     ui.Canvas canvas,
     WordElementPaintData lineElement,
   ) {
@@ -591,7 +592,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     int offset = lineElement.textBlock.offset;
     int length = lineElement.textBlock.length;
     int shift = lineElement.shift;
-    ColorData color = lineElement.color;
+    ColorData? color = lineElement.color;
     List<String> data = lineElement.textBlock.data;
     var mark = lineElement.mark;
     if (mark == null) {
@@ -616,31 +617,37 @@ class PageTurnAnimation extends BaseAnimationPage {
           continue;
         }
 
-        // if (markStart > pos) {
-        //   int endPos = min(markStart, length);
-        //   paintContext.setTextColor(color);
-        //   Size stringSize = paintContext.drawString2(
-        //       canvas, x, y, data, offset + pos, endPos - pos);
-        //   x += paintContext
-        //       .getStringWidth(data, offset + pos, endPos - pos,
-        //           stringSize: stringSize)
-        //       .right;
-        // }
-        //
-        // if (markStart < length) {
-        //   paintContext.setFillColor(getHighlightingBackgroundColor());
-        //   int endPos = min(markStart + markLen, length);
-        //   Pair<TextPainter?, double> result = paintContext.getStringWidth(
-        //       data, offset + markStart, endPos - markStart);
-        //   final double endX = x + result.right;
-        //   paintContext.fillRectangle(x, y - context.getStringHeight(), endX - 1,
-        //       y + context.getDescent());
-        //   paintContext.setTextColor(getHighlightingForegroundColor());
-        //   paintContext.drawString2(
-        //       canvas, x, y, data, offset + markStart, endPos - markStart,
-        //       painter: result.left);
-        //   x = endX;
-        // }
+        if (markStart > pos) {
+          int endPos = min(markStart, length);
+          int offsetEdited = offset + pos;
+          int len = endPos - pos;
+          paintContext.setTextColor(color);
+          Size stringSize =
+              paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
+          x += paintContext
+              .getStringWidth(data, offsetEdited, len, stringSize: stringSize)
+              .right;
+        }
+
+        if (markStart < length) {
+          paintContext.setFillColor(lineElement.highlightBackgroundColor);
+          int endPos = min(markStart + markLen, length);
+          int offsetEdited = offset + markStart;
+          int len = endPos - markStart;
+          Pair<TextPainter?, double> result =
+              paintContext.getStringWidth(data, offsetEdited, len);
+          final double endX = x + result.right;
+          paintContext.fillRectangle(
+              canvas,
+              x,
+              y - paintContext.getStringHeight(),
+              endX - 1,
+              y + paintContext.getDescent(result.left!));
+          paintContext.setTextColor(lineElement.highlightForegroundColor);
+          paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
+              painter: result.left);
+          x = endX;
+        }
         pos = markStart + markLen;
       }
 
@@ -654,7 +661,7 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   /// 绘制图片
   void _drawImage(
-    PagePaintContext pagePaintContext,
+    PaintContext pagePaintContext,
     ui.Canvas canvas,
     ImageElementPaintData lineElement,
     bool isStable,

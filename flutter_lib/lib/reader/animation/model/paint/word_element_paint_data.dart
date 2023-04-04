@@ -10,15 +10,19 @@ class WordElementPaintData extends ElementPaintData {
   final NRTextStyle textStyle;
   final TextBlock textBlock;
   final Mark? mark;
-  final ColorData color;
+  final ColorData? color;
   final int shift;
+  final ColorData? highlightBackgroundColor;
+  final ColorData? highlightForegroundColor;
 
   WordElementPaintData.fromJson(Map<String, dynamic> json)
       : textStyle = NRTextStyle.create(json['textStyle']),
         textBlock = TextBlock.fromJson(json['textBlock']),
-        mark = Mark.fromJsonOrNull(json['mark']),
-        color = ColorData.fromJson(json['color']),
-        shift = json['shift'];
+        mark = Mark.fromJsonNullable(json['mark']),
+        color = ColorData.fromJsonNullable(json['color']),
+        shift = json['shift'],
+        highlightBackgroundColor = ColorData.fromJsonNullable(json['highlightBackgroundColor']),
+        highlightForegroundColor = ColorData.fromJsonNullable(json['highlightForegroundColor']);
 
   @override
   void debugFillDescription(List<String> description) {
@@ -40,7 +44,7 @@ class Mark {
         length = json['Length'],
         next = Mark.fromJson(json['myNext']);
 
-  static Mark? fromJsonOrNull(Map<String, dynamic>? json) {
+  static Mark? fromJsonNullable(Map<String, dynamic>? json) {
     return json != null ? Mark.fromJson(json) : null;
   }
 }

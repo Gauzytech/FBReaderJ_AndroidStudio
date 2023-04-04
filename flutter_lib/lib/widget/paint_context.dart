@@ -28,9 +28,9 @@ abstract class PaintContext {
   // return mySystemInfo;
   // }
 
-  void clear(ColorData wallpaperFile, FillMode mode);
+  void clear(ui.Canvas canvas, ColorData wallpaperFile, FillMode mode);
 
-  void clearColor(ui.Canvas canvas, ColorData colorData);
+  void clear2(ui.Canvas canvas, ColorData colorData);
 
   /// 获取背景色
   ///
@@ -124,14 +124,14 @@ abstract class PaintContext {
   /// 设置文字颜色
   ///
   /// @param color 颜色
-  void setTextColor(ColorData colorData);
+  void setTextColor(ColorData? colorData);
 
   void setExtraFoot(int textSize, ColorData colorData);
 
   /// 设置线颜色
   ///
   /// @param color 线颜色
-  void setLineColor(ColorData colorData);
+  void setLineColor(ColorData? colorData);
 
   /// 设置线的宽度
   ///
@@ -141,7 +141,7 @@ abstract class PaintContext {
   /// 设置填充颜色
   ///
   /// @param color 颜色
-  void setFillColor(ColorData color) {
+  void setFillColor(ColorData? color) {
     setFillColorWithOpacity(color, 0xFF);
   }
 
@@ -149,7 +149,7 @@ abstract class PaintContext {
   ///
   /// @param color 颜色
   /// @param alpha 透明度
-  void setFillColorWithOpacity(ColorData colorData, double opacity);
+  void setFillColorWithOpacity(ColorData? colorData, double opacity);
 
   /// 获取宽度
   ///
@@ -230,10 +230,10 @@ abstract class PaintContext {
 
   int getCharHeightInternal(String chr);
 
-  int getDescent() {
+  int getDescent(TextPainter textPainter) {
     int descent = _myDescent;
     if (descent == -1) {
-      descent = getDescentInternal();
+      descent = getDescentInternal(textPainter);
       _myDescent = descent;
     }
     return descent;
@@ -241,7 +241,7 @@ abstract class PaintContext {
 
   /// 字符baseline到bottom到距离.
   /// 见https://www.jianshu.com/p/71cf11c120f0
-  int getDescentInternal();
+  int getDescentInternal(TextPainter textPainter);
 
   /// 绘制整个字符串
   ///
@@ -260,8 +260,15 @@ abstract class PaintContext {
   /// @param string 字符串数组
   /// @param offset 偏移（字符串数组的偏移）
   /// @param length 绘制的字符长度
-  Size drawString2(ui.Canvas canvas, double x, double y,
-      List<String> chars, int offset, int length);
+  Size drawString2(
+    ui.Canvas canvas,
+    double x,
+    double y,
+    List<String> chars,
+    int offset,
+    int length, {
+    TextPainter? painter,
+  });
 
   /// 获得书页中的插图, 耗时操作
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling);

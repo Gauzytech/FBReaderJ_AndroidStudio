@@ -23,29 +23,40 @@ sealed class ElementPaintData {
         val textStyle: ZLTextStyle,
         var textBlock: TextBlock,
         val mark: ZLTextWord.Mark?,
-        val color: ZLColor,
+        val color: ZLColor?,
         val shift: Int,
+        val highlightBackgroundColor: ZLColor?,
+        val highlightForegroundColor: ZLColor?,
     ) : ElementPaintData() {
 
-        internal class Builder  {
+        internal class Builder {
             private var textStyle: ZLTextStyle? = null
             private var textBlock: TextBlock? = null
             private var mark: ZLTextWord.Mark? = null
             private var color: ZLColor? = null
             private var shift: Int? = null
+            private var highlightBackgroundColor: ZLColor? = null
+            private var highlightForegroundColor: ZLColor? = null
 
             fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
             fun textBlock(textBlock: TextBlock) = apply { this.textBlock = textBlock }
             fun mark(mark: ZLTextWord.Mark?) = apply { this.mark = mark }
-            fun color(color: ZLColor) = apply { this.color = color }
+            fun color(color: ZLColor?) = apply { this.color = color }
             fun shift(shift: Int) = apply { this.shift = shift }
+            fun highlightBackgroundColor(color: ZLColor?) =
+                apply { this.highlightBackgroundColor = color }
+
+            fun highlightForegroundColor(color: ZLColor?) =
+                apply { this.highlightForegroundColor = color }
 
             fun build() = Word(
                 textStyle = requireNotNull(textStyle),
                 textBlock = requireNotNull(textBlock),
                 mark = mark,
-                color = requireNotNull(color),
-                shift = requireNotNull(shift)
+                color = color,
+                shift = requireNotNull(shift),
+                highlightBackgroundColor = highlightBackgroundColor,
+                highlightForegroundColor = highlightForegroundColor,
             )
         }
     }

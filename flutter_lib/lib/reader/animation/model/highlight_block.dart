@@ -82,6 +82,10 @@ class ColorData {
         green = json['Green'],
         blue = json['Blue'];
 
+  static ColorData? fromJsonNullable(dynamic rawData) {
+    return rawData != null ? ColorData.fromJson(rawData) : null;
+  }
+
   @override
   String toString() {
     return "NeatColor: {$red, $green, $blue}";

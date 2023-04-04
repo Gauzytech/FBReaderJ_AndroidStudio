@@ -11,16 +11,16 @@ import '../reader/animation/model/paint/image_element_paint_data.dart';
 import '../reader/animation/model/user_settings/geometry.dart';
 
 class PagePaintContext extends PaintContext {
-  final String _tag = "[PaintContext], 画笔context]";
-
-  /// 文字画笔
-  Paint _myTextPaint = Paint()..isAntiAlias = true;
+  /// 文字样式
+  TextStyle _textStyle = const TextStyle(color: Colors.black);
 
   /// 线画笔
-  Paint _myLinePaint = Paint()..style = PaintingStyle.stroke;
+  Paint _myLinePaint = Paint()
+    ..style = PaintingStyle.stroke;
 
   /// 填充画笔
-  Paint _myFillPaint = Paint()..isAntiAlias = true;
+  Paint _myFillPaint = Paint()
+    ..isAntiAlias = true;
 
   /// 轮廓线画笔
   /// 设置轮廓画笔, 比如: 长按选中图片或者超链接
@@ -33,7 +33,7 @@ class PagePaintContext extends PaintContext {
   final Paint _myExtraPaint = Paint()..isAntiAlias = true;
   final Path _myPath = Path();
 
-  Paint _transparentPaint = Paint()
+  final Paint _transparentPaint = Paint()
     ..color = Colors.transparent
     ..blendMode = BlendMode.clear
     ..isAntiAlias = true;
@@ -56,17 +56,17 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  void clear(ColorData wallpaperFile, FillMode mode) {
-    // TODO: implement clear
+  void clear(ui.Canvas canvas, ColorData wallpaperFile, FillMode mode) {
+    // todo
   }
 
   @override
-  void clearColor(ui.Canvas canvas, ColorData colorData) {
+  void clear2(ui.Canvas canvas, ColorData colorData) {
     _myBackgroundColor = colorData;
-    _myFillPaint = _myFillPaint.withColor(colorData.toColor());
+    _myFillPaint = _myFillPaint.copyWith(color: colorData.toColor());
     canvas.drawRect(
       Rect.fromLTRB(
-          0, 0, _myGeometry.areaSize.width, _myGeometry.areaSize.height),
+        0, 0, _myGeometry.areaSize.width, _myGeometry.areaSize.height),
       _transparentPaint,
     );
   }
@@ -96,10 +96,10 @@ class PagePaintContext extends PaintContext {
     if(image != null) {
       switch (adjustingMode) {
         case ColorAdjustingMode.lightenToBackground:
-          _myFillPaint = _myFillPaint.withBlendMode(BlendMode.lighten);
+          _myFillPaint = _myFillPaint.copyWith(blendMode: BlendMode.lighten);
           break;
         case ColorAdjustingMode.darkenToBackground:
-          _myFillPaint = _myFillPaint.withBlendMode(BlendMode.darken);
+          _myFillPaint = _myFillPaint.copyWith(blendMode: BlendMode.darken);
           break;
         case ColorAdjustingMode.none:
           break;
@@ -110,17 +110,17 @@ class PagePaintContext extends PaintContext {
         Offset(x, y - image.height),
         _myFillPaint,
       );
-      _myFillPaint = _myFillPaint.withBlendMode(BlendMode.srcOver);
+      _myFillPaint = _myFillPaint.copyWith(blendMode: BlendMode.srcOver);
     }
   }
 
   @override
   void drawLine(ui.Canvas canvas, double x0, double y0, double x1, double y1) {
-    _myLinePaint = _myLinePaint.withAntiAlias(false);
+    _myLinePaint = _myLinePaint.copyWith(isAntiAlias: false);
     canvas.drawLine(Offset(x0, y0), Offset(x1, y1), _myLinePaint);
     final points = [Offset(x0, y0), Offset(x1, y1)];
     canvas.drawPoints(ui.PointMode.points, points, _myLinePaint);
-    _myLinePaint = _myLinePaint.withAntiAlias(true);
+    _myLinePaint = _myLinePaint.copyWith(isAntiAlias: true);
   }
 
   @override
@@ -203,19 +203,23 @@ class PagePaintContext extends PaintContext {
   ColorData get backgroundColor => _myBackgroundColor;
 
   @override
-  void setFillColorWithOpacity(ColorData colorData, double opacity) {
-    _myFillPaint = _myFillPaint.withColor(colorData.toColor(opacity));
+  void setFillColorWithOpacity(ColorData? colorData, double opacity) {
+    if (colorData != null) {
+      _myFillPaint = _myFillPaint.copyWith(color: colorData.toColor(opacity));
+    }
   }
 
   @override
-  void setLineColor(ColorData colorData) {
-    _myLinePaint = _myLinePaint.withColor(colorData.toColor());
-    _myOutlinePaint = _myOutlinePaint.withColor(colorData.toColor());
+  void setLineColor(ColorData? colorData) {
+    if(colorData != null) {
+      _myLinePaint = _myLinePaint.copyWith(color: colorData.toColor());
+      _myOutlinePaint = _myOutlinePaint.copyWith(color: colorData.toColor());
+    }
   }
 
   @override
   void setLineWidth(double width) {
-    _myLinePaint = _myLinePaint.withStrokeWidth(width);
+    _myLinePaint = _myLinePaint.copyWith(strokeWidth: width);
   }
 
   /// ------------------------ 绘制文字的操作 ------------------------
@@ -258,7 +262,7 @@ class PagePaintContext extends PaintContext {
         locale: WidgetsBinding.instance.window.locale,
         text: TextSpan(
           text: buffer.toString(),
-          style: const TextStyle(color: Colors.black),
+          style: _textStyle,
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -268,8 +272,7 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  Pair<TextPainter?, double> getStringWidth(
-      List<String> chars,
+  Pair<TextPainter?, double> getStringWidth(List<String> chars,
       int offset,
       int length, {
         Size? stringSize,
@@ -301,7 +304,7 @@ class PagePaintContext extends PaintContext {
       locale: WidgetsBinding.instance.window.locale,
       text: TextSpan(
         text: buffer.toString(),
-        style: const TextStyle(color: Colors.black),
+        style: _textStyle,
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -327,6 +330,7 @@ class PagePaintContext extends PaintContext {
   @override
   void setFontInternal(List<FontEntry> entries, int size, bool bold,
       bool italic, bool underline, bool strikeThrough) {
+    // todo 字体的设置
     // Typeface typeface = null;
     // for (FontEntry e : entries) {
     //   typeface = AndroidFontUtil.typeface(getSystemInfo(), e, bold, italic);
@@ -335,43 +339,59 @@ class PagePaintContext extends PaintContext {
     //   }
     // }
     // myTextPaint.setTypeface(typeface);
-    // myTextPaint.setTextSize(size);
-    // myTextPaint.setUnderlineText(underline);
-    // myTextPaint.setStrikeThruText(strikeThrought);
+    ui.TextDecoration textDecoration;
+    if (underline) {
+      textDecoration = ui.TextDecoration.underline;
+    } else if (strikeThrough) {
+      textDecoration = ui.TextDecoration.lineThrough;
+    } else {
+      textDecoration = ui.TextDecoration.none;
+    }
+    _textStyle = _textStyle.copyWith(
+      fontSize: size.toDouble(),
+      decoration: textDecoration,
+    );
   }
 
   @override
-  void setTextColor(ColorData colorData) {
-    // _myTextPaint = _myTextPaint.withColor(colorData.toColor());
+  void setTextColor(ColorData? colorData) {
+    if(colorData != null) {
+      _textStyle = _textStyle.copyWith(color: colorData.toColor());
+    }
   }
 
   @override
   int getCharHeightInternal(String chr) {
+    // todo
     return 0;
   }
 
   @override
-  int getDescentInternal() {
-    return 0;
+  int getDescentInternal(TextPainter textPainter) {
+    return (textPainter
+        .computeLineMetrics()
+        .first
+        .descent + 0.5).toInt();
   }
 
   @override
   int getExtraStringWidth(Characters string, int offset, int length) {
+    // todo
     return 0;
   }
 
   @override
   int getSpaceWidthInternal() {
+    // todo
     return 0;
   }
 
   @override
-  int getStringHeightInternal() {
-    return 0;
-  }
+  int getStringHeightInternal() => (_textStyle.fontSize! + 0.5).toInt();
 
   @override
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling) {
+    // todo
     return const Size(0, 0);
   }
 }

@@ -1,43 +1,16 @@
 import 'dart:ui';
 
 extension PaintModify on Paint {
-  Paint withColor(Color color) {
+  Paint copyWith({
+    Color? color,
+    bool? isAntiAlias,
+    double? strokeWidth,
+    BlendMode? blendMode,
+  }) {
     return Paint()
-      ..color = color
-      ..isAntiAlias = isAntiAlias
-      ..style = style
-      ..blendMode = blendMode
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = strokeJoin;
-  }
-
-  Paint withAntiAlias(bool isAntiAlias) {
-    return Paint()
-      ..color = color
-      ..isAntiAlias = isAntiAlias
-      ..style = style
-      ..blendMode = blendMode
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = strokeJoin;
-  }
-
-  Paint withStrokeWidth(double strokeWidth) {
-    return Paint()
-      ..color = color
-      ..isAntiAlias = isAntiAlias
-      ..style = style
-      ..blendMode = blendMode
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = strokeJoin;
-  }
-
-  Paint withBlendMode(BlendMode blendMode) {
-    return Paint()
-      ..color = color
-      ..isAntiAlias = isAntiAlias
-      ..style = style
-      ..blendMode = blendMode
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = strokeJoin;
+      ..color = color ?? this.color
+      ..isAntiAlias = isAntiAlias ?? this.isAntiAlias
+      ..blendMode = blendMode ?? this.blendMode
+      ..strokeWidth = strokeWidth ?? this.strokeWidth;
   }
 }
