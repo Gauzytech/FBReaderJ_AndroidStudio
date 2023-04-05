@@ -3,7 +3,7 @@ import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dar
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_ng_style_description.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 class NRTextNGStyle extends NRTextDecoratedStyle {
@@ -40,7 +40,7 @@ class NRTextNGStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getFontSizeInternal(TextMetrics metrics) =>
+  int getFontSizeInternal(NRTextMetrics metrics) =>
       _myDescription.getFontSize(metrics, parent.getFontSize(metrics));
 
   @override
@@ -89,31 +89,31 @@ class NRTextNGStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getLeftMarginInternal(TextMetrics metrics, int fontSize) {
+  int getLeftMarginInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getLeftMargin(
         metrics, parent.getLeftMargin(metrics), fontSize);
   }
 
   @override
-  int getRightMarginInternal(TextMetrics metrics, int fontSize) {
+  int getRightMarginInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getRightMargin(
         metrics, parent.getRightMargin(metrics), fontSize);
   }
 
   @override
-  int getLeftPaddingInternal(TextMetrics metrics, int fontSize) {
+  int getLeftPaddingInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getLeftPadding(
         metrics, parent.getLeftPadding(metrics), fontSize);
   }
 
   @override
-  int getRightPaddingInternal(TextMetrics metrics, int fontSize) {
+  int getRightPaddingInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getRightPadding(
         metrics, parent.getRightPadding(metrics), fontSize);
   }
 
   @override
-  int getFirstLineIndentInternal(TextMetrics metrics, int fontSize) {
+  int getFirstLineIndentInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getFirstLineIndent(
         metrics, parent.getFirstLineIndent(metrics), fontSize);
   }
@@ -129,7 +129,7 @@ class NRTextNGStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getVerticalAlignInternal(TextMetrics metrics, int fontSize) {
+  int getVerticalAlignInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getVerticalAlign(
         metrics, parent.getVerticalAlign(metrics), fontSize);
   }
@@ -140,13 +140,13 @@ class NRTextNGStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getSpaceBeforeInternal(TextMetrics metrics, int fontSize) {
+  int getSpaceBeforeInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getSpaceBefore(
         metrics, parent.getSpaceBefore(metrics), fontSize);
   }
 
   @override
-  int getSpaceAfterInternal(TextMetrics metrics, int fontSize) {
+  int getSpaceAfterInternal(NRTextMetrics metrics, int fontSize) {
     return _myDescription.getSpaceAfter(
         metrics, parent.getSpaceAfter(metrics), fontSize);
   }

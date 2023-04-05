@@ -44,6 +44,7 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1317,8 +1318,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
             // 保证跳过代表标签的ZLTextControlElement类
             if (element == area.Element) {
                 ++index;
+                ZLTextStyle updatedStyle = null;
                 if (area.ChangeStyle) {
-                    setTextStyle(area.Style);
+//                    setTextStyle(area.Style);
+                    updatedStyle = area.Style;
                 }
                 // 起始X坐标
                 final int areaX = area.XStart;
@@ -1333,25 +1336,30 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     // 高亮前景色
                     final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
                     // 绘制文字
-                    ElementPaintData.Word wordPaintData = getDrawWordPaintData(
+                    ElementPaintData.Word.Builder wordPaintData = getDrawWordPaintData(
                             areaX, areaY, (ZLTextWord) element, charIndex, -1, false,
                             hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
                     );
-                    // 保存wordElement绘制信息
-                    lineElements.add(wordPaintData);
+                    // 保存绘制信息
+                    if (updatedStyle != null) {
+                        wordPaintData.textStyle(updatedStyle);
+                    }
+                    lineElements.add(wordPaintData.build());
                 } else if (element instanceof ZLTextImageElement) {
                     final ZLTextImageElement imageElement = (ZLTextImageElement) element;
-                    ElementPaintData.Image imagePaintData = new ElementPaintData.Image.Builder()
+                    ElementPaintData.Image.Builder imagePaintData = new ElementPaintData.Image.Builder()
                             .sourceType(ZLImageProxy.SourceType.FILE.ordinal())
                             .left(areaX)
                             .top(areaY)
                             .imageSrc(imageElement.cacheDirectoryWithFileName())
                             .maxSize(getTextAreaSize())
                             .scalingType(getScalingType(imageElement).ordinal())
-                            .adjustingModeForImages(getAdjustingModeForImages().ordinal())
-                            .build();
-
-                    lineElements.add(imagePaintData);
+                            .adjustingModeForImages(getAdjustingModeForImages().ordinal());
+                    // 保存绘制信息
+                    if (updatedStyle != null) {
+                        imagePaintData.textStyle(updatedStyle);
+                    }
+                    lineElements.add(imagePaintData.build());
                 } else if (element instanceof ZLTextVideoElement) {
                     ElementPaintData.Video.Builder videoPaintDataBuilder = new ElementPaintData.Video.Builder();
 //                    context.setLineColor(getTextColor(ZLTextHyperlink.NO_LINK));
@@ -1366,6 +1374,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
                             .xEnd(xEnd)
                             .yStart(yStart)
                             .yEnd(yEnd);
+                    // 保存绘制信息
+                    if (updatedStyle != null) {
+                        videoPaintDataBuilder.textStyle(updatedStyle);
+                    }
                     lineElements.add(videoPaintDataBuilder.build());
 //                    context.fillRectangle(xStart, yStart, xEnd, yEnd);
 //                    context.drawLine(xStart, yStart, xStart, yEnd);
@@ -1380,9 +1392,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
 //                    context.setFillColor(new ZLColor(196, 196, 196));
 //                    context.fillPolygon(new int[]{l, l, r}, new int[]{t, b, c});
                 } else if (element instanceof ExtensionElement) {
-                    ElementPaintData.Extension extensionPaintData = ((ExtensionElement) element).getDrawData(context, area);
+                    ElementPaintData.Extension.Builder extensionPaintData = ((ExtensionElement) element).getDrawData(context, area);
                     if (extensionPaintData != null) {
-                        lineElements.add(extensionPaintData);
+                        // 保存绘制信息
+                        if (updatedStyle != null) {
+                            extensionPaintData.textStyle(updatedStyle);
+                        }
+                        lineElements.add(extensionPaintData.build());
                     }
                 } else if (element instanceof HSpaceElement || element instanceof NBSpaceElement) {
                     ElementPaintData.Space.Builder spaceDataBuilder = new ElementPaintData.Space.Builder();
@@ -1394,6 +1410,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
                         blocks.add(context.getDrawStringData(areaX + len, areaY, SPACE, 0, 1));
                     }
                     spaceDataBuilder.textBlocks(blocks);
+                    if (updatedStyle != null) {
+                        spaceDataBuilder.textStyle(updatedStyle);
+                    }
                     lineElements.add(spaceDataBuilder.build());
                 }
             }
@@ -1402,8 +1421,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 特殊情况，index还没到终点to, endElementIndex肯定是Word, 进行绘制
         if (index != to) {
             ZLTextElementArea area = pageAreas.get(index++);
+            ZLTextStyle updatedStyle = null;
             if (area.ChangeStyle) {
-                setTextStyle(area.Style);
+//                setTextStyle(area.Style);
+                updatedStyle = area.Style;
             }
 
             final int start = info.startElementIndex == info.endElementIndex
@@ -1415,13 +1436,16 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
 
-            ElementPaintData.Word wordPaintData = getDrawWordPaintData(
+            ElementPaintData.Word.Builder wordPaintData = getDrawWordPaintData(
                     area.XStart, area.YEnd - context.getDescent() - getTextStyle().getVerticalAlign(metrics()),
                     word, start, len, area.AddHyphenationSign,
                     hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
             );
             // 保存wordElement绘制信息
-            lineElements.add(wordPaintData);
+            if(updatedStyle != null) {
+                wordPaintData.textStyle(updatedStyle);
+            }
+            lineElements.add(wordPaintData.build());
         }
 
         // 保存本行的绘制信息, 传给flutter绘制

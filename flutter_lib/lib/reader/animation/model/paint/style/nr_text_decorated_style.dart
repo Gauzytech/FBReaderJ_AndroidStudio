@@ -1,7 +1,7 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 abstract class NRTextDecoratedStyle extends NRTextStyle {
@@ -27,7 +27,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   int _myLeftPadding = 0;
   int _myRightPadding = 0;
   int _myFirstLineIndent = 0;
-  late TextMetrics _myMetrics;
+  late NRTextMetrics _myMetrics;
 
   NRTextDecoratedStyle(
     NRTextStyle base,
@@ -57,7 +57,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
         _myLeftPadding = json['myLeftPadding'],
         _myRightPadding = json['myRightPadding'],
         _myFirstLineIndent = json['myFirstLineIndent'],
-        _myMetrics = TextMetrics.fromJson(json['myMetrics']),
+        _myMetrics = NRTextMetrics.fromJson(json['myMetrics']),
         super.fromJson(json);
 
   void _initCache() {
@@ -71,7 +71,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
     _isNotCached = false;
   }
 
-  void _initMetricsCache(TextMetrics metrics) {
+  void _initMetricsCache(NRTextMetrics metrics) {
     _myMetrics = metrics;
     _myFontSize = getFontSizeInternal(metrics);
     _mySpaceBefore = getSpaceBeforeInternal(metrics, _myFontSize);
@@ -93,7 +93,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getFontSize(TextMetrics metrics) {
+  int getFontSize(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -101,7 +101,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getSpaceBefore(TextMetrics metrics) {
+  int getSpaceBefore(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -109,7 +109,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getSpaceAfter(TextMetrics metrics) {
+  int getSpaceAfter(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -149,7 +149,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getVerticalAlign(TextMetrics metrics) {
+  int getVerticalAlign(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -164,7 +164,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getLeftMargin(TextMetrics metrics) {
+  int getLeftMargin(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -172,7 +172,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getRightMargin(TextMetrics metrics) {
+  int getRightMargin(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -180,7 +180,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getLeftPadding(TextMetrics metrics) {
+  int getLeftPadding(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -188,7 +188,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getRightPadding(TextMetrics metrics) {
+  int getRightPadding(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -196,7 +196,7 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
   }
 
   @override
-  int getFirstLineIndent(TextMetrics metrics) {
+  int getFirstLineIndent(NRTextMetrics metrics) {
     if (metrics != _myMetrics) {
       _initMetricsCache(metrics);
     }
@@ -213,11 +213,11 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
 
   List<FontEntry> getFontEntriesInternal();
 
-  int getFontSizeInternal(TextMetrics metrics);
+  int getFontSizeInternal(NRTextMetrics metrics);
 
-  int getSpaceBeforeInternal(TextMetrics metrics, int fontSize);
+  int getSpaceBeforeInternal(NRTextMetrics metrics, int fontSize);
 
-  int getSpaceAfterInternal(TextMetrics metrics, int fontSize);
+  int getSpaceAfterInternal(NRTextMetrics metrics, int fontSize);
 
   bool isItalicInternal();
 
@@ -227,19 +227,19 @@ abstract class NRTextDecoratedStyle extends NRTextStyle {
 
   bool isStrikeThroughInternal();
 
-  int getVerticalAlignInternal(TextMetrics metrics, int fontSize);
+  int getVerticalAlignInternal(NRTextMetrics metrics, int fontSize);
 
   bool isVerticallyAlignedInternal();
 
-  int getLeftMarginInternal(TextMetrics metrics, int fontSize);
+  int getLeftMarginInternal(NRTextMetrics metrics, int fontSize);
 
-  int getRightMarginInternal(TextMetrics metrics, int fontSize);
+  int getRightMarginInternal(NRTextMetrics metrics, int fontSize);
 
-  int getLeftPaddingInternal(TextMetrics metrics, int fontSize);
+  int getLeftPaddingInternal(NRTextMetrics metrics, int fontSize);
 
-  int getRightPaddingInternal(TextMetrics metrics, int fontSize);
+  int getRightPaddingInternal(NRTextMetrics metrics, int fontSize);
 
-  int getFirstLineIndentInternal(TextMetrics metrics, int fontSize);
+  int getFirstLineIndentInternal(NRTextMetrics metrics, int fontSize);
 
   int getLineSpacePercentInternal();
 }

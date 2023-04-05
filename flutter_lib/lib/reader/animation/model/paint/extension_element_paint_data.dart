@@ -10,7 +10,8 @@ class ExtensionElementPaintData extends ElementPaintData {
   ExtensionElementPaintData.fromJson(Map<String, dynamic> json)
       : imagePaintData = ImageElementPaintData.fromJson(json['imagePaintData']),
         videoElementPaintData =
-            VideoElementPaintData.fromJson(json['videoPaintData']);
+            VideoElementPaintData.fromJson(json['videoPaintData']),
+        super.fromJson(json);
 
   @override
   void tearDown() {

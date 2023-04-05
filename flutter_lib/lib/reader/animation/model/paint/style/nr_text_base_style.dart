@@ -1,6 +1,6 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/options/option_string.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 import 'style_models/options/option_boolean.dart';
@@ -63,12 +63,12 @@ class NRTextBaseStyle extends NRTextStyle {
   }
 
   @override
-  int getFirstLineIndent(TextMetrics metrics) {
+  int getFirstLineIndent(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getFontSize(TextMetrics metrics) {
+  int getFontSize(NRTextMetrics metrics) {
     return _getFontSize();
   }
 
@@ -77,12 +77,12 @@ class NRTextBaseStyle extends NRTextStyle {
   }
 
   @override
-  int getLeftMargin(TextMetrics metrics) {
+  int getLeftMargin(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getLeftPadding(TextMetrics metrics) {
+  int getLeftPadding(NRTextMetrics metrics) {
     return 0;
   }
 
@@ -92,27 +92,27 @@ class NRTextBaseStyle extends NRTextStyle {
   }
 
   @override
-  int getRightMargin(TextMetrics metrics) {
+  int getRightMargin(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getRightPadding(TextMetrics metrics) {
+  int getRightPadding(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getSpaceAfter(TextMetrics metrics) {
+  int getSpaceAfter(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getSpaceBefore(TextMetrics metrics) {
+  int getSpaceBefore(NRTextMetrics metrics) {
     return 0;
   }
 
   @override
-  int getVerticalAlign(TextMetrics metrics) {
+  int getVerticalAlign(NRTextMetrics metrics) {
     return 0;
   }
 

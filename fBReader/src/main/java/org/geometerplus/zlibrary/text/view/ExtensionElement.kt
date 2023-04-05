@@ -25,5 +25,5 @@ abstract class ExtensionElement(type: String) : ZLTextElement(type) {
     protected abstract val width: Int
     protected abstract val height: Int
     protected abstract fun draw(context: ZLPaintContext, area: ZLTextElementArea)
-    protected abstract fun getDrawData(context: ZLPaintContext, area: ZLTextElementArea): ElementPaintData.Extension?
+    protected abstract fun getDrawData(context: ZLPaintContext, area: ZLTextElementArea): ElementPaintData.Extension.Builder?
 }

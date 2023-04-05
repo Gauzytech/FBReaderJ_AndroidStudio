@@ -1,5 +1,5 @@
-import 'package:flutter_lib/reader/animation/model/paint/element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/animation/model/paint/element_paint_data.dart';
 
 class VideoElementPaintData extends ElementPaintData {
   ColorData lineColor;
@@ -13,7 +13,8 @@ class VideoElementPaintData extends ElementPaintData {
         xStart = json['xStart'],
         xEnd = json['xEnd'],
         yStart = json['yStart'],
-        yEnd = json['yEnd'];
+        yEnd = json['yEnd'],
+        super.fromJson(json);
 
   @override
   void debugFillDescription(List<String> description) {

@@ -132,7 +132,7 @@ public final class BookElement extends ExtensionElement {
 	}
 
 	@Override
-	protected ElementPaintData.Extension getDrawData(@NonNull ZLPaintContext context, @NonNull ZLTextElementArea area) {
+	protected ElementPaintData.Extension.Builder getDrawData(@NonNull ZLPaintContext context, @NonNull ZLTextElementArea area) {
 		final int vMargin = ZLibrary.Instance().getDisplayDPI() / 15;
 		final int hMargin = ZLibrary.Instance().getDisplayDPI() / 10;
 		final String imageUrl = getImageUrl();
@@ -151,8 +151,7 @@ public final class BookElement extends ExtensionElement {
 					.scalingType(ZLPaintContext.ScalingType.FitMaximum.ordinal())
 					.adjustingModeForImages(ZLPaintContext.ColorAdjustingMode.NONE.ordinal())
 					.build();
-			return extensionBuilder.imagePaintData(imagePaintData)
-					.build();
+			return extensionBuilder.imagePaintData(imagePaintData);
 
 		} else {
 			ElementPaintData.Video.Builder videoPaintDataBuilder = new ElementPaintData.Video.Builder();
@@ -171,8 +170,7 @@ public final class BookElement extends ExtensionElement {
 					.yEnd(yEnd);
 			ElementPaintData.Extension.Builder extensionBuilder = new ElementPaintData.Extension.Builder();
 			return extensionBuilder
-					.videoPaintData(videoPaintDataBuilder.build())
-					.build();
+					.videoPaintData(videoPaintDataBuilder.build());
 //			context.fillRectangle(xStart, yStart, xEnd, yEnd);
 //			context.drawLine(xStart, yStart, xStart, yEnd);
 //			context.drawLine(xStart, yEnd, xEnd, yEnd);

@@ -35,7 +35,8 @@ class ImageElementPaintData extends ElementPaintData with DisposablePaintData {
         ),
         scalingType = ScalingType.fromOrdinal(json['scalingType']),
         adjustingModeForImages =
-            ColorAdjustingMode.fromOrdinal(json['adjustingModeForImages']);
+            ColorAdjustingMode.fromOrdinal(json['adjustingModeForImages']),
+        super.fromJson(json);
 
   ImageStreamListener? _listener;
   ImageStream? _stream;

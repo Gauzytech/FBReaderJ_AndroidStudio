@@ -53,7 +53,7 @@ import timber.log.Timber;
  * Android画笔上下文（绘制相关）
  */
 public final class ZLAndroidPaintContext extends ZLPaintContext {
-    private final String TAG = "[PaintContext], 画笔context [" + hashCode() + "]";
+    private final String TAG = "PaintContext[" + System.identityHashCode(this) + "]";
 
     /**
      * 字体抗锯齿

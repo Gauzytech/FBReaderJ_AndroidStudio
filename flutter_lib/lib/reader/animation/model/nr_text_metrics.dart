@@ -1,4 +1,4 @@
-class TextMetrics {
+class NRTextMetrics {
   int get dpi => _dpi;
   final int _dpi;
 
@@ -11,13 +11,13 @@ class TextMetrics {
   int get fontSize => _fontSize;
   final int _fontSize;
 
-  TextMetrics(int dpi, int fullWidth, int fullHeight, int fontSize)
+  NRTextMetrics(int dpi, int fullWidth, int fullHeight, int fontSize)
       : _dpi = dpi,
         _fullWidth = fullWidth,
         _fullHeight = fullHeight,
         _fontSize = fontSize;
 
-  TextMetrics.fromJson(Map<String, dynamic> json)
+  NRTextMetrics.fromJson(Map<String, dynamic> json)
       : _dpi = json['DPI'],
         _fullWidth = json['FullWidth'],
         _fullHeight = json['FullHeight'],
@@ -28,7 +28,7 @@ class TextMetrics {
     if (other == this) {
       return true;
     }
-    if (other is! TextMetrics) {
+    if (other is! NRTextMetrics) {
       return false;
     }
     return _dpi == other.dpi &&

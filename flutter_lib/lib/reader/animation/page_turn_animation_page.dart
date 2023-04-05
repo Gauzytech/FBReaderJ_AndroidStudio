@@ -7,11 +7,14 @@ import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/model/animation_data.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
+import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:flutter_lib/widget/paint_context.dart';
 
@@ -62,12 +65,17 @@ class PageTurnAnimation extends BaseAnimationPage {
     ..style = PaintingStyle.stroke
     ..strokeWidth = 10;
 
+  NRTextStyle? _myTextStyle;
+  int _myWordHeight = -1;
+  NRTextMetrics? _myMetrics;
   final PagePaintMetaData _metaData = PagePaintMetaData();
 
-  PageTurnAnimation(ReaderViewModel viewModel,
-      AnimationController animationController,) : super(
-      readerViewModel: viewModel,
-      animationController: animationController) {
+  PageTurnAnimation(
+    ReaderViewModel viewModel,
+    AnimationController animationController,
+  ) : super(
+            readerViewModel: viewModel,
+            animationController: animationController) {
     _setContentViewModel(viewModel);
   }
 
@@ -586,6 +594,9 @@ class PageTurnAnimation extends BaseAnimationPage {
     WordElementPaintData lineElement,
   ) {
     print('flutter内容绘制流程, 绘制======$lineElement');
+    if (lineElement.textStyle != null) {
+      _setTextStyle(paintContext, lineElement.textStyle!);
+    }
 
     double x = lineElement.textBlock.x.toDouble();
     double y = lineElement.textBlock.y.toDouble();
@@ -683,4 +694,34 @@ class PageTurnAnimation extends BaseAnimationPage {
       );
     }
   }
+
+  void _setTextStyle(PaintContext paintContext, NRTextStyle style) {
+    if (_myTextStyle != style) {
+      _myTextStyle = style;
+      _myWordHeight = -1;
+    }
+    paintContext.setFont(style.getFontEntries(), style.getFontSize(_metrics()), style.isBold(), style.isItalic(), style.isUnderline(), style.isStrikeThrough());
+  }
+
+  /// @return 书页内容渲染的metrics:
+  /// 1. 屏幕dpi
+  /// 2. 屏幕宽度
+  /// 3. 屏幕高度
+  /// 4. 字体大小
+  // NRTextMetrics _metrics() {
+  //   // this local variable is used to guarantee null will not
+  //   // be returned from this method even in multi-thread environment
+  //   NRTextMetrics? m = _myMetrics;
+  //   if (m == null) {
+  //     m = NRTextMetrics(
+  //         ScreenUtil.displayDpi.toInt(),
+  //         // TODO: screen area width
+  //         100,
+  //         // TODO: screen area height
+  //         100,
+  //         getTextStyleCollection().getBaseStyle().getFontSize());
+  //     _myMetrics = m;
+  //   }
+  //   return m;
+  // }
 }

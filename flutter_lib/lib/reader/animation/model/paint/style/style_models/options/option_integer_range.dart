@@ -8,7 +8,7 @@ class OptionIntegerRange extends BaseOption {
   final int _maxValue;
 
   int _value;
-  String _stringValue;
+  String? _stringValue;
 
   OptionIntegerRange.fromJson(Map<String, dynamic> json)
       : _minValue = json['MinValue'],

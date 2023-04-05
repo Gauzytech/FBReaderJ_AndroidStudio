@@ -38,7 +38,7 @@ public class ZLTextStyleCollection {
 		final Map<Integer,ZLTextNGStyleDescription> descriptions =
 			new SimpleCSSReader().read(ZLResourceFile.createResourceFile("default/styles.css"));
 		myDescriptionList = Collections.unmodifiableList(
-			new ArrayList<ZLTextNGStyleDescription>(descriptions.values())
+				new ArrayList<>(descriptions.values())
 		);
 		for (Map.Entry<Integer,ZLTextNGStyleDescription> entry : descriptions.entrySet()) {
 			// 将新建的ZLTextNGStyleDescription类以id属性为键名加入

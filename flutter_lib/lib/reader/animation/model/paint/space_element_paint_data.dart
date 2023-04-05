@@ -6,7 +6,8 @@ class SpaceElementPaintData extends ElementPaintData {
 
   SpaceElementPaintData.fromJson(Map<String, dynamic> json)
       : spaceWidth = json['spaceWidth'],
-        textBlocks = TextBlock.fromJsonList(json['textBlocks']);
+        textBlocks = TextBlock.fromJsonList(json['textBlocks']),
+        super.fromJson(json);
 
   @override
   void debugFillDescription(List<String> description) {

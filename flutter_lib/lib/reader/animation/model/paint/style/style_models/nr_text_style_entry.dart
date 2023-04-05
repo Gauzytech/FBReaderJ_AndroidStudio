@@ -2,7 +2,7 @@ import 'dart:core';
 
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_css_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_other_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 abstract class NRTextStyleEntry {
@@ -57,7 +57,7 @@ abstract class NRTextStyleEntry {
     return (mask & (1 << featureId)) != 0;
   }
 
-  int getLength(Feature feature, TextMetrics metrics, int fontSize) {
+  int getLength(Feature feature, NRTextMetrics metrics, int fontSize) {
     return NRTextStyleEntryLength.compute(
         _lengths[feature.id]!, metrics, fontSize, feature);
   }
@@ -165,7 +165,7 @@ class NRTextStyleEntryLength {
 
   static int compute(
     NRTextStyleEntryLength length,
-    TextMetrics metrics,
+    NRTextMetrics metrics,
     int fontSize,
     Feature feature,
   ) {
@@ -188,7 +188,7 @@ class NRTextStyleEntryLength {
     return length.size;
   }
 
-  static int _fullSize(TextMetrics metrics, int fontSize, Feature feature) {
+  static int _fullSize(NRTextMetrics metrics, int fontSize, Feature feature) {
     switch (feature) {
       case Feature.lengthMarginLeft:
       case Feature.lengthMarginRight:

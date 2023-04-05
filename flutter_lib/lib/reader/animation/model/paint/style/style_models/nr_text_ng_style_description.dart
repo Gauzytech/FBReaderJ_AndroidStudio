@@ -1,6 +1,6 @@
 import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 
 import 'options/option_string.dart';
 
@@ -43,7 +43,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
             OptionString.fromJson(json['VerticalAlignOption']),
         lineHeightOption = OptionString.fromJson(json['LineHeightOption']);
 
-  int getFontSize(TextMetrics metrics, int parentFontSize) {
+  int getFontSize(NRTextMetrics metrics, int parentFontSize) {
     NRTextStyleEntryLength? length = parseLength(fontSizeOption.getValue());
     if (length == null) {
       return parentFontSize;
@@ -52,7 +52,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
         length, metrics, parentFontSize, Feature.lengthFontSize);
   }
 
-  int getVerticalAlign(TextMetrics metrics, int base, int fontSize) {
+  int getVerticalAlign(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length =
         parseLength(verticalAlignOption.getValue());
     if (length == null) {
@@ -72,7 +72,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
     return length != null && length.size != 0;
   }
 
-  int getLeftMargin(TextMetrics metrics, int base, int fontSize) {
+  int getLeftMargin(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length = parseLength(marginLeftOption.getValue());
     if (length == null) {
       return base;
@@ -82,7 +82,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
             length, metrics, fontSize, Feature.lengthMarginLeft);
   }
 
-  int getRightMargin(TextMetrics metrics, int base, int fontSize) {
+  int getRightMargin(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length = parseLength(marginRightOption.getValue());
     if (length == null) {
       return base;
@@ -92,15 +92,15 @@ class NrTextNGStyleDescription with DebugInfoProvider{
             length, metrics, fontSize, Feature.lengthMarginRight);
   }
 
-  int getLeftPadding(TextMetrics metrics, int base, int fontSize) {
+  int getLeftPadding(NRTextMetrics metrics, int base, int fontSize) {
     return base;
   }
 
-  int getRightPadding(TextMetrics metrics, int base, int fontSize) {
+  int getRightPadding(NRTextMetrics metrics, int base, int fontSize) {
     return base;
   }
 
-  int getFirstLineIndent(TextMetrics metrics, int base, int fontSize) {
+  int getFirstLineIndent(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length = parseLength(textIndentOption.getValue());
     if (length == null) {
       return base;
@@ -109,7 +109,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
         length, metrics, fontSize, Feature.lengthFirstLineIndent);
   }
 
-  int getSpaceBefore(TextMetrics metrics, int base, int fontSize) {
+  int getSpaceBefore(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length = parseLength(marginTopOption.getValue());
     if (length == null) {
       return base;
@@ -118,7 +118,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
         length, metrics, fontSize, Feature.lengthSpaceBefore);
   }
 
-  int getSpaceAfter(TextMetrics metrics, int base, int fontSize) {
+  int getSpaceAfter(NRTextMetrics metrics, int base, int fontSize) {
     NRTextStyleEntryLength? length = parseLength(marginBottomOption.getValue());
     if (length == null) {
       return base;

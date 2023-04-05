@@ -2,7 +2,7 @@ import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_styl
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_explicitly_decorated_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_ng_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_hyper_link.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 abstract class NRTextStyle {
@@ -39,7 +39,7 @@ abstract class NRTextStyle {
 
   List<FontEntry> getFontEntries();
 
-  int getFontSize(TextMetrics metrics);
+  int getFontSize(NRTextMetrics metrics);
 
   bool isBold();
 
@@ -51,31 +51,31 @@ abstract class NRTextStyle {
 
   bool isVerticallyAligned();
 
-  int getLeftIndent(TextMetrics metrics) {
+  int getLeftIndent(NRTextMetrics metrics) {
     return getLeftMargin(metrics) + getLeftPadding(metrics);
   }
 
-  int getRightIndent(TextMetrics metrics) {
+  int getRightIndent(NRTextMetrics metrics) {
     return getRightMargin(metrics) + getRightPadding(metrics);
   }
 
-  int getLeftMargin(TextMetrics metrics);
+  int getLeftMargin(NRTextMetrics metrics);
 
-  int getRightMargin(TextMetrics metrics);
+  int getRightMargin(NRTextMetrics metrics);
 
-  int getLeftPadding(TextMetrics metrics);
+  int getLeftPadding(NRTextMetrics metrics);
 
-  int getRightPadding(TextMetrics metrics);
+  int getRightPadding(NRTextMetrics metrics);
 
-  int getFirstLineIndent(TextMetrics metrics);
+  int getFirstLineIndent(NRTextMetrics metrics);
 
   int getLineSpacePercent();
 
-  int getVerticalAlign(TextMetrics metrics);
+  int getVerticalAlign(NRTextMetrics metrics);
 
-  int getSpaceBefore(TextMetrics metrics);
+  int getSpaceBefore(NRTextMetrics metrics);
 
-  int getSpaceAfter(TextMetrics metrics);
+  int getSpaceAfter(NRTextMetrics metrics);
 
   int getAlignment();
 

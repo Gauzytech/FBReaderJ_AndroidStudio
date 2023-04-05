@@ -1,7 +1,7 @@
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_decorated_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_css_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 import 'style_models/nr_text_style_entry.dart';
@@ -70,7 +70,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getFontSizeInternal(TextMetrics metrics) {
+  int getFontSizeInternal(NRTextMetrics metrics) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSFontSizeOption.getValue()) {
       return parent.getFontSize(metrics);
@@ -143,7 +143,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getLeftMarginInternal(TextMetrics metrics, int fontSize) {
+  int getLeftMarginInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getLeftMargin(metrics);
@@ -157,7 +157,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getRightMarginInternal(TextMetrics metrics, int fontSize) {
+  int getRightMarginInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getRightMargin(metrics);
@@ -171,7 +171,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getLeftPaddingInternal(TextMetrics metrics, int fontSize) {
+  int getLeftPaddingInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getLeftPadding(metrics);
@@ -185,7 +185,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getRightPaddingInternal(TextMetrics metrics, int fontSize) {
+  int getRightPaddingInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getRightPadding(metrics);
@@ -199,7 +199,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getFirstLineIndentInternal(TextMetrics metrics, int fontSize) {
+  int getFirstLineIndentInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getFirstLineIndent(metrics);
@@ -218,7 +218,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getVerticalAlignInternal(TextMetrics metrics, int fontSize) {
+  int getVerticalAlignInternal(NRTextMetrics metrics, int fontSize) {
     // TODO: implement
     if (_entry.isFeatureSupported(Feature.lengthVerticalAlign.id)) {
       return _entry.getLength(Feature.lengthVerticalAlign, metrics, fontSize);
@@ -280,7 +280,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getSpaceBeforeInternal(TextMetrics metrics, int fontSize) {
+  int getSpaceBeforeInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getSpaceBefore(metrics);
@@ -293,7 +293,7 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  int getSpaceAfterInternal(TextMetrics metrics, int fontSize) {
+  int getSpaceAfterInternal(NRTextMetrics metrics, int fontSize) {
     if (_entry is NRTextCSSStyleEntry &&
         !baseStyle.useCSSMarginsOption.getValue()) {
       return parent.getSpaceAfter(metrics);

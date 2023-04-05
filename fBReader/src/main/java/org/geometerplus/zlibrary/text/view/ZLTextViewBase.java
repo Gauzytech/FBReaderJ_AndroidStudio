@@ -384,9 +384,8 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
-    final ElementPaintData.Word getDrawWordPaintData(int x, int y, ZLTextWord word, int start, int length, boolean addHyphenationSign, ZLColor color) {
+    final ElementPaintData.Word.Builder getDrawWordPaintData(int x, int y, ZLTextWord word, int start, int length, boolean addHyphenationSign, ZLColor color) {
         ElementPaintData.Word.Builder wordDataBuilder = new ElementPaintData.Word.Builder();
-        wordDataBuilder.textStyle(getTextStyle());
 
 //        final ZLPaintContext context = getContext();
         if (start == 0 && length == -1) { // 绘制整个
@@ -398,8 +397,7 @@ abstract class ZLTextViewBase extends ZLView {
                     .color(color)
                     .shift(0)
                     .highlightBackgroundColor(getHighlightingBackgroundColor())
-                    .highlightForegroundColor(getHighlightingForegroundColor())
-                    .build();
+                    .highlightForegroundColor(getHighlightingForegroundColor());
         } else {
             if (length == -1) {
                 length = word.Length - start;
@@ -430,8 +428,7 @@ abstract class ZLTextViewBase extends ZLView {
 
             return wordDataBuilder
                     .highlightBackgroundColor(getHighlightingBackgroundColor())
-                    .highlightForegroundColor(getHighlightingForegroundColor())
-                    .build();
+                    .highlightForegroundColor(getHighlightingForegroundColor());
         }
     }
 

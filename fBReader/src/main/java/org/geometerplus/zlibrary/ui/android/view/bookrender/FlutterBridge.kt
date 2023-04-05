@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.fbreader.fbreader.FBReaderApp
+import org.geometerplus.zlibrary.core.library.ZLibrary
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.BUILD_PAGE_PAINT_DATA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL

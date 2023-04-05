@@ -2,12 +2,10 @@ import 'dart:core';
 
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/space_element_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 
 import 'element_paint_data.dart';
 
 class WordElementPaintData extends ElementPaintData {
-  final NRTextStyle textStyle;
   final TextBlock textBlock;
   final Mark? mark;
   final ColorData? color;
@@ -16,13 +14,15 @@ class WordElementPaintData extends ElementPaintData {
   final ColorData? highlightForegroundColor;
 
   WordElementPaintData.fromJson(Map<String, dynamic> json)
-      : textStyle = NRTextStyle.create(json['textStyle']),
-        textBlock = TextBlock.fromJson(json['textBlock']),
+      : textBlock = TextBlock.fromJson(json['textBlock']),
         mark = Mark.fromJsonNullable(json['mark']),
         color = ColorData.fromJsonNullable(json['color']),
         shift = json['shift'],
-        highlightBackgroundColor = ColorData.fromJsonNullable(json['highlightBackgroundColor']),
-        highlightForegroundColor = ColorData.fromJsonNullable(json['highlightForegroundColor']);
+        highlightBackgroundColor =
+            ColorData.fromJsonNullable(json['highlightBackgroundColor']),
+        highlightForegroundColor =
+            ColorData.fromJsonNullable(json['highlightForegroundColor']),
+        super.fromJson(json);
 
   @override
   void debugFillDescription(List<String> description) {
