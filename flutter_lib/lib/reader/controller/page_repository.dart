@@ -7,7 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
@@ -92,8 +93,9 @@ class PageRepository with PageRepositoryDelegate {
       );
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
+      NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
       List<LinePaintData> lineData =
-          LinePaintData.fromJsonList(pageData['linePaintDataList']);
+          LinePaintData.fromJsonList(pageData['line_paint_data_list']);
       int width = ui.window.physicalSize.width.toInt();
       int height = ui.window.physicalSize.height.toInt();
 
@@ -116,7 +118,10 @@ class PageRepository with PageRepositoryDelegate {
 
       _bitmapManager.setSize(width, height);
       _bitmapManager.setGeometry(Geometry.fromJson(pageData['geometry']));
-      _bitmapManager.cachePagePaintData(internalIdx, lineData);
+      _bitmapManager.cachePagePaintData(
+        internalIdx,
+        PagePaintData(styleCollection, lineData.toList()),
+      );
       _readerPageViewModelDelegate!.initialize(width, height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
@@ -193,11 +198,12 @@ class PageRepository with PageRepositoryDelegate {
       print('flutter_perf[preparePagePaintData], 收到了PaintData ${now()}');
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
+      NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
       List<LinePaintData> lineData =
-          LinePaintData.fromJsonList(pageData['linePaintDataList']);
+          LinePaintData.fromJsonList(pageData['line_paint_data_list']);
       _bitmapManager.cachePagePaintData(
         internalCacheIndex,
-        lineData.toList(),
+        PagePaintData(styleCollection, lineData.toList()),
       );
 
       print(

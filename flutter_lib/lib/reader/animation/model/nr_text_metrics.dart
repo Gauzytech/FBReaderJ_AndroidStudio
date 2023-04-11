@@ -1,4 +1,6 @@
-class NRTextMetrics {
+import 'package:flutter_lib/interface/debug_info_provider.dart';
+
+class NRTextMetrics with DebugInfoProvider {
   int get dpi => _dpi;
   final int _dpi;
 
@@ -25,9 +27,6 @@ class NRTextMetrics {
 
   @override
   bool operator ==(Object other) {
-    if (other == this) {
-      return true;
-    }
     if (other is! NRTextMetrics) {
       return false;
     }
@@ -38,4 +37,12 @@ class NRTextMetrics {
 
   @override
   int get hashCode => _dpi + 13 * (_fullHeight + 13 * _fullWidth);
+
+  @override
+  void debugFillDescription(List<String> description) {
+    description.add("dpi: $_dpi");
+    description.add("fullWidth: $_fullWidth");
+    description.add("fullHeight: $_fullHeight");
+    description.add("fontSize: $_fontSize");
+  }
 }

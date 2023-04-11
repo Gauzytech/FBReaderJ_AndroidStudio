@@ -1,11 +1,11 @@
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
 
 import 'options/option_string.dart';
 
 /// 标签样式，会覆盖base节点样式
-class NrTextNGStyleDescription with DebugInfoProvider{
+class NRTextNGStyleDescription with DebugInfoProvider {
   String name;
 
   OptionString fontFamilyOption;
@@ -24,7 +24,7 @@ class NrTextNGStyleDescription with DebugInfoProvider{
   OptionString lineHeightOption;
 
   // 标签内属性都会被一一赋值给ZLTextNGStyleDescription类的各个属性
-  NrTextNGStyleDescription.fromJson(Map<String, dynamic> json)
+  NRTextNGStyleDescription.fromJson(Map<String, dynamic> json)
       : name = json['Name'],
         fontFamilyOption = OptionString.fromJson(json['FontFamilyOption']),
         fontSizeOption = OptionString.fromJson(json['FontSizeOption']),
@@ -42,6 +42,19 @@ class NrTextNGStyleDescription with DebugInfoProvider{
         verticalAlignOption =
             OptionString.fromJson(json['VerticalAlignOption']),
         lineHeightOption = OptionString.fromJson(json['LineHeightOption']);
+
+  static List<NRTextNGStyleDescription> fromJsonList(dynamic rawData) {
+    return (rawData as List)
+        .map((item) => NRTextNGStyleDescription.fromJson(item))
+        .toList();
+  }
+
+  static List<NRTextNGStyleDescription?> fromJsonListNullable(dynamic rawData) {
+    return (rawData as List)
+        .map((item) =>
+            item != null ? NRTextNGStyleDescription.fromJson(item) : null)
+        .toList();
+  }
 
   int getFontSize(NRTextMetrics metrics, int parentFontSize) {
     NRTextStyleEntryLength? length = parseLength(fontSizeOption.getValue());

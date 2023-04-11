@@ -1,6 +1,7 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
-import org.geometerplus.zlibrary.text.view.ZLTextPage
+import com.google.gson.annotations.SerializedName
+import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext.Geometry
 
 /**
@@ -12,6 +13,11 @@ import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext.Geometry
  */
 sealed class ContentPageResult {
 
-    data class Paint(val linePaintDataList: List<LinePaintData>, val geometry: Geometry) : ContentPageResult()
+    data class Paint(
+        @SerializedName("text_style_collection") val textStyleCollection: ZLTextStyleCollection,
+        @SerializedName("line_paint_data_list") val linePaintDataList: List<LinePaintData>,
+        @SerializedName("geometry") val geometry: Geometry
+    ) : ContentPageResult()
+
     object NoOp : ContentPageResult()
 }

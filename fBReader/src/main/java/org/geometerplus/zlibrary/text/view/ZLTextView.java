@@ -44,7 +44,6 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -747,7 +746,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         Timber.v("flutter_perf, page data处理完毕, 返回结果, %s", System.currentTimeMillis());
-        return new ContentPageResult.Paint(linePaintDataList, getContext().getGeometry());
+        return new ContentPageResult.Paint(
+                getTextStyleCollection(),
+                linePaintDataList,
+                getContext().getGeometry()
+        );
     }
 
     @Override

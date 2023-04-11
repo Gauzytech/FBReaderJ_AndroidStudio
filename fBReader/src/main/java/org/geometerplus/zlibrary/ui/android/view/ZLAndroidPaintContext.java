@@ -380,6 +380,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         Timber.v("%s, setFontInternal", TAG);
         Typeface typeface = null;
         for (FontEntry e : entries) {
+            Timber.v("字体测试， %s", e);
             typeface = AndroidFontUtil.typeface(getSystemInfo(), e, bold, italic);
             if (typeface != null) {
                 break;

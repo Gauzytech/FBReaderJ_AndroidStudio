@@ -1,7 +1,6 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter_lib/model/page_index.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 
 import '../reader/animation/model/paint/page_paint_data.dart';
@@ -20,7 +19,7 @@ mixin BitmapManager {
 
   void cachePagePaintData(
     int internalCacheIndex,
-    List<LinePaintData> linePaintDataList,
+    PagePaintData pagePaintData,
   );
 
   PaintDataSrc getPagePaintData(PageIndex pageIndex);

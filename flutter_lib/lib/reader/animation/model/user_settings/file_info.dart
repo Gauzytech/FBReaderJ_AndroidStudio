@@ -1,9 +1,10 @@
 
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/utils/compare_helper.dart';
 
 import 'file_encryption_info.dart';
 
-class FileInfo {
+class FileInfo with DebugInfoProvider {
   final String path;
   final FileEncryptionInfo encryptionInfo;
 
@@ -23,9 +24,6 @@ class FileInfo {
 
   @override
   bool operator ==(Object other) {
-    if (this == other) {
-      return true;
-    }
     if (other is! FileInfo) {
       return false;
     }
@@ -36,5 +34,11 @@ class FileInfo {
   @override
   int get hashCode {
     return path.hashCode + 23 * CompareHelper.createHashCode(encryptionInfo);
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    description.add("path: $path");
+    description.add("encryptionInfo: $encryptionInfo");
   }
 }

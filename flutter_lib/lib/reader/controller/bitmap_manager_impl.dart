@@ -5,6 +5,7 @@ import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 
 /// Bitmap管理（绘制后的图）的实现
@@ -197,11 +198,11 @@ class BitmapManagerImpl with BitmapManager {
   @override
   void cachePagePaintData(
     int internalCacheIndex,
-    List<LinePaintData> linePaintDataList,
+    PagePaintData pagePaintData,
   ) {
-    print('flutter内容绘制流程[cachePagePaintData], $internalCacheIndex -> length = ${linePaintDataList.length}');
-    _pageDataCache[internalCacheIndex] =
-        PagePaintData(linePaintDataList.toList());
+    print(
+        'flutter内容绘制流程[cachePagePaintData], $internalCacheIndex -> length = ${pagePaintData.data.length}');
+    _pageDataCache[internalCacheIndex] = pagePaintData;
   }
 
   @override
@@ -212,12 +213,13 @@ class BitmapManagerImpl with BitmapManager {
       if (_pageIndexCache[i] == pageIndex) {
         PagePaintData? pagePaintData = _pageDataCache[i];
         return PaintDataSrc(
+          styleCollection: pagePaintData?.styleCollection,
           data: pagePaintData?.data,
           pending: pagePaintData == null,
         );
       }
     }
-    return PaintDataSrc(data: null, pending: false);
+    return PaintDataSrc(styleCollection: null, data: null, pending: false);
   }
 }
 
@@ -238,10 +240,14 @@ class ImageSrc {
 }
 
 class PaintDataSrc {
+  NRTextStyleCollection? styleCollection;
   List<LinePaintData>? data;
   bool pending;
 
-  PaintDataSrc({required this.data, required this.pending});
+  PaintDataSrc(
+      {required this.styleCollection,
+      required this.data,
+      required this.pending});
 
   @override
   String toString() => 'data = ${data != null}, pending = $pending';

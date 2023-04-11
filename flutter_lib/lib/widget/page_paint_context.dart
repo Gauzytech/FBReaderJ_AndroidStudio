@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
+import 'package:flutter_lib/utils/font_util.dart';
 import 'package:flutter_lib/utils/paint_modify.dart';
 import 'package:flutter_lib/widget/paint_context.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../reader/animation/model/paint/image_element_paint_data.dart';
 import '../reader/animation/model/user_settings/geometry.dart';
@@ -328,17 +330,21 @@ class PagePaintContext extends PaintContext {
   }
 
   @override
-  void setFontInternal(List<FontEntry> entries, int size, bool bold,
-      bool italic, bool underline, bool strikeThrough) {
-    // todo 字体的设置
-    // Typeface typeface = null;
-    // for (FontEntry e : entries) {
-    //   typeface = AndroidFontUtil.typeface(getSystemInfo(), e, bold, italic);
-    //   if (typeface != null) {
-    //     break;
-    //   }
-    // }
-    // myTextPaint.setTypeface(typeface);
+  void setFontInternal(
+    List<FontEntry> entries,
+    int size,
+    bool bold,
+    bool italic,
+    bool underline,
+    bool strikeThrough,
+  ) {
+    print('flutter内容绘制流程, setFontInternal');
+
+    FontTypeFace? typeface;
+    for (var fontEntry in entries) {
+      typeface = FontUtil.fontTypeFace(fontEntry.family);
+      break;
+    }
     ui.TextDecoration textDecoration;
     if (underline) {
       textDecoration = ui.TextDecoration.underline;
@@ -347,10 +353,42 @@ class PagePaintContext extends PaintContext {
     } else {
       textDecoration = ui.TextDecoration.none;
     }
-    _textStyle = _textStyle.copyWith(
-      fontSize: size.toDouble(),
-      decoration: textDecoration,
-    );
+    // todo 文字渲染的位置有点不对
+    ui.FontWeight fontWeight = bold ? FontWeight.bold : FontWeight.normal;
+    ui.FontStyle fontStyle = italic ? FontStyle.italic : FontStyle.normal;
+    switch (typeface) {
+      case FontTypeFace.sans:
+        _textStyle = GoogleFonts.openSans(
+          fontSize: size.toDouble(),
+          decoration: textDecoration,
+          fontWeight: fontWeight,
+          fontStyle: fontStyle,
+        );
+        break;
+      case FontTypeFace.serif:
+        _textStyle = GoogleFonts.ptSerif(
+          fontSize: size.toDouble(),
+          decoration: textDecoration,
+          fontWeight: fontWeight,
+          fontStyle: fontStyle,
+        );
+        break;
+      case FontTypeFace.monospace:
+        _textStyle = GoogleFonts.spaceMono(
+          fontSize: size.toDouble(),
+          decoration: textDecoration,
+          fontWeight: fontWeight,
+          fontStyle: fontStyle,
+        );
+        break;
+      default:
+        _textStyle = _textStyle.copyWith(
+          fontSize: size.toDouble(),
+          decoration: textDecoration,
+          fontWeight: fontWeight,
+          fontStyle: fontStyle,
+        );
+    }
   }
 
   @override

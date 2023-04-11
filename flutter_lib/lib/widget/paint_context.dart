@@ -99,6 +99,7 @@ abstract class PaintContext {
       _myFontIsStrikeThrough = strikeThrough;
       _myResetFont = true;
     }
+    print('flutter内容绘制流程, $_myFontEntries, _myResetFont = $_myResetFont');
     if (_myResetFont) {
       _myResetFont = false;
       setFontInternal(

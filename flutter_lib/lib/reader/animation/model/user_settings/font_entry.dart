@@ -1,11 +1,12 @@
 import 'dart:core';
 
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/file_info.dart';
 import 'package:flutter_lib/utils/compare_helper.dart';
 
 const Map<String, FontEntry> _ourSystemEntries = {};
 
-class FontEntry {
+class FontEntry with DebugInfoProvider {
   // Map<String, FontEntry> ourSystemEntries = <String, FontEntry>{};
   String family;
   List<FileInfo>? fileInfos;
@@ -48,9 +49,6 @@ class FontEntry {
 
   @override
   bool operator ==(Object other) {
-    if (other == this) {
-      return true;
-    }
     if (other is! FontEntry) {
       return false;
     }
@@ -74,4 +72,10 @@ class FontEntry {
 
   @override
   int get hashCode => CompareHelper.createHashCode(family);
+
+  @override
+  void debugFillDescription(List<String> description) {
+    description.add("family: $family");
+    description.add("fileInfos: $fileInfos");
+  }
 }

@@ -1,6 +1,8 @@
+import 'package:flutter_lib/interface/debug_info_provider.dart';
+
 import '../../../../utils/compare_helper.dart';
 
-class FileEncryptionInfo {
+class FileEncryptionInfo with DebugInfoProvider {
   final String uri;
   final String method;
   final String algorithm;
@@ -31,5 +33,13 @@ class FileEncryptionInfo {
   @override
   bool operator ==(Object other) {
     return CompareHelper.equals(this, other);
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    description.add("uri: $uri");
+    description.add("method: $method");
+    description.add("algorithm: $algorithm");
+    description.add("contentId: $contentId");
   }
 }

@@ -48,9 +48,6 @@ abstract class ContentPosition implements Comparable<ContentPosition> {
 
   @override
   bool operator ==(Object other) {
-    if (other == this) {
-      return true;
-    }
     if (other is! ContentPosition) {
       return false;
     }

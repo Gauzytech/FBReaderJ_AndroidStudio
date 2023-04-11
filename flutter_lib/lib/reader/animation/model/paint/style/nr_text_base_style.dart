@@ -69,10 +69,10 @@ class NRTextBaseStyle extends NRTextStyle {
 
   @override
   int getFontSize(NRTextMetrics metrics) {
-    return _getFontSize();
+    return getFontSize2();
   }
 
-  int _getFontSize() {
+  int getFontSize2() {
     return fontSizeOption.getValue();
   }
 

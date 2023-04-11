@@ -36,6 +36,8 @@ import org.geometerplus.zlibrary.ui.android.library.ZLAndroidLibrary;
 
 import org.geometerplus.fbreader.Paths;
 
+import timber.log.Timber;
+
 public final class AndroidFontUtil {
 	private static volatile Map<String,String[]> ourFontAssetMap;
 	private static volatile Map<String,File[]> ourFontFileMap;
@@ -192,6 +194,7 @@ public final class AndroidFontUtil {
 		if (tf == null) {
 			tf = Typeface.create(family, style);
 		}
+		Timber.v("字体测试, family = %s", family);
 		typefaces[style] = tf;
 		return tf;
 	}

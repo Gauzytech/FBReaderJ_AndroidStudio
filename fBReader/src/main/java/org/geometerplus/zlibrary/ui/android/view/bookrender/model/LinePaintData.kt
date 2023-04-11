@@ -4,6 +4,7 @@ import org.geometerplus.zlibrary.core.util.ZLColor
 import org.geometerplus.zlibrary.core.view.ZLPaintContext.Size
 import org.geometerplus.zlibrary.text.view.ZLTextStyle
 import org.geometerplus.zlibrary.text.view.ZLTextWord
+import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection
 
 enum class ElementType {
     WORD,
@@ -14,7 +15,9 @@ enum class ElementType {
 }
 
 /** 保存绘制一行所需要的所有信息 */
-data class LinePaintData(val elementPaintData: List<ElementPaintData>)
+data class LinePaintData(
+    val elementPaintData: List<ElementPaintData>
+)
 
 sealed class ElementPaintData(
     val elementType: Int,

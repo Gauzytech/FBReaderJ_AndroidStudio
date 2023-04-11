@@ -9,8 +9,8 @@ import 'package:flutter_lib/reader/animation/model/animation_data.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
+import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
@@ -436,7 +436,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         PaintDataSrc nextPage =
             readerViewModel.getPagePaintData(PageIndex.next);
         if (nextPage.data != null) {
-          _performPageDraw(canvas, paintContext, nextPage.data!, 'next');
+          _performPageDraw(canvas, paintContext, nextPage, 'next');
           print(
             'flutter翻页行为:onDraw[有nextPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -453,7 +453,7 @@ class PageTurnAnimation extends BaseAnimationPage {
             readerViewModel.getPagePaintData(PageIndex.prev);
         canvas.translate(actualOffsetX - currentSize.width, 0);
         if (prevPage.data != null) {
-          _performPageDraw(canvas, paintContext, prevPage.data!, 'prev');
+          _performPageDraw(canvas, paintContext, prevPage, 'prev');
           print(
             'flutter翻页行为:onDraw[有prevPage], '
             'actualOffsetX = $actualOffsetX, '
@@ -480,7 +480,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         _performPageDraw(
           canvas,
           paintContext,
-          currentPage.data!,
+          currentPage,
           'current',
           isStable: actualOffsetX == 0,
         );
@@ -560,15 +560,16 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   /// 绘制当前page
   void _performPageDraw(ui.Canvas canvas, PaintContext paintContext,
-      List<LinePaintData> lineData, String from,
+      PaintDataSrc paintData, String from,
       {bool isStable = false}) {
-    for (var lineInfo in lineData) {
+    for (var lineInfo in paintData.data!) {
       for (var lineElement in lineInfo.elementPaintDataList) {
         switch (lineElement.runtimeType) {
           case WordElementPaintData:
             _drawString(
               paintContext,
               canvas,
+              paintData.styleCollection!,
               lineElement as WordElementPaintData,
             );
             break;
@@ -591,11 +592,12 @@ class PageTurnAnimation extends BaseAnimationPage {
   void _drawString(
     PaintContext paintContext,
     ui.Canvas canvas,
+    NRTextStyleCollection styleCollection,
     WordElementPaintData lineElement,
   ) {
     print('flutter内容绘制流程, 绘制======$lineElement');
     if (lineElement.textStyle != null) {
-      _setTextStyle(paintContext, lineElement.textStyle!);
+      _setTextStyle(paintContext, styleCollection, lineElement.textStyle!);
     }
 
     double x = lineElement.textBlock.x.toDouble();
@@ -695,12 +697,21 @@ class PageTurnAnimation extends BaseAnimationPage {
     }
   }
 
-  void _setTextStyle(PaintContext paintContext, NRTextStyle style) {
+  void _setTextStyle(PaintContext paintContext,
+      NRTextStyleCollection styleCollection, NRTextStyle style) {
     if (_myTextStyle != style) {
+      print('flutter内容绘制流程, _setTextStyle, $style');
       _myTextStyle = style;
       _myWordHeight = -1;
     }
-    paintContext.setFont(style.getFontEntries(), style.getFontSize(_metrics()), style.isBold(), style.isItalic(), style.isUnderline(), style.isStrikeThrough());
+
+    paintContext.setFont(
+        style.getFontEntries(),
+        style.getFontSize(_metrics(styleCollection)),
+        style.isBold(),
+        style.isItalic(),
+        style.isUnderline(),
+        style.isStrikeThrough());
   }
 
   /// @return 书页内容渲染的metrics:
@@ -708,20 +719,20 @@ class PageTurnAnimation extends BaseAnimationPage {
   /// 2. 屏幕宽度
   /// 3. 屏幕高度
   /// 4. 字体大小
-  // NRTextMetrics _metrics() {
-  //   // this local variable is used to guarantee null will not
-  //   // be returned from this method even in multi-thread environment
-  //   NRTextMetrics? m = _myMetrics;
-  //   if (m == null) {
-  //     m = NRTextMetrics(
-  //         ScreenUtil.displayDpi.toInt(),
-  //         // TODO: screen area width
-  //         100,
-  //         // TODO: screen area height
-  //         100,
-  //         getTextStyleCollection().getBaseStyle().getFontSize());
-  //     _myMetrics = m;
-  //   }
-  //   return m;
-  // }
+  NRTextMetrics _metrics(NRTextStyleCollection styleCollection) {
+    // this local variable is used to guarantee null will not
+    // be returned from this method even in multi-thread environment
+    NRTextMetrics? m = _myMetrics;
+    if (m == null) {
+      m = NRTextMetrics(
+          ScreenUtil.displayDpi.toInt(),
+          // TODO: screen area width
+          100,
+          // TODO: screen area height
+          100,
+          styleCollection.baseStyle.getFontSize2());
+      _myMetrics = m;
+    }
+    return m;
+  }
 }

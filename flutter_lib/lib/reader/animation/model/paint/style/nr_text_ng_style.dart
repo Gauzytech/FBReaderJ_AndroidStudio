@@ -7,18 +7,18 @@ import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
 class NRTextNGStyle extends NRTextDecoratedStyle {
-  final NrTextNGStyleDescription _myDescription;
+  final NRTextNGStyleDescription _myDescription;
 
   NRTextNGStyle(
     NRTextStyle parent,
-    NrTextNGStyleDescription description,
+    NRTextNGStyleDescription description,
     NRTextHyperLink hyperlink,
   )   : _myDescription = description,
         super(parent, hyperlink);
 
   NRTextNGStyle.fromJson(Map<String, dynamic> json)
       : _myDescription =
-            NrTextNGStyleDescription.fromJson(json['myDescription']),
+            NRTextNGStyleDescription.fromJson(json['myDescription']),
         super.fromJson(json);
 
   @override

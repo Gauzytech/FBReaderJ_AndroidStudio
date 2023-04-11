@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.core.fonts;
 
+import androidx.annotation.NonNull;
+
 import org.fbreader.util.ComparisonUtil;
 
 import java.util.HashMap;
@@ -63,6 +65,7 @@ public final class FontEntry {
 		return myFileInfos != null ? myFileInfos[(bold ? 1 : 0) + (italic ? 2 : 0)] : null;
 	}
 
+	@NonNull
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder("FontEntry[");
@@ -73,7 +76,9 @@ public final class FontEntry {
 				builder.append(";").append(info != null ? info.Path : null);
 			}
 		}
-		return builder.append("]").toString();
+		return builder.append("]")
+				.append(", isSystem: ")
+				.append(isSystem()).toString();
 	}
 
 	@Override
