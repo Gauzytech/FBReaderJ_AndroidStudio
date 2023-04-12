@@ -526,11 +526,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             }
         }
         if (!containsSoftHyphen) {
-//            StringBuilder sb = new StringBuilder();
-//            for (int i = offset; i <= offset + length; i++) {
-//                sb.append(string[i]);
-//            }
-//            Timber.v("ceshi123, offset = %s, length = %s : %s", offset, length, sb.toString());
+            printDebugStr(string, offset, length, x, y);
             myCanvas.drawText(string, offset, length, x, y, myTextPaint);
         } else {
             final char[] corrected = new char[length];
@@ -541,6 +537,8 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
                     corrected[len++] = chr;
                 }
             }
+
+            printDebugStr(corrected, 0, len, x, y);
             myCanvas.drawText(corrected, 0, len, x, y, myTextPaint);
         }
     }
@@ -548,7 +546,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     @Override
     public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length) {
         boolean containsSoftHyphen = false;
-        for (int i = offset; i < offset + length; ++i) {
+        for (int i = offset; i <= offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
                 containsSoftHyphen = true;
                 break;
@@ -670,5 +668,13 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
         Timber.v("%s, setExtraFoot", TAG);
         myExtraPaint.setTextSize(textSize);
         myExtraPaint.setARGB(255, color.Red, color.Green, color.Blue);
+    }
+
+    private void printDebugStr(char[] chars, int start, int len, int x, int y) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = start; i <= start + len; i++) {
+            sb.append(chars[i]);
+        }
+        Timber.v("ceshi123, draw: %s [%s, %s]", sb, x, y);
     }
 }

@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import timber.log.Timber;
+
 /**
  * 画笔上下文（绘制相关）
  */
@@ -300,7 +302,7 @@ abstract public class ZLPaintContext {
 
     private int myDescent = -1;
 
-    public final int getDescent() {
+    public final int getDescent(String from) {
         int descent = myDescent;
         if (descent == -1) {
             descent = getDescentInternal();

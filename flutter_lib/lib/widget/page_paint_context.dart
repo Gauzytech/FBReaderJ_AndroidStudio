@@ -268,6 +268,8 @@ class PagePaintContext extends PaintContext {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
+
+      print('ceshi123, flutter draw: ${buffer.toString()}, [$x, $y]');
       textPainter.paint(canvas, Offset(x, y));
       return textPainter.size;
     }

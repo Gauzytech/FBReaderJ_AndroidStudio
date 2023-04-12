@@ -237,6 +237,7 @@ abstract class PaintContext {
       descent = getDescentInternal(textPainter);
       _myDescent = descent;
     }
+    print('ceshi123, descent = $descent');
     return descent;
   }
 

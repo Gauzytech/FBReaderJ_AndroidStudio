@@ -297,8 +297,8 @@ abstract class ZLTextViewBase extends ZLView {
         return 0;
     }
 
-    final int getElementDescent(ZLTextElement element) {
-        return element instanceof ZLTextWord ? getContext().getDescent() : 0;
+    final int getElementDescent(ZLTextElement element, String from) {
+        return element instanceof ZLTextWord ? getContext().getDescent(from) : 0;
     }
 
     /**
@@ -478,7 +478,7 @@ abstract class ZLTextViewBase extends ZLView {
                     context.setFillColor(getHighlightingBackgroundColor());
                     int endPos = Math.min(markStart + markLen, length);
                     final int endX = x + context.getStringWidth(str, offset + markStart, endPos - markStart);
-                    context.fillRectangle(x, y - context.getStringHeight(), endX - 1, y + context.getDescent());
+                    context.fillRectangle(x, y - context.getStringHeight(), endX - 1, y + context.getDescent("drawString"));
                     context.setTextColor(getHighlightingForegroundColor());
                     context.drawString(x, y, str, offset + markStart, endPos - markStart);
                     x = endX;

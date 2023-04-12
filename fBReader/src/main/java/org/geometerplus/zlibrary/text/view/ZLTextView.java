@@ -957,7 +957,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         float charsPerLine = Math.min(effectiveWidth / charWidth,
                 charsPerParagraph * 1.2f);
 
-        final int strHeight = getWordHeight() + getContext().getDescent();
+        final int strHeight = getWordHeight() + getContext().getDescent("computeCharsPerPage");
         final int effectiveHeight = (int)
                 (textHeight -
                         (getTextStyle().getSpaceBefore(metrics())
@@ -1221,7 +1221,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 起始X坐标
                 final int areaX = area.XStart;
                 // 起始Y坐标
-                final int areaY = area.YEnd - getElementDescent(element) - getTextStyle().getVerticalAlign(metrics());
+                final int descent = getElementDescent(element, "drawTextLine");
+                final int areaY = area.YEnd - descent - getTextStyle().getVerticalAlign(metrics());
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
                     // 文本位置信息
@@ -1287,7 +1288,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final ZLTextHighlighting hl = getWordHighlighting(pos, highlightingList);
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
             drawWord(
-                    area.XStart, area.YEnd - context.getDescent() - getTextStyle().getVerticalAlign(metrics()),
+                    area.XStart, area.YEnd - context.getDescent("drawTextLine") - getTextStyle().getVerticalAlign(metrics()),
                     word, start, len, area.AddHyphenationSign,
                     hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
             );
@@ -1323,13 +1324,15 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 ++index;
                 ZLTextStyle updatedStyle = null;
                 if (area.ChangeStyle) {
-//                    setTextStyle(area.Style);
+                    setTextStyle(area.Style);
                     updatedStyle = area.Style;
                 }
                 // 起始X坐标
                 final int areaX = area.XStart;
                 // 起始Y坐标
-                final int areaY = area.YEnd - getElementDescent(element) - getTextStyle().getVerticalAlign(metrics());
+                // todo descent
+                final int descent = getElementDescent(element, "prepareDrawTextLine");
+                final int areaY = area.YEnd - descent - getTextStyle().getVerticalAlign(metrics());
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
                     // 文本位置信息
@@ -1426,7 +1429,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             ZLTextElementArea area = pageAreas.get(index++);
             ZLTextStyle updatedStyle = null;
             if (area.ChangeStyle) {
-//                setTextStyle(area.Style);
+                setTextStyle(area.Style);
                 updatedStyle = area.Style;
             }
 
@@ -1440,7 +1443,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             final ZLColor hlColor = hl != null ? hl.getForegroundColor() : null;
 
             ElementPaintData.Word.Builder wordPaintData = getDrawWordPaintData(
-                    area.XStart, area.YEnd - context.getDescent() - getTextStyle().getVerticalAlign(metrics()),
+                    area.XStart, area.YEnd - context.getDescent("prepareDrawTextLine") - getTextStyle().getVerticalAlign(metrics()),
                     word, start, len, area.AddHyphenationSign,
                     hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
             );
@@ -1706,7 +1709,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 /* ------------------------------ 开始UI操作 ------------------------------ */
                 contentRenderWidth += getElementWidth(element, currentCharIndex);
                 contentRenderHeight = Math.max(contentRenderHeight, getElementHeight(element));
-                newDescent = Math.max(newDescent, getElementDescent(element));
+                newDescent = Math.max(newDescent, getElementDescent(element, "processTextLineInternal"));
                 /* ------------------------------ 结束UI操作 ------------------------------ */
                 if (element instanceof HSpaceElement) {
                     if (contentOccurred) {
@@ -1965,7 +1968,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             } else if (element instanceof ZLTextWord || element instanceof ZLTextImageElement || element instanceof ZLTextVideoElement || element instanceof ExtensionElement) {
                 // 处理内容元素: 文字, 图片，视频, 超链接
                 final int height = getElementHeight(element);
-                final int descent = getElementDescent(element);
+                final int descent = getElementDescent(element, "prepareTextLine");
                 final int length = element instanceof ZLTextWord ? ((ZLTextWord) element).Length : 0;
                 if (spaceElement != null) {
                     page.TextElementMap.add(spaceElement);
@@ -2005,7 +2008,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 final boolean addHyphenationSign = word.Data[word.Offset + len - 1] != '-';
                 final int width = getWordWidth(word, 0, len, addHyphenationSign);
                 final int height = getElementHeight(word);
-                final int descent = context.getDescent();
+                final int descent = context.getDescent("prepareTextLine");
                 page.TextElementMap.add(
                         // 根据当前字的x坐标与y坐标以及使用的样式生成一个ZLTextElementArea类
                         new ZLTextElementArea(
