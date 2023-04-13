@@ -171,11 +171,6 @@ public class ZLTextNGStyle extends ZLTextDecoratedStyle {
 
 	@Override
 	public String toString() {
-		return "ZLTextNGStyle{" +
-				"Parent=" + Parent +
-				", Hyperlink=" + Hyperlink +
-				", BaseStyle=" + BaseStyle +
-				", myDescription=" + myDescription +
-				'}';
+		return "ZLTextNGStyle[" + myDescription.Name + "]";
 	}
 }

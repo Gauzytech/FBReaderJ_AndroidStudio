@@ -259,17 +259,18 @@ class PagePaintContext extends PaintContext {
         }
         buffer = corrected;
       }
+      print('ceshi123, flutter draw: ${buffer.toString()}, [$x, $y], total = ${chars.length}');
 
       TextPainter textPainter = TextPainter(
-        locale: WidgetsBinding.instance.window.locale,
         text: TextSpan(
           text: buffer.toString(),
           style: _textStyle,
         ),
+        locale: WidgetsBinding.instance.window.locale,
         textDirection: TextDirection.ltr,
       )..layout();
 
-      print('ceshi123, flutter draw: ${buffer.toString()}, [$x, $y]');
+      // todo 根据y绘制出来的高度不对
       textPainter.paint(canvas, Offset(x, y));
       return textPainter.size;
     }
@@ -355,20 +356,11 @@ class PagePaintContext extends PaintContext {
     } else {
       textDecoration = ui.TextDecoration.none;
     }
-    // todo 文字渲染的位置有点不对
     ui.FontWeight fontWeight = bold ? FontWeight.bold : FontWeight.normal;
     ui.FontStyle fontStyle = italic ? FontStyle.italic : FontStyle.normal;
     switch (typeface) {
-      case FontTypeFace.sans:
-        _textStyle = GoogleFonts.openSans(
-          fontSize: size.toDouble(),
-          decoration: textDecoration,
-          fontWeight: fontWeight,
-          fontStyle: fontStyle,
-        );
-        break;
       case FontTypeFace.serif:
-        _textStyle = GoogleFonts.ptSerif(
+        _textStyle = GoogleFonts.robotoSerif(
           fontSize: size.toDouble(),
           decoration: textDecoration,
           fontWeight: fontWeight,
@@ -376,7 +368,7 @@ class PagePaintContext extends PaintContext {
         );
         break;
       case FontTypeFace.monospace:
-        _textStyle = GoogleFonts.spaceMono(
+        _textStyle = GoogleFonts.robotoMono(
           fontSize: size.toDouble(),
           decoration: textDecoration,
           fontWeight: fontWeight,

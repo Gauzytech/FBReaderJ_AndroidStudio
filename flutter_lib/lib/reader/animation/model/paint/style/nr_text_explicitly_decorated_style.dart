@@ -317,8 +317,13 @@ class NRTextExplicitlyDecoratedStyle extends NRTextDecoratedStyle {
   }
 
   @override
-  bool allowHyphenations() {
-    // TODO: implement
-    return parent.allowHyphenations();
+  bool allowHyphenations() => parent.allowHyphenations();
+
+  @override
+  String toString() {
+    return "ZLTextExplicitlyDecoratedStyle{" +
+        "myEntry= $_entry"  +
+        ", myTreeParent= $_treeParent" +
+        '}';
   }
 }

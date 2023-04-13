@@ -1,11 +1,12 @@
 import 'dart:core';
 
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_css_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_other_style_entry.dart';
 import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 
-abstract class NRTextStyleEntry {
+abstract class NRTextStyleEntry with DebugInfoProvider {
   int get depth => _depth;
   final int _depth;
 
@@ -73,6 +74,18 @@ abstract class NRTextStyleEntry {
 
   bool hasNonZeroLength(Feature feature) {
     return _lengths[feature.id]?.size != 0;
+  }
+
+  @override
+  void debugFillDescription(List<String> description) {
+    description.add("depth: $_depth");
+    description.add("featureMask: $_featureMask");
+    description.add("lengths: $_lengths");
+    description.add("alignmentType: $_alignmentType");
+    description.add("fontEntries: $_fontEntries");
+    description.add("supportedFontModifiers: $_supportedFontModifiers");
+    description.add("fontModifiers: $_fontModifiers");
+    description.add("verticalAlignCode: $_verticalAlignCode");
   }
 }
 
@@ -147,7 +160,7 @@ enum Boolean3 {
   UNDEFINED;
 }
 
-class NRTextStyleEntryLength {
+class NRTextStyleEntryLength with DebugInfoProvider {
   int size;
   SizeUnit unit;
 
@@ -208,8 +221,8 @@ class NRTextStyleEntryLength {
   }
 
   @override
-  String toString() {
-    return "$size.$unit";
+  void debugFillDescription(List<String> description) {
+    description.add("$size.$unit");
   }
 }
 

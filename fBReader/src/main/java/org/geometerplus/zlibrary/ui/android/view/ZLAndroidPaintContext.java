@@ -526,6 +526,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
             }
         }
         if (!containsSoftHyphen) {
+
             printDebugStr(string, offset, length, x, y);
             myCanvas.drawText(string, offset, length, x, y, myTextPaint);
         } else {
@@ -672,9 +673,9 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     private void printDebugStr(char[] chars, int start, int len, int x, int y) {
         StringBuilder sb = new StringBuilder();
-        for (int i = start; i <= start + len; i++) {
+        for (int i = start; i < start + len; i++) {
             sb.append(chars[i]);
         }
-        Timber.v("ceshi123, draw: %s [%s, %s]", sb, x, y);
+        Timber.v("ceshi123, draw: %s, [%s, %s], total = %s", sb, x, y, chars.length);
     }
 }

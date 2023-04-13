@@ -19,6 +19,7 @@
 
 package org.geometerplus.zlibrary.text.model;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.fbreader.util.Boolean3;
@@ -219,4 +220,18 @@ public abstract class ZLTextStyleEntry {
 		buffer.append("]");
 		return buffer.toString();
 	}
+
+//	@Override
+//	public String toString() {
+//		return this.getClass().getSimpleName() + "{" +
+//				"Depth=" + Depth +
+//				", myFeatureMask=" + myFeatureMask +
+//				", myLengths=" + Arrays.toString(myLengths) +
+//				", myAlignmentType=" + myAlignmentType +
+//				", myFontEntries=" + myFontEntries +
+//				", mySupportedFontModifiers=" + mySupportedFontModifiers +
+//				", myFontModifiers=" + myFontModifiers +
+//				", myVerticalAlignCode=" + myVerticalAlignCode +
+//				'}';
+//	}
 }

@@ -72,8 +72,14 @@ abstract class PaintContext {
   /// @param italic        斜体
   /// @param underline     下划线
   /// @param strikeThrough 中划线
-  void setFont(List<FontEntry>? entries, int size, bool bold, bool italic,
-      bool underline, bool strikeThrough) {
+  void setFont(
+    List<FontEntry>? entries,
+    int size,
+    bool bold,
+    bool italic,
+    bool underline,
+    bool strikeThrough,
+  ) {
     if (entries != null && entries != _myFontEntries) {
       _myFontEntries = entries;
       _myResetFont = true;
@@ -99,7 +105,7 @@ abstract class PaintContext {
       _myFontIsStrikeThrough = strikeThrough;
       _myResetFont = true;
     }
-    print('flutter内容绘制流程, $_myFontEntries, _myResetFont = $_myResetFont');
+
     if (_myResetFont) {
       _myResetFont = false;
       setFontInternal(

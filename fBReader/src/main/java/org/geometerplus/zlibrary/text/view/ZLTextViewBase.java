@@ -368,9 +368,11 @@ abstract class ZLTextViewBase extends ZLView {
             if (length == -1) {
                 length = word.Length - start;
             }
-            if (!addHyphenationSign) { // 无断字连接
+            if (!addHyphenationSign) {
+                // 无断字连接
                 drawString(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start);
-            } else { // 有断字连接
+            } else {
+                // 有断字连接
                 char[] part = myWordPartArray;
                 if (length + 1 > part.length) {
                     part = new char[length + 1];
