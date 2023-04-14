@@ -13,16 +13,18 @@ import '../reader/animation/model/paint/image_element_paint_data.dart';
 import '../reader/animation/model/user_settings/geometry.dart';
 
 class PagePaintContext extends PaintContext {
-  /// 文字样式
+  /// 文字画笔
+  final TextPainter _textPainter = TextPainter(
+    locale: WidgetsBinding.instance.window.locale,
+    textDirection: TextDirection.ltr,
+  );
   TextStyle _textStyle = const TextStyle(color: Colors.black);
 
   /// 线画笔
-  Paint _myLinePaint = Paint()
-    ..style = PaintingStyle.stroke;
+  Paint _myLinePaint = Paint()..style = PaintingStyle.stroke;
 
   /// 填充画笔
-  Paint _myFillPaint = Paint()
-    ..isAntiAlias = true;
+  Paint _myFillPaint = Paint()..isAntiAlias = true;
 
   /// 轮廓线画笔
   /// 设置轮廓画笔, 比如: 长按选中图片或者超链接
@@ -236,7 +238,7 @@ class PagePaintContext extends PaintContext {
     TextPainter? painter,
   }) {
     if (painter != null) {
-      painter.paint(canvas, Offset(x, y));
+      painter.paint(canvas, Offset(x, y - getStringHeightInternal()));
       return painter.size;
     } else {
       var buffer = StringBuffer();
@@ -259,20 +261,12 @@ class PagePaintContext extends PaintContext {
         }
         buffer = corrected;
       }
-      print('ceshi123, flutter draw: ${buffer.toString()}, [$x, $y], total = ${chars.length}');
 
-      TextPainter textPainter = TextPainter(
-        text: TextSpan(
-          text: buffer.toString(),
-          style: _textStyle,
-        ),
-        locale: WidgetsBinding.instance.window.locale,
-        textDirection: TextDirection.ltr,
-      )..layout();
-
+      _textPainter.text = TextSpan(text: buffer.toString(), style: _textStyle);
+      _textPainter.layout();
       // todo 根据y绘制出来的高度不对
-      textPainter.paint(canvas, Offset(x, y));
-      return textPainter.size;
+      _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));
+      return _textPainter.size;
     }
   }
 
@@ -305,14 +299,9 @@ class PagePaintContext extends PaintContext {
       buffer = corrected;
     }
 
-    TextPainter textPainter = TextPainter(
-      locale: WidgetsBinding.instance.window.locale,
-      text: TextSpan(
-        text: buffer.toString(),
-        style: _textStyle,
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+    // todo 换成_textPainter, 得解决绘制太慢的问题
+    TextPainter textPainter = _createTextPainter(buffer.toString());
+    textPainter.layout();
     return Pair(textPainter, textPainter.width + 0.5);
   }
 
@@ -395,7 +384,7 @@ class PagePaintContext extends PaintContext {
   @override
   int getCharHeightInternal(String chr) {
     // todo
-    return 0;
+    throw Exception('need implementation');
   }
 
   @override
@@ -409,13 +398,14 @@ class PagePaintContext extends PaintContext {
   @override
   int getExtraStringWidth(Characters string, int offset, int length) {
     // todo
-    return 0;
+    throw Exception('need implementation');
   }
 
   @override
   int getSpaceWidthInternal() {
-    // todo
-    return 0;
+    TextPainter painter = _createTextPainter(" ");
+    painter.layout();
+    return (painter.height + 0.5).toInt();
   }
 
   @override
@@ -424,6 +414,17 @@ class PagePaintContext extends PaintContext {
   @override
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling) {
     // todo
-    return const Size(0, 0);
+    throw Exception('need implementation');
+  }
+
+  TextPainter _createTextPainter(String str) {
+    return TextPainter(
+      locale: WidgetsBinding.instance.window.locale,
+      text: TextSpan(
+        text: str,
+        style: _textStyle,
+      ),
+      textDirection: TextDirection.ltr,
+    );
   }
 }

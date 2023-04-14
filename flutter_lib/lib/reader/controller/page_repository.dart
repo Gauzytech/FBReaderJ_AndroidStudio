@@ -205,9 +205,11 @@ class PageRepository with PageRepositoryDelegate {
         internalCacheIndex,
         PagePaintData(styleCollection, lineData.toList()),
       );
+      print('flutter_perf[preparePagePaintData], JSON转换完毕 ${now()}');
 
       print(
           'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');
+      refreshContent();
       // for (var item in lineData) {
       //   // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
       //   for (var lineElement in item.elementPaintDataList) {

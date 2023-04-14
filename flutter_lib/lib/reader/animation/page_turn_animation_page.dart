@@ -484,6 +484,7 @@ class PageTurnAnimation extends BaseAnimationPage {
           'current',
           isStable: actualOffsetX == 0,
         );
+        print('flutter_perf, 内容绘制完毕: ${now()}');
       } else {
         print('flutter内容绘制流程, currentPage不存在');
         _drawUnavailable(canvas);
@@ -545,8 +546,6 @@ class PageTurnAnimation extends BaseAnimationPage {
       }
       canvas.restore();
     }
-
-    print('flutter_perf, 绘制完毕: ${now()}');
   }
 
   void _drawUnavailable(ui.Canvas canvas) {
@@ -562,6 +561,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   void _performPageDraw(ui.Canvas canvas, PaintContext paintContext,
       PaintDataSrc paintData, String from,
       {bool isStable = false}) {
+    print('flutter_perf, _performPageDraw len = ${paintData.data!.length}, ${now()}');
     for (var lineInfo in paintData.data!) {
       for (var lineElement in lineInfo.elementPaintDataList) {
         switch (lineElement.runtimeType) {
@@ -635,10 +635,10 @@ class PageTurnAnimation extends BaseAnimationPage {
           int offsetEdited = offset + pos;
           int len = endPos - pos;
           paintContext.setTextColor(color);
-          Size stringSize =
+          Size size =
               paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
           x += paintContext
-              .getStringWidth(data, offsetEdited, len, stringSize: stringSize)
+              .getStringWidth(data, offsetEdited, len, stringSize: size)
               .right;
         }
 
@@ -651,11 +651,12 @@ class PageTurnAnimation extends BaseAnimationPage {
               paintContext.getStringWidth(data, offsetEdited, len);
           final double endX = x + result.right;
           paintContext.fillRectangle(
-              canvas,
-              x,
-              y - paintContext.getStringHeight(),
-              endX - 1,
-              y + paintContext.getDescent(result.left!));
+            canvas,
+            x,
+            y - paintContext.getStringHeight(),
+            endX - 1,
+            y + paintContext.getDescent(result.left!),
+          );
           paintContext.setTextColor(lineElement.highlightForegroundColor);
           paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
               painter: result.left);
