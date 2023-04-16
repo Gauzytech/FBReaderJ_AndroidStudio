@@ -135,7 +135,7 @@ abstract class ZLTextViewBase extends ZLView {
     }
 
     final void setTextStyle(ZLTextStyle style) {
-        Timber.v("渲染流程:分页, 设置TextStyle, %s", style);
+//        Timber.v("渲染流程:分页, 设置TextStyle, %s", style);
         if (myTextStyle != style) {
             // ZLTextViewBase类的myTextStyle属性将指向代表基本样式的ZLTextBaseStyle类
             myTextStyle = style;

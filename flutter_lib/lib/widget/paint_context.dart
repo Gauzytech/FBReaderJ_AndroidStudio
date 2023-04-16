@@ -63,6 +63,8 @@ abstract class PaintContext {
   final Map<String, int> _myCharHeights = SplayTreeMap();
   int _myDescent = -1;
 
+  TextStyle get textStyle;
+
   /// 设置字体相关属性（内部实现）
   /// 有一个属性变化就RestFont
   ///
@@ -276,7 +278,10 @@ abstract class PaintContext {
     int offset,
     int length, {
     TextPainter? painter,
+    int? debugTimestamp,
   });
+
+  drawString3(ui.Canvas canvas, double x, double y, List<TextSpan> content);
 
   /// 获得书页中的插图, 耗时操作
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling);

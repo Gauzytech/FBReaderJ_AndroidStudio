@@ -6,6 +6,7 @@ import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
 import 'package:flutter_lib/utils/font_util.dart';
 import 'package:flutter_lib/utils/paint_modify.dart';
+import 'package:flutter_lib/utils/time_util.dart';
 import 'package:flutter_lib/widget/paint_context.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,6 +19,9 @@ class PagePaintContext extends PaintContext {
     locale: WidgetsBinding.instance.window.locale,
     textDirection: TextDirection.ltr,
   );
+
+  @override
+  TextStyle get textStyle => _textStyle;
   TextStyle _textStyle = const TextStyle(color: Colors.black);
 
   /// 线画笔
@@ -236,6 +240,7 @@ class PagePaintContext extends PaintContext {
     int offset,
     int length, {
     TextPainter? painter,
+    int? debugTimestamp,
   }) {
     if (painter != null) {
       painter.paint(canvas, Offset(x, y - getStringHeightInternal()));
@@ -262,20 +267,31 @@ class PagePaintContext extends PaintContext {
         buffer = corrected;
       }
 
-      _textPainter.text = TextSpan(text: buffer.toString(), style: _textStyle);
+      var text = buffer.toString();
+      _textPainter.text = TextSpan(text: text, style: _textStyle);
       _textPainter.layout();
       // todo 根据y绘制出来的高度不对
       _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));
+      print(
+          'flutter_perf, 绘制文字行: $text, [$x, $y],  $offset -> $length | ${now() - debugTimestamp!}ms');
       return _textPainter.size;
     }
   }
 
   @override
-  Pair<TextPainter?, double> getStringWidth(List<String> chars,
-      int offset,
-      int length, {
-        Size? stringSize,
-      }) {
+  drawString3(ui.Canvas canvas, double x, double y, List<TextSpan> content) {
+    _textPainter.text = TextSpan(children: content);
+    _textPainter.layout();
+    _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));
+  }
+
+  @override
+  Pair<TextPainter?, double> getStringWidth(
+    List<String> chars,
+    int offset,
+    int length, {
+    Size? stringSize,
+  }) {
     if (stringSize != null) return Pair(null, stringSize.width + 0.5);
 
     var buffer = StringBuffer();

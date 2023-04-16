@@ -188,24 +188,26 @@ class PageRepository with PageRepositoryDelegate {
     PageIndex pageIndex,
   ) async {
     try {
-      print('flutter_perf[preparePagePaintData], 请求PaintData ${now()}');
+      var time = now();
+      print('flutter_perf[preparePagePaintData], 请求PaintData ${time}');
       // 调用native方法，获取page的绘制数据
       Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.buildPagePaintData,
         {'page_index': pageIndex.index},
       );
 
-      print('flutter_perf[preparePagePaintData], 收到了PaintData ${now()}');
+      print('flutter_perf[preparePagePaintData], 收到了PaintData ${now() - time}ms');
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
       NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
+      print('flutter_perf[preparePagePaintData], JSON转换完毕1 ${now() - time}ms');
       List<LinePaintData> lineData =
           LinePaintData.fromJsonList(pageData['line_paint_data_list']);
+      print('flutter_perf[preparePagePaintData], JSON转换完毕2 ${now() - time}ms , lines: ${lineData.length}');
       _bitmapManager.cachePagePaintData(
         internalCacheIndex,
         PagePaintData(styleCollection, lineData.toList()),
       );
-      print('flutter_perf[preparePagePaintData], JSON转换完毕 ${now()}');
 
       print(
           'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');

@@ -538,7 +538,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         int pageY = getTopMargin();
         int columnIndex = 0;
         ZLTextLineInfo prevLineInfo = null;
-        Timber.v("渲染流程:分页, x = %s, y = %s", pageX, pageY);
+
         // 6. 计算每一行每个字的位置
         for (int i = 0; i < lineInfoList.size(); i++) {
             ZLTextLineInfo info = lineInfoList.get(i);
@@ -663,6 +663,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
 
         Timber.v("渲染流程:分页, myTextModel存在, draw %s, 总paragraphs = %s", pageIndex.name(), myTextModel.getParagraphsNumber());
+        long time = System.currentTimeMillis();
+        Timber.v("page_process_perf, ---------- 开始process page: %s ------------", time);
 
         // 3. 先根据pageIndex选择page
         ZLTextPage page;
@@ -702,11 +704,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
             return ContentPageResult.NoOp.INSTANCE;
         }
 
+        Timber.v("page_process_perf, preparePaintInfo完成: 耗时%dms ------------", System.currentTimeMillis() - time);
         Timber.v("渲染流程:分页[%s]], ----------------------------- preparePaintInfo完成, 本次需要绘制lineInfoSize = %d, 接下来就是把lineInfo画到bitmap上 -----------------------------", pageIndex.name(), page.getLineInfos().size());
         /*
          * 内容 + 高亮的绘制
          */
         final List<ZLTextLineInfo> lineInfoList = page.getLineInfos();
+        Timber.v("page_process_perf, page总行数: %d", lineInfoList.size());
         final int[] labels = new int[lineInfoList.size() + 1];
         int pageX = getLeftMargin();
         int pageY = getTopMargin();
@@ -733,6 +737,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             prevLineInfo = info;
         }
 
+        Timber.v("page_process_perf, prepareTextLine完成: 耗时%dms ------------", System.currentTimeMillis() - time);
+
         // 7. 移除paragraphCursor, 只保存相关element
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
         List<LinePaintData> linePaintDataList = new ArrayList<>();
@@ -745,6 +751,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             }
         }
 
+        Timber.v("page_process_perf, ---------- page data处理完毕, 返回结果, 耗时%dms ----------", System.currentTimeMillis() - time);
         Timber.v("flutter_perf, page data处理完毕, 返回结果, %s", System.currentTimeMillis());
         return new ContentPageResult.Paint(
                 getTextStyleCollection(),
@@ -1448,14 +1455,18 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
             );
             // 保存wordElement绘制信息
-            if(updatedStyle != null) {
+            if (updatedStyle != null) {
                 wordPaintData.textStyle(updatedStyle);
             }
             lineElements.add(wordPaintData.build());
         }
 
         // 保存本行的绘制信息, 传给flutter绘制
-        return new LinePaintData(lineElements);
+        if (lineElements.isEmpty()) {
+            return null;
+        } else {
+            return new LinePaintData(lineElements);
+        }
     }
 
     /**
@@ -2087,6 +2098,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * @param page 页面
      */
     private synchronized void preparePaintInfo(ZLTextPage page, String from) {
+        // todo prepare一屏数据竟然花了727ms, 需要优化
+        Timber.v("page_process_perf, preparePaintInfo: %s", from);
         if (from.contains("paint")) {
             Timber.v("渲染流程:lineInfo, from -> " + from +
                             ", \n{startCursor= " + page.startCursor +
