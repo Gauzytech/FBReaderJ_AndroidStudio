@@ -24,6 +24,8 @@ abstract class ZLTextElement constructor(val type: String) {
         fun hSpace() = HSpaceElement()
         fun nbSpace() = NBSpaceElement()
         fun afterParagraph() = AfterParagraphElement()
+
+        @JvmStatic
         fun indent() = IndentElement()
         fun styleClose() = StyleCloseElement()
     }

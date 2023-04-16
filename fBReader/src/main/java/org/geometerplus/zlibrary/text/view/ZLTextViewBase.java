@@ -19,6 +19,8 @@
 
 package org.geometerplus.zlibrary.text.view;
 
+import androidx.annotation.Nullable;
+
 import org.geometerplus.DebugHelper;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -27,6 +29,7 @@ import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.text.model.ZLTextMetrics;
+import org.geometerplus.zlibrary.text.model.ZLTextWordMetrics;
 import org.geometerplus.zlibrary.text.view.style.ZLTextExplicitlyDecoratedStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyleDescription;
@@ -248,10 +251,12 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
-    /** 获得element渲染所需要的宽度. UI操作 */
-    final int getElementWidth(ZLTextElement element, int charIndex) {
+    /**
+     * 获得element渲染所需要的宽度. UI操作
+     */
+    final int getElementWidth(ZLTextElement element, int charIndex, @Nullable ZLTextWordMetrics textWordCache) {
         if (element instanceof ZLTextWord) {
-            return getWordWidth((ZLTextWord) element, charIndex);
+            return textWordCache != null ? textWordCache.getWidth() : getWordWidth((ZLTextWord) element, charIndex);
         } else if (element instanceof ZLTextImageElement) {
             final ZLTextImageElement imageElement = (ZLTextImageElement) element;
             final ZLPaintContext.Size size = getContext().imageSize(
@@ -274,7 +279,9 @@ abstract class ZLTextViewBase extends ZLView {
         return 0;
     }
 
-    /** 获得element渲染所需要的高度 */
+    /**
+     * 获得element渲染所需要的高度
+     */
     final int getElementHeight(ZLTextElement element) {
         if (element instanceof NBSpaceElement ||
                 element instanceof ZLTextWord ||
@@ -297,8 +304,11 @@ abstract class ZLTextViewBase extends ZLView {
         return 0;
     }
 
-    final int getElementDescent(ZLTextElement element, String from) {
-        return element instanceof ZLTextWord ? getContext().getDescent(from) : 0;
+    final int getElementDescent(ZLTextElement element, @Nullable ZLTextWordMetrics textWordCache, String from) {
+        if (element instanceof ZLTextWord) {
+            return textWordCache != null ? textWordCache.getDescent() : getContext().getDescent(from);
+        }
+        return 0;
     }
 
     /**
@@ -306,8 +316,8 @@ abstract class ZLTextViewBase extends ZLView {
      */
     final int getWordWidth(ZLTextWord word, int start) {
         return start == 0 ?
-                        word.getWidth(getContext()) :
-                        getContext().getStringWidth(word.Data, word.Offset + start, word.Length - start);
+                word.getWidth(getContext()) :
+                getContext().getStringWidth(word.Data, word.Offset + start, word.Length - start);
     }
 
     final int getWordWidth(ZLTextWord word, int start, int length) {

@@ -38,6 +38,7 @@ import org.geometerplus.zlibrary.text.model.ZLTextAlignmentType;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
+import org.geometerplus.zlibrary.text.model.ZLTextWordMetrics;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
@@ -698,6 +699,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 5. 计算本页数据并更新page
         // 从定位指定段落后得到的ZLTextPage类中取出
         // 代表段落中每个字的ZLTextElement子类，计算出每个字应该在屏幕上的哪一行
+        // todo
+        //  1. 第一次优化，添加textWordMetricCache, 本方法执行727ms -> 697ms, 总耗时966ms -> 939ms
         preparePaintInfo(page, "paint." + pageIndex.name());
 
         if (page.startCursor.isNull() || page.endCursor.isNull()) {
@@ -753,6 +756,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         Timber.v("page_process_perf, ---------- page data处理完毕, 返回结果, 耗时%dms ----------", System.currentTimeMillis() - time);
         Timber.v("flutter_perf, page data处理完毕, 返回结果, %s", System.currentTimeMillis());
+
+        // 8. 最后清空每个字测量的width, descent缓存
+        page.clearTextWordMetricCache();
         return new ContentPageResult.Paint(
                 getTextStyleCollection(),
                 linePaintDataList,
@@ -959,7 +965,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
         final float charWidth = computeCharWidth();
 
-        final int indentWidth = getElementWidth(ZLTextElement.Companion.indent(), 0);
+        final int indentWidth = getElementWidth(ZLTextElement.indent(), 0, null);
         final float effectiveWidth = textWidth - (indentWidth + 0.5f * textWidth) / charsPerParagraph;
         float charsPerLine = Math.min(effectiveWidth / charWidth,
                 charsPerParagraph * 1.2f);
@@ -1228,7 +1234,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 // 起始X坐标
                 final int areaX = area.XStart;
                 // 起始Y坐标
-                final int descent = getElementDescent(element, "drawTextLine");
+                final int descent = getElementDescent(element, page.getTextWordMetrics(element, getTextStyle()), "drawTextLine");
                 final int areaY = area.YEnd - descent - getTextStyle().getVerticalAlign(metrics());
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
@@ -1338,7 +1344,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 final int areaX = area.XStart;
                 // 起始Y坐标
                 // todo descent
-                final int descent = getElementDescent(element, "prepareDrawTextLine");
+                final int descent = getElementDescent(element, page.getTextWordMetrics(element, getTextStyle()), "prepareDrawTextLine");
                 final int areaY = area.YEnd - descent - getTextStyle().getVerticalAlign(metrics());
                 // 根据元素类型处理
                 if (element instanceof ZLTextWord) { // 文本文字
@@ -1479,7 +1485,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     private ZLTextHighlighting getWordHighlighting(ZLTextPosition pos, List<ZLTextHighlighting> highlightingList) {
         for (ZLTextHighlighting h : highlightingList) {
             // 如果文本位置在高亮列表的位置里，返回该高亮信息
-            if (h.getStartPosition() == null) return  null;
+            if (h.getStartPosition() == null) return null;
             if (h.getStartPosition().compareToIgnoreChar(pos) <= 0 && pos.compareToIgnoreChar(h.getEndPosition()) <= 0) {
                 return h;
             }
@@ -1487,10 +1493,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return null;
     }
 
-    // 这个是分页算法: 根据可绘制区域高度往里填充textLine,
-    // startCursor/endCursor确定填充几个段落
+    /**
+     * 这个是分页算法: 根据可绘制区域高度往里填充textLine,
+     * startCursor/endCursor确定填充几个段落
+     */
     private void buildInfos(ZLTextPage page, ZLTextWordCursor startCursor, ZLTextWordCursor endCursor, String from) {
-        if (DebugHelper.filterTag(from, "paint", "gotoPosition")){
+        if (DebugHelper.filterTag(from, "paint", "gotoPosition")) {
             Timber.v("渲染流程:分页[%s], 开始分页 -> \nstart = %s, \nend = %s", from, startCursor, endCursor);
         }
         endCursor.setCursor(startCursor);
@@ -1520,7 +1528,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             // 当前段落的长度
             final int elementSize = currentLineInfo.paragraphCursorLength;
             while (currentLineInfo.endElementIndex != elementSize) {
-                Timber.v("渲染流程:分页[%s], 开始处理endElementIndex = %s", from, currentLineInfo.endElementIndex);
+                Timber.v("渲染流程:分页[%s], 开始处理endElementIndex = %s / %d", from, currentLineInfo.endElementIndex, elementSize);
                 // 获取该行的信息，包括行高，左右缩进，包含哪些字等信息
                 int debugElementIdx = currentLineInfo.endElementIndex;
                 int debugCharIdx = currentLineInfo.endCharIndex;
@@ -1528,7 +1536,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 currentLineInfo = processTextLine(
                         page,
                         endParagraphCursor,
-                        currentLineInfo.endElementIndex, currentLineInfo.endCharIndex,
+                        currentLineInfo.endElementIndex,
+                        currentLineInfo.endCharIndex,
                         elementSize,
                         previousLineInfo,
                         from);
@@ -1718,9 +1727,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 ZLTextElement element = paragraphCursor.getElement(currentElementIndex);
                 // 获取每个字将占的宽度, 并将每个字的宽度累加
                 /* ------------------------------ 开始UI操作 ------------------------------ */
-                contentRenderWidth += getElementWidth(element, currentCharIndex);
+                contentRenderWidth += getElementWidth(element, currentCharIndex, null);
                 contentRenderHeight = Math.max(contentRenderHeight, getElementHeight(element));
-                newDescent = Math.max(newDescent, getElementDescent(element, "processTextLineInternal"));
+                int elementDescent = getElementDescent(element, null, "processTextLineInternal");
+                newDescent = Math.max(newDescent, elementDescent);
+                // 缓存测量结果
+                page.addTextWordMetrics(element, getTextStyle(), contentRenderWidth, elementDescent);
                 /* ------------------------------ 结束UI操作 ------------------------------ */
                 if (element instanceof HSpaceElement) {
                     if (contentOccurred) {
@@ -1955,7 +1967,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 利用RealStartElementIndex属性获取当前行第一个字的位置，利用for循环读取当前行第一个字到最后一个字之间的内容
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
             final ZLTextElement element = paragraph.getElement(wordIndex);
-            final int elementWidth = getElementWidth(element, charIndex); // UI操作
+
+            // 先查看缓存width
+            int elementWidth = getElementWidth(element, charIndex, page.getTextWordMetrics(element, getTextStyle())); // UI操作
+
             if (element instanceof HSpaceElement) {
                 // 处理空格元素
                 if (wordOccurred && spaceCounter > 0) {
@@ -1979,7 +1994,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
             } else if (element instanceof ZLTextWord || element instanceof ZLTextImageElement || element instanceof ZLTextVideoElement || element instanceof ExtensionElement) {
                 // 处理内容元素: 文字, 图片，视频, 超链接
                 final int height = getElementHeight(element);
-                final int descent = getElementDescent(element, "prepareTextLine");
+                final int descent = getElementDescent(element, page.getTextWordMetrics(element, getTextStyle()), "prepareTextLine");
                 final int length = element instanceof ZLTextWord ? ((ZLTextWord) element).Length : 0;
                 if (spaceElement != null) {
                     page.TextElementMap.add(spaceElement);
@@ -2212,12 +2227,14 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 }
                 break;
             case PaintStateEnum.START_IS_KNOWN:
+                Timber.v("page_process_perf, preparePaintInfo: START_IS_KNOWN");
                 // 开始cursor已经知道, 从前往后渲染
                 if (!page.startCursor.isNull()) {
                     buildInfos(page, page.startCursor, page.endCursor, from);
                 }
                 break;
             case PaintStateEnum.END_IS_KNOWN:
+                Timber.v("page_process_perf, preparePaintInfo: END_IS_KNOWN");
                 // 结束cursor已经知道,
                 if (!page.endCursor.isNull()) {
                     // TODO findStartOfPreviousPage()无法判断从前往后无法判断后面的page是否需要留白

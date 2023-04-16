@@ -20,10 +20,15 @@
 package org.geometerplus.zlibrary.text.view;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.geometerplus.DebugHelper;
+import org.geometerplus.zlibrary.text.model.ZLTextWordCacheKey;
+import org.geometerplus.zlibrary.text.model.ZLTextWordMetrics;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import timber.log.Timber;
 
@@ -44,6 +49,11 @@ public final class ZLTextPage {
     private int myColumnWidth;
     private int myHeight;
     private boolean myTwoColumnView;
+
+    /**
+     * 在计算page每行数据时，缓存每个element的宽高, 以提高计算速度
+     */
+    private final Map<ZLTextWordCacheKey, ZLTextWordMetrics> textWordMetricCache = new HashMap<>();
 
     protected void setSize(int columnWidth, int height, boolean twoColumnView, boolean keepEndNotStart) {
         if (myColumnWidth == columnWidth && myHeight == height) {
@@ -80,6 +90,7 @@ public final class ZLTextPage {
         endCursor.reset();
         lineInfos.clear();
         paintState = PaintStateEnum.NOTHING_TO_PAINT;
+        clearTextWordMetricCache();
     }
 
     public boolean isClearPaintState() {
@@ -218,6 +229,37 @@ public final class ZLTextPage {
 
     public ArrayList<ZLTextLineInfo> getLineInfos() {
         return lineInfos;
+    }
+
+    /**
+     * 添加一个element的宽, 高, descent信息.
+     * <p>
+     * 顺序:
+     * 1. 在processPage -> preparePaintInfo -> buildInfos -> processTextLineInternal中计算出metric信息并缓存
+     * 2. 在prepareTextLine中复用缓存
+     * 3. 在processPage最后清空缓存
+     */
+    public void addTextWordMetrics(ZLTextElement element, ZLTextStyle style, int width, int descent) {
+        if (element instanceof ZLTextWord) {
+            ZLTextWordCacheKey key = new ZLTextWordCacheKey((ZLTextWord) element, style);
+            textWordMetricCache.put(key, new ZLTextWordMetrics(width, descent));
+        }
+    }
+
+    public @Nullable
+    ZLTextWordMetrics getTextWordMetrics(ZLTextElement element, ZLTextStyle style) {
+        if (element instanceof ZLTextWord) {
+            ZLTextWordCacheKey key = new ZLTextWordCacheKey((ZLTextWord) element, style);
+            return textWordMetricCache.get(key);
+        }
+        return null;
+    }
+
+    /**
+     * 清空缓存的textWord数据
+     */
+    public void clearTextWordMetricCache() {
+        textWordMetricCache.clear();
     }
 
     @NonNull

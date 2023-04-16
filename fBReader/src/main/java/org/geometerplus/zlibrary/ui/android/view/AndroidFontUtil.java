@@ -194,7 +194,6 @@ public final class AndroidFontUtil {
 		if (tf == null) {
 			tf = Typeface.create(family, style);
 		}
-		Timber.v("字体测试, family = %s", family);
 		typefaces[style] = tf;
 		return tf;
 	}
