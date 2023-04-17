@@ -38,7 +38,6 @@ import org.geometerplus.zlibrary.text.model.ZLTextAlignmentType;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
-import org.geometerplus.zlibrary.text.model.ZLTextWordMetrics;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
@@ -52,6 +51,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -1363,6 +1363,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     if (updatedStyle != null) {
                         wordPaintData.textStyle(updatedStyle);
                     }
+                    wordPaintData.spaceAfterWord(area.getSpaceAfterWord());
                     lineElements.add(wordPaintData.build());
                 } else if (element instanceof ZLTextImageElement) {
                     final ZLTextImageElement imageElement = (ZLTextImageElement) element;
@@ -1511,7 +1512,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
         page.column0Height = 0;
         boolean nextParagraphExist;
         ZLTextLineInfo currentLineInfo = null;
+//        int totalTimeCost = 0;
         do {
+//            long time = System.currentTimeMillis();
             final ZLTextLineInfo previousLineInfo = currentLineInfo;
             // 恢复到基本样式
             resetTextStyle();
@@ -1527,6 +1530,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             currentLineInfo = new ZLTextLineInfo(endParagraphCursor, elementIndex, charIndex, getTextStyle());
             // 当前段落的长度
             final int elementSize = currentLineInfo.paragraphCursorLength;
+//            Timber.v("page_process_perf, 开始填充行, 初始height = %d, elementSize = %d, ts = %d", textAreaHeight, elementSize, time);
+            // todo 优化element的计算, 现在一屏要705ms
             while (currentLineInfo.endElementIndex != elementSize) {
                 Timber.v("渲染流程:分页[%s], 开始处理endElementIndex = %s / %d", from, currentLineInfo.endElementIndex, elementSize);
                 // 获取该行的信息，包括行高，左右缩进，包含哪些字等信息
@@ -1587,6 +1592,9 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     page.column0Height = page.getLineInfos().size();
                 }
             }
+//            long timeCost = System.currentTimeMillis() - time;
+//            totalTimeCost += timeCost;
+//            Timber.v("page_process_perf, 填充行结束: 剩余height = %d, %d/%dms", textAreaHeight, timeCost, totalTimeCost);
         } while (nextParagraphExist && textAreaHeight >= 0 &&
                 (!endCursor.getParagraphCursor().isEndOfSection() ||
                         page.getLineInfos().size() == page.column0Height)
@@ -1905,7 +1913,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
     /**
      * 进一步计算出每一行中的每一个字在屏幕上的绝对位置
-     * 每个字的绝对位置以及显示格式等信息会用y一个ZLTextElementArea类表示
+     * 每个字的绝对位置以及显示格式等信息会用一个ZLTextElementArea类表示
      */
     private void prepareTextLine(ZLTextPage page, ZLTextLineInfo info, int x, int y, int columnIndex) {
         // 1. 初始化y坐标
@@ -1961,8 +1969,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     break;
             }
         }
-
-        ZLTextElementArea spaceElement = null;
+//        Timber.v("空格测试, spaceCounter = %s", spaceCounter);
+        ZLTextElementArea underLineSpaceArea = null;
         // 5.
         // 利用RealStartElementIndex属性获取当前行第一个字的位置，利用for循环读取当前行第一个字到最后一个字之间的内容
         for (int wordIndex = info.realStartElementIndex; wordIndex != endElementIndex; ++wordIndex, charIndex = 0) {
@@ -1973,10 +1981,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
 
             if (element instanceof HSpaceElement) {
                 // 处理空格元素
+//                Timber.v("空格测试, 发现空格, 当前wordOccurred = %s, spaceCounter = %s", wordOccurred, spaceCounter);
                 if (wordOccurred && spaceCounter > 0) {
+
                     final int spaceLength = context.getSpaceWidth();
                     if (getTextStyle().isUnderline()) {
-                        spaceElement = new ZLTextElementArea(
+                        underLineSpaceArea = new ZLTextElementArea(
                                 paragraphIndex, wordIndex, 0,
                                 0, // length
                                 true, // is last in element
@@ -1984,32 +1994,42 @@ public abstract class ZLTextView extends ZLTextViewBase {
                                 false, // changed style
                                 getTextStyle(), element, (int) textLineXCoord, (int) textLineXCoord + spaceLength, textLineYCoord, textLineYCoord, columnIndex
                         );
+//                        Timber.v("空格测试, 处理空格 1");
                     } else {
-                        spaceElement = null;
+                        underLineSpaceArea = null;
+//                        Timber.v("空格测试, 处理空格 2");
                     }
                     textLineXCoord += spaceLength;
+                    if (DebugHelper.ENABLE_FLUTTER) {
+                        Objects.requireNonNull(page.TextElementMap.getLastArea()).addSpaceAfterWord();
+                    }
                     wordOccurred = false;
                     --spaceCounter;
                 }
-            } else if (element instanceof ZLTextWord || element instanceof ZLTextImageElement || element instanceof ZLTextVideoElement || element instanceof ExtensionElement) {
+            } else if (element instanceof ZLTextWord
+                    || element instanceof ZLTextImageElement
+                    || element instanceof ZLTextVideoElement
+                    || element instanceof ExtensionElement) {
                 // 处理内容元素: 文字, 图片，视频, 超链接
                 final int height = getElementHeight(element);
                 final int descent = getElementDescent(element, page.getTextWordMetrics(element, getTextStyle()), "prepareTextLine");
                 final int length = element instanceof ZLTextWord ? ((ZLTextWord) element).Length : 0;
-                if (spaceElement != null) {
-                    page.TextElementMap.add(spaceElement);
-                    spaceElement = null;
+                if (underLineSpaceArea != null) {
+                    page.TextElementMap.add(underLineSpaceArea);
+                    underLineSpaceArea = null;
                 }
-                page.TextElementMap.add(new ZLTextElementArea(
-                        paragraphIndex, wordIndex, charIndex,
-                        length - charIndex,
-                        true, // is last in element
-                        false, // add hyphenation sign
-                        changeStyle, getTextStyle(), element,
-                        (int) textLineXCoord, (int) textLineXCoord + elementWidth - 1, textLineYCoord - height + 1, textLineYCoord + descent, columnIndex
-                ));
+                page.TextElementMap.add(
+                        new ZLTextElementArea(
+                                paragraphIndex, wordIndex, charIndex,
+                                length - charIndex,
+                                true, // is last in element
+                                false, // add hyphenation sign
+                                changeStyle, getTextStyle(), element,
+                                (int) textLineXCoord, (int) textLineXCoord + elementWidth - 1, textLineYCoord - height + 1, textLineYCoord + descent, columnIndex
+                        ));
                 changeStyle = false;
                 wordOccurred = true;
+//                Timber.v("空格测试, 处理空格 发现内容: %s", element.getClass().getSimpleName());
             } else if (isStyleChangeElement(element)) {
                 // 处理style元素
                 applyStyleChangeElement(element);

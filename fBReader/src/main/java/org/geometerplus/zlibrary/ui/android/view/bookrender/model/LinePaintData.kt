@@ -31,6 +31,7 @@ sealed class ElementPaintData(
         val shift: Int,
         val highlightBackgroundColor: ZLColor?,
         val highlightForegroundColor: ZLColor?,
+        val spaceAfterWord: Int
     ) : ElementPaintData(ElementType.WORD.ordinal) {
 
         class Builder {
@@ -41,6 +42,7 @@ sealed class ElementPaintData(
             private var shift: Int? = null
             private var highlightBackgroundColor: ZLColor? = null
             private var highlightForegroundColor: ZLColor? = null
+            private var spaceAfterWord: Int = 0
 
             fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
             fun textBlock(textBlock: TextBlock) = apply { this.textBlock = textBlock }
@@ -53,6 +55,8 @@ sealed class ElementPaintData(
             fun highlightForegroundColor(color: ZLColor?) =
                 apply { this.highlightForegroundColor = color }
 
+            fun spaceAfterWord(spaceAfterWord: Int) = apply { this.spaceAfterWord = spaceAfterWord }
+
             fun build() = Word(
                 textStyle = textStyle,
                 textBlock = requireNotNull(textBlock),
@@ -61,6 +65,7 @@ sealed class ElementPaintData(
                 shift = requireNotNull(shift),
                 highlightBackgroundColor = highlightBackgroundColor,
                 highlightForegroundColor = highlightForegroundColor,
+                spaceAfterWord = spaceAfterWord
             )
         }
     }

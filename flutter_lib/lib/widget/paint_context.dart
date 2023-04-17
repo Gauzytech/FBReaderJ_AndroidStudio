@@ -18,6 +18,7 @@ enum FillMode {
 }
 
 abstract class PaintContext {
+  static const space = 32;
   // private final SystemInfo mySystemInfo;
   //
   // protected ZLPaintContext(SystemInfo systemInfo) {

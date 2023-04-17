@@ -765,7 +765,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     return m;
   }
 
-  String _getTargetWord(List<String> chars, int offset, int length) {
+  String _getTargetWord(List<String> chars, int offset, int length, int spaceAfterWord) {
     var buffer = StringBuffer();
     bool containsSoftHyphen = false;
     for (int i = offset; i < offset + length; ++i) {
@@ -787,7 +787,13 @@ class PageTurnAnimation extends BaseAnimationPage {
       buffer = corrected;
     }
 
-    // print('flutter_perf, 字: ${buffer.toString()}');
+    // 添加空格
+    for(int i = 0; i < spaceAfterWord; i++) {
+      buffer.write(String.fromCharCode(PaintContext.space));
+    }
+    if(spaceAfterWord > 0) {
+      buffer.write(String.fromCharCode(PaintContext.space));
+    }
     return buffer.toString();
   }
 
@@ -809,7 +815,7 @@ class PageTurnAnimation extends BaseAnimationPage {
     if (mark == null) {
       // 无标记
       paintContext.setTextColor(color);
-      String textWord = _getTargetWord(data, offset, length);
+      String textWord = _getTargetWord(data, offset, length, lineElement.spaceAfterWord);
       spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
     } else {
       // 有标记
@@ -834,7 +840,7 @@ class PageTurnAnimation extends BaseAnimationPage {
           int offsetEdited = offset + pos;
           int len = endPos - pos;
           paintContext.setTextColor(color);
-          String textWord = _getTargetWord(data, offsetEdited, len);
+          String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
           spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
           // Size size = paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
           x += paintContext.getStringWidth(data, offsetEdited, len).right;
@@ -856,7 +862,7 @@ class PageTurnAnimation extends BaseAnimationPage {
             y + paintContext.getDescent(result.left!),
           );
           paintContext.setTextColor(lineElement.highlightForegroundColor);
-          String textWord = _getTargetWord(data, offsetEdited, len);
+          String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
           spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
           // paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
           //     painter: result.left);
@@ -869,7 +875,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         paintContext.setTextColor(color);
         // paintContext.drawString2(
         //     canvas, x, y, data, offset + pos, length - pos);
-        String textWord = _getTargetWord(data, offset + pos, length - pos);
+        String textWord = _getTargetWord(data, offset + pos, length - pos, lineElement.spaceAfterWord);
         spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
       }
     }

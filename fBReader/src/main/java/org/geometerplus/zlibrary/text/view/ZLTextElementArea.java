@@ -39,6 +39,10 @@ public final class ZLTextElementArea extends ZLTextFixedPosition {
 
 	private final boolean myIsLastInElement;
 
+	// 因为flutter文字是一行一行的渲染，而native的一个字一个字的渲染,
+	// 需要这个变量添加额外的空格到word后面
+	private int spaceAfterWord;
+
 	ZLTextElementArea(int paragraphIndex, int elementIndex, int charIndex, int length, boolean lastInElement, boolean addHyphenationSign, boolean changeStyle, ZLTextStyle style, ZLTextElement element, int xStart, int xEnd, int yStart, int yEnd, int columnIndex) {
 		super(paragraphIndex, elementIndex, charIndex);
 
@@ -67,6 +71,14 @@ public final class ZLTextElementArea extends ZLTextFixedPosition {
 
 	boolean isLastInElement() {
 		return myIsLastInElement;
+	}
+
+	public void addSpaceAfterWord() {
+		spaceAfterWord++;
+	}
+
+	public int getSpaceAfterWord() {
+		return spaceAfterWord;
 	}
 
 	@NonNull

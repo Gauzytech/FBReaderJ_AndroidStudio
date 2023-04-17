@@ -12,6 +12,7 @@ class WordElementPaintData extends ElementPaintData {
   final int shift;
   final ColorData? highlightBackgroundColor;
   final ColorData? highlightForegroundColor;
+  final int spaceAfterWord;
 
   WordElementPaintData.fromJson(Map<String, dynamic> json)
       : textBlock = TextBlock.fromJson(json['textBlock']),
@@ -22,6 +23,7 @@ class WordElementPaintData extends ElementPaintData {
             ColorData.fromJsonNullable(json['highlightBackgroundColor']),
         highlightForegroundColor =
             ColorData.fromJsonNullable(json['highlightForegroundColor']),
+        spaceAfterWord = json['spaceAfterWord'],
         super.fromJson(json);
 
   @override
