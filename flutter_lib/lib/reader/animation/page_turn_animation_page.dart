@@ -10,6 +10,7 @@ import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
@@ -570,19 +571,32 @@ class PageTurnAnimation extends BaseAnimationPage {
       double lineX = double.infinity;
       double lineY = 0;
       List<TextSpan> lineText = [];
+      // 遍历一行中所有的element, 一行对应多个element
       for (var lineElement in lineInfo.elementPaintDataList) {
         switch (lineElement.runtimeType) {
           case WordElementPaintData:
             lineElement as WordElementPaintData;
-            lineX = min(lineX, lineElement.textBlock.x.toDouble());
-            lineY = lineElement.textBlock.y.toDouble();
-            List<TextSpan> lineTextSpans = _buildTextSpan(
-              canvas,
-              paintContext,
-              paintData.styleCollection!,
-              lineElement,
-            );
-            lineText.addAll(lineTextSpans);
+            if (lineElement.textStyle != null) {
+              _setTextStyle(paintContext, paintData.styleCollection!, lineElement.textStyle!);
+            }
+
+            // 遍历每个block, 一个元素对应多个block
+            for (var block in lineElement.blocks) {
+              if(block is TextBlock) {
+                lineX = min(lineX, block.x.toDouble());
+                lineY = block.y.toDouble();
+              }
+              List<TextSpan> lineTextSpans = _buildTextSpan2(canvas, paintContext, block);
+              lineText.addAll(lineTextSpans);
+            }
+
+            // List<TextSpan> lineTextSpans = _buildTextSpan(
+            //   canvas,
+            //   paintContext,
+            //   paintData.styleCollection!,
+            //   lineElement,
+            // );
+            // lineText.addAll(lineTextSpans);
 
             // _drawString(
             //   paintContext,
@@ -612,91 +626,91 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   /// 绘制文字word
-  void _drawString(
-    PaintContext paintContext,
-    ui.Canvas canvas,
-    NRTextStyleCollection styleCollection,
-    WordElementPaintData lineElement,
-    int debug,
-  ) {
-    print('flutter内容绘制流程, 绘制======$lineElement');
-    if (lineElement.textStyle != null) {
-      _setTextStyle(paintContext, styleCollection, lineElement.textStyle!);
-    }
-
-    double x = lineElement.textBlock.x.toDouble();
-    double y = lineElement.textBlock.y.toDouble();
-    int offset = lineElement.textBlock.offset;
-    int length = lineElement.textBlock.length;
-    int shift = lineElement.shift;
-    ColorData? color = lineElement.color;
-    List<String> data = lineElement.textBlock.data;
-    var mark = lineElement.mark;
-    if (mark == null) {
-      // 无标记
-      paintContext.setTextColor(color);
-      paintContext.drawString2(canvas, x, y, data, offset, length,
-          debugTimestamp: debug);
-    } else {
-      // 有标记
-      int pos = 0;
-      for (; (mark != null) && (pos < length); mark = mark.next) {
-        // 标记的起始
-        int markStart = mark.start - shift;
-        // 标记的长度
-        int markLen = mark.length;
-
-        if (markStart < pos) {
-          markLen += markStart - pos;
-          markStart = pos;
-        }
-
-        if (markLen <= 0) {
-          continue;
-        }
-
-        if (markStart > pos) {
-          int endPos = min(markStart, length);
-          int offsetEdited = offset + pos;
-          int len = endPos - pos;
-          paintContext.setTextColor(color);
-          Size size =
-              paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
-          x += paintContext
-              .getStringWidth(data, offsetEdited, len, stringSize: size)
-              .right;
-        }
-
-        if (markStart < length) {
-          paintContext.setFillColor(lineElement.highlightBackgroundColor);
-          int endPos = min(markStart + markLen, length);
-          int offsetEdited = offset + markStart;
-          int len = endPos - markStart;
-          Pair<TextPainter?, double> result =
-              paintContext.getStringWidth(data, offsetEdited, len);
-          final double endX = x + result.right;
-          paintContext.fillRectangle(
-            canvas,
-            x,
-            y - paintContext.getStringHeight(),
-            endX - 1,
-            y + paintContext.getDescent(result.left!),
-          );
-          paintContext.setTextColor(lineElement.highlightForegroundColor);
-          paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
-              painter: result.left);
-          x = endX;
-        }
-        pos = markStart + markLen;
-      }
-
-      if (pos < length) {
-        paintContext.setTextColor(color);
-        paintContext.drawString2(
-            canvas, x, y, data, offset + pos, length - pos);
-      }
-    }
-  }
+  // void _drawString(
+  //   PaintContext paintContext,
+  //   ui.Canvas canvas,
+  //   NRTextStyleCollection styleCollection,
+  //   WordElementPaintData lineElement,
+  //   int debug,
+  // ) {
+  //   print('flutter内容绘制流程, 绘制======$lineElement');
+  //   if (lineElement.textStyle != null) {
+  //     _setTextStyle(paintContext, styleCollection, lineElement.textStyle!);
+  //   }
+  //
+  //   double x = lineElement.textBlock.x.toDouble();
+  //   double y = lineElement.textBlock.y.toDouble();
+  //   int offset = lineElement.textBlock.offset;
+  //   int length = lineElement.textBlock.length;
+  //   int shift = lineElement.shift;
+  //   ColorData? color = lineElement.color;
+  //   List<String> data = lineElement.textBlock.data;
+  //   var mark = lineElement.mark;
+  //   if (mark == null) {
+  //     // 无标记
+  //     paintContext.setTextColor(color);
+  //     paintContext.drawString2(canvas, x, y, data, offset, length,
+  //         debugTimestamp: debug);
+  //   } else {
+  //     // 有标记
+  //     int pos = 0;
+  //     for (; (mark != null) && (pos < length); mark = mark.next) {
+  //       // 标记的起始
+  //       int markStart = mark.start - shift;
+  //       // 标记的长度
+  //       int markLen = mark.length;
+  //
+  //       if (markStart < pos) {
+  //         markLen += markStart - pos;
+  //         markStart = pos;
+  //       }
+  //
+  //       if (markLen <= 0) {
+  //         continue;
+  //       }
+  //
+  //       if (markStart > pos) {
+  //         int endPos = min(markStart, length);
+  //         int offsetEdited = offset + pos;
+  //         int len = endPos - pos;
+  //         paintContext.setTextColor(color);
+  //         Size size =
+  //             paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
+  //         x += paintContext
+  //             .getStringWidth(data, offsetEdited, len, stringSize: size)
+  //             .right;
+  //       }
+  //
+  //       if (markStart < length) {
+  //         paintContext.setFillColor(lineElement.highlightBackgroundColor);
+  //         int endPos = min(markStart + markLen, length);
+  //         int offsetEdited = offset + markStart;
+  //         int len = endPos - markStart;
+  //         Pair<TextPainter?, double> result =
+  //             paintContext.getStringWidth(data, offsetEdited, len);
+  //         final double endX = x + result.right;
+  //         paintContext.fillRectangle(
+  //           canvas,
+  //           x,
+  //           y - paintContext.getStringHeight(),
+  //           endX - 1,
+  //           y + paintContext.getDescent(result.left!),
+  //         );
+  //         paintContext.setTextColor(lineElement.highlightForegroundColor);
+  //         paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
+  //             painter: result.left);
+  //         x = endX;
+  //       }
+  //       pos = markStart + markLen;
+  //     }
+  //
+  //     if (pos < length) {
+  //       paintContext.setTextColor(color);
+  //       paintContext.drawString2(
+  //           canvas, x, y, data, offset + pos, length - pos);
+  //     }
+  //   }
+  // }
 
   /// 绘制图片
   void _drawImage(
@@ -788,98 +802,127 @@ class PageTurnAnimation extends BaseAnimationPage {
     }
 
     // 添加空格
-    for(int i = 0; i < spaceAfterWord; i++) {
+    for (int i = 0; i < spaceAfterWord; i++) {
       buffer.write(String.fromCharCode(PaintContext.space));
     }
-    if(spaceAfterWord > 0) {
+    if (spaceAfterWord > 0) {
       buffer.write(String.fromCharCode(PaintContext.space));
     }
     return buffer.toString();
   }
 
-  List<TextSpan> _buildTextSpan(ui.Canvas canvas, PaintContext paintContext,
-      NRTextStyleCollection styleCollection, WordElementPaintData lineElement) {
-    if (lineElement.textStyle != null) {
-      _setTextStyle(paintContext, styleCollection, lineElement.textStyle!);
-    }
+  List<TextSpan> _buildTextSpan2(
+    ui.Canvas canvas,
+    PaintContext paintContext,
+    PaintBlock block,
+  ) {
 
     List<TextSpan> spans = [];
-    double x = lineElement.textBlock.x.toDouble();
-    double y = lineElement.textBlock.y.toDouble();
-    int offset = lineElement.textBlock.offset;
-    int length = lineElement.textBlock.length;
-    int shift = lineElement.shift;
-    ColorData? color = lineElement.color;
-    List<String> data = lineElement.textBlock.data;
-    var mark = lineElement.mark;
-    if (mark == null) {
-      // 无标记
-      paintContext.setTextColor(color);
-      String textWord = _getTargetWord(data, offset, length, lineElement.spaceAfterWord);
-      spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
-    } else {
-      // 有标记
-      int pos = 0;
-      for (; (mark != null) && (pos < length); mark = mark.next) {
-        // 标记的起始
-        int markStart = mark.start - shift;
-        // 标记的长度
-        int markLen = mark.length;
-
-        if (markStart < pos) {
-          markLen += markStart - pos;
-          markStart = pos;
-        }
-
-        if (markLen <= 0) {
-          continue;
-        }
-
-        if (markStart > pos) {
-          int endPos = min(markStart, length);
-          int offsetEdited = offset + pos;
-          int len = endPos - pos;
-          paintContext.setTextColor(color);
-          String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
-          spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
-          // Size size = paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
-          x += paintContext.getStringWidth(data, offsetEdited, len).right;
-        }
-
-        if (markStart < length) {
-          paintContext.setFillColor(lineElement.highlightBackgroundColor);
-          int endPos = min(markStart + markLen, length);
-          int offsetEdited = offset + markStart;
-          int len = endPos - markStart;
-          Pair<TextPainter?, double> result =
-              paintContext.getStringWidth(data, offsetEdited, len);
-          final double endX = x + result.right;
-          paintContext.fillRectangle(
-            canvas,
-            x,
-            y - paintContext.getStringHeight(),
-            endX - 1,
-            y + paintContext.getDescent(result.left!),
-          );
-          paintContext.setTextColor(lineElement.highlightForegroundColor);
-          String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
-          spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
-          // paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
-          //     painter: result.left);
-          x = endX;
-        }
-        pos = markStart + markLen;
-      }
-
-      if (pos < length) {
-        paintContext.setTextColor(color);
-        // paintContext.drawString2(
-        //     canvas, x, y, data, offset + pos, length - pos);
-        String textWord = _getTargetWord(data, offset + pos, length - pos, lineElement.spaceAfterWord);
-        spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
-      }
+    switch (block.runtimeType) {
+      case TextBlock:
+        block as TextBlock;
+        paintContext.setTextColor(block.colorData);
+        spans.add(TextSpan(text: block.text, style: paintContext.textStyle));
+        break;
+      case RectangleBlock:
+        block as RectangleBlock;
+        paintContext.setFillColor(block.colorData);
+        paintContext.fillRectangle(
+          canvas,
+          block.x0.toDouble(),
+          block.y0.toDouble(),
+          block.x1.toDouble(),
+          block.y1.toDouble(),
+        );
+        break;
     }
 
     return spans;
   }
+
+  // List<TextSpan> _buildTextSpan(ui.Canvas canvas, PaintContext paintContext,
+  //     NRTextStyleCollection styleCollection, WordElementPaintData lineElement) {
+  //   if (lineElement.textStyle != null) {
+  //     _setTextStyle(paintContext, styleCollection, lineElement.textStyle!);
+  //   }
+  //
+  //   List<TextSpan> spans = [];
+  //   double x = lineElement.textBlock.x.toDouble();
+  //   double y = lineElement.textBlock.y.toDouble();
+  //   int offset = lineElement.textBlock.offset;
+  //   int length = lineElement.textBlock.length;
+  //   int shift = lineElement.shift;
+  //   ColorData? color = lineElement.color;
+  //   List<String> data = lineElement.textBlock.data;
+  //   var mark = lineElement.mark;
+  //   if (mark == null) {
+  //     // 无标记
+  //     paintContext.setTextColor(color);
+  //     String textWord = _getTargetWord(data, offset, length, lineElement.spaceAfterWord);
+  //     spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
+  //   } else {
+  //     // 有标记
+  //     int pos = 0;
+  //     for (; (mark != null) && (pos < length); mark = mark.next) {
+  //       // 标记的起始
+  //       int markStart = mark.start - shift;
+  //       // 标记的长度
+  //       int markLen = mark.length;
+  //
+  //       if (markStart < pos) {
+  //         markLen += markStart - pos;
+  //         markStart = pos;
+  //       }
+  //
+  //       if (markLen <= 0) {
+  //         continue;
+  //       }
+  //
+  //       if (markStart > pos) {
+  //         int endPos = min(markStart, length);
+  //         int offsetEdited = offset + pos;
+  //         int len = endPos - pos;
+  //         paintContext.setTextColor(color);
+  //         String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
+  //         spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
+  //         // Size size = paintContext.drawString2(canvas, x, y, data, offsetEdited, len);
+  //         x += paintContext.getStringWidth(data, offsetEdited, len).right;
+  //       }
+  //
+  //       if (markStart < length) {
+  //         paintContext.setFillColor(lineElement.highlightBackgroundColor);
+  //         int endPos = min(markStart + markLen, length);
+  //         int offsetEdited = offset + markStart;
+  //         int len = endPos - markStart;
+  //         Pair<TextPainter?, double> result =
+  //             paintContext.getStringWidth(data, offsetEdited, len);
+  //         final double endX = x + result.right;
+  //         paintContext.fillRectangle(
+  //           canvas,
+  //           x,
+  //           y - paintContext.getStringHeight(),
+  //           endX - 1,
+  //           y + paintContext.getDescent(result.left!),
+  //         );
+  //         paintContext.setTextColor(lineElement.highlightForegroundColor);
+  //         String textWord = _getTargetWord(data, offsetEdited, len, lineElement.spaceAfterWord);
+  //         spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
+  //         // paintContext.drawString2(canvas, x, y, data, offsetEdited, len,
+  //         //     painter: result.left);
+  //         x = endX;
+  //       }
+  //       pos = markStart + markLen;
+  //     }
+  //
+  //     if (pos < length) {
+  //       paintContext.setTextColor(color);
+  //       // paintContext.drawString2(
+  //       //     canvas, x, y, data, offset + pos, length - pos);
+  //       String textWord = _getTargetWord(data, offset + pos, length - pos, lineElement.spaceAfterWord);
+  //       spans.add(TextSpan(text: textWord, style: paintContext.textStyle));
+  //     }
+  //   }
+  //
+  //   return spans;
+  // }
 }

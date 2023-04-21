@@ -31,8 +31,6 @@ import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 final class DummyPaintContext extends ZLPaintContext {
 
@@ -141,7 +139,7 @@ final class DummyPaintContext extends ZLPaintContext {
     }
 
     @Override
-    public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length) {
+    public StringBuilder getDrawString(int x, int y, char[] string, int offset, int length) {
         return null;
     }
 

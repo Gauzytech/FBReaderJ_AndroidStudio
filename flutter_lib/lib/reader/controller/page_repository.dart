@@ -93,7 +93,8 @@ class PageRepository with PageRepositoryDelegate {
       );
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
+      NRTextStyleCollection styleCollection =
+          NRTextStyleCollection.fromJson(pageData['text_style_collection']);
       List<LinePaintData> lineData =
           LinePaintData.fromJsonList(pageData['line_paint_data_list']);
       int width = ui.window.physicalSize.width.toInt();

@@ -42,7 +42,7 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageRes
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.PaintBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1357,13 +1357,13 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     // 绘制文字
                     ElementPaintData.Word.Builder wordPaintData = getDrawWordPaintData(
                             areaX, areaY, (ZLTextWord) element, charIndex, -1, false,
-                            hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
+                            hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink),
+                            area.getSpaceAfterWord()
                     );
                     // 保存绘制信息
                     if (updatedStyle != null) {
                         wordPaintData.textStyle(updatedStyle);
                     }
-                    wordPaintData.spaceAfterWord(area.getSpaceAfterWord());
                     lineElements.add(wordPaintData.build());
                 } else if (element instanceof ZLTextImageElement) {
                     final ZLTextImageElement imageElement = (ZLTextImageElement) element;
@@ -1424,12 +1424,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
                     ElementPaintData.Space.Builder spaceDataBuilder = new ElementPaintData.Space.Builder();
                     final int spaceWidth = context.getSpaceWidth();
                     spaceDataBuilder.spaceWidth(spaceWidth);
-                    List<TextBlock> blocks = new ArrayList<>();
+                    List<PaintBlock.TextBlock> blocks = new ArrayList<>();
                     for (int len = 0; len < area.XEnd - area.XStart; len += spaceWidth) {
-//                        context.getDrawStringData(areaX + len, areaY, SPACE, 0, 1);
-                        blocks.add(context.getDrawStringData(areaX + len, areaY, SPACE, 0, 1));
+                        StringBuilder drawString = context.getDrawString(areaX + len, areaY, SPACE, 0, 1);
+                        blocks.add(new PaintBlock.TextBlock(null, drawString.toString(), areaX + len, areaY));
                     }
-                    spaceDataBuilder.textBlocks(blocks);
+                    spaceDataBuilder.blocks(blocks);
                     if (updatedStyle != null) {
                         spaceDataBuilder.textStyle(updatedStyle);
                     }
@@ -1459,7 +1459,8 @@ public abstract class ZLTextView extends ZLTextViewBase {
             ElementPaintData.Word.Builder wordPaintData = getDrawWordPaintData(
                     area.XStart, area.YEnd - context.getDescent("prepareDrawTextLine") - getTextStyle().getVerticalAlign(metrics()),
                     word, start, len, area.AddHyphenationSign,
-                    hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink)
+                    hlColor != null ? hlColor : getTextColor(getTextStyle().Hyperlink),
+                    area.getSpaceAfterWord()
             );
             // 保存wordElement绘制信息
             if (updatedStyle != null) {

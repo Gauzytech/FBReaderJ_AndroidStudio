@@ -35,7 +35,10 @@ import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyle;
 import org.geometerplus.zlibrary.text.view.style.ZLTextNGStyleDescription;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.PaintBlock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import timber.log.Timber;
 
@@ -396,15 +399,15 @@ abstract class ZLTextViewBase extends ZLView {
         }
     }
 
-    final ElementPaintData.Word.Builder getDrawWordPaintData(int x, int y, ZLTextWord word, int start, int length, boolean addHyphenationSign, ZLColor color) {
-        ElementPaintData.Word.Builder wordDataBuilder = new ElementPaintData.Word.Builder();
+    final ElementPaintData.Word.Builder getDrawWordPaintData(int x, int y, ZLTextWord word, int start, int length, boolean addHyphenationSign, ZLColor color, int spaceAfterWord) {
+        ElementPaintData.Word.Builder builder = new ElementPaintData.Word.Builder();
 
-//        final ZLPaintContext context = getContext();
-        if (start == 0 && length == -1) { // 绘制整个
+        final ZLPaintContext context = getContext();
+        if (start == 0 && length == -1) { // 绘制一个字
 //            drawString(context, x, y, word.Data, word.Offset, word.Length, word.getMark(), color, 0);
-
-            return wordDataBuilder
-                    .textBlock(TextBlock.create(word.Data, word.Offset, word.Length, x, y))
+            List<PaintBlock> blocks = getDrawStringPaintData(context, x, y, word.Data, word.Offset, word.Length, word.getMark(), color, 0, spaceAfterWord);
+            return builder
+                    .blocks(blocks)
                     .mark(word.getMark())
                     .color(color)
                     .shift(0)
@@ -416,8 +419,9 @@ abstract class ZLTextViewBase extends ZLView {
             }
             if (!addHyphenationSign) { // 无断字连接
 //                drawString(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start);
-                wordDataBuilder
-                        .textBlock(TextBlock.create(word.Data, word.Offset + start, length, x, y))
+                List<PaintBlock> blocks = getDrawStringPaintData(context, x, y, word.Data, word.Offset + start, length, word.getMark(), color, start, spaceAfterWord);
+                builder
+                        .blocks(blocks)
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);
@@ -431,14 +435,15 @@ abstract class ZLTextViewBase extends ZLView {
                 System.arraycopy(word.Data, word.Offset + start, part, 0, length);
                 part[length] = '-';
 //                drawString(context, x, y, part, 0, length + 1, word.getMark(), color, start);
-                wordDataBuilder
-                        .textBlock(TextBlock.create(part, 0, length + 1, x, y))
+                List<PaintBlock> blocks = getDrawStringPaintData(context, x, y, part, 0, length + 1, word.getMark(), color, start, spaceAfterWord);
+                builder
+                        .blocks(blocks)
                         .mark(word.getMark())
                         .color(color)
                         .shift(start);
             }
 
-            return wordDataBuilder
+            return builder
                     .highlightBackgroundColor(getHighlightingBackgroundColor())
                     .highlightForegroundColor(getHighlightingForegroundColor());
         }
@@ -503,6 +508,76 @@ abstract class ZLTextViewBase extends ZLView {
                 context.drawString(x, y, str, offset + pos, length - pos);
             }
         }
+    }
+
+    protected List<PaintBlock> getDrawStringPaintData(ZLPaintContext context, int x, int y, char[] str, int offset, int length, ZLTextWord.Mark mark, ZLColor color, int shift, int spaceAfterWord) {
+        List<PaintBlock> paintData = new ArrayList();
+        if (mark == null) { // 无标记
+//            context.setTextColor(color);
+//            context.drawString(x, y, str, offset, length);
+            StringBuilder drawString = context.getDrawString(x, y, str, offset, length);
+            for (int i = 0; i < spaceAfterWord; i++) {
+                drawString.append(" ");
+            }
+            paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
+        } else { // 有标记
+            int pos = 0;
+            for (; (mark != null) && (pos < length); mark = mark.getNext()) {
+                // 标记的起始
+                int markStart = mark.Start - shift;
+                // 标记的长度
+                int markLen = mark.Length;
+
+                if (markStart < pos) {
+                    markLen += markStart - pos;
+                    markStart = pos;
+                }
+
+                if (markLen <= 0) {
+                    continue;
+                }
+
+                if (markStart > pos) {
+                    int endPos = Math.min(markStart, length);
+//                    context.setTextColor(color);
+//                    context.drawString(x, y, str, offset + pos, endPos - pos);
+                    StringBuilder drawString = context.getDrawString(x, y, str, offset + pos, endPos - pos);
+                    for (int i = 0; i < spaceAfterWord; i++) {
+                        drawString.append(" ");
+                    }
+                    paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
+                    x += context.getStringWidth(str, offset + pos, endPos - pos);
+                }
+
+                if (markStart < length) {
+//                    context.setFillColor(getHighlightingBackgroundColor());
+                    int endPos = Math.min(markStart + markLen, length);
+                    final int endX = x + context.getStringWidth(str, offset + markStart, endPos - markStart);
+//                    context.fillRectangle(x, y - context.getStringHeight(), endX - 1, y + context.getDescent("drawString"));
+                    paintData.add(new PaintBlock.RectangleBlock(getHighlightingBackgroundColor(), x, y - context.getStringHeight(), endX - 1, y + context.getDescent("drawString")));
+//                    context.setTextColor(getHighlightingForegroundColor());
+//                    context.drawString(x, y, str, offset + markStart, endPos - markStart);
+                    StringBuilder drawString = context.getDrawString(x, y, str, offset + markStart, endPos - markStart);
+                    for (int i = 0; i < spaceAfterWord; i++) {
+                        drawString.append(" ");
+                    }
+                    paintData.add(new PaintBlock.TextBlock(getHighlightingForegroundColor(), drawString.toString(), x, y));
+                    x = endX;
+                }
+                pos = markStart + markLen;
+            }
+
+            if (pos < length) {
+//                context.setTextColor(color);
+//                context.drawString(x, y, str, offset + pos, length - pos);
+                StringBuilder drawString = context.getDrawString(x, y, str, offset + pos, length - pos);
+                for (int i = 0; i < spaceAfterWord; i++) {
+                    drawString.append(" ");
+                }
+                paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
+            }
+        }
+        return paintData;
     }
 
     public abstract ZLColor getHighlightingBackgroundColor();

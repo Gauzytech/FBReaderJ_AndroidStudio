@@ -118,11 +118,11 @@ class FlutterBridge(
                                 ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
                                 is ContentPageResult.Paint -> {
                                     Timber.v("flutter_perf, 发送结果, ${System.currentTimeMillis()}")
-//                                    data.linePaintDataList.forEach {
-//                                        it.elementPaintData.forEach { element ->
-//                                            Timber.v("flutter内容绘制流程, 发送: ${(element as? ElementPaintData.Word)?.textBlock?.data}")
-//                                        }
-//                                    }
+                                    data.linePaintDataList.forEach {
+                                        it.elementPaintData.forEach { element ->
+                                            Timber.v("flutter_bridge, 发送: ${(element as? ElementPaintData.Word)?.paintBlocks}")
+                                        }
+                                    }
                                     result.success(
                                         mapOf("page_data" to gson.toJson(data))
                                     )

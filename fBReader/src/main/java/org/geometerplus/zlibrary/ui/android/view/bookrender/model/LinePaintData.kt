@@ -1,10 +1,10 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
+import com.google.gson.annotations.SerializedName
 import org.geometerplus.zlibrary.core.util.ZLColor
 import org.geometerplus.zlibrary.core.view.ZLPaintContext.Size
 import org.geometerplus.zlibrary.text.view.ZLTextStyle
 import org.geometerplus.zlibrary.text.view.ZLTextWord
-import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection
 
 enum class ElementType {
     WORD,
@@ -16,6 +16,7 @@ enum class ElementType {
 
 /** 保存绘制一行所需要的所有信息 */
 data class LinePaintData(
+    @SerializedName("element_paint_data")
     val elementPaintData: List<ElementPaintData>
 )
 
@@ -25,27 +26,25 @@ sealed class ElementPaintData(
 
     data class Word(
         val textStyle: ZLTextStyle?,
-        var textBlock: TextBlock,
+        val paintBlocks: List<PaintBlock>,
         val mark: ZLTextWord.Mark?,
         val color: ZLColor?,
         val shift: Int,
         val highlightBackgroundColor: ZLColor?,
         val highlightForegroundColor: ZLColor?,
-        val spaceAfterWord: Int
     ) : ElementPaintData(ElementType.WORD.ordinal) {
 
         class Builder {
             private var textStyle: ZLTextStyle? = null
-            private var textBlock: TextBlock? = null
+            private var paintBlocks: List<PaintBlock>? = null
             private var mark: ZLTextWord.Mark? = null
             private var color: ZLColor? = null
             private var shift: Int? = null
             private var highlightBackgroundColor: ZLColor? = null
             private var highlightForegroundColor: ZLColor? = null
-            private var spaceAfterWord: Int = 0
 
             fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
-            fun textBlock(textBlock: TextBlock) = apply { this.textBlock = textBlock }
+            fun blocks(paintBlocks: List<PaintBlock>) = apply { this.paintBlocks = paintBlocks }
             fun mark(mark: ZLTextWord.Mark?) = apply { this.mark = mark }
             fun color(color: ZLColor?) = apply { this.color = color }
             fun shift(shift: Int) = apply { this.shift = shift }
@@ -55,17 +54,14 @@ sealed class ElementPaintData(
             fun highlightForegroundColor(color: ZLColor?) =
                 apply { this.highlightForegroundColor = color }
 
-            fun spaceAfterWord(spaceAfterWord: Int) = apply { this.spaceAfterWord = spaceAfterWord }
-
             fun build() = Word(
                 textStyle = textStyle,
-                textBlock = requireNotNull(textBlock),
+                paintBlocks = requireNotNull(paintBlocks),
                 mark = mark,
                 color = color,
                 shift = requireNotNull(shift),
                 highlightBackgroundColor = highlightBackgroundColor,
                 highlightForegroundColor = highlightForegroundColor,
-                spaceAfterWord = spaceAfterWord
             )
         }
     }
@@ -175,23 +171,22 @@ sealed class ElementPaintData(
     data class Space(
         val textStyle: ZLTextStyle?,
         val spaceWidth: Int,
-        val textBlocks: List<TextBlock>
+        val paintBlocks: List<PaintBlock>
     ) : ElementPaintData(ElementType.SPACE.ordinal) {
 
         class Builder {
             private var textStyle: ZLTextStyle? = null
             private var spaceWidth: Int? = null
-            private var textBlocks: List<TextBlock>? = null
+            private var paintBlocks: List<PaintBlock>? = null
 
             fun textStyle(textStyle: ZLTextStyle) = apply { this.textStyle = textStyle }
             fun spaceWidth(spaceWidth: Int) = apply { this.spaceWidth = spaceWidth }
-            fun textBlocks(textBlocks: List<TextBlock>) =
-                apply { this.textBlocks = textBlocks.toList() }
+            fun blocks(paintBlocks: List<PaintBlock>) = apply { this.paintBlocks = paintBlocks }
 
             fun build() = Space(
                 textStyle = textStyle,
                 spaceWidth = requireNotNull(spaceWidth),
-                textBlocks = requireNotNull(textBlocks)
+                paintBlocks = requireNotNull(paintBlocks)
             )
         }
     }

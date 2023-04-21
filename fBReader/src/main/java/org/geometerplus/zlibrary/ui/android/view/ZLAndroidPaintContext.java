@@ -43,7 +43,6 @@ import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.ZLPaintContext;
 import org.geometerplus.zlibrary.ui.android.image.ZLAndroidImageData;
 import org.geometerplus.zlibrary.ui.android.util.ZLAndroidColorUtil;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 import java.util.List;
 
@@ -545,29 +544,33 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
     }
 
     @Override
-    public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length) {
+    public StringBuilder getDrawString(int x, int y, char[] string, int offset, int length) {
         boolean containsSoftHyphen = false;
-        for (int i = offset; i <= offset + length; ++i) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = offset; i < offset + length; ++i) {
             if (string[i] == (char) 0xAD) {
                 containsSoftHyphen = true;
                 break;
             }
+            sb.append(string[i]);
         }
         if (!containsSoftHyphen) {
-            myCanvas.drawText(string, offset, length, x, y, myTextPaint);
-            return TextBlock.create(string, offset, length, x, y);
+//            myCanvas.drawText(string, offset, length, x, y, myTextPaint);
+//            return new TextBlock(sb.toString(), offset, length, x, y);
         } else {
-            final char[] corrected = new char[length];
-            int len = 0;
+            sb = new StringBuilder();
+//            final char[] corrected = new char[length];
+//            int len = 0;
             for (int o = offset; o < offset + length; ++o) {
                 final char chr = string[o];
                 if (chr != (char) 0xAD) {
-                    corrected[len++] = chr;
+//                    corrected[len++] = chr;
+                    sb.append(chr);
                 }
             }
-            myCanvas.drawText(corrected, 0, len, x, y, myTextPaint);
-            return TextBlock.create(corrected, 0, len, x, y);
+//            return new TextBlock(sb.toString(), 0, sb.length(), x, y);
         }
+        return sb;
     }
 
     @Override

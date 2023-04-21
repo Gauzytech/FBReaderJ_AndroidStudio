@@ -19,22 +19,16 @@
 
 package org.geometerplus.zlibrary.core.view;
 
-import androidx.annotation.Nullable;
-
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
 import org.geometerplus.zlibrary.core.fonts.FontEntry;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.util.SystemInfo;
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.TextBlock;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import timber.log.Timber;
 
 /**
  * 画笔上下文（绘制相关）
@@ -339,7 +333,7 @@ abstract public class ZLPaintContext {
      */
     abstract public void drawString(int x, int y, char[] string, int offset, int length);
 
-    abstract public TextBlock getDrawStringData(int x, int y, char[] string, int offset, int length);
+    abstract public StringBuilder getDrawString(int x, int y, char[] string, int offset, int length);
 
     public static final class Size {
         public final int Width;
