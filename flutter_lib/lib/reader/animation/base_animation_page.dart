@@ -12,9 +12,8 @@ abstract class BaseAnimationPage {
 
   AnimationController animationController;
 
-  Size currentSize =
-      Size(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
-
+  Size get currentSize => _currentSize!;
+  Size? _currentSize;
 //  @protected
 //  ReaderContentViewModel contentModel=ReaderContentViewModel.instance;
 
@@ -27,7 +26,7 @@ abstract class BaseAnimationPage {
   BaseAnimationPage({required this.readerViewModel, required this.animationController});
 
   void setSize(Size size) {
-    currentSize = size;
+    _currentSize = size;
     // mTouch = Offset(currentSize.width, currentSize.height);
   }
 

@@ -231,55 +231,10 @@ class PagePaintContext extends PaintContext {
   }
 
   /// ------------------------ 绘制文字的操作 ------------------------
-  @override
-  Size drawString2(
-    ui.Canvas canvas,
-    double x,
-    double y,
-    List<String> chars,
-    int offset,
-    int length, {
-    TextPainter? painter,
-    int? debugTimestamp,
-  }) {
-    if (painter != null) {
-      painter.paint(canvas, Offset(x, y - getStringHeightInternal()));
-      return painter.size;
-    } else {
-      var buffer = StringBuffer();
-      bool containsSoftHyphen = false;
-      for (int i = offset; i < offset + length; ++i) {
-        if (chars[i] == String.fromCharCode(0xAD)) {
-          containsSoftHyphen = true;
-          break;
-        }
-        buffer.write(chars[i]);
-      }
-
-      if (containsSoftHyphen) {
-        StringBuffer corrected = StringBuffer();
-        for (int o = offset; o < offset + length; ++o) {
-          final String chr = chars[o];
-          if (chr != String.fromCharCode(0xAD)) {
-            corrected.write(chr);
-          }
-        }
-        buffer = corrected;
-      }
-
-      var text = buffer.toString();
-      _textPainter.text = TextSpan(text: text, style: _textStyle);
-      _textPainter.layout();
-      // todo 根据y绘制出来的高度不对
-      _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));
-      print(
-          'flutter_perf, 绘制文字行: $text, [$x, $y],  $offset -> $length | ${now() - debugTimestamp!}ms');
-      return _textPainter.size;
-    }
-  }
 
   @override
-  drawString3(ui.Canvas canvas, double x, double y, List<TextSpan> content) {
+  void drawString(
+      ui.Canvas canvas, double x, double y, List<TextSpan> content) {
     _textPainter.text = TextSpan(children: content);
     _textPainter.layout();
     _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));

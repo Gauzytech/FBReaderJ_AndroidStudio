@@ -792,8 +792,6 @@ class ReaderContentViewState
 
   @override
   void invalidateContent([String? tag]) {
-    // print(
-    //     'flutter内容绘制流程[invalidateContent], tag = $tag, contentKey exist = ${contentKey.currentContext != null}');
     // markNeedsPaint不会调用shouldRepaint
     // onBuildView会调用shouldRepaint
     contentKey.currentContext?.findRenderObject()?.markNeedsPaint();

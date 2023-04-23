@@ -20,9 +20,7 @@ data class LinePaintData(
     val elementPaintData: List<ElementPaintData>
 )
 
-sealed class ElementPaintData(
-    val elementType: Int,
-) {
+sealed class ElementPaintData(val elementType: Int) {
 
     data class Word(
         val textStyle: ZLTextStyle?,

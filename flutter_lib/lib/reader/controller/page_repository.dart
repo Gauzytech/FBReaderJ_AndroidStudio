@@ -101,12 +101,12 @@ class PageRepository with PageRepositoryDelegate {
       int height = ui.window.physicalSize.height.toInt();
 
       print('flutter内容绘制流程, 收到了PaintData: ${lineData.length}');
-      for (var element in lineData) {
+      // for (var element in lineData) {
         // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
-        for (var data in element.elementPaintDataList) {
-          print('flutter内容绘制流程, data = $data');
-        }
-      }
+      //   for (var data in element.elementPaintDataList) {
+      //     print('flutter内容绘制流程, data = $data');
+      //   }
+      // }
 
       // final image = await imgBytes.toImage();
 
@@ -201,7 +201,6 @@ class PageRepository with PageRepositoryDelegate {
 
       Map<String, dynamic> pageData = jsonDecode(result['page_data']);
       NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
-      print('flutter_perf[preparePagePaintData], JSON转换完毕1 ${now() - time}ms');
       List<LinePaintData> lineData =
           LinePaintData.fromJsonList(pageData['line_paint_data_list']);
       print('flutter_perf[preparePagePaintData], JSON转换完毕2 ${now() - time}ms , lines: ${lineData.length}');

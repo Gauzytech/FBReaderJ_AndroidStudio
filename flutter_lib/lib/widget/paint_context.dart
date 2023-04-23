@@ -254,35 +254,7 @@ abstract class PaintContext {
   /// 见https://www.jianshu.com/p/71cf11c120f0
   int getDescentInternal(TextPainter textPainter);
 
-  /// 绘制整个字符串
-  ///
-  /// @param x      起始X
-  /// @param y      起始Y
-  /// @param string 字符串
-  Size drawString(
-      ui.Canvas canvas, double x, double y, List<String> chars) {
-    return drawString2(canvas, x, y, chars, 0, chars.length);
-  }
-
-  /// 绘制字符串（抽象）
-  ///
-  /// @param x      起始X
-  /// @param y      起始Y
-  /// @param string 字符串数组
-  /// @param offset 偏移（字符串数组的偏移）
-  /// @param length 绘制的字符长度
-  Size drawString2(
-    ui.Canvas canvas,
-    double x,
-    double y,
-    List<String> chars,
-    int offset,
-    int length, {
-    TextPainter? painter,
-    int? debugTimestamp,
-  });
-
-  drawString3(ui.Canvas canvas, double x, double y, List<TextSpan> content);
+  void drawString(ui.Canvas canvas, double x, double y, List<TextSpan> content);
 
   /// 获得书页中的插图, 耗时操作
   Size imageSize(String imageUrl, Size maxSize, ScalingType scaling);
