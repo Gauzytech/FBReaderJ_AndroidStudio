@@ -38,10 +38,10 @@ class SelectionHandler {
   GlobalKey bottomIndicatorKey;
 
   // 划选弹窗
+  bool get hasSelection => _selectionState;
   bool _selectionState = false;
 
-  bool get isSelectionStateEnabled => _selectionState;
-
+  Offset? get menuPosition => _selectionMenuPosition;
   Offset? _selectionMenuPosition;
 
   SelectionMenuFactory get factory => _menuFactory!;
@@ -53,8 +53,6 @@ class SelectionHandler {
       required this.bottomIndicatorKey}) {
     _menuFactory = SelectionMenuFactory();
   }
-
-  Offset? get menuPosition => _selectionMenuPosition;
 
   /// 长按事件处理操作
   /// 保存当前坐标
@@ -80,61 +78,61 @@ class SelectionHandler {
     _selectionMenuPosition = position;
   }
 
-  // todo
+  /// 拖拽操作开始
   void onDragStart(DragStartDetails detail) {
     Offset position = detail.localPosition;
-    print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作$position}");
+    print("flutter动画流程[onDragStart], 有长按选中弹窗, 进行选中区域操作 $position");
     _setSelectionTouch(position);
     readerContentHandler.callNativeMethod(
       NativeScript.dragStart,
-      position.dx.toInt(),
-      position.dy.toInt(),
+      position.dx,
+      position.dy,
     );
   }
 
-  // todo
+  /// 拖拽移动中
   void onDragMove(DragUpdateDetails detail) {
     Offset position = detail.localPosition;
-    print('flutter动画流程[onDragUpdate], 有长按选中弹窗, 进行选中区域操作$position');
     if (!_isDuplicateTouch(position)) {
+      print('flutter动画流程[onDragUpdate], 有长按选中弹窗, 进行选中区域操作 $position');
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
         NativeScript.dragMove,
-        position.dx.toInt(),
-        position.dy.toInt(),
+        position.dx,
+        position.dy,
       );
     }
   }
 
-  // todo
+  /// 拖拽操作完成
   void onDragEnd(DragEndDetails detail) {
-    print("flutter动画流程[onDragEnd], 长按选择操作$detail");
+    print("flutter动画流程[onDragEnd], 进行选中区域操作 $detail");
     _setSelectionTouch(null);
     readerContentHandler.callNativeMethod(NativeScript.dragEnd, 0, 0);
   }
 
   void onLongPressStart(LongPressStartDetails detail) {
     Offset position = detail.localPosition;
-    print("flutter动画流程:触摸事件, ------------长按事件开始  $position-------->>>>>>>>>");
+    print("flutter动画流程:触摸事件, ------------长按事件开始 $position-------->>>>>>>>>");
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
         NativeScript.longPressStart,
-        position.dx.toInt(),
-        position.dy.toInt(),
+        position.dx,
+        position.dy,
       );
     }
   }
 
   void onLongPressMove(LongPressMoveUpdateDetails detail) {
     Offset position = detail.localPosition;
-    print("flutter动画流程:触摸事件, ------------长按事件移动 $position--------->>>>>>>>>");
     if (!_isDuplicateTouch(position)) {
+      print("flutter动画流程:触摸事件, ------------长按事件移动 $position--------->>>>>>>>>");
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
         NativeScript.longPressMove,
-        position.dx.toInt(),
-        position.dy.toInt(),
+        position.dx,
+        position.dy,
       );
     }
   }
@@ -147,18 +145,18 @@ class SelectionHandler {
 
   void onTagUp(TapUpDetails detail) {
     Offset position = detail.localPosition;
-    print("flutter动画流程:触摸事件, -------------onTapUp $position--------->>>>>>>>>");
+    print("flutter动画流程:触摸事件, ------------onTapUp $position--------->>>>>>>>>");
     readerContentHandler.callNativeMethod(
       NativeScript.tapUp,
-      position.dx.toInt(),
-      position.dy.toInt(),
+      position.dx,
+      position.dy,
     );
   }
 
-  SelectionIndicator? enableCrossPageIndicator(Offset touchPosition,) {
-    if(overlapWithTopIndicator(touchPosition)) {
+  SelectionIndicator? enableCrossPageIndicator(Offset touchPosition) {
+    if (overlapWithTopIndicator(touchPosition)) {
       return SelectionIndicator.topStart;
-    } else if(overlapWithBottomIndicator(touchPosition)) {
+    } else if (overlapWithBottomIndicator(touchPosition)) {
       return SelectionIndicator.bottomEnd;
     }
     return null;
@@ -167,7 +165,7 @@ class SelectionHandler {
   bool overlapWithTopIndicator(Offset touchPosition) {
     var ratio = ui.window.devicePixelRatio;
     var renderBox =
-    topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
+        topIndicatorKey.currentContext?.findRenderObject() as RenderBox;
     var topRight = renderBox.localToGlobal(Offset(renderBox.size.width, 0));
     var bottomLeft = renderBox.localToGlobal(Offset(0, renderBox.size.height));
 

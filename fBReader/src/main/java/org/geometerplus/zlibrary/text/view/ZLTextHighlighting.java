@@ -20,9 +20,12 @@
 package org.geometerplus.zlibrary.text.view;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.geometerplus.zlibrary.core.util.ZLColor;
 import org.geometerplus.zlibrary.core.view.Hull;
+
+import timber.log.Timber;
 
 public abstract class ZLTextHighlighting implements Comparable<ZLTextHighlighting> {
 
@@ -61,6 +64,10 @@ public abstract class ZLTextHighlighting implements Comparable<ZLTextHighlightin
         final ZLTextPosition startPosition = getStartPosition();
         final ZLTextPosition endPosition = getEndPosition();
         final List<ZLTextElementArea> areas = page.TextElementMap.areas();
+        Timber.v("ceshi1234, %s - %s", startPosition, endPosition);
+        for(int i = 0; i < areas.size(); i++) {
+            Timber.v("ceshi1234, %s", areas.get(i));
+        }
         int startIndex = 0;
         int endIndex = 0;
         for (int i = 0; i < areas.size(); ++i) {

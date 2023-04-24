@@ -1,23 +1,35 @@
 import 'dart:ui';
 
-class HighlightBlock {
+import 'package:flutter_lib/interface/debug_info_provider.dart';
+import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
+
+class HighlightBlock extends PaintBlock with DebugInfoProvider {
   ColorData color;
-  List<BlockCoordinate> coordinates;
+  List<HighlightCoord> coordinates;
 
   HighlightBlock(this.color, this.coordinates);
 
   HighlightBlock.fromJson(Map<String, dynamic> json)
       : color = ColorData.fromJson(json['color']),
         coordinates = (json['coordinates'] as List)
-            .map((item) => BlockCoordinate.fromJson(item))
+            .map((item) => HighlightCoord.fromJson(item))
             .toList();
 
-  bool equals(HighlightBlock other) {
-    if (color != other.color || coordinates.length != other.coordinates.length) {
+  @override
+  int get hashCode => color.hashCode + coordinates.hashCode;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! HighlightBlock) {
       return false;
     }
-    for(var i = 0; i < coordinates.length; i++) {
-      if(!coordinates[i].equals(other.coordinates[i])) {
+
+    if (color != other.color ||
+        coordinates.length != other.coordinates.length) {
+      return false;
+    }
+    for (var i = 0; i < coordinates.length; i++) {
+      if (coordinates[i] != other.coordinates[i]) {
         return false;
       }
     }
@@ -25,19 +37,26 @@ class HighlightBlock {
   }
 
   @override
-  String toString() {
-    return "HighlightBlock: {color= $color, coordinates= $coordinates}";
+  void debugFillDescription(List<String> description) {
+    description.add("color: $color");
+    description.add("coordinates: $coordinates");
   }
 }
 
-class BlockCoordinate {
+class HighlightCoord with DebugInfoProvider {
   final int type;
   final List<int> xs;
   final List<int> ys;
 
-  BlockCoordinate(this.type, this.xs, this.ys);
+  HighlightCoord(this.type, this.xs, this.ys);
 
-  bool equals(BlockCoordinate other) {
+  @override
+  int get hashCode => type.hashCode + xs.hashCode + ys.hashCode;
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! HighlightCoord) return false;
+
     if (type != other.type ||
         xs.length != other.xs.length ||
         ys.length != other.ys.length) return false;
@@ -51,18 +70,16 @@ class BlockCoordinate {
     return true;
   }
 
-  BlockCoordinate.fromJson(Map<String, dynamic> json)
+  HighlightCoord.fromJson(Map<String, dynamic> json)
       : type = json['type'],
         xs = List.from(json['xs']),
         ys = List.from(json['ys']);
 
   @override
-  String toString() {
-    return "{"
-        "\n\"type\":$type,"
-        "\n\"xs\":$xs,"
-        "\n\"ys\":$ys"
-        "\n}";
+  void debugFillDescription(List<String> description) {
+    description.add("type: $type");
+    description.add("xs: $xs");
+    description.add("xs: $ys");
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/rendering.dart';
+import 'package:flutter_lib/interface/debug_info_provider.dart';
 
-class PagePaintMetaData {
+class PagePaintMetaData with DebugInfoProvider{
   double pixels;
   double page;
   ScrollDirection userScrollDirection;
@@ -21,7 +22,9 @@ class PagePaintMetaData {
   }
 
   @override
-  String toString() {
-    return 'MetaData{pixels: ${pixels.toStringAsFixed(6)}, page: ${page.toStringAsFixed(6)}, $userScrollDirection}';
+  void debugFillDescription(List<String> description) {
+    description.add("pixels: ${pixels.toStringAsFixed(2)}");
+    description.add("page: ${page.toStringAsFixed(2)}");
+    description.add("userScrollDirection: ${userScrollDirection.name}");
   }
 }

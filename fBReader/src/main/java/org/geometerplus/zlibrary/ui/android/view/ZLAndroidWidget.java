@@ -460,7 +460,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
 
     @Override
     public boolean onLongClick(View v) {
-        return contentProcessor.onFingerLongPress(myPressedX, myPressedY, null, null);
+        return contentProcessor.onFingerLongPress(myPressedX, myPressedY, null);
     }
 
     @Override
@@ -620,7 +620,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                 if (myPendingDoubleTap) {
                     contentProcessor.onFingerDoubleTap(x, y);
                 } else if (myLongClickPerformed) {
-                    contentProcessor.onFingerReleaseAfterLongPress(x, y, null, null);
+                    contentProcessor.onFingerReleaseAfterLongPress(x, y, null);
                 } else {
                     if (myPendingLongClickRunnable != null) {
                         removeCallbacks(myPendingLongClickRunnable);
@@ -652,7 +652,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
                     myPendingDoubleTap = false;
                 }
                 if (myLongClickPerformed) {
-                    contentProcessor.onFingerMoveAfterLongPress(x, y, null, null);
+                    contentProcessor.onFingerMoveAfterLongPress(x, y, null);
                 } else {
                     if (myPendingPress) {
                         if (isAMove) {

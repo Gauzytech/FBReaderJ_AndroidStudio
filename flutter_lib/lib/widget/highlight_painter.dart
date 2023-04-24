@@ -175,7 +175,7 @@ class HighlightPainter extends CustomPainter {
     print('时间测试, shouldRepaint, old: $oldBlocks, new: $highlightBlocks');
     if (oldBlocks == null || highlightBlocks == null) return true;
     for (var i = 0; i < oldBlocks.length; i++) {
-      if (!oldBlocks[i].equals(highlightBlocks![i])) {
+      if (oldBlocks[i] != highlightBlocks![i]) {
         print('时间测试, shouldRepaint = true');
         return true;
       }

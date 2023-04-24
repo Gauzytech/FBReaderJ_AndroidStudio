@@ -110,7 +110,6 @@ interface ContentProcessor {
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     ): Boolean
 
     /** 长按移动事件 */
@@ -118,22 +117,16 @@ interface ContentProcessor {
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     )
 
-    /** 长按完成事件 */
+    /** 长按结束事件 */
     fun onFingerReleaseAfterLongPress(
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     )
 
-    /**
-     * 是否双击支持
-     *
-     * @return 是否双击支持
-     */
+    /** 是否双击支持 */
     val isDoubleTapSupported: Boolean
 
     fun onTrackballRotated(diffX: Int, diffY: Int): Boolean

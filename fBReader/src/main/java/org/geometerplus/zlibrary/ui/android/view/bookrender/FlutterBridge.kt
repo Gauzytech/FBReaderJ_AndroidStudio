@@ -10,7 +10,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import org.geometerplus.fbreader.fbreader.FBReaderApp
-import org.geometerplus.zlibrary.core.library.ZLibrary
 import org.geometerplus.zlibrary.core.view.ZLViewEnums.PageIndex
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.BUILD_PAGE_PAINT_DATA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.CAN_SCROLL
@@ -160,30 +159,23 @@ class FlutterBridge(
                 contentProcessor.onScrollingFinished(pageIndex)
             }
             LONG_PRESS_START -> {
-                val dx = call.argument<Int>("touch_x")!!.toInt()
-                val dy = call.argument<Int>("touch_y")!!.toInt()
-                val time = call.argument<Long>("time_stamp")!!
+                val dx = call.argument<Int>("touch_x")!!
+                val dy = call.argument<Int>("touch_y")!!
                 Timber.v("flutter长按事件, ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerLongPress(
                     dx,
                     dy,
                     getSelectionCallback(call.method, result),
-                    Pair(
-                        call.argument<Double>("width")!!.toInt(),
-                        call.argument<Double>("height")!!.toInt()
-                    )
                 )
             }
             LONG_PRESS_MOVE -> {
-                val dx = call.argument<Int>("touch_x")!!.toInt()
-                val dy = call.argument<Int>("touch_y")!!.toInt()
-                val time = call.argument<Long>("time_stamp")!!
+                val dx = call.argument<Int>("touch_x")!!
+                val dy = call.argument<Int>("touch_y")!!
                 Timber.v("flutter长按事件,  ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerMoveAfterLongPress(
                     dx,
                     dy,
-                    getSelectionCallback(call.method, result),
-                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
+                    getSelectionCallback(call.method, result)
                 )
             }
             LONG_PRESS_END -> {
@@ -193,8 +185,7 @@ class FlutterBridge(
                 Timber.v("flutter长按事件, ${call.method} [$width, $height]")
                 contentProcessor.onFingerReleaseAfterLongPress(
                     0, 0,
-                    getSelectionCallback(call.method, result),
-                    Pair(width, height)
+                    getSelectionCallback(call.method, result)
                 )
             }
             ON_TAP_UP -> {
@@ -210,31 +201,34 @@ class FlutterBridge(
             ON_SELECTION_DRAG_START -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val time = call.argument<Long>("time_stamp")!!
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerPress(
                     dx, dy,
                     getSelectionCallback(call.method, result),
-                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
+                    Pair(width, height)
                 )
             }
             ON_SELECTION_DRAG_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
-                val time = call.argument<Long>("time_stamp")!!
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerMove(
                     dx, dy,
                     getSelectionCallback(call.method, result),
-                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
+                    Pair(width, height)
                 )
             }
             ON_SELECTION_DRAG_END -> {
-                val time = call.argument<Long>("time_stamp")!!
+                val width = call.argument<Int>("width")!!
+                val height = call.argument<Int>("height")!!
                 contentProcessor.onFingerRelease(
                     0, 0,
                     getSelectionCallback(call.method, result),
-                    Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
+                    Pair(width, height)
                 )
             }
             SELECTION_CLEAR -> {
@@ -313,7 +307,7 @@ class FlutterBridge(
             override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
                 Timber.v("时间测试, 重绘返回 $name")
                 when (selectionResult) {
-                    is SelectionResult.Highlight -> {
+                    is SelectionResult.HighlightPaintData -> {
                         result.success(
                             mapOf("highlights_data" to gson.toJson(selectionResult))
                         )

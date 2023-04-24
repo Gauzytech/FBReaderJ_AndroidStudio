@@ -138,16 +138,15 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         targetContentView.onFingerDoubleTap(x, y)
     }
 
-    /** 触摸事件: 长按 */
+    /** 触摸事件: 长按开始 */
     override fun onFingerLongPress(
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     ): Boolean {
         return if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerLongPressFlutter(x, y)) {
-                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                is SelectionResult.HighlightPaintData -> selectionListener?.onSelection(result)
                 else -> Unit
             }
             return false
@@ -161,11 +160,10 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when(val result = targetContentView.onFingerMoveAfterLongPressFlutter(x, y)) {
-                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                is SelectionResult.HighlightPaintData -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -178,12 +176,11 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         x: Int,
         y: Int,
         selectionListener: SelectionListener?,
-        size: Pair<Int, Int>?
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
                 is SelectionResult.ShowMenu,
-                is SelectionResult.Highlight,
+                is SelectionResult.HighlightPaintData,
                 is SelectionResult.OpenDirectory,
                 is SelectionResult.OpenImage -> selectionListener?.onSelection(result)
                 else -> Unit
@@ -210,7 +207,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                         selectionListener?.onSelection(result, drawCurrentPage(size!!))
                     }
                 }
-                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                is SelectionResult.HighlightPaintData -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -226,7 +223,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerPressFlutter(x, y)) {
-                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                is SelectionResult.HighlightPaintData -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {
@@ -244,7 +241,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
             val result = targetContentView.onFingerMoveFlutter(x, y)
             Timber.v("时间测试, onFingerMove 返回结果 ${result.javaClass.simpleName}")
             when(result) {
-                is SelectionResult.Highlight -> selectionListener?.onSelection(result)
+                is SelectionResult.HighlightPaintData -> selectionListener?.onSelection(result)
                 else -> Unit
             }
         } else {

@@ -630,7 +630,7 @@ class ReaderContentViewState
   /// 这个方法在dragDown, longPressDown时都会调用
   void _handleDragDown(DragDownDetails details) {
     print(
-        "flutter动画流程[onDragDown], isSelected: ${_selectionHandler.isSelectionStateEnabled}");
+        "flutter动画流程[onDragDown], hasSelection = ${_selectionHandler.hasSelection}");
     // print("选择弹窗[onDragDown]}");
     // if (_selectionHandler.isSelectionStateEnabled) {
     //   // 此时划选模式应该已经激活，隐藏划选弹窗
@@ -638,7 +638,7 @@ class ReaderContentViewState
     // }
 
     // 不是长按状态, 初始化drag滚动行为
-    if(!_selectionHandler.isSelectionStateEnabled) {
+    if(!_selectionHandler.hasSelection) {
       if (newScroll) {
         assert(_drag == null);
         assert(_hold == null);
@@ -648,7 +648,7 @@ class ReaderContentViewState
   }
 
   void _handleDragStart(DragStartDetails details) {
-    if (_selectionHandler.isSelectionStateEnabled) {
+    if (_selectionHandler.hasSelection) {
       // 如果划选模式已经激活，隐藏划选弹窗
       hideSelectionMenu();
       _selectionHandler.onDragStart(details);
@@ -668,7 +668,7 @@ class ReaderContentViewState
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    if (_selectionHandler.isSelectionStateEnabled) {
+    if (_selectionHandler.hasSelection) {
       _selectionHandler.onDragMove(details);
       _processIndicator(NativeScript.dragMove, details.localPosition);
     } else {
@@ -685,7 +685,7 @@ class ReaderContentViewState
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    if (_selectionHandler.isSelectionStateEnabled) {
+    if (_selectionHandler.hasSelection) {
       _selectionHandler.onDragEnd(details);
       _processIndicator(NativeScript.dragEnd, null);
     } else {
@@ -739,7 +739,7 @@ class ReaderContentViewState
   }
 
   void _handleLongPressStart(LongPressStartDetails details) {
-    if (!_selectionHandler.isSelectionStateEnabled) {
+    if (!_selectionHandler.hasSelection) {
       updateSelectionState(true);
     } else {
       // 如果划选模式已经激活，隐藏划选弹窗
@@ -771,7 +771,7 @@ class ReaderContentViewState
 
   void _handleTapUp(TapUpDetails details) {
     // 点击事件，隐藏划选弹窗
-    if (_selectionHandler.isSelectionStateEnabled) {
+    if (_selectionHandler.hasSelection) {
       _selectionHandler.onTagUp(details);
       hideSelectionMenu();
       updateHighlight(null, null);

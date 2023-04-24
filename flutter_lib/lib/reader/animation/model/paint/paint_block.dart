@@ -9,6 +9,8 @@ abstract class PaintBlock {
         return TextBlock.fromJson(json);
       case 1:
         return RectangleBlock.fromJson(json);
+      case 2:
+        return HighlightBlock.fromJson(json);
       default:
         throw Exception('Unsupported blockType: $blockType');
     }
@@ -16,6 +18,10 @@ abstract class PaintBlock {
 
   static List<PaintBlock> fromJsonList(dynamic rawData) {
     return (rawData as List).map((item) => PaintBlock.fromJson(item)).toList();
+  }
+
+  static List<HighlightBlock> fromJsonHighlights(dynamic rawData) {
+    return (rawData as List).map((item) => PaintBlock.fromJson(item) as HighlightBlock).toList();
   }
 }
 

@@ -52,7 +52,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
 import org.geometerplus.zlibrary.text.view.style.ZLTextStyleCollection;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.PaintBlock;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult;
 
 import java.util.ArrayList;
@@ -1072,11 +1072,11 @@ public final class FBView extends ZLTextView {
 
                         final SelectionCursor.Which cursor = findSelectionCursor(x, y);
                         if (cursor != null) {
-                            Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
-                            moveSelectionCursorToFlutter(cursor, x, y);
+                            moveSelectionCursorToFlutter(cursor, x, y, "onFingerLongPress");
                         }
-                        return SelectionResult.Companion.createHighlight(
-                                findCurrentPageHighlightingCoordinates(),
+
+                        return SelectionResult.createHighlight(
+                                findCurrentPageHighlight(),
                                 getSelectionCursorColor(),
                                 getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                                 getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
@@ -1095,9 +1095,10 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 super.outlineRegion(region);
-                return SelectionResult.Companion.createHighlight(
-                        new HighlightBlock(DebugHelper.outlineColor(),
-                                region.getDrawCoordinates(Hull.DrawMode.Outline)));
+                return SelectionResult.createHighlight(
+                        new PaintBlock.HighlightBlock(DebugHelper.outlineColor(),
+                                region.getDrawCoordinates(Hull.DrawMode.Outline))
+                );
             }
         }
         return SelectionResult.NoOp.INSTANCE;
@@ -1112,9 +1113,9 @@ public final class FBView extends ZLTextView {
         // 判断当前触摸坐标是否有选中文字
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
-            if (moveSelectionCursorToFlutter(cursor, x, y)) {
-                return SelectionResult.Companion.createHighlight(
-                        findCurrentPageHighlightingCoordinates(),
+            if (moveSelectionCursorToFlutter(cursor, x, y, "onFingerMoveAfterLongPress")) {
+                return SelectionResult.createHighlight(
+                        findCurrentPageHighlight(),
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
@@ -1134,8 +1135,8 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            return SelectionResult.Companion.createHighlight(
-                                    new HighlightBlock(DebugHelper.outlineColor(),
+                            return SelectionResult.createHighlight(
+                                    new PaintBlock.HighlightBlock(DebugHelper.outlineColor(),
                                             region.getDrawCoordinates(Hull.DrawMode.Outline)));
                         }
                     }
@@ -1285,10 +1286,9 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = findSelectionCursor(x, y, maxDist * maxDist);
         if (cursor != null) {
             // myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
-            Timber.v("长按流程, 移动cursor, %s", cursor);
-            moveSelectionCursorToFlutter(cursor, x, y);
+            moveSelectionCursorToFlutter(cursor, x, y, "onFingerPress");
             return SelectionResult.Companion.createHighlight(
-                    findCurrentPageHighlightingCoordinates(),
+                    findCurrentPageHighlight(),
                     getSelectionCursorColor(),
                     getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                     getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
@@ -1319,10 +1319,9 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
 //            mCanMagnifier = true;
-            Timber.v("长按流程[onFingerMoveFlutter], 移动cursor, %s", cursor);
-            if (moveSelectionCursorToFlutter(cursor, x, y)) {
+            if (moveSelectionCursorToFlutter(cursor, x, y, "onFingerMove")) {
                 return SelectionResult.Companion.createHighlight(
-                        findCurrentPageHighlightingCoordinates(),
+                        findCurrentPageHighlight(),
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
@@ -1366,6 +1365,7 @@ public final class FBView extends ZLTextView {
 //        mCanMagnifier = false;
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
+            Timber.v("flutter动画流程[onFingerReleaseFlutter], 释放%s cursor", cursor);
             return releaseSelectionCursorFlutter();
         } else {
             // 如果有选中，恢复选中动作弹框

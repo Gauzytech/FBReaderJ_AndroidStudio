@@ -12,7 +12,8 @@ import org.geometerplus.zlibrary.core.util.ZLColor
 
 enum class BlockType {
     TEXT,
-    RECTANGLE
+    RECTANGLE,
+    HIGHLIGHT
 }
 
 sealed class PaintBlock(val blockType: Int) {
@@ -31,4 +32,10 @@ sealed class PaintBlock(val blockType: Int) {
         val x1: Int,
         val y1: Int
     ) : PaintBlock(BlockType.RECTANGLE.ordinal)
+
+    /** @param coordinates 高亮绘制的坐标 */
+    data class HighlightBlock(
+        val color: ZLColor,
+        val coordinates: List<HighlightCoord>
+    ): PaintBlock(BlockType.HIGHLIGHT.ordinal)
 }

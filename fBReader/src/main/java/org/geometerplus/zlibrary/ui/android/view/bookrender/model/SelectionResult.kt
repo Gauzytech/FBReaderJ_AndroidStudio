@@ -1,5 +1,6 @@
 package org.geometerplus.zlibrary.ui.android.view.bookrender.model
 
+import com.google.gson.annotations.SerializedName
 import org.geometerplus.zlibrary.core.library.ZLibrary
 import org.geometerplus.zlibrary.core.util.ZLColor
 import org.geometerplus.zlibrary.text.view.ZLTextSelection
@@ -29,27 +30,32 @@ sealed class SelectionResult {
     /**
      * @param blocks 高亮区域
      */
-    data class Highlight(
-        val blocks: List<HighlightBlock>,
-        val leftSelectionCursor: SelectionCursor? = null,
-        val rightSelectionCursor: SelectionCursor? = null
+    data class HighlightPaintData(
+        @SerializedName("paint_blocks") val paintBlocks: List<PaintBlock.HighlightBlock>,
+        @SerializedName("left_cursor") val leftSelectionCursor: SelectionCursor? = null,
+        @SerializedName("right_cursor") val rightSelectionCursor: SelectionCursor? = null
     ) : SelectionResult()
 
     companion object {
-        fun createHighlight(block: HighlightBlock): Highlight {
-            return Highlight(listOf(block))
+
+        @JvmStatic
+        fun createHighlight(block: PaintBlock.HighlightBlock): HighlightPaintData {
+            return HighlightPaintData(listOf(block))
         }
 
+        @JvmStatic
         fun createHighlight(
-            blocks: List<HighlightBlock>,
+            blocks: List<PaintBlock.HighlightBlock>,
             cursorColor: ZLColor,
             leftPoint: ZLTextSelection.Point?,
             rightPoint: ZLTextSelection.Point?,
-        ): Highlight {
+        ): HighlightPaintData {
             val dpi = ZLibrary.Instance().displayDPI
-            val leftCursor = if (leftPoint != null) SelectionCursor(cursorColor, leftPoint, dpi) else null
-            val rightCursor = if (rightPoint != null) SelectionCursor(cursorColor, rightPoint, dpi) else null
-            return Highlight(blocks, leftCursor, rightCursor)
+            val leftCursor =
+                if (leftPoint != null) SelectionCursor(cursorColor, leftPoint, dpi) else null
+            val rightCursor =
+                if (rightPoint != null) SelectionCursor(cursorColor, rightPoint, dpi) else null
+            return HighlightPaintData(blocks, leftCursor, rightCursor)
         }
     }
 }

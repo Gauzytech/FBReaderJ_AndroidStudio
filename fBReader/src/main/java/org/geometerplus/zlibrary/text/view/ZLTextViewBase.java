@@ -516,9 +516,9 @@ abstract class ZLTextViewBase extends ZLView {
 //            context.setTextColor(color);
 //            context.drawString(x, y, str, offset, length);
             StringBuilder drawString = context.getDrawString(x, y, str, offset, length);
-            for (int i = 0; i < spaceAfterWord; i++) {
-                drawString.append(" ");
-            }
+//            for (int i = 0; i < spaceAfterWord; i++) {
+//                drawString.append(" ");
+//            }
             paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
         } else { // 有标记
             int pos = 0;
@@ -542,9 +542,9 @@ abstract class ZLTextViewBase extends ZLView {
 //                    context.setTextColor(color);
 //                    context.drawString(x, y, str, offset + pos, endPos - pos);
                     StringBuilder drawString = context.getDrawString(x, y, str, offset + pos, endPos - pos);
-                    for (int i = 0; i < spaceAfterWord; i++) {
-                        drawString.append(" ");
-                    }
+//                    for (int i = 0; i < spaceAfterWord; i++) {
+//                        drawString.append(" ");
+//                    }
                     paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
                     x += context.getStringWidth(str, offset + pos, endPos - pos);
                 }
@@ -558,9 +558,9 @@ abstract class ZLTextViewBase extends ZLView {
 //                    context.setTextColor(getHighlightingForegroundColor());
 //                    context.drawString(x, y, str, offset + markStart, endPos - markStart);
                     StringBuilder drawString = context.getDrawString(x, y, str, offset + markStart, endPos - markStart);
-                    for (int i = 0; i < spaceAfterWord; i++) {
-                        drawString.append(" ");
-                    }
+//                    for (int i = 0; i < spaceAfterWord; i++) {
+//                        drawString.append(" ");
+//                    }
                     paintData.add(new PaintBlock.TextBlock(getHighlightingForegroundColor(), drawString.toString(), x, y));
                     x = endX;
                 }
@@ -571,9 +571,9 @@ abstract class ZLTextViewBase extends ZLView {
 //                context.setTextColor(color);
 //                context.drawString(x, y, str, offset + pos, length - pos);
                 StringBuilder drawString = context.getDrawString(x, y, str, offset + pos, length - pos);
-                for (int i = 0; i < spaceAfterWord; i++) {
-                    drawString.append(" ");
-                }
+//                for (int i = 0; i < spaceAfterWord; i++) {
+//                    drawString.append(" ");
+//                }
                 paintData.add(new PaintBlock.TextBlock(color, drawString.toString(), x, y));
             }
         }

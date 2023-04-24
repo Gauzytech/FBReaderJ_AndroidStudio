@@ -8,6 +8,7 @@ import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
+import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
 import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
@@ -302,7 +303,7 @@ class PageRepository with PageRepositoryDelegate {
 
   int time = 0;
 
-  Future<void> callNativeMethod(NativeScript script, int x, int y) async {
+  Future<void> callNativeMethod(NativeScript script, double x, double y) async {
     Size imageSize = getContentSize();
     time = now();
     print('时间测试, call $script $time');
@@ -318,8 +319,8 @@ class PageRepository with PageRepositoryDelegate {
         Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
           script,
           {
-            'touch_x': x,
-            'touch_y': y,
+            'touch_x': x.toInt(),
+            'touch_y': y.toInt(),
             'width': imageSize.width,
             'height': imageSize.height,
             'time_stamp': time,
@@ -373,12 +374,11 @@ class PageRepository with PageRepositoryDelegate {
 
   void _handleHighlight(String highlightDrawData) {
     Map<String, dynamic> data = jsonDecode(highlightDrawData);
-    List<HighlightBlock> blocks = (data['blocks'] as List)
-        .map((item) => HighlightBlock.fromJson(item))
-        .toList();
+    List<HighlightBlock> blocks =
+        PaintBlock.fromJsonHighlights(data['paint_blocks']);
 
-    Map<String, dynamic>? leftCursor = data['leftSelectionCursor'];
-    Map<String, dynamic>? rightCursor = data['rightSelectionCursor'];
+    Map<String, dynamic>? leftCursor = data['left_cursor'];
+    Map<String, dynamic>? rightCursor = data['right_cursor'];
     List<SelectionCursor> cursors = [];
     if (leftCursor != null) {
       cursors.add(SelectionCursor.fromJson(CursorDirection.left, leftCursor));
@@ -386,7 +386,8 @@ class PageRepository with PageRepositoryDelegate {
     if (rightCursor != null) {
       cursors.add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
     }
-    _readerPageViewModelDelegate!.selectionDelegate.updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
+    _readerPageViewModelDelegate!.selectionDelegate
+        .updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
   }
 
   void _handleSelectionMenu(String selectionMenuData) {

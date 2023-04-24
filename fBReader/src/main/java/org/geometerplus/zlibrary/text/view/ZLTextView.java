@@ -40,7 +40,6 @@ import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextParagraph;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData;
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightBlock;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.LinePaintData;
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.PaintBlock;
 
@@ -370,10 +369,10 @@ public abstract class ZLTextView extends ZLTextViewBase {
      * 移动选择光标
      * @return 'true' 选择区域拓展成功, 'false' 选择区域没拓展
      */
-    protected boolean moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y) {
-        Timber.v("长按选中流程[CursorToFlutter], %s", getSelectionDebug());
+    protected boolean moveSelectionCursorToFlutter(SelectionCursor.Which which, int x, int y, String from) {
         y -= getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         mySelection.setCursorInMovement(which, x, y);
+        Timber.v("flutter动画流程[%s, moveCursor], 移动%s光标, 当前: %s, 目标: [%s, %s]", from, which, getSelectionDebug(), x, y);
         return mySelection.expandToFlutter(myCurrentPage, x, y);
     }
 
@@ -1155,11 +1154,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
     /**
      * 获得当前页面的文字高亮绘制坐标
      */
-    protected List<HighlightBlock> findCurrentPageHighlightingCoordinates() {
-        final List<HighlightBlock> list = new ArrayList<>();
+    protected List<PaintBlock.HighlightBlock> findCurrentPageHighlight() {
+        final List<PaintBlock.HighlightBlock> list = new ArrayList<>();
         // 长按选中高亮效果
         if (mySelection.intersects(myCurrentPage)) {
-            HighlightBlock block  = highlightingToBlock(mySelection, myCurrentPage);
+            PaintBlock.HighlightBlock block  = highlightToBlock(mySelection, myCurrentPage);
             if (block != null) {
                 list.add(block);
             }
@@ -1168,30 +1167,31 @@ public abstract class ZLTextView extends ZLTextViewBase {
         synchronized (myHighlightingList) {
             for (ZLTextHighlighting highlight : myHighlightingList) {
                 if (highlight.intersects(myCurrentPage)) {
-                    HighlightBlock block  = highlightingToBlock(highlight, myCurrentPage);
+                    PaintBlock.HighlightBlock block  = highlightToBlock(highlight, myCurrentPage);
                     if (block != null) {
                         list.add(block);
                     }
                 }
             }
         }
+        Timber.d("flutter动画流程[findHighlight], 高亮坐标 = %s", list);
         return list;
     }
 
     @Nullable
-    private HighlightBlock highlightingToBlock(ZLTextHighlighting highlighting, ZLTextPage page) {
+    private PaintBlock.HighlightBlock highlightToBlock(ZLTextHighlighting highlighting, ZLTextPage page) {
         int mode = Hull.DrawMode.None;
-        HighlightBlock highlightBlock = null;
+        PaintBlock.HighlightBlock highlightBlock = null;
         if (highlighting.getBackgroundColor() != null) {
             mode |= Hull.DrawMode.Fill;
-            highlightBlock = new HighlightBlock(
+            highlightBlock = new PaintBlock.HighlightBlock(
                     highlighting.getBackgroundColor(),
                     highlighting.hull(page).getDrawHighlightCoordinates(mode));
         }
 
         if (mySelection.getOutlineColor() != null) {
             mode |= Hull.DrawMode.Outline;
-            highlightBlock = new HighlightBlock(
+            highlightBlock = new PaintBlock.HighlightBlock(
                     highlighting.getOutlineColor(),
                     highlighting.hull(page).getDrawHighlightCoordinates(mode));
         }
@@ -2433,6 +2433,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
     }
 
     protected ZLTextRegion findRegion(int x, int y, int maxDistance, ZLTextRegion.Filter filter) {
+        Timber.v("长按选中流程, findRegion: [%d, %d]", x, y);
         return myCurrentPage.TextElementMap.findRegion(x, y, maxDistance, filter);
     }
 

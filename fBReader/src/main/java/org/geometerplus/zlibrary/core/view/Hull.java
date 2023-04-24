@@ -19,7 +19,7 @@
 
 package org.geometerplus.zlibrary.core.view;
 
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.BlockCoordinate;
+import org.geometerplus.zlibrary.ui.android.view.bookrender.model.HighlightCoord;
 
 import java.util.List;
 
@@ -40,5 +40,5 @@ public interface Hull {
     /**
      * 获得绘制高亮所需要的坐标，传给flutter进行绘制操作
      */
-    List<BlockCoordinate> getDrawHighlightCoordinates(int mode);
+    List<HighlightCoord> getDrawHighlightCoordinates(int mode);
 }

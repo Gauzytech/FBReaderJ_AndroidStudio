@@ -7,7 +7,6 @@ mixin DebugInfoProvider {
   @override
   String toString() {
     List<String> description = [];
-    description.add("$runtimeType");
     debugFillDescription(description);
     return '${describeIdentity(this)} (${description.join(", ")})';
   }
