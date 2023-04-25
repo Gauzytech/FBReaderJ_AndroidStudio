@@ -4,7 +4,7 @@ import org.geometerplus.zlibrary.text.view.ZLTextStyle
 import org.geometerplus.zlibrary.text.view.ZLTextWord
 
 /**
- * 缓存[org.geometerplus.zlibrary.text.view.ZLTextWord]的信息
+ * 缓存[org.geometerplus.zlibrary.text.view.ZLTextWord]的测量信息
  */
 data class ZLTextWordMetrics(val width: Int, val descent: Int)
 

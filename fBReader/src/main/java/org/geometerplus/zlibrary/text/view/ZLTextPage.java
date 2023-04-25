@@ -90,7 +90,6 @@ public final class ZLTextPage {
         endCursor.reset();
         lineInfos.clear();
         paintState = PaintStateEnum.NOTHING_TO_PAINT;
-        clearTextWordMetricCache();
     }
 
     public boolean isClearPaintState() {

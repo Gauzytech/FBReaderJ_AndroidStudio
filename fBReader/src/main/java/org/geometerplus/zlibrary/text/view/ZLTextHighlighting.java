@@ -64,10 +64,7 @@ public abstract class ZLTextHighlighting implements Comparable<ZLTextHighlightin
         final ZLTextPosition startPosition = getStartPosition();
         final ZLTextPosition endPosition = getEndPosition();
         final List<ZLTextElementArea> areas = page.TextElementMap.areas();
-        Timber.v("ceshi1234, %s - %s", startPosition, endPosition);
-        for(int i = 0; i < areas.size(); i++) {
-            Timber.v("ceshi1234, %s", areas.get(i));
-        }
+
         int startIndex = 0;
         int endIndex = 0;
         for (int i = 0; i < areas.size(); ++i) {

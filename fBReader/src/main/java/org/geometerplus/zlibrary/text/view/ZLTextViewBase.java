@@ -257,9 +257,9 @@ abstract class ZLTextViewBase extends ZLView {
     /**
      * 获得element渲染所需要的宽度. UI操作
      */
-    final int getElementWidth(ZLTextElement element, int charIndex, @Nullable ZLTextWordMetrics textWordCache) {
+    final int getElementWidth(ZLTextElement element, int charIndex) {
         if (element instanceof ZLTextWord) {
-            return textWordCache != null ? textWordCache.getWidth() : getWordWidth((ZLTextWord) element, charIndex);
+            return getWordWidth((ZLTextWord) element, charIndex);
         } else if (element instanceof ZLTextImageElement) {
             final ZLTextImageElement imageElement = (ZLTextImageElement) element;
             final ZLPaintContext.Size size = getContext().imageSize(
@@ -307,11 +307,8 @@ abstract class ZLTextViewBase extends ZLView {
         return 0;
     }
 
-    final int getElementDescent(ZLTextElement element, @Nullable ZLTextWordMetrics textWordCache, String from) {
-        if (element instanceof ZLTextWord) {
-            return textWordCache != null ? textWordCache.getDescent() : getContext().getDescent(from);
-        }
-        return 0;
+    final int getElementDescent(ZLTextElement element, String from) {
+        return element instanceof ZLTextWord ? getContext().getDescent(from) : 0;
     }
 
     /**
