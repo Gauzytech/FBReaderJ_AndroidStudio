@@ -48,7 +48,6 @@ class ContentPainter extends CustomPainter with BookContentPainter {
 
   @override
   Future<bool> canScroll(ScrollDirection scrollDirection) async {
-    // return await _pageViewModel.canScrollNew(scrollDirection);
     return _pageViewModel.canScrollPage(scrollDirection);
   }
 

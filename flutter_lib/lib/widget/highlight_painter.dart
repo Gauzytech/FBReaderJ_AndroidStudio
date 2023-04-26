@@ -24,8 +24,10 @@ class HighlightPainter extends CustomPainter {
 
   final Paint _contentBackgroundPaint = Paint();
 
-  List<HighlightBlock>? highlightBlocks;
-  List<SelectionCursor>? cursors;
+  bool get hasSelection =>
+      _selectionHighlights != null && _selectionHighlights!.isNotEmpty;
+  List<HighlightBlock>? _selectionHighlights;
+  List<SelectionCursor>? _selectionCursors;
 
   HighlightPainter({Key? key}) {
     print('时间测试， init HighlightPainter');
@@ -37,47 +39,46 @@ class HighlightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // 绘制图书内容的背景颜色 TODO 实现设置自定义背景颜色
-    canvas.drawRect(
-      Rect.fromPoints(Offset.zero, Offset(size.width, size.height)),
-      _contentBackgroundPaint,
-    );
+    // canvas.drawRect(
+    //   Rect.fromPoints(Offset.zero, Offset(size.width, size.height)),
+    //   _contentBackgroundPaint,
+    // );
+
     // 绘制高亮
-    if (highlightBlocks != null) {
-      print('时间测试, 绘制高亮 -------------------------');
-      for (var item in highlightBlocks!) {
-        for (var coord in item.coordinates) {
-          if (coord.type == drawModeOutline) {
-            _outLinePaint.color = item.color.toColor();
-            _drawOutline(canvas, coord.xs, coord.ys);
-          } else if (coord.type == drawModeFill) {
-            _fillPaint.color = item.color.toColor();
-            _fillPolygon(canvas, coord.xs, coord.ys);
-          }
+    _selectionHighlights?.forEach((highLightBlock) {
+      for (var coordinate in highLightBlock.coordinates) {
+        if (coordinate.type == drawModeOutline) {
+          _outLinePaint.color = highLightBlock.color.toColor();
+          _drawOutline(canvas, coordinate.xs, coordinate.ys);
+        } else if (coordinate.type == drawModeFill) {
+          _fillPaint.color = highLightBlock.color.toColor();
+          _fillPolygon(canvas, coordinate.xs, coordinate.ys);
         }
       }
-    }
+    });
+
     // 绘制选中的左右光标
-    if(cursors != null) {
-      for(var cursor in cursors!) {
-        _drawSelectionCursor(canvas, cursor);
-      }
-    }
+    _selectionCursors?.forEach((element) {
+      _drawSelectionCursor(canvas, element);
+    });
   }
 
   void updateHighlight(
-      List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+    List<HighlightBlock>? blocks,
+    List<SelectionCursor>? selectionCursors,
+  ) {
     if (blocks != null) {
       print('时间测试, 更新高亮, $blocks');
-      highlightBlocks = List.from(blocks);
+      _selectionHighlights = List.from(blocks);
     } else {
       print('时间测试, 清除高亮');
-      highlightBlocks = null;
+      _selectionHighlights = null;
     }
 
     if (selectionCursors != null) {
-      cursors = List.from(selectionCursors);
+      _selectionCursors = List.from(selectionCursors);
     } else {
-      cursors = null;
+      _selectionCursors = null;
     }
   }
 
@@ -170,17 +171,16 @@ class HighlightPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    List<HighlightBlock>? oldBlocks =
-        (oldDelegate as HighlightPainter).highlightBlocks;
-    print('时间测试, shouldRepaint, old: $oldBlocks, new: $highlightBlocks');
-    if (oldBlocks == null || highlightBlocks == null) return true;
-    for (var i = 0; i < oldBlocks.length; i++) {
-      if (oldBlocks[i] != highlightBlocks![i]) {
-        print('时间测试, shouldRepaint = true');
+    return (oldDelegate as HighlightPainter).compare(_selectionHighlights);
+  }
+
+  bool compare(List<HighlightBlock>? other) {
+    if (other == null || _selectionHighlights == null) return true;
+    for (var i = 0; i < other.length; i++) {
+      if (other[i] != _selectionHighlights![i]) {
         return true;
       }
     }
-    print('时间测试, shouldRepaint = false');
     return false;
   }
 }

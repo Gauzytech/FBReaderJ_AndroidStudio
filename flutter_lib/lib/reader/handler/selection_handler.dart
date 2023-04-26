@@ -67,12 +67,12 @@ class SelectionHandler {
     return offset.dx.toInt() == prevDx && offset.dy.toInt() == prevDy;
   }
 
-  void updateSelectionState(bool enable) {
-    _selectionState = enable;
-    if(!enable) {
-      crossPageCount = 1;
-    }
-  }
+  // void updateSelectionState(bool enable) {
+  //   _selectionState = enable;
+  //   if(!enable) {
+  //     crossPageCount = 1;
+  //   }
+  // }
 
   void updateSelectionMenuPosition(Offset? position) {
     _selectionMenuPosition = position;

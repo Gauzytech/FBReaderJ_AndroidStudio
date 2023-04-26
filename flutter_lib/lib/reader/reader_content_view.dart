@@ -300,7 +300,7 @@ class ReaderContentViewState
     }
   }
 
-  // 根据点击区域实现无动画翻页
+  /// 根据点击区域实现无动画翻页
   Future<void> navigatePageNoAnimation(Offset touchPosition, SelectionIndicator? indicator) async {
     var eventAction = getEventAction(touchPosition, indicator);
     if (eventAction != null) {
@@ -310,7 +310,7 @@ class ReaderContentViewState
           pixels: position.pixels);
       if (await _readerPageViewModel!.canScroll(event)) {
         _contentPainter?.startCurrentTouchEvent(event);
-        updateHighlight(null, null);
+        setSelectionHighlight(null, null);
         invalidateContent();
         setState(() {
           _selectionHandler.crossPageCount++;
@@ -464,7 +464,7 @@ class ReaderContentViewState
 
   @override
   void updateSelectionState(bool enable) {
-    _selectionHandler.updateSelectionState(enable);
+    // _selectionHandler.updateSelectionState(enable);
   }
 
   Widget _buildHighlightLayer(double width, double height) {
@@ -576,8 +576,11 @@ class ReaderContentViewState
   }
 
   @override
-  void updateHighlight(List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+  void setSelectionHighlight(List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
     _highlightPainter.updateHighlight(blocks, selectionCursors);
+    if(!_highlightPainter.hasSelection) {
+      _selectionHandler.crossPageCount = 1;
+    }
     highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
   }
 
@@ -630,7 +633,7 @@ class ReaderContentViewState
   /// 这个方法在dragDown, longPressDown时都会调用
   void _handleDragDown(DragDownDetails details) {
     print(
-        "flutter动画流程[onDragDown], hasSelection = ${_selectionHandler.hasSelection}");
+        "flutter动画流程[onDragDown], hasSelection = ${_highlightPainter.hasSelection}");
     // print("选择弹窗[onDragDown]}");
     // if (_selectionHandler.isSelectionStateEnabled) {
     //   // 此时划选模式应该已经激活，隐藏划选弹窗
@@ -638,7 +641,7 @@ class ReaderContentViewState
     // }
 
     // 不是长按状态, 初始化drag滚动行为
-    if(!_selectionHandler.hasSelection) {
+    if (!_highlightPainter.hasSelection) {
       if (newScroll) {
         assert(_drag == null);
         assert(_hold == null);
@@ -648,7 +651,7 @@ class ReaderContentViewState
   }
 
   void _handleDragStart(DragStartDetails details) {
-    if (_selectionHandler.hasSelection) {
+    if (_highlightPainter.hasSelection) {
       // 如果划选模式已经激活，隐藏划选弹窗
       hideSelectionMenu();
       _selectionHandler.onDragStart(details);
@@ -668,7 +671,7 @@ class ReaderContentViewState
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    if (_selectionHandler.hasSelection) {
+    if (_highlightPainter.hasSelection) {
       _selectionHandler.onDragMove(details);
       _processIndicator(NativeScript.dragMove, details.localPosition);
     } else {
@@ -685,7 +688,7 @@ class ReaderContentViewState
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    if (_selectionHandler.hasSelection) {
+    if (_highlightPainter.hasSelection) {
       _selectionHandler.onDragEnd(details);
       _processIndicator(NativeScript.dragEnd, null);
     } else {
@@ -732,16 +735,16 @@ class ReaderContentViewState
         (LongPressGestureRecognizer instance) {
       instance
         ..onLongPressStart = _handleLongPressStart
-        ..onLongPressMoveUpdate = _handleLongPressUpdate
+        ..onLongPressMoveUpdate = _handleLongPressMoveUpdate
         ..onLongPressEnd = _handleLongPressEnd
         ..onLongPressCancel = _handleLongPressCancel;
         });
   }
 
   void _handleLongPressStart(LongPressStartDetails details) {
-    if (!_selectionHandler.hasSelection) {
-      updateSelectionState(true);
-    } else {
+    print('flutter触摸事件, longPressStart');
+    if (_highlightPainter.hasSelection) {
+      // updateSelectionState(true);
       // 如果划选模式已经激活，隐藏划选弹窗
       hideSelectionMenu();
     }
@@ -750,32 +753,36 @@ class ReaderContentViewState
     _processIndicator(NativeScript.longPressStart, details.localPosition);
   }
 
-  void _handleLongPressUpdate(LongPressMoveUpdateDetails details) {
+  void _handleLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
+    print('flutter触摸事件，longPressMove');
     _selectionHandler.onLongPressMove(details);
     _processIndicator(NativeScript.longPressMove, details.localPosition);
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
+    print('flutter触摸事件, longPressEnd');
     _selectionHandler.onLongPressUp();
     _processIndicator(NativeScript.longPressEnd, null);
   }
 
-  void _handleLongPressCancel() {}
+  void _handleLongPressCancel() {
+    print('flutter触摸事件, longPressCancel');
+  }
 
   GestureRecognizerFactoryWithHandlers<TapGestureRecognizer> _tapRecognizer() {
     return GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-            () => TapGestureRecognizer(), (TapGestureRecognizer instance) {
+        () => TapGestureRecognizer(), (TapGestureRecognizer instance) {
       instance.onTapUp = _handleTapUp;
     });
   }
 
   void _handleTapUp(TapUpDetails details) {
     // 点击事件，隐藏划选弹窗
-    if (_selectionHandler.hasSelection) {
+    if (_highlightPainter.hasSelection) {
       _selectionHandler.onTagUp(details);
       hideSelectionMenu();
-      updateHighlight(null, null);
-      updateSelectionState(false);
+      setSelectionHighlight(null, null);
+      // updateSelectionState(false);
     } else {
       navigatePageNoAnimation(details.localPosition, null);
     }
@@ -841,9 +848,10 @@ class ReaderContentViewState
     assert(_contentPainter != null);
     if (newScroll) {
       print('flutter翻页行为, 执行pixels = ${position.pixels}');
-      bool canScroll = await _contentPainter!.canScroll(
-          position.userScrollDirection);
+      bool canScroll =
+          await _contentPainter!.canScroll(position.userScrollDirection);
       if (canScroll) {
+        print("flutter翻页行为, 开始滚动");
         _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
           pixels: position.pixels,
           page: position.page!,

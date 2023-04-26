@@ -345,12 +345,13 @@ class PageRepository with PageRepositoryDelegate {
         // 选择弹窗
         String? selectionMenuData = result['selection_menu_data'];
         if (selectionMenuData != null) {
+          print('flutter触摸事件, 更新menu data');
           _handleSelectionMenu(selectionMenuData);
         } else {
-          if (script == NativeScript.longPressEnd && highlightsData == null) {
-            print('时间测试, 取消长按状态');
-            _readerPageViewModelDelegate!.selectionDelegate.updateSelectionState(false);
-          }
+          // if (script == NativeScript.longPressEnd && highlightsData == null) {
+          //   print('flutter触摸事件, 取消长按状态');
+          //   _readerPageViewModelDelegate?.selectionDelegate.updateSelectionState(false);
+          // }
         }
         break;
       case NativeScript.selectedText:
@@ -386,15 +387,15 @@ class PageRepository with PageRepositoryDelegate {
     if (rightCursor != null) {
       cursors.add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
     }
-    _readerPageViewModelDelegate!.selectionDelegate
-        .updateHighlight(blocks, cursors.isNotEmpty ? cursors : null);
+    _readerPageViewModelDelegate?.selectionDelegate
+        .setSelectionHighlight(blocks, cursors.isNotEmpty ? cursors : null);
   }
 
   void _handleSelectionMenu(String selectionMenuData) {
     Map<String, dynamic> data = jsonDecode(selectionMenuData);
     SelectionMenuPosition position = SelectionMenuPosition.fromJson(data);
     Offset showPosition = position.toShowPosition(getContentSize());
-    _readerPageViewModelDelegate!.selectionDelegate.showSelectionMenu(
+    _readerPageViewModelDelegate?.selectionDelegate.showSelectionMenu(
       showPosition,
     );
   }
