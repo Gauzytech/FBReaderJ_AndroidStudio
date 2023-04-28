@@ -16,13 +16,20 @@ enum PixelDensity {
 }
 
 class ScreenUtil {
-  static double getScreenHeight() {
-    return MediaQueryData.fromWindow(ui.window).size.height;
-  }
+  MediaQueryData mediaQueryData;
 
-  static double getScreenWidth() {
-    return MediaQueryData.fromWindow(ui.window).size.width;
-  }
+  ScreenUtil._internal()
+      : mediaQueryData = MediaQueryData.fromWindow(ui.window);
+
+  factory ScreenUtil() => _instance;
+
+  static late final ScreenUtil _instance = ScreenUtil._internal();
+
+  double get screenWidth =>
+      mediaQueryData.size.width * mediaQueryData.devicePixelRatio;
+
+  double get screenHeight =>
+      mediaQueryData.size.height * mediaQueryData.devicePixelRatio;
 
   static double get displayDpi =>
       ui.window.devicePixelRatio * PixelDensity.mdpi.value;

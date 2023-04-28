@@ -14,6 +14,7 @@ import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart'
 import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
+import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -98,8 +99,8 @@ class PageRepository with PageRepositoryDelegate {
           NRTextStyleCollection.fromJson(pageData['text_style_collection']);
       List<LinePaintData> lineData =
           LinePaintData.fromJsonList(pageData['line_paint_data_list']);
-      int width = ui.window.physicalSize.width.toInt();
-      int height = ui.window.physicalSize.height.toInt();
+      int width = ScreenUtil().screenWidth.toInt();
+      int height = ScreenUtil().screenHeight.toInt();
 
       print('flutter内容绘制流程, 收到了PaintData: ${lineData.length}');
       // for (var element in lineData) {

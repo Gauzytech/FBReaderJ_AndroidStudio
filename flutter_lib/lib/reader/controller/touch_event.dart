@@ -1,9 +1,4 @@
-import 'dart:math';
-import 'dart:ui';
-
 import 'package:flutter/gestures.dart';
-
-import '../../utils/screen_util.dart';
 
 enum EventAction {
   dragStart,
@@ -18,8 +13,7 @@ enum EventAction {
 class TouchEvent<T> {
   EventAction action;
   T? _touchDetail;
-  Offset touchPosition =
-      Offset(ScreenUtil.getScreenWidth(), ScreenUtil.getScreenHeight());
+  Offset touchPosition;
 
   double pixels;
 

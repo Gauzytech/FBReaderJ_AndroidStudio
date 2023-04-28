@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/interface/content_selection_delegate.dart';
@@ -16,6 +16,7 @@ import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dar
 import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selection_handler.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
+import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 import 'package:flutter_lib/widget/content_painter.dart';
 import 'package:flutter_lib/widget/highlight_painter.dart';
@@ -256,8 +257,7 @@ class ReaderContentViewState
         TouchEvent.fromOnDown(
             EventAction.dragStart, detail.localPosition, position.pixels),
       );
-      _contentPainter
-          ?.startCurrentTouchEvent(null);
+      _contentPainter?.startCurrentTouchEvent(null);
       invalidateContent();
     }
   }
@@ -301,20 +301,60 @@ class ReaderContentViewState
   }
 
   /// 根据点击区域实现无动画翻页
-  Future<void> navigatePageNoAnimation(Offset touchPosition, SelectionIndicator? indicator) async {
+  Future<void> jumpToPage(
+    Offset touchPosition,
+    SelectionIndicator? indicator,
+  ) async {
+    setSelectionHighlight(null, null);
     var eventAction = getEventAction(touchPosition, indicator);
     if (eventAction != null) {
-      TouchEvent event = TouchEvent(
+      if (newScroll) {
+        var direction = ScrollDirection.idle;
+        var pixels = 0.0;
+        var page = 0.0;
+        if (eventAction == EventAction.noAnimationForward) {
+          direction = ScrollDirection.reverse;
+          pixels = ScreenUtil().screenWidth;
+          page = 1;
+        } else if (eventAction == EventAction.noAnimationBackward) {
+          direction = ScrollDirection.forward;
+          pixels = -ScreenUtil().screenWidth;
+          page = -1;
+        }
+
+        // todo
+        print(
+            '选择翻页, jumpToPage, event = $direction, touchPosition = $touchPosition');
+        if (await _contentPainter!.canScroll(direction)) {
+          _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
+            pixels: pixels,
+            page: page,
+            userScrollDirection: direction,
+            onPageCentered: _disposePageDraw,
+          ));
+          if (indicator != null) {
+            setState(() {
+              _selectionHandler.crossPageCount++;
+            });
+          } else {
+            invalidateContent();
+          }
+        }
+      } else {
+        TouchEvent event = TouchEvent(
           action: eventAction,
           touchPosition: touchPosition,
-          pixels: position.pixels);
-      if (await _readerPageViewModel!.canScroll(event)) {
-        _contentPainter?.startCurrentTouchEvent(event);
-        setSelectionHighlight(null, null);
-        invalidateContent();
-        setState(() {
-          _selectionHandler.crossPageCount++;
-        });
+          pixels: position.pixels,
+        );
+
+        if (await _readerPageViewModel!.canScroll(event)) {
+          _contentPainter?.startCurrentTouchEvent(event);
+          setSelectionHighlight(null, null);
+          invalidateContent();
+          setState(() {
+            _selectionHandler.crossPageCount++;
+          });
+        }
       }
     }
   }
@@ -328,7 +368,7 @@ class ReaderContentViewState
       // 下一页
         return EventAction.noAnimationForward;
       default:
-        double widthPx = ui.window.physicalSize.width;
+        double widthPx = ScreenUtil().screenWidth;
         double ratio = 0.25;
         var prevPageRegion = [0, (widthPx * ratio).round()];
         var nextPageRegion = [(widthPx - widthPx * ratio).round(), widthPx];
@@ -340,10 +380,9 @@ class ReaderContentViewState
             touchPosition.dx <= nextPageRegion[1]) {
           // 下一页
           return EventAction.noAnimationForward;
-        } else {
-          return null;
         }
     }
+    return null;
   }
 
   void showIndicator(SelectionIndicator indicator, Offset touchPosition) {
@@ -382,7 +421,7 @@ class ReaderContentViewState
           //  1. 5页的翻页划选限制 (完成)
           //  2. 在最后一页划选页取消划选之后, 前面的缓存页没有刷新, (完成)
           //  3. 处理图片选中
-          navigatePageNoAnimation(touchPosition, indicator);
+          jumpToPage(touchPosition, indicator);
         }
       });
     }
@@ -784,7 +823,7 @@ class ReaderContentViewState
       setSelectionHighlight(null, null);
       // updateSelectionState(false);
     } else {
-      navigatePageNoAnimation(details.localPosition, null);
+      jumpToPage(details.localPosition, null);
     }
   }
 
@@ -848,9 +887,7 @@ class ReaderContentViewState
     assert(_contentPainter != null);
     if (newScroll) {
       print('flutter翻页行为, 执行pixels = ${position.pixels}');
-      bool canScroll =
-          await _contentPainter!.canScroll(position.userScrollDirection);
-      if (canScroll) {
+      if (await _contentPainter!.canScroll(position.userScrollDirection)) {
         print("flutter翻页行为, 开始滚动");
         _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
           pixels: position.pixels,
