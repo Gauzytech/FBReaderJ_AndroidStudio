@@ -500,7 +500,7 @@ public final class FBView extends ZLTextView {
         int countY = y - getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         // 搜索查看上一行内容区域是否存在
         final ZLTextRegion region = findRegion(x, countY, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
-        Timber.v("长按选中流程, 寻找选中区域结束: %s", region);
+        Timber.v("长按选中流程[onFingerLongPress], 找到了选中区域: %s", region);
         if (region != null) {
             final ZLTextRegion.Soul soul = region.getSoul();
             boolean doSelectRegion = false;
@@ -522,7 +522,7 @@ public final class FBView extends ZLTextView {
 
                         final SelectionCursor.Which cursor = findSelectionCursor(x, y);
                         if (cursor != null) {
-                            Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
+//                            Timber.v("长按选中流程, 刷新selectionCursor: %s", cursor);
                             moveSelectionCursorTo(cursor, x, y, "onFingerLongPress");
                         } else {
                             repaint("setSelectedRegion");
@@ -562,7 +562,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             releaseSelectionCursor();
-            Timber.v("长按选中流程, releaseSelectionCursor");
+//            Timber.v("长按选中流程, releaseSelectionCursor");
             return;
         }
 
@@ -1058,7 +1058,7 @@ public final class FBView extends ZLTextView {
         int countY = y - getTextStyleCollection().getBaseStyle().getFontSize() / 2;
         // 搜索查看上一行内容区域是否存在
         final ZLTextRegion region = findRegion(x, countY, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
-        Timber.v("长按选中流程, 寻找选中区域结束: %s", region);
+        Timber.v("长按选中流程[onFingerLongPressFlutter], 找到了选中区域: %s", region);
         if (region != null) {
             final ZLTextRegion.Soul soul = region.getSoul();
             boolean doSelectRegion = false;

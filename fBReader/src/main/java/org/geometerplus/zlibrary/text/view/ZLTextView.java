@@ -471,7 +471,6 @@ public abstract class ZLTextView extends ZLTextViewBase {
     @Override
     public synchronized void paint(ZLPaintContext paintContext, PageIndex pageIndex) {
         Timber.v("渲染流程:Bitmap绘制, ================================ 开始paint: %s================================", pageIndex.name());
-        Timber.v("长按选中流程, 绘制");
         // 1. 更新绘制画笔信息
         setContext(paintContext);
         // 2. 绘制背景
@@ -563,7 +562,7 @@ public abstract class ZLTextView extends ZLTextViewBase {
         // 笔记效果: 计算需要高亮的文字
         // 长按选中效果见findHighlightingList()
         final List<ZLTextHighlighting> highlightingList = findHighlightingList(page, pageIndex.name());
-        Timber.v("长按选中流程[绘制], text highlight = %s", highlightingList.size());
+//        Timber.v("长按选中流程[绘制], text highlight = %s", highlightingList.size());
         // FLUTTER: 这个逻辑已经移到flutter
         if (!DebugHelper.ENABLE_FLUTTER) {
             for (ZLTextHighlighting h : highlightingList) {

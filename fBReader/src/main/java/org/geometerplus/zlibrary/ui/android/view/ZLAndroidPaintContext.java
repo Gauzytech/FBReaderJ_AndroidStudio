@@ -401,7 +401,7 @@ public final class ZLAndroidPaintContext extends ZLPaintContext {
 
     @Override
     public void setLineColor(ZLColor color) {
-        Timber.v("长按选中流程[绘制],  LineColor = %s", color);
+        Timber.v("长按选中流程[setLineColor],  LineColor = %s", color);
         if (color != null) {
             myLinePaint.setColor(ZLAndroidColorUtil.rgb(color));
             myOutlinePaint.setColor(ZLAndroidColorUtil.rgb(color));

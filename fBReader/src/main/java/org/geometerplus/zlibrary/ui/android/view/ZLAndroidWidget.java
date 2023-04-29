@@ -211,7 +211,7 @@ public class ZLAndroidWidget extends MainView implements ZLViewWidget, View.OnLo
         if (!DebugHelper.ON_START_REPAINT && from.equals("onStart")) return;
 
         Timber.v("渲染流程:绘制, 刷新view %s", from);
-        Timber.v("长按选中流程, 刷新view %s", from);
+//        Timber.v("长按选中流程, 刷新view %s", from);
         // 不是每次都会执行onDraw()
         // 不执行原因
         // 1. 自定义的View所在的布局中,自定义View计算不出位置.
