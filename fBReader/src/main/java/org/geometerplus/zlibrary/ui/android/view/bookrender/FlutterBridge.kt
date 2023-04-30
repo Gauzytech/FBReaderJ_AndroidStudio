@@ -305,7 +305,7 @@ class FlutterBridge(
     ): SelectionListener {
         return object : SelectionListener {
             override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
-                Timber.v("时间测试, 重绘返回 $name")
+                Timber.v("flutter长按事件[$name], 重绘返回: $selectionResult")
                 when (selectionResult) {
                     is SelectionResult.HighlightPaintData -> {
                         result.success(

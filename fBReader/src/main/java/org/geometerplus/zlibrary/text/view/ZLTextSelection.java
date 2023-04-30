@@ -282,45 +282,47 @@ public class ZLTextSelection extends ZLTextHighlighting {
         }
     }
 
-    boolean expandToFlutter(ZLTextPage page, int x, int y) {
+    public boolean expandToFlutter(ZLTextPage page, int x, int y) {
         if (isEmpty()) {
             return false;
         }
 
         SelectionRange prevRange = new SelectionRange(myLeftMostRegionSoul, myRightMostRegionSoul);
 
-        final ZLTextElementAreaVector vector = page.TextElementMap;
-        final ZLTextElementArea firstArea = vector.getFirstArea();
-        final ZLTextElementArea lastArea = vector.getLastArea();
-        if (firstArea != null && y < firstArea.YStart) {
-            if (myScroller != null && myScroller.scrollsForward()) {
-                myScroller.stop();
-                myScroller = null;
-            }
-            if (myScroller == null) {
-                myScroller = new Scroller(page, false, x, y);
-                return false;
-            }
-            //} else if (lastArea != null && y + ZLTextSelectionCursor.getHeight() / 2 + ZLTextSelectionCursor.getAccent() / 2 > lastArea.YEnd) {
-        } else if (lastArea != null && y > lastArea.YEnd) {
-            if (myScroller != null && !myScroller.scrollsForward()) {
-                myScroller.stop();
-                myScroller = null;
-            }
-            if (myScroller == null) {
-                myScroller = new Scroller(page, true, x, y);
-                return false;
-            }
-        } else {
-            if (myScroller != null) {
-                myScroller.stop();
-                myScroller = null;
-            }
-        }
-
-        if (myScroller != null) {
-            myScroller.setXY(x, y);
-        }
+//        final ZLTextElementAreaVector vector = page.TextElementMap;
+//        final ZLTextElementArea firstArea = vector.getFirstArea();
+//        final ZLTextElementArea lastArea = vector.getLastArea();
+//        if (firstArea != null && y < firstArea.YStart) {
+//            if (myScroller != null && myScroller.scrollsForward()) {
+//                myScroller.stop();
+//                myScroller = null;
+//            }
+//            if (myScroller == null) {
+//                myScroller = new Scroller(page, false, x, y);
+//                Timber.v("flutter动画流程[expandToFlutter], 2");
+//                return false;
+//            }
+//            //} else if (lastArea != null && y + ZLTextSelectionCursor.getHeight() / 2 + ZLTextSelectionCursor.getAccent() / 2 > lastArea.YEnd) {
+//        } else if (lastArea != null && y > lastArea.YEnd) {
+//            if (myScroller != null && !myScroller.scrollsForward()) {
+//                myScroller.stop();
+//                myScroller = null;
+//            }
+//            if (myScroller == null) {
+//                myScroller = new Scroller(page, true, x, y);
+//                Timber.v("flutter动画流程[expandToFlutter], 3");
+//                return false;
+//            }
+//        } else {
+//            if (myScroller != null) {
+//                myScroller.stop();
+//                myScroller = null;
+//            }
+//        }
+//
+//        if (myScroller != null) {
+//            myScroller.setXY(x, y);
+//        }
 
         ZLTextRegion region = myView.findRegion(x, y, myView.maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
         if (region == null) {
@@ -346,6 +348,7 @@ public class ZLTextSelection extends ZLTextHighlighting {
             }
         }
         if (region == null) {
+            Timber.v("flutter动画流程[expandToFlutter], 4");
             return false;
         }
 

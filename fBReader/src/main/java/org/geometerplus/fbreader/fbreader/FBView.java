@@ -1119,6 +1119,8 @@ public final class FBView extends ZLTextView {
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
+            } else {
+                return SelectionResult.NoOp.INSTANCE;
             }
         }
 
@@ -1325,6 +1327,8 @@ public final class FBView extends ZLTextView {
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Right));
+            } else {
+                return SelectionResult.NoOp.INSTANCE;
             }
         } else {
             // todo 如果有选中， 隐藏选中动作弹框

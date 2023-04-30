@@ -5,7 +5,8 @@ import org.geometerplus.zlibrary.text.view.ZLTextSelection
 
 /**
  * 保存需要绘制高亮区域的坐标, 传回flutter进行绘制
- * @param type 高亮的类型：文字高亮/轮廓高亮, 见[org.geometerplus.zlibrary.core.view.Hull.DrawMode]
+ * @param type 高亮的类型, '1': outline, '2': fill.
+ * 见[org.geometerplus.zlibrary.core.view.Hull.DrawMode]
  */
 data class HighlightCoord(val type: Int, val xs: IntArray, val ys: IntArray) {
     override fun equals(other: Any?): Boolean {
