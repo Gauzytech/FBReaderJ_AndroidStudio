@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_phase_delegate.dart';
 
 /// 当用户在屏幕上拖动手指， 开始产生阅读界面当滚动效果
 class ReaderDragController implements Drag {
   ReaderDragController({
-    required ReaderScrollStageDelegate delegate,
+    required ReaderScrollPhaseDelegate delegate,
     required DragStartDetails details,
     this.onDragCanceled,
   })
@@ -14,8 +14,8 @@ class ReaderDragController implements Drag {
         _lastDetails = details;
 
   /// 通过委托与对阅读界面交互.
-  ReaderScrollStageDelegate get delegate => _delegate;
-  ReaderScrollStageDelegate _delegate;
+  ReaderScrollPhaseDelegate get delegate => _delegate;
+  ReaderScrollPhaseDelegate _delegate;
 
   /// 在[dispose]调用.
   final VoidCallback? onDragCanceled;
@@ -27,7 +27,7 @@ class ReaderDragController implements Drag {
 
   bool get _reversed => axisDirectionIsReversed(delegate.axisDirection);
 
-  void updateDelegate(ReaderScrollStageDelegate value) {
+  void updateDelegate(ReaderScrollPhaseDelegate value) {
     assert(_delegate != value);
     _delegate = value;
   }

@@ -2444,12 +2444,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         return myCurrentPage.TextElementMap.findRegionsPair(x, y, getColumnIndex(x), filter);
     }
 
-/*
-	public void resetRegionPointer() {
+
+	public void resetOuelineRegion() {
 		myOutlinedRegionSoul = null;
 		myShowOutline = true;
 	}
-*/
 
     protected void setSelectedRegion(ZLTextRegion region) {
         mySelection.start(region);

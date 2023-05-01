@@ -373,18 +373,20 @@ public class ZLTextSelection extends ZLTextHighlighting {
 
         // 判断选中区域是否相同
         if (prevRange.isSame(myLeftMostRegionSoul, myRightMostRegionSoul)) {
-            Timber.tag("expandToFlutter").v("时间测试, 重复选中 忽略");
+            Timber.v("flutter动画流程[expandToFlutter], 时间测试, 重复选中 忽略");
             return false;
         }
 
         if (myCursorInMovement == SelectionCursor.Which.Right) {
             if (hasPartAfterPage(page)) {
+                Timber.v("flutter动画流程[expandToFlutter], hasPartAfterPage");
                 myView.turnPage(true, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
                 myView.Application.getViewWidget().reset("expandTo");
                 myView.preparePaintInfo();
             }
         } else {
             if (hasPartBeforePage(page)) {
+                Timber.v("flutter动画流程[expandToFlutter], hasPartBeforePage");
                 myView.turnPage(false, ZLTextView.ScrollingMode.SCROLL_LINES, 1);
                 myView.Application.getViewWidget().reset("expandTo");
                 myView.preparePaintInfo();

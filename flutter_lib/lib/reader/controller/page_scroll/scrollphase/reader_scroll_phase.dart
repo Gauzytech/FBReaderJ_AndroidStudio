@@ -1,26 +1,26 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_phase_delegate.dart';
 
-abstract class ReaderScrollStage {
+abstract class ReaderScrollPhase {
 
-  /// 使用委托提供[ReaderScrollStage]与阅读界面的交互
-  ReaderScrollStageDelegate get delegate => _delegate;
-  ReaderScrollStageDelegate _delegate;
+  /// 使用委托提供[ReaderScrollPhase]与阅读界面的交互
+  ReaderScrollPhaseDelegate get delegate => _delegate;
+  ReaderScrollPhaseDelegate _delegate;
 
   /// Initializes [delegate] for subclasses.
-  ReaderScrollStage(this._delegate);
+  ReaderScrollPhase(this._delegate);
 
-  /// 更新stage的[ReaderScrollStageDelegate].
+  /// 更新stage的[ReaderScrollPhaseDelegate].
   ///
-  /// 当[ReaderScrollStage]将要被弃用时调用本方法把[ReaderScrollStageDelegate]对象更新.
-  void updateDelegate(ReaderScrollStageDelegate value) {
+  /// 当[ReaderScrollPhase]将要被弃用时调用本方法把[ReaderScrollPhaseDelegate]对象更新.
+  void updateDelegate(ReaderScrollPhaseDelegate value) {
     assert(_delegate != value);
     _delegate = value;
   }
 
   void applyNewDimensions() {}
 
-  void resetActivity() { }
+  void resetPhase() { }
 
   /// 在执行当前state的时候是否需要忽略其他pointer
   bool get shouldIgnorePointer;

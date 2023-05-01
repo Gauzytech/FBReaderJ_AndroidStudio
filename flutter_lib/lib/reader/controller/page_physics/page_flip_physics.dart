@@ -7,9 +7,9 @@ import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position
 import 'book_page_physics.dart';
 
 /// 水平翻页的物理行为
-class PageTurnPhysics with BookPagePhysics {
+class PageFlipPhysics with BookPagePhysics {
   /// 创建图书滚动的物理行为.
-  PageTurnPhysics();
+  PageFlipPhysics();
 
   /// 计算滚动的默认精度, 见[ScrollPhysics], _kDefaultTolerance.
   Tolerance get tolerance => Tolerance(
@@ -31,7 +31,7 @@ class PageTurnPhysics with BookPagePhysics {
     final Tolerance tolerance = this.tolerance;
     final double target = getTargetPixels(position as BookPagePosition, tolerance, velocity);
     if (target != position.pixels) {
-      print('flutter翻页行为[createBallisticSimulation], 创建动画, ${position.pixels} -> $target');
+      print('flutter翻页行为[创建惯性模拟], 创建动画, ${position.pixels} -> $target');
       return ScrollSpringSimulation(spring, position.pixels, target, velocity,
           tolerance: tolerance);
     }

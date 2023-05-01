@@ -664,7 +664,7 @@ public final class FBView extends ZLTextView {
             Timber.v("长按流程, video");
             outlineRegion(videoRegion);
             repaint("onFingerSingleTap");
-            myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
+            myReader.runAction(ActionCode.OPEN_VIDEO, videoRegion.getSoul());
             return;
         }
 
@@ -1129,6 +1129,7 @@ public final class FBView extends ZLTextView {
         if (region != null) {
             ZLTextRegion.Soul soul = region.getSoul();
             if (soul instanceof ZLTextHyperlinkRegionSoul || soul instanceof ZLTextWordRegionSoul) {
+                Timber.v("flutter长按事件[onFingerMove], 处理outline数据: %s", soul);
                 if (myReader.MiscOptions.WordTappingAction.getValue() !=
                         MiscOptions.WordTappingActionEnum.doNothing) {
                     region = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
@@ -1172,16 +1173,19 @@ public final class FBView extends ZLTextView {
 
         //  判断手指触摸区域有没有选中outline
         final ZLTextRegion region = getOutlinedRegion();
+        Timber.v("flutter长按事件[onFingerRelease], 获得region = %s", region);
         if (region != null) {
             final ZLTextRegion.Soul soul = region.getSoul();
             SelectionResult outlineResult = null;
             boolean doRunAction = false;
             if (soul instanceof ZLTextWordRegionSoul) {
+                Timber.v("flutter长按事件[onFingerRelease], 处理outline数据: %s", soul);
                 doRunAction =
                         myReader.MiscOptions.WordTappingAction.getValue() ==
                                 MiscOptions.WordTappingActionEnum.openDictionary;
                 outlineResult = SelectionResult.OpenDirectory.INSTANCE;
             } else if (soul instanceof ZLTextImageRegionSoul) {
+                Timber.v("flutter长按事件[onFingerRelease], 处理outline数据: %s", soul);
                 doRunAction =
                         myReader.ImageOptions.TapAction.getValue() ==
                                 ImageOptions.TapActionEnum.openImageView;
@@ -1204,7 +1208,7 @@ public final class FBView extends ZLTextView {
      */
     @Override
     public void onFingerSingleTapFlutter(int x, int y) {
-        Timber.v("长按流程, 长按坐标: [%s, %s]", x, y);
+        Timber.v("flutter长按事件, 长按坐标: [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
 //        if (isPreview()) {
 //            myReader.runAction(ActionCode.SHOW_MENU, x, y);
@@ -1224,7 +1228,7 @@ public final class FBView extends ZLTextView {
         // TODO 是否应该改成点击空白地方应该隐藏outline????
         final ZLTextRegion hyperlinkRegion = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.HyperlinkFilter);
         if (hyperlinkRegion != null) {
-            Timber.v("长按流程, 超链接");
+            Timber.v("flutter长按事件, 超链接");
             outlineRegion(hyperlinkRegion);
 //            repaint("onFingerSingleTap");
             // todo 超链接跳转方法待实现
@@ -1243,7 +1247,7 @@ public final class FBView extends ZLTextView {
         // todo video视频支持
         final ZLTextRegion videoRegion = findRegion(x, y, 0, ZLTextRegion.VideoFilter);
         if (videoRegion != null) {
-            Timber.v("长按流程, video");
+            Timber.v("flutter长按事件, video");
             outlineRegion(videoRegion);
 //            repaint("onFingerSingleTap");
             // todo
@@ -1400,15 +1404,18 @@ public final class FBView extends ZLTextView {
         // 1. 清除划选内容
         if (hasSelection()) {
             clearSelection();
+            Timber.v("flutter长按事件 clear");
             return true;
         }
 
         // 2. 清除图片, 超链接的outline选中效果
         if(getOutlinedRegion() != null) {
-            hideOutline();
+            resetOuelineRegion();
+            Timber.v("flutter长按事件 resetOueline");
             return true;
         }
 
+        Timber.v("flutter长按事件 false");
         return false;
     }
 }

@@ -289,6 +289,7 @@ class PageRepository with PageRepositoryDelegate {
 
   /// 判断是否可以滚动到上一页/下一页
   Future<bool> canScroll(PageIndex pageIndex) async {
+    print('翻页判断, $pageIndex canScroll');
     return await nativeInterface.evaluateNativeFunc(
       NativeScript.canScroll,
       {'page_index': pageIndex.index},

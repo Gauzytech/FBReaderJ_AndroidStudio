@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_drag_controller.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/reader_scroll_phase.dart';
 
-import '../reader_scroll_stage_delegate.dart';
+import '../reader_scroll_phase_delegate.dart';
 
 /// 具体功能方法模仿[DragScrollActivity].
-class DragScrollStage extends ReaderScrollStage {
-  DragScrollStage({
-    required ReaderScrollStageDelegate delegate,
+class DragScrollPhase extends ReaderScrollPhase {
+  DragScrollPhase({
+    required ReaderScrollPhaseDelegate delegate,
     ReaderDragController? controller,
   })  : _controller = controller,
         super(delegate);

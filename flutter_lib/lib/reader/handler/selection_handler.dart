@@ -37,10 +37,6 @@ class SelectionHandler {
   GlobalKey topIndicatorKey;
   GlobalKey bottomIndicatorKey;
 
-  // 划选弹窗
-  bool get hasSelection => _selectionState;
-  bool _selectionState = false;
-
   Offset? get menuPosition => _selectionMenuPosition;
   Offset? _selectionMenuPosition;
 
@@ -66,13 +62,6 @@ class SelectionHandler {
     int prevDy = _selectionTouchOffset?.dy.toInt() ?? -1;
     return offset.dx.toInt() == prevDx && offset.dy.toInt() == prevDy;
   }
-
-  // void updateSelectionState(bool enable) {
-  //   _selectionState = enable;
-  //   if(!enable) {
-  //     crossPageCount = 1;
-  //   }
-  // }
 
   void updateSelectionMenuPosition(Offset? position) {
     _selectionMenuPosition = position;
@@ -113,7 +102,7 @@ class SelectionHandler {
 
   void onLongPressStart(LongPressStartDetails detail) {
     Offset position = detail.localPosition;
-    print("flutter动画流程:触摸事件, ------------长按事件开始 $position-------->>>>>>>>>");
+    print("flutter动画流程:长按事件, ------------start $position-------->>>>>>>>>");
     if (!_isDuplicateTouch(position)) {
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
@@ -127,7 +116,7 @@ class SelectionHandler {
   void onLongPressMove(LongPressMoveUpdateDetails detail) {
     Offset position = detail.localPosition;
     if (!_isDuplicateTouch(position)) {
-      print("flutter动画流程:触摸事件, ------------长按事件移动 $position--------->>>>>>>>>");
+      print("flutter动画流程:长按事件, ------------move $position--------->>>>>>>>>");
       _setSelectionTouch(position);
       readerContentHandler.callNativeMethod(
         NativeScript.longPressMove,
@@ -138,7 +127,7 @@ class SelectionHandler {
   }
 
   void onLongPressUp() {
-    print("flutter动画流程:触摸事件, ------------长按事件结束------------>>>>>>>>>");
+    print("flutter动画流程:长按事件, ------------end------------>>>>>>>>>");
     _setSelectionTouch(null);
     readerContentHandler.callNativeMethod(NativeScript.longPressEnd, 0, 0);
   }

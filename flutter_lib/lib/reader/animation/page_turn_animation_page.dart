@@ -395,18 +395,16 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onPagePreDraw(PagePaintMetaData metaData) {
-    print('flutter翻页行为:翻页调整[onPagePreDraw], $metaData');
+    print('flutter翻页行为[onPagePreDraw], $metaData');
     _metaData.apply(metaData);
     // 如果是整数，代表内容已经居中对齐显示, 通知缓存切换书页
     if (metaData.page % 1 == 0) {
       if (metaData.page > 0) {
-        print('flutter翻页行为:翻页调整, shift下一页');
-        print('flutter动画流程:onPagePreDraw, shift下一页');
+        print('flutter翻页行为[onPagePreDraw], shift下一页');
         readerViewModel.shiftPage(PageIndex.next);
         readerViewModel.onScrollingFinished(PageIndex.next);
       } else if (metaData.page < 0) {
-        print('flutter翻页行为:翻页调整, shift上一页');
-        print('flutter动画流程:onPagePreDraw, shift上一页');
+        print('flutter翻页行为[onPagePreDraw], shift上一页');
         readerViewModel.shiftPage(PageIndex.prev);
         readerViewModel.onScrollingFinished(PageIndex.prev);
       }
@@ -416,7 +414,7 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onPageDraw(ui.Canvas canvas) {
-    print('flutter动画流程:onDraw, $_metaData');
+    // print('flutter翻页行为:onDraw, $_metaData');
     // pixels 负数: 往左滚动, 正数: 往右滚动
     double actualOffsetX = _metaData.pixels < 0
         ? _metaData.pixels.abs() % currentSize.width
@@ -470,6 +468,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       } else {
         print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
         _resetData();
+        print('flutter翻页行为, onPageCentered 重置坐标');
         _metaData.onPageCentered?.call();
         // readerViewModel.preloadAdjacentPage();
       }

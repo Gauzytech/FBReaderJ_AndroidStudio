@@ -1,12 +1,12 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/reader_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/reader_scroll_phase.dart';
 
 /// 手指抬起后, onDragUp, 执行模拟惯性动画.
 ///
 /// 具体功能方法模仿[BallisticScrollActivity].
-class BallisticScrollStage extends ReaderScrollStage {
-  BallisticScrollStage(
+class BallisticScrollPhase extends ReaderScrollPhase {
+  BallisticScrollPhase(
     super.delegate,
     Simulation simulation,
     TickerProvider vsync,
@@ -29,7 +29,7 @@ class BallisticScrollStage extends ReaderScrollStage {
   }
 
   @override
-  void resetActivity() {
+  void resetPhase() {
     delegate.goBallistic(velocity);
   }
 

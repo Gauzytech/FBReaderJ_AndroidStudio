@@ -243,7 +243,7 @@ class ReaderContentViewState
     viewModel?.dispose();
     _cancelTimer();
     _pageRepository?.tearDown();
-    _position?.removeListener(_onPagePaintMetaUpdate);
+    _position?.removeListener(_onPositionUpdate);
     super.dispose();
   }
 
@@ -324,7 +324,7 @@ class ReaderContentViewState
 
         // todo
         print(
-            '选择翻页, jumpToPage, event = $direction, touchPosition = $touchPosition');
+            '跳页, jumpToPage, event = $direction, touchPosition = $touchPosition');
         if (await _contentPainter!.canScroll(direction)) {
           _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
             pixels: pixels,
@@ -628,7 +628,7 @@ class ReaderContentViewState
       case ReaderPageViewModel.TYPE_ANIMATION_SLIDE_TURN:
         _gestureRecognizers = <Type, GestureRecognizerFactory>{
           BookVerticalDragGestureRecognizer:
-              GestureRecognizerFactoryWithHandlers<
+          GestureRecognizerFactoryWithHandlers<
                       BookVerticalDragGestureRecognizer>(
                   () => BookVerticalDragGestureRecognizer(),
                   (BookVerticalDragGestureRecognizer instance) {
@@ -672,7 +672,7 @@ class ReaderContentViewState
   /// 这个方法在dragDown, longPressDown时都会调用
   void _handleDragDown(DragDownDetails details) {
     print(
-        "flutter动画流程[onDragDown], hasSelection = ${_highlightPainter.hasSelection}");
+        "flutter动画流程[onDragDown], 存在高亮选择 = ${_highlightPainter.hasSelection}");
     // print("选择弹窗[onDragDown]}");
     // if (_selectionHandler.isSelectionStateEnabled) {
     //   // 此时划选模式应该已经激活，隐藏划选弹窗
@@ -685,6 +685,7 @@ class ReaderContentViewState
         assert(_drag == null);
         assert(_hold == null);
         _hold = position.hold(_disposeHold);
+        print('flutter翻页行为[dragDown], 执行了$_hold');
       }
     }
   }
@@ -696,11 +697,12 @@ class ReaderContentViewState
       _selectionHandler.onDragStart(details);
       _processIndicator(NativeScript.dragStart, details.localPosition);
     } else {
-      print("flutter动画流程[onDragStart], 进行翻页操作${details.localPosition}");
+      print("flutter动画流程[onDragStart], 进行翻页操作 ${details.localPosition}");
 
       if (newScroll) {
         assert(_drag == null);
         _drag = position.drag(details, _disposeDrag);
+        print('flutter翻页行为[dragStart], 创建: $_drag');
         assert(_drag != null);
         assert(_hold == null);
       } else {
@@ -714,12 +716,12 @@ class ReaderContentViewState
       _selectionHandler.onDragMove(details);
       _processIndicator(NativeScript.dragMove, details.localPosition);
     } else {
-      print(
-          'flutter动画流程[onDragUpdate], 进行翻页操作 = ${details.localPosition}, primaryDelta = ${details.primaryDelta}');
+      print('flutter动画流程[onDragUpdate], 进行翻页操作 $details');
 
       if (newScroll) {
         assert(_hold == null || _drag == null);
         _drag?.update(details);
+        print('flutter翻页行为[dragUpdate], 更新后: $_drag');
       } else {
         onUpdateEvent(details);
       }
@@ -731,9 +733,10 @@ class ReaderContentViewState
       _selectionHandler.onDragEnd(details);
       _processIndicator(NativeScript.dragEnd, null);
     } else {
-      print("flutter动画流程[onDragEnd], 进行翻页操作$details");
+      print("flutter动画流程[onDragEnd], 进行翻页操作 $details");
       if (newScroll) {
         assert(_hold == null || _drag == null);
+        print('flutter翻页行为[dragEnd], 准备结束: $_drag');
         _drag?.end(details);
         assert(_drag == null);
       } else {
@@ -746,6 +749,7 @@ class ReaderContentViewState
     print("flutter动画流程[onDragCancel]");
     if (newScroll) {
       assert(_hold == null || _drag == null);
+      print('flutter翻页行为[dragCancel], 取消 $_hold, $_drag');
       _hold?.cancel();
       _drag?.cancel();
       assert(_hold == null);
@@ -763,7 +767,6 @@ class ReaderContentViewState
 
   /// 翻页结束, 绘制完成, 重置pixels
   void _disposePageDraw() {
-    print('flutter翻页行为, 重置坐标');
     position.correctPixels(0);
   }
 
@@ -849,7 +852,7 @@ class ReaderContentViewState
     _physics = widget.physics;
     final BookPagePosition? oldPosition = _position;
     if (oldPosition != null) {
-      oldPosition.removeListener(_onPagePaintMetaUpdate);
+      oldPosition.removeListener(_onPositionUpdate);
       _effectiveController.detach(oldPosition);
       // It's important that we not dispose the old position until after the
       // viewport has had a chance to unregister its listeners from the old
@@ -859,7 +862,7 @@ class ReaderContentViewState
     _position = _effectiveController.createBookPagePosition(
         _physics!, this, oldPosition);
     assert(_position != null);
-    position.addListener(_onPagePaintMetaUpdate);
+    position.addListener(_onPositionUpdate);
     _effectiveController.attach(position);
   }
 
@@ -883,12 +886,11 @@ class ReaderContentViewState
     print('flutter内容绘制流程, 初始化数据完毕: $position');
   }
 
-  Future<void> _onPagePaintMetaUpdate() async {
+  Future<void> _onPositionUpdate() async {
     assert(_contentPainter != null);
     if (newScroll) {
-      print('flutter翻页行为, 执行pixels = ${position.pixels}');
+      print('flutter翻页行为[_onPositionUpdate], 更新position = $position');
       if (await _contentPainter!.canScroll(position.userScrollDirection)) {
-        print("flutter翻页行为, 开始滚动");
         _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
           pixels: position.pixels,
           page: position.page!,
@@ -897,6 +899,7 @@ class ReaderContentViewState
         ));
         invalidateContent();
       } else {
+        print('flutter翻页行为[_onPagePaintMetaUpdate], 重置坐标');
         _disposePageDraw();
       }
     } else {

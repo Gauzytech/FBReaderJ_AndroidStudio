@@ -3,17 +3,16 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_drag_controller.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_phase_delegate.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_stage_delegate.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/drag_scroll_stage.dart';
-import 'package:flutter_lib/reader/controller/page_scroll/scroll_stage/idle_scroll_stage.dart';
-
-import 'scroll_stage/ballistic_scroll_stage.dart';
-import 'scroll_stage/hold_scroll_stage.dart';
-import 'scroll_stage/reader_scroll_stage.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/ballistic_scroll_phase.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/drag_scroll_phase.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/hold_scroll_phase.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/idle_scroll_phase.dart';
+import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/reader_scroll_phase.dart';
 
 class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
-    implements ReaderScrollStageDelegate {
+    implements ReaderScrollPhaseDelegate {
   ReaderScrollPositionWithSingleContext({
     required super.context,
     required super.physics,
@@ -25,20 +24,19 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     }
 
     // 初始化当前滚动行为是静止
-    if (scrollStage == null) {
+    if (scrollPhase == null) {
       goIdle();
     }
-    assert(scrollStage != null);
+    assert(scrollPhase != null);
   }
 
   @override
   ScrollDirection get userScrollDirection => _userScrollDirection;
   ScrollDirection _userScrollDirection = ScrollDirection.idle;
 
-
   /// Velocity from a previous scrollState temporarily held by [hold] to potentially
   /// transfer to a next scrollState.
-  double _heldPreviousStageVelocity = 0.0;
+  double _heldPreviousPhaseVelocity = 0.0;
 
   @override
   PageMode get pageMode => context.pageMode;
@@ -48,18 +46,18 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   double setPixels(double newPixels) {
-    assert(scrollStage!.isScrolling);
+    assert(scrollPhase!.isScrolling);
     return super.setPixels(newPixels);
   }
 
   @override
   void absorb(ReaderScrollPosition other) {
     super.absorb(other);
-    if(other is! ReaderScrollPositionWithSingleContext) {
+    if (other is! ReaderScrollPositionWithSingleContext) {
       goIdle();
       return;
     }
-    scrollStage!.updateDelegate(this);
+    scrollPhase!.updateDelegate(this);
     _userScrollDirection = other._userScrollDirection;
     assert(_currentDrag == null);
     if (other._currentDrag != null) {
@@ -70,16 +68,16 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
   }
 
   @override
-  void beginScrollStage(ReaderScrollStage? newStage) {
-    _heldPreviousStageVelocity = 0.0;
-    if(newStage == null) {
+  void beginScrollPhase(ReaderScrollPhase? newPhase) {
+    _heldPreviousPhaseVelocity = 0.0;
+    if (newPhase == null) {
       return;
     }
-    assert(newStage.delegate == this);
-    super.beginScrollStage(newStage);
+    assert(newPhase.delegate == this);
+    super.beginScrollPhase(newPhase);
     _currentDrag?.dispose();
     _currentDrag = null;
-    if (!scrollStage!.isScrolling) {
+    if (!scrollPhase!.isScrolling) {
       updateUserScrollDirection(ScrollDirection.idle);
     }
   }
@@ -92,18 +90,26 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   void goIdle() {
-    beginScrollStage(IdleScrollStage(this));
+    beginScrollPhase(IdleScrollPhase(this));
   }
 
+  /// 根据[physics]开始一个simulation, 来确定[pixels]的位置，以一定的速度开始.
+  ///
+  /// 此方法遵循 [ScrollPhysics.createBallisticSimulation]，
+  /// 通常有两种模拟效果:
+  /// 1. 回弹模拟: 发生在在当前position越界时
+  /// 2. 摩擦模拟: 发生在当前position在边界之内但速度为0时
+  ///
+  /// Speed = logical pixels / sec.
   @override
   void goBallistic(double velocity) {
     assert(hasPixels);
     final Simulation? simulation =
         physics.createBallisticSimulation(this, velocity);
-    if(simulation != null) {
-      beginScrollStage(BallisticScrollStage(this, simulation, context.vsync));
+    if (simulation != null) {
+      beginScrollPhase(BallisticScrollPhase(this, simulation, context.vsync));
     } else {
-      print('flutter翻页行为: go idle');
+      print('flutter翻页行为[goBallistic]: go idle');
       goIdle();
     }
   }
@@ -122,14 +128,14 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
 
   @override
   ScrollHoldController hold(VoidCallback holdCancelCallback) {
-    final double previousVelocity = scrollStage!.velocity;
-    final HoldScrollStage holdStage = HoldScrollStage(
+    final double previousVelocity = scrollPhase!.velocity;
+    final HoldScrollPhase holdPhase = HoldScrollPhase(
       delegate: this,
       onHoldCanceled: holdCancelCallback,
     );
-    beginScrollStage(holdStage);
-    _heldPreviousStageVelocity = previousVelocity;
-    return holdStage;
+    beginScrollPhase(holdPhase);
+    _heldPreviousPhaseVelocity = previousVelocity;
+    return holdPhase;
   }
 
   ReaderDragController? _currentDrag;
@@ -141,7 +147,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
       details: details,
       onDragCanceled: dragCancelCallback,
     );
-    beginScrollStage(DragScrollStage(delegate: this, controller: drag));
+    beginScrollPhase(DragScrollPhase(delegate: this, controller: drag));
     assert(_currentDrag == null);
     _currentDrag = drag;
     return drag;
@@ -159,7 +165,7 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     super.debugFillDescription(description);
     description.add('${context.runtimeType}');
     description.add('$physics');
-    description.add('$scrollStage');
+    description.add('$scrollPhase');
     description.add('$userScrollDirection');
   }
 }

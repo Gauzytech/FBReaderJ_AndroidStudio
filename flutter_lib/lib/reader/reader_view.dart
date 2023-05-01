@@ -6,7 +6,7 @@ import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dar
 import 'package:flutter_lib/reader/reader_content_view.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
 
-import 'controller/page_physics/page_turn_physics.dart';
+import 'controller/page_physics/page_flip_physics.dart';
 import 'controller/page_physics/page_vertical_scroll_physics.dart';
 import 'controller/reader_page_view_model.dart';
 
@@ -142,11 +142,11 @@ class _ReaderState extends BaseStatefulViewState<ReaderView, ReaderViewModel>
       case ReaderPageViewModel.TYPE_ANIMATION_PAGE_TURN:
       case ReaderPageViewModel.TYPE_ANIMATION_SLIDE_TURN:
       case ReaderPageViewModel.TYPE_ANIMATION_SIMULATION_TURN:
-        return PageTurnPhysics();
+        return PageFlipPhysics();
       case ReaderPageViewModel.TYPE_ANIMATION_COVER_TURN:
         return PageVerticalScrollPhysics();
       default:
-        return PageTurnPhysics();
+        return PageFlipPhysics();
     }
   }
 }
