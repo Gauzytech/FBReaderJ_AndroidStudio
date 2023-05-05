@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/src/rendering/viewport_offset.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
@@ -57,5 +58,15 @@ class PageFlipPhysics with BookPagePhysics {
   }
 
   @override
-  String toString() => 'PageTurnPhysics';
+  String toString() => 'PageFlipPhysics';
+
+  @override
+  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed) {
+    final double target = getTargetPixels(position as BookPagePosition, tolerance, velocity);
+    double offset = position.pixels - target;
+    if(reversed) {
+      offset = -offset;
+    }
+    return offset > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse;
+  }
 }

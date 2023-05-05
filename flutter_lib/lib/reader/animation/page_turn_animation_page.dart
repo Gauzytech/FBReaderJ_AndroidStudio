@@ -59,7 +59,6 @@ class PageTurnAnimation extends BaseAnimationPage {
   late Animation<Offset> currentAnimation;
   AnimationData? progressAnimation;
 
-  final Paint _paint = Paint();
   final Paint _loadingPaint = Paint()
     ..strokeCap = StrokeCap.round
     ..style = PaintingStyle.fill
@@ -323,53 +322,53 @@ class PageTurnAnimation extends BaseAnimationPage {
   }
 
   void handleEvent(TouchEvent event) {
-    if (!getCachedTouchData().dx.isInfinite && !eventStartPoint.dx.isInfinite) {
-      // 本次滑动偏移量，其实就是dy
-      double moveDistanceX = getMoveDistance(event.touchPosition.dx);
-      // 如果是中断动画, 判断是否越界了
-      if (progressAnimation != null) {
-        double targetCurrentMoveDx = getPageMoveDx(moveDistanceX);
-        if (!progressAnimation!.springRange.isWithinRange(targetCurrentMoveDx)) {
-          return;
-        }
-      }
-
-      if (!currentSize.width.isInfinite &&
-          currentSize.width != 0 &&
-          !currentMoveDx.isInfinite) {
-        // 总滚动距离 / 可渲染内容container高度 = 当前页面index
-        // ~/是除法, 但返回整数
-        int currentIndex = (moveDistanceX + mStartDx) ~/ currentSize.width;
-        if (lastIndex != currentIndex) {
-          if (currentIndex < lastIndex) {
-            print('flutter动画流程:handleEvent[${event.actionName}], '
-                '$currentIndex vs. $lastIndex, shift下一页');
-            readerViewModel.shiftPage(PageIndex.next);
-            readerViewModel.onScrollingFinished(PageIndex.next);
-          } else if (currentIndex + 1 > lastIndex) {
-            print('flutter动画流程:handleEvent[${event.actionName}], '
-                '$currentIndex vs. $lastIndex, shift上一页');
-            readerViewModel.shiftPage(PageIndex.prev);
-            readerViewModel.onScrollingFinished(PageIndex.prev);
-          } else {
-            print('flutter动画流程:handleEvent[${event.actionName}], 不操作');
-          }
-        }
-
-        // 保存当前触摸的坐标, 接下来onDraw会用到
-        cacheCurrentTouchData(event.touchPosition);
-        // isTurnToNext = moveDistanceX < 0;
-        lastIndex = currentIndex;
-        // 更新currentMoveDx, drawBottomPage时候使用
-        if (!moveDistanceX.isInfinite && !currentMoveDx.isInfinite) {
-          currentMoveDx = getPageMoveDx(moveDistanceX);
-          print('flutter动画流程:handleEvent[${event.actionName}], '
-              '本次事件偏移量currentMoveDx = $currentMoveDx, '
-              'pixels = ${event.pixels}, '
-              'springRange = ${progressAnimation?.springRange}');
-        }
-      }
-    }
+    // if (!getCachedTouchData().dx.isInfinite && !eventStartPoint.dx.isInfinite) {
+    //   // 本次滑动偏移量，其实就是dy
+    //   double moveDistanceX = getMoveDistance(event.touchPosition.dx);
+    //   // 如果是中断动画, 判断是否越界了
+    //   if (progressAnimation != null) {
+    //     double targetCurrentMoveDx = getPageMoveDx(moveDistanceX);
+    //     if (!progressAnimation!.springRange.isWithinRange(targetCurrentMoveDx)) {
+    //       return;
+    //     }
+    //   }
+    //
+    //   if (!currentSize.width.isInfinite &&
+    //       currentSize.width != 0 &&
+    //       !currentMoveDx.isInfinite) {
+    //     // 总滚动距离 / 可渲染内容container高度 = 当前页面index
+    //     // ~/是除法, 但返回整数
+    //     int currentIndex = (moveDistanceX + mStartDx) ~/ currentSize.width;
+  //       if (lastIndex != currentIndex) {
+  //         if (currentIndex < lastIndex) {
+  //           print('flutter动画流程:handleEvent[${event.actionName}], '
+  //               '$currentIndex vs. $lastIndex, shift下一页');
+  //           readerViewModel.shiftPage(PageIndex.next);
+  //           readerViewModel.onScrollingFinished(PageIndex.next);
+  //         } else if (currentIndex + 1 > lastIndex) {
+  //           print('flutter动画流程:handleEvent[${event.actionName}], '
+  //               '$currentIndex vs. $lastIndex, shift上一页');
+  //           readerViewModel.shiftPage(PageIndex.prev);
+  //           readerViewModel.onScrollingFinished(PageIndex.prev);
+  //         } else {
+  //           print('flutter动画流程:handleEvent[${event.actionName}], 不操作');
+  //         }
+  //       }
+  //
+  //       // 保存当前触摸的坐标, 接下来onDraw会用到
+  //       cacheCurrentTouchData(event.touchPosition);
+  //       // isTurnToNext = moveDistanceX < 0;
+  //       lastIndex = currentIndex;
+  //       // 更新currentMoveDx, drawBottomPage时候使用
+  //       if (!moveDistanceX.isInfinite && !currentMoveDx.isInfinite) {
+  //         currentMoveDx = getPageMoveDx(moveDistanceX);
+  //         print('flutter动画流程:handleEvent[${event.actionName}], '
+  //             '本次事件偏移量currentMoveDx = $currentMoveDx, '
+  //             'pixels = ${event.pixels}, '
+  //             'springRange = ${progressAnimation?.springRange}');
+  //       }
+  //     }
+  //   }
   }
 
   double getMoveDistance(double eventDx) {

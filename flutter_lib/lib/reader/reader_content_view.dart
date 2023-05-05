@@ -329,7 +329,6 @@ class ReaderContentViewState
           _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
             pixels: pixels,
             page: page,
-            userScrollDirection: direction,
             onPageCentered: _disposePageDraw,
           ));
           if (indicator != null) {
@@ -702,7 +701,6 @@ class ReaderContentViewState
       if (newScroll) {
         assert(_drag == null);
         _drag = position.drag(details, _disposeDrag);
-        print('flutter翻页行为[dragStart], 创建: $_drag');
         assert(_drag != null);
         assert(_hold == null);
       } else {
@@ -721,7 +719,6 @@ class ReaderContentViewState
       if (newScroll) {
         assert(_hold == null || _drag == null);
         _drag?.update(details);
-        print('flutter翻页行为[dragUpdate], 更新后: $_drag');
       } else {
         onUpdateEvent(details);
       }
@@ -736,7 +733,6 @@ class ReaderContentViewState
       print("flutter动画流程[onDragEnd], 进行翻页操作 $details");
       if (newScroll) {
         assert(_hold == null || _drag == null);
-        print('flutter翻页行为[dragEnd], 准备结束: $_drag');
         _drag?.end(details);
         assert(_drag == null);
       } else {
@@ -749,7 +745,6 @@ class ReaderContentViewState
     print("flutter动画流程[onDragCancel]");
     if (newScroll) {
       assert(_hold == null || _drag == null);
-      print('flutter翻页行为[dragCancel], 取消 $_hold, $_drag');
       _hold?.cancel();
       _drag?.cancel();
       assert(_hold == null);
@@ -889,12 +884,11 @@ class ReaderContentViewState
   Future<void> _onPositionUpdate() async {
     assert(_contentPainter != null);
     if (newScroll) {
-      print('flutter翻页行为[_onPositionUpdate], 更新position = $position');
-      if (await _contentPainter!.canScroll(position.userScrollDirection)) {
+      print('flutter翻页行为[_onPositionUpdate], 更新position, pixels = ${position.pixels}, direction = ${position.pixelsDirection}');
+      if (await _contentPainter!.canScroll(position.pixelsDirection)) {
         _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
           pixels: position.pixels,
           page: position.page!,
-          userScrollDirection: position.userScrollDirection,
           onPageCentered: _disposePageDraw,
         ));
         invalidateContent();

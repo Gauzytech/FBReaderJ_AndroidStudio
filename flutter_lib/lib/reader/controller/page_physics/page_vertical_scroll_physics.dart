@@ -1,4 +1,5 @@
 import 'package:flutter/physics.dart';
+import 'package:flutter/src/rendering/viewport_offset.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
 
@@ -22,5 +23,10 @@ class PageVerticalScrollPhysics with BookPagePhysics {
   double getTargetPixels(
       BookPagePosition position, Tolerance tolerance, double velocity) {
     return 0;
+  }
+
+  @override
+  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed) {
+    return ScrollDirection.idle;
   }
 }

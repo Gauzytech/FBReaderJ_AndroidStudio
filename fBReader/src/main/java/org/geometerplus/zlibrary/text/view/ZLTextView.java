@@ -850,10 +850,12 @@ public abstract class ZLTextView extends ZLTextViewBase {
                 return true;
             case NEXT: {
                 final ZLTextWordCursor cursor = getEndCursor();
+                Timber.v("flutter翻页行为, canScroll%s, 当前cursor = %s", index.name(), cursor);
                 return cursor != null && !cursor.isNull() && !cursor.isEndOfText();
             }
             case PREV: {
                 final ZLTextWordCursor cursor = getStartCursor();
+                Timber.v("flutter翻页行为, canScroll%s, 当前cursor = %s", index.name(), cursor);
                 return cursor != null && !cursor.isNull() && !cursor.isStartOfText();
             }
         }

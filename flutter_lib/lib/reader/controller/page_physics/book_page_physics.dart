@@ -1,4 +1,5 @@
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import '../page_scroll/book_page_position.dart';
@@ -20,7 +21,7 @@ mixin BookPagePhysics {
   /// Used by [DragScrollPhase] and other user-driven activities to convert
   /// an offset in logical pixels as provided by the [DragUpdateDetails] into a
   /// delta to apply (subtract from the current position) using
-  /// [ReaderScrollStateDelegate.setPixels].
+  /// [ReaderScrollPhaseDelegate.setPixels].
   ///
   /// This is used by some [ReaderScrollPosition] subclasses to apply friction during
   /// overscroll situations.
@@ -33,4 +34,6 @@ mixin BookPagePhysics {
   /// may update to reflect an entirely unrelated scrollable.
   double applyPhysicsToUserOffset(ReaderScrollPosition position, double offset);
 
+  /// 计算模拟动画的[pixels]运动方向
+  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed);
 }
