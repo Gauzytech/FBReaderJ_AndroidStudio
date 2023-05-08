@@ -58,9 +58,9 @@ class PageRepository with PageRepositoryDelegate {
 
   Geometry get geometry => _bitmapManager.geometry;
 
-  PageRepository({required MethodChannel methodChannel}) {
+  PageRepository({required String methodChannelName}) {
     _nativeInterface = NativeInterface(
-      methodChannel: methodChannel,
+      methodChannel: MethodChannel(methodChannelName),
       delegate: this,
     );
   }

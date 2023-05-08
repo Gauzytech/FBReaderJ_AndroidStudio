@@ -59,14 +59,4 @@ class PageFlipPhysics with BookPagePhysics {
 
   @override
   String toString() => 'PageFlipPhysics';
-
-  @override
-  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed) {
-    final double target = getTargetPixels(position as BookPagePosition, tolerance, velocity);
-    double offset = position.pixels - target;
-    if(reversed) {
-      offset = -offset;
-    }
-    return offset > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse;
-  }
 }

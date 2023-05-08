@@ -5,8 +5,6 @@ import '../reader/animation/model/selection_cursor.dart';
 
 abstract class ContentSelectionDelegate {
 
-  void updateSelectionState(bool enable);
-
   void showText(String text);
 
   void setSelectionHighlight(

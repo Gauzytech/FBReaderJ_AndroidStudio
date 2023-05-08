@@ -1,10 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/base_animation_page.dart';
 import 'package:flutter_lib/reader/animation/controller_animation_with_listener_number.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
-import 'dart:ui' as ui;
 
 /// 覆盖动画 ///
 class CoverPageAnimation extends BaseAnimationPage {
@@ -25,7 +27,14 @@ class CoverPageAnimation extends BaseAnimationPage {
 
   AnimationStatusListener? statusListener;
 
-  CoverPageAnimation({required ReaderViewModel readerViewModel, required AnimationController animationController}) : super(readerViewModel: readerViewModel, animationController: animationController);
+  CoverPageAnimation({
+    required ReaderViewModel readerViewModel,
+    required AnimationController animationController,
+    required BookPageScrollContext scrollContext,
+  }) : super(
+            readerViewModel: readerViewModel,
+            animationController: animationController,
+            scrollContext: scrollContext);
 
   @override
   Animation<Offset>? getCancelAnimation(
@@ -88,7 +97,8 @@ class CoverPageAnimation extends BaseAnimationPage {
       currentAnimation?.addStatusListener(statusListener!);
     }
 
-    if (statusListener != null && !(controller as AnimationControllerWithListenerNumber)
+    if (statusListener != null &&
+        !(controller as AnimationControllerWithListenerNumber)
             .statusListeners
             .contains(statusListener)) {
       currentAnimation?.addStatusListener(statusListener!);

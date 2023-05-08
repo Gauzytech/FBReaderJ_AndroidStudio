@@ -40,6 +40,10 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
   @override
   bool get hasViewportDimension => _viewportDimension != null;
 
+  @override
+  double get scrollStartPixels => _scrollStartPixels;
+  double _scrollStartPixels = 0;
+
   /// 终止当前state然后开始一个[HoldScrollPhase].
   ScrollHoldController hold(VoidCallback holdCancelCallback);
 
@@ -87,6 +91,7 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     if (other.hasPixels) {
       _pixels = other.pixels;
     }
+    _scrollStartPixels = other.scrollStartPixels;
     if (other.hasViewportDimension) {
       _viewportDimension = other.viewportDimension;
     }
@@ -100,6 +105,7 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     }
     // todo setIgnorePointer用法
     // context.setIgnorePointer(scrollState!.shouldIgnorePointer);
+    // todo isScrollingNotifier用法
     isScrollingNotifier.value = scrollPhase!.isScrolling;
   }
 
@@ -135,6 +141,7 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
       if (wasScrolling && !newPhase.isScrolling) {
         // todo 发送一个通知: 之前的scroll停止了
         // didEndScroll();
+        _onEndScroll();
       }
       _scrollPhase!.dispose();
     } else {
@@ -150,7 +157,20 @@ abstract class ReaderScrollPosition extends ReaderViewportOffset {
     if (!wasScrolling && _scrollPhase!.isScrolling) {
       // todo 发送一个通知: 新的scroll开始了
       // didStartScroll();
+      _onStartScroll();
     }
+  }
+
+  /// 在[beginScrollPhase]调用, 表示滚动行为开始了
+  void _onStartScroll() {
+    print('flutter翻页行为:scroll状态, onStartScroll');
+    _scrollStartPixels = pixels;
+  }
+
+  /// 在[beginScrollPhase]调用, 表示滚动行为结束了.
+  void _onEndScroll() {
+    print('flutter翻页行为:scroll状态, _onEndScroll');
+    _scrollStartPixels = 0;
   }
 
   @override

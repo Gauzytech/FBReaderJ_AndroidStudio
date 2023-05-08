@@ -34,10 +34,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
   ScrollDirection get userScrollDirection => _userScrollDirection;
   ScrollDirection _userScrollDirection = ScrollDirection.idle;
 
-  @override
-  ScrollDirection get pixelsDirection => _pixelsDirection;
-  ScrollDirection _pixelsDirection = ScrollDirection.idle;
-
   /// Velocity from a previous scrollState temporarily held by [hold] to potentially
   /// transfer to a next scrollState.
   double _heldPreviousPhaseVelocity = 0.0;
@@ -63,7 +59,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     }
     scrollPhase!.updateDelegate(this);
     _userScrollDirection = other._userScrollDirection;
-    _pixelsDirection = other._pixelsDirection;
     assert(_currentDrag == null);
     if (other._currentDrag != null) {
       _currentDrag = other._currentDrag;
@@ -90,7 +85,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
   @override
   void applyUserOffset(double delta) {
     updateUserScrollDirection(delta > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse);
-    updatePixelsDirection(delta > 0.0 ? ScrollDirection.forward : ScrollDirection.reverse);
     setPixels(pixels - physics.applyPhysicsToUserOffset(this, delta));
   }
 
@@ -114,7 +108,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
         physics.createBallisticSimulation(this, velocity);
     if (simulation != null) {
       bool reversed = axisDirectionIsReversed(axisDirection);
-      updatePixelsDirection(physics.getSimulationPixelsDirection(this, velocity, reversed));
       beginScrollPhase(BallisticScrollPhase(this, simulation, context.vsync));
     } else {
       print('flutter翻页行为[goBallistic]: go idle');
@@ -132,13 +125,6 @@ class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     _userScrollDirection = value;
     // todo 发送一个scrollDirection更新的通知
     // didUpdateScrollDirection(value);
-  }
-
-  void updatePixelsDirection(ScrollDirection value) {
-    if (_pixelsDirection == value) {
-      return;
-    }
-    _pixelsDirection = value;
   }
 
   @override

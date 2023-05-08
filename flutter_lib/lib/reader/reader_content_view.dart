@@ -4,7 +4,6 @@ import 'package:ele_progress/ele_progress.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/interface/content_selection_delegate.dart';
 import 'package:flutter_lib/model/base_view_model.dart';
@@ -67,8 +66,6 @@ class ReaderContentViewState
   // 当前翻页模式的滚动物理行为
   BookPagePhysics? _physics;
 
-  final _methodChannel = const MethodChannel('platform_channel_methods');
-
   // 翻页倒计时
   Timer? _timer;
   static const int timeFactorLimit = 50;
@@ -83,7 +80,7 @@ class ReaderContentViewState
   double _bottomEndIndicatorOpacity = 0;
 
   BookContentPainter? _contentPainter;
-  final HighlightPainter _highlightPainter = HighlightPainter();
+  final HighlightPainter _highlightPainter;
 
   final GlobalKey<RawGestureDetectorState> _gestureDetectorKey =
       GlobalKey<RawGestureDetectorState>();
@@ -91,11 +88,17 @@ class ReaderContentViewState
       const <Type, GestureRecognizerFactory>{};
   AnimationController? animationController;
 
-  PageRepository? _pageRepository;
+  final PageRepository _pageRepository;
   late handlers.SelectionHandler _selectionHandler;
 
   BookPageController get _effectiveController => widget.controller!;
   ReaderPageViewModel? _readerPageViewModel;
+
+  ReaderContentViewState()
+      : _pageRepository = PageRepository(
+          methodChannelName: "platform_channel_methods",
+        ),
+        _highlightPainter = HighlightPainter();
 
   @override
   void didChangeDependencies() {
@@ -124,11 +127,9 @@ class ReaderContentViewState
 
   @override
   void onInitState() {
-    // handler必须在这里初始化, 因为里面注册了原生交互的方法, 只能执行一次
     print('flutter生命周期, onInitState');
-    _pageRepository = PageRepository(methodChannel: _methodChannel);
     _selectionHandler = handlers.SelectionHandler(
-      readerContentHandler: _pageRepository!,
+      readerContentHandler: _pageRepository,
       topIndicatorKey: topIndicatorKey,
       bottomIndicatorKey: bottomIndicatorKey,
     );
@@ -164,7 +165,7 @@ class ReaderContentViewState
           viewModel: viewModel,
           scrollContext: this,
           selectionDelegate: this,
-          pageRepository: _pageRepository!);
+          pageRepository: _pageRepository);
       _contentPainter = ContentPainter(pageViewModel: _readerPageViewModel!);
     }
 
@@ -325,18 +326,31 @@ class ReaderContentViewState
         // todo
         print(
             '跳页, jumpToPage, event = $direction, touchPosition = $touchPosition');
-        if (await _contentPainter!.canScroll(direction)) {
-          _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
-            pixels: pixels,
-            page: page,
-            onPageCentered: _disposePageDraw,
-          ));
-          if (indicator != null) {
+        if (indicator != null) {
+          if (await _effectiveController.canScrollPage(direction: direction)) {
+            _readerPageViewModel?.currentAnimationPage
+                .onPagePreDraw(PagePaintMetaData(
+              pixels: pixels,
+              page: page,
+              onPageCentered: _disposePageDraw,
+            ));
             setState(() {
               _selectionHandler.crossPageCount++;
             });
-          } else {
-            invalidateContent();
+          }
+        } else {
+          if (eventAction == EventAction.noAnimationForward) {
+            // next page
+            _effectiveController.nextPage(
+              _readerPageViewModel!.currentAnimationPage,
+              _disposePageDraw,
+            );
+          } else if (eventAction == EventAction.noAnimationBackward) {
+            // prev page
+            _effectiveController.previousPage(
+              _readerPageViewModel!.currentAnimationPage,
+              _disposePageDraw,
+            );
           }
         }
       } else {
@@ -498,11 +512,6 @@ class ReaderContentViewState
         _selectionHandler.updateSelectionMenuPosition(null);
       });
     }
-  }
-
-  @override
-  void updateSelectionState(bool enable) {
-    // _selectionHandler.updateSelectionState(enable);
   }
 
   Widget _buildHighlightLayer(double width, double height) {
@@ -684,7 +693,7 @@ class ReaderContentViewState
         assert(_drag == null);
         assert(_hold == null);
         _hold = position.hold(_disposeHold);
-        print('flutter翻页行为[dragDown], 执行了$_hold');
+        print('flutter翻页行为[dragDown], 执行了$_hold, pixel = ${position.pixels}');
       }
     }
   }
@@ -781,7 +790,6 @@ class ReaderContentViewState
   void _handleLongPressStart(LongPressStartDetails details) {
     print('flutter触摸事件, longPressStart');
     if (_highlightPainter.hasSelection) {
-      // updateSelectionState(true);
       // 如果划选模式已经激活，隐藏划选弹窗
       hideSelectionMenu();
     }
@@ -819,7 +827,6 @@ class ReaderContentViewState
       _selectionHandler.onTagUp(details);
       hideSelectionMenu();
       setSelectionHighlight(null, null);
-      // updateSelectionState(false);
     } else {
       jumpToPage(details.localPosition, null);
     }
@@ -848,7 +855,7 @@ class ReaderContentViewState
     final BookPagePosition? oldPosition = _position;
     if (oldPosition != null) {
       oldPosition.removeListener(_onPositionUpdate);
-      _effectiveController.detach(oldPosition);
+      _effectiveController.detach();
       // It's important that we not dispose the old position until after the
       // viewport has had a chance to unregister its listeners from the old
       // position. So, schedule a microtask to do it.
@@ -858,7 +865,7 @@ class ReaderContentViewState
         _physics!, this, oldPosition);
     assert(_position != null);
     position.addListener(_onPositionUpdate);
-    _effectiveController.attach(position);
+    _effectiveController.attach(position, _pageRepository!);
   }
 
   @override
@@ -882,23 +889,11 @@ class ReaderContentViewState
   }
 
   Future<void> _onPositionUpdate() async {
-    assert(_contentPainter != null);
-    if (newScroll) {
-      print('flutter翻页行为[_onPositionUpdate], 更新position, pixels = ${position.pixels}, direction = ${position.pixelsDirection}');
-      if (await _contentPainter!.canScroll(position.pixelsDirection)) {
-        _contentPainter!.onPagePaintMetaUpdate(PagePaintMetaData(
-          pixels: position.pixels,
-          page: position.page!,
-          onPageCentered: _disposePageDraw,
-        ));
-        invalidateContent();
-      } else {
-        print('flutter翻页行为[_onPagePaintMetaUpdate], 重置坐标');
-        _disposePageDraw();
-      }
-    } else {
-      print('flutter翻页行为, 忽略, 此处需要重置坐标');
-      // _disposePageDraw();
-    }
+    print(
+        'flutter翻页行为[_onPositionUpdate], 更新position, pixels = ${position.pixels}, direction = ${position.userScrollDirection}');
+    _effectiveController.animateToPage(
+      _readerPageViewModel!.currentAnimationPage,
+      _disposePageDraw,
+    );
   }
 }

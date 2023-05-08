@@ -64,16 +64,11 @@ abstract class ReaderViewportOffset extends ChangeNotifier {
   ///  b. 翻页滚动(从右往左划): 书页内容显示右边部分，下一页
   ScrollDirection get userScrollDirection;
 
-  /// [pixels]的滚动方向
-  ///
-  /// 1. [ScrollDirection.idle], 表示pixel = 0
-  /// 2. [ScrollDirection.forward], 移动距离(primaryDelta) = 正数
-  ///  a. 垂直滚动(从上往下): 书页内容显示上边部分，上一页
-  ///  b. 翻页滚动(从左往右): 书页内容显示左边部分，上一页
-  /// 3. [ScrollDirection.reverse], 移动距离(primaryDelta) = 负数
-  ///  a. 垂直滚动(从下往上划): 书页内容显示下边部分，下一页
-  ///  b. 翻页滚动(从右往左划): 书页内容显示右边部分，下一页
-  ScrollDirection get pixelsDirection;
+  /// 本次滚动的起点坐标, 不同滚动状态导致startPixels不同.
+  /// 滚动状态分两种:
+  /// 1. 静止状态滚动
+  /// 2. 中断进行中的滚动，然后开始下一次滚动
+  double get scrollStartPixels;
 
   @override
   String toString() {

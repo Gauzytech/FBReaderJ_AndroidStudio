@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 
@@ -39,9 +38,11 @@ class SlidePageAnimation extends BaseAnimationPage {
   SlidePageAnimation(
     ReaderViewModel viewModel,
     AnimationController animationController,
+    BookPageScrollContext scrollContext,
   ) : super(
             readerViewModel: viewModel,
-            animationController: animationController) {
+            animationController: animationController,
+            scrollContext: scrollContext) {
     physics = const ClampingScrollPhysics();
     _setContentViewModel(viewModel);
   }

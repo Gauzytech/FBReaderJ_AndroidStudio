@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
 import '../../model/view_model_reader.dart';
-import '../../utils/screen_util.dart';
 import '../controller/touch_event.dart';
 
 enum ANIMATION_TYPE { TYPE_CONFIRM, TYPE_CANCEL, TYPE_FILING }
@@ -14,16 +14,28 @@ abstract class BaseAnimationPage {
 
   Size get currentSize => _currentSize!;
   Size? _currentSize;
+
 //  @protected
 //  ReaderContentViewModel contentModel=ReaderContentViewModel.instance;
 
   ReaderViewModel readerViewModel;
 
+  BookPageScrollContext get scrollContext => _scrollContext;
+  final BookPageScrollContext _scrollContext;
+
+  PagePaintMetaData get metaData => _metaData;
+  final PagePaintMetaData _metaData;
+
 //  void setData(ReaderChapterPageContentConfig prePageConfig,ReaderChapterPageContentConfig currentPageConfig,ReaderChapterPageContentConfig nextPageConfig){
 //    currentPageContentConfig=pageConfig;
 //  }
 
-  BaseAnimationPage({required this.readerViewModel, required this.animationController});
+  BaseAnimationPage({
+    required this.readerViewModel,
+    required this.animationController,
+    required BookPageScrollContext scrollContext,
+  })  : _scrollContext = scrollContext,
+        _metaData = PagePaintMetaData();
 
   void setSize(Size size) {
     _currentSize = size;
@@ -39,7 +51,9 @@ abstract class BaseAnimationPage {
 
   void onTouchEvent(TouchEvent event);
 
-  void onPagePreDraw(PagePaintMetaData metaData) {}
+  void onPagePreDraw(PagePaintMetaData metaData) {
+    _metaData.apply(metaData);
+  }
 
   void onPageDraw(Canvas canvas) {}
 

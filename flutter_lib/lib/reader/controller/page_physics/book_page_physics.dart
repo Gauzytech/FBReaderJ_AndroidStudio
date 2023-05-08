@@ -33,7 +33,4 @@ mixin BookPagePhysics {
   /// reference to it to use later, as the values may update, may not update, or
   /// may update to reflect an entirely unrelated scrollable.
   double applyPhysicsToUserOffset(ReaderScrollPosition position, double offset);
-
-  /// 计算模拟动画的[pixels]运动方向
-  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed);
 }

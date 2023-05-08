@@ -1,61 +1,42 @@
-
+import 'package:flutter/rendering.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
+import 'package:flutter_lib/model/page_index.dart';
+import 'package:flutter_lib/reader/animation/base_animation_page.dart';
+import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/controller/page_physics/book_page_physics.dart';
+import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/reader_content_view.dart';
+import 'package:flutter_lib/utils/screen_util.dart';
 
 mixin BookPageController {
 
-  /// Animates the controlled [PageView] from the current page to the given page.
-  ///
-  /// The animation lasts for the given duration and follows the given curve.
-  /// The returned [Future] resolves when the animation completes.
-  ///
-  /// The `duration` and `curve` arguments must not be null.
-  Future<void> animateToPage(int page);
+  /// 将受控的 [ReaderContentView]根据 [BookPagePosition]从当前页面滚动到上一页或者下一页 - 有滚动动画.
+  Future<void> animateToPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  );
 
-  /// Changes which page is displayed in the controlled [PageView].
-  ///
-  /// Jumps the page position from its current value to the given value,
-  /// without animation, and without checking if the new value is in range.
+  /// 将受控的 [ReaderContentView]根据 [page]从当前页面滚动到上一页或者下一页 - 没有滚动动画.
   void jumpToPage(int page);
 
-  /// Animates the controlled [PageView] to the next page.
-  ///
-  /// The animation lasts for the given duration and follows the given curve.
-  /// The returned [Future] resolves when the animation completes.
-  ///
-  /// The `duration` and `curve` arguments must not be null.
-  Future<void> nextPage();
+  /// 将受控的 [ReaderContentView]从当前页面滚动到下一页 - 没有滚动动画.
+  Future<void> nextPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  );
 
-  /// Animates the controlled [PageView] to the previous page.
-  ///
-  /// The animation lasts for the given duration and follows the given curve.
-  /// The returned [Future] resolves when the animation completes.
-  ///
-  /// The `duration` and `curve` arguments must not be null.
-  Future<void> previousPage();
+  /// 将受控的 [ReaderContentView]从当前页面滚动到上一页 - 没有滚动动画.
+  Future<void> previousPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  );
 
   /// todo 翻译
-  /// 初始化[BookPagePosition]
-  /// Creates a [BookPagePosition] for use by [ReaderContentView].
+  /// 创建供 [ReaderContentView] 使用的 [BookPagePosition]
   ///
-  /// Subclasses can override this function to customize the [ScrollPosition]
-  /// used by the scrollable widgets they control. For example, [PageController]
-  /// overrides this function to return a page-oriented scroll position
-  /// subclass that keeps the same page visible when the scrollable widget
-  /// resizes.
-  ///
-  /// By default, returns a [ScrollPositionWithSingleContext].
-  ///
-  /// The arguments are generally passed to the [ScrollPosition] being created:
-  ///
-  ///  * `physics`: An instance of [ScrollPhysics] that determines how the
-  ///    [ScrollPosition] should react to user interactions, how it should
-  ///    simulate scrolling when released or flung, etc. The value will not be
-  ///    null. It typically comes from the [ScrollView] or other widget that
-  ///    creates the [Scrollable], or, if none was provided, from the ambient
-  ///    [ScrollConfiguration].
+  ///  * `physics`:  [ScrollPhysics] 的一个实例, 它决定了[ScrollPosition]如何对用户交互做出反应.
+  ///    如何在用户手指松开或甩出的时，进行模拟滚动.
   ///  * `context`: A [ScrollContext] used for communicating with the object
   ///    that is to own the [ScrollPosition] (typically, this is the
   ///    [Scrollable] itself).
@@ -65,68 +46,123 @@ mixin BookPageController {
   ///    needs to recreate the [ScrollPosition] object. It is null the first
   ///    time the [ScrollPosition] is created.
   BookPagePosition createBookPagePosition(
-    BookPagePhysics bookPagePhysics,
+    BookPagePhysics physics,
     BookPageScrollContext context,
     BookPagePosition? oldPosition,
   );
 
-  /// Register the given position with this controller.
+  /// 使用此控制器注册[position]。
   ///
-  /// After this function returns, the [animateTo] and [jumpTo] methods on this
-  /// controller will manipulate the given position.
-  void attach(BookPagePosition position);
+  /// 此函数返回后，此函数上的 [animateTo] 和 [jumpTo] 方法
+  /// 控制器将操纵[position]。
+  void attach(BookPagePosition position, PageRepository pageRepository);
 
-  void detach(BookPagePosition oldPosition);
+  void detach();
+
+  /// 判断是否可以滚动到上一页/下一页
+  Future<bool> canScrollPage({ScrollDirection? direction});
 }
 
 class BookPageControllerImpl with BookPageController {
 
   BookPagePosition? _bookPagePosition;
+
   BookPagePosition get pagePosition {
     assert(_bookPagePosition != null, 'BookPageController not attached yet');
     return _bookPagePosition!;
   }
 
+  PageRepository? _pageRepository;
+
   BookPageControllerImpl();
 
   @override
-  Future<void> animateToPage(int page) {
-    return Future<void>.value();
+  Future<void> animateToPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  ) async {
+    if (await canScrollPage()) {
+      animationPage.onPagePreDraw(PagePaintMetaData(
+        pixels: pagePosition.pixels,
+        page: pagePosition.page!,
+        onPageCentered: onPageCentered,
+      ));
+    } else {
+      print('flutter翻页行为[_onPagePaintMetaUpdate], 重置坐标');
+      onPageCentered();
+    }
   }
 
   @override
-  void jumpToPage(int page) {
+  void jumpToPage(int page) {}
+
+  @override
+  Future<void> nextPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  ) async {
+    if (await canScrollPage(direction: ScrollDirection.reverse)) {
+      animationPage.onPagePreDraw(PagePaintMetaData(
+        pixels: ScreenUtil().screenWidth,
+        page: 1,
+        onPageCentered: onPageCentered,
+      ));
+    }
   }
 
   @override
-  Future<void> nextPage() {
-    return Future<void>.value();
-  }
-
-  @override
-  Future<void> previousPage() {
-    return Future<void>.value();
+  Future<void> previousPage(
+    BaseAnimationPage animationPage,
+    VoidCallback onPageCentered,
+  ) async {
+    if (await canScrollPage(direction: ScrollDirection.reverse)) {
+      animationPage.onPagePreDraw(PagePaintMetaData(
+        pixels: ScreenUtil().screenWidth,
+        page: -1,
+        onPageCentered: onPageCentered,
+      ));
+    }
   }
 
   @override
   BookPagePosition createBookPagePosition(
-    BookPagePhysics bookPagePhysics,
+    BookPagePhysics physics,
     BookPageScrollContext context,
     BookPagePosition? oldPosition,
   ) =>
       BookPagePosition(
         context: context,
-        physics: bookPagePhysics,
+        physics: physics,
         oldPosition: oldPosition,
       );
 
   @override
-  void attach(BookPagePosition position) {
+  void attach(BookPagePosition position, PageRepository pageRepository) {
+    print('flutter生命周期, attach');
     _bookPagePosition = position;
+    _pageRepository = pageRepository;
   }
 
   @override
-  void detach(BookPagePosition oldPosition) {
+  void detach() {
+    print('flutter生命周期, detach');
     _bookPagePosition = null;
+    _pageRepository = null;
+  }
+
+  @override
+  Future<bool> canScrollPage({ScrollDirection? direction}) async {
+    if (pagePosition.scrollStartPixels != 0) return true;
+    var scrollDirection = direction ?? pagePosition.userScrollDirection;
+    assert(_pageRepository != null, "BookPageController not attached yet");
+
+    switch (scrollDirection) {
+      case ScrollDirection.idle:
+        return false;
+      case ScrollDirection.forward:
+        return _pageRepository!.canScroll(PageIndex.prev);
+      case ScrollDirection.reverse:
+        return _pageRepository!.canScroll(PageIndex.next);
+    }
   }
 }

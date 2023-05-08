@@ -15,9 +15,6 @@ mixin BookContentPainter {
 
   Offset lastTouchPosition();
 
-  void onPagePaintMetaUpdate(PagePaintMetaData data);
-
-  Future<bool> canScroll(ScrollDirection scrollDirection);
 }
 
 class ContentPainter extends CustomPainter with BookContentPainter {
@@ -44,11 +41,6 @@ class ContentPainter extends CustomPainter with BookContentPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
     return _pageViewModel.shouldRepaint(oldDelegate, this);
-  }
-
-  @override
-  Future<bool> canScroll(ScrollDirection scrollDirection) async {
-    return _pageViewModel.canScrollPage(scrollDirection);
   }
 
   /// 缓存触摸事件判断滑动方向
@@ -83,7 +75,4 @@ class ContentPainter extends CustomPainter with BookContentPainter {
   Offset lastTouchPosition() {
     return currentTouchData?.touchPosition ?? Offset.zero;
   }
-
-  @override
-  void onPagePaintMetaUpdate(PagePaintMetaData data) => _pageViewModel.onPagePreDraw(data);
 }

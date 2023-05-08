@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
@@ -67,14 +68,15 @@ class PageTurnAnimation extends BaseAnimationPage {
   NRTextStyle? _myTextStyle;
   int _myWordHeight = -1;
   NRTextMetrics? _myMetrics;
-  final PagePaintMetaData _metaData = PagePaintMetaData();
 
   PageTurnAnimation(
     ReaderViewModel viewModel,
     AnimationController animationController,
+    BookPageScrollContext scrollContext,
   ) : super(
             readerViewModel: viewModel,
-            animationController: animationController) {
+            animationController: animationController,
+            scrollContext: scrollContext) {
     _setContentViewModel(viewModel);
   }
 
@@ -395,7 +397,7 @@ class PageTurnAnimation extends BaseAnimationPage {
   @override
   void onPagePreDraw(PagePaintMetaData metaData) {
     print('flutter翻页行为[onPagePreDraw], $metaData');
-    _metaData.apply(metaData);
+    super.onPagePreDraw(metaData);
     // 如果是整数，代表内容已经居中对齐显示, 通知缓存切换书页
     if (metaData.page % 1 == 0) {
       if (metaData.page > 0) {
@@ -408,16 +410,16 @@ class PageTurnAnimation extends BaseAnimationPage {
         readerViewModel.onScrollingFinished(PageIndex.prev);
       }
     }
-    // todo 在这里刷新contentPainter
+    scrollContext.invalidateContent();
   }
 
   @override
   void onPageDraw(ui.Canvas canvas) {
     // print('flutter翻页行为:onDraw, $_metaData');
     // pixels 负数: 往左滚动, 正数: 往右滚动
-    double actualOffsetX = _metaData.pixels < 0
-        ? _metaData.pixels.abs() % currentSize.width
-        : -(_metaData.pixels % currentSize.width);
+    double actualOffsetX = metaData.pixels < 0
+        ? metaData.pixels.abs() % currentSize.width
+        : -(metaData.pixels % currentSize.width);
     _onPageDrawInternal(canvas, actualOffsetX);
   }
 
@@ -468,7 +470,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         print('flutter翻页行为:onDraw[只绘制current], actualOffsetX = $actualOffsetX');
         _resetData();
         print('flutter翻页行为, onPageCentered 重置坐标');
-        _metaData.onPageCentered?.call();
+        metaData.onPageCentered?.call();
         // readerViewModel.preloadAdjacentPage();
       }
 
@@ -558,8 +560,6 @@ class PageTurnAnimation extends BaseAnimationPage {
     double dialCanvasRadius = radius - 0.8 * unit;
     var lines = 8;
     for (int i = 0; i < lines; i++) {
-      // var x1 = dialCanvasRadius - (i % 5 == 0 ? 0.85 * unit : 1 * unit);
-      // var x2 = dialCanvasRadius - (i % 5 == 0 ? 2 * unit : 1.67 * unit);
       var x1 = dialCanvasRadius;
       var x2 = dialCanvasRadius * 0.5;
       canvas.drawLine(Offset(x1, 0), Offset(x2, 0), _loadingPaint);
@@ -572,7 +572,7 @@ class PageTurnAnimation extends BaseAnimationPage {
       PaintDataSrc paintData, String from,
       {bool isStable = false}) {
     var time = now();
-    print('flutter_perf[$from], 开始画第${paintData.data!.length}行, 开始时间: $time');
+    print('flutter_perf[$from], 开始绘制第${paintData.data!.length}行, 开始时间: $time');
     for (int i = 0; i < paintData.data!.length; i++) {
       LinePaintData lineInfo = paintData.data![i];
       // 保存一行里所有需要绘制的text元素

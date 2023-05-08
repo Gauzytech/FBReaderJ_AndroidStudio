@@ -24,9 +24,4 @@ class PageVerticalScrollPhysics with BookPagePhysics {
       BookPagePosition position, Tolerance tolerance, double velocity) {
     return 0;
   }
-
-  @override
-  ScrollDirection getSimulationPixelsDirection(ReaderScrollPosition position, double velocity, bool reversed) {
-    return ScrollDirection.idle;
-  }
 }
