@@ -243,63 +243,63 @@ class ReaderContentViewState
     animationController?.dispose();
     viewModel?.dispose();
     _cancelTimer();
-    _pageRepository?.tearDown();
+    _pageRepository.tearDown();
     _position?.removeListener(_onPositionUpdate);
     super.dispose();
   }
 
-  void onDragStart(DragStartDetails detail) {
-    // 如果动画正在进行, 直接忽略event
-    if (!_contentPainter!.isDuplicateEvent(
-      EventAction.dragStart,
-      detail.localPosition,
-    )) {
-      _contentPainter?.setCurrentTouchEvent(
-        TouchEvent.fromOnDown(
-            EventAction.dragStart, detail.localPosition, position.pixels),
-      );
-      _contentPainter?.startCurrentTouchEvent(null);
-      invalidateContent();
-    }
-  }
+  // void onDragStart(DragStartDetails detail) {
+  //   // 如果动画正在进行, 直接忽略event
+  //   if (!_contentPainter!.isDuplicateEvent(
+  //     EventAction.dragStart,
+  //     detail.localPosition,
+  //   )) {
+  //     _contentPainter?.setCurrentTouchEvent(
+  //       TouchEvent.fromOnDown(
+  //           EventAction.dragStart, detail.localPosition, position.pixels),
+  //     );
+  //     _contentPainter?.startCurrentTouchEvent(null);
+  //     invalidateContent();
+  //   }
+  // }
 
-  Future<void> onUpdateEvent(DragUpdateDetails detail) async {
-    if (!_contentPainter!.isDuplicateEvent(
-      EventAction.move,
-      detail.localPosition,
-    )) {
-      TouchEvent event = TouchEvent.fromOnUpdate(
-          EventAction.move, detail.localPosition, position.pixels);
-      _contentPainter?.setCurrentTouchEvent(event);
-      // 检查上一页/下一页是否存在
-      if (await _readerPageViewModel!.canScroll(event)) {
-        if (_contentPainter?.startCurrentTouchEvent(event) == true) {
-          invalidateContent();
-        } else {
-          print('flutter动画流程:忽略onUpdate: ${detail.localPosition}');
-        }
-      }
-    }
-  }
+  // Future<void> onUpdateEvent(DragUpdateDetails detail) async {
+  //   if (!_contentPainter!.isDuplicateEvent(
+  //     EventAction.move,
+  //     detail.localPosition,
+  //   )) {
+  //     TouchEvent event = TouchEvent.fromOnUpdate(
+  //         EventAction.move, detail.localPosition, position.pixels);
+  //     _contentPainter?.setCurrentTouchEvent(event);
+  //     // 检查上一页/下一页是否存在
+  //     if (await _readerPageViewModel!.canScroll(event)) {
+  //       if (_contentPainter?.startCurrentTouchEvent(event) == true) {
+  //         invalidateContent();
+  //       } else {
+  //         print('flutter动画流程:忽略onUpdate: ${detail.localPosition}');
+  //       }
+  //     }
+  //   }
+  // }
 
-  Future<void> onEndEvent(DragEndDetails detail) async {
-    if (!_contentPainter!.isDuplicateEvent(
-      EventAction.dragEnd,
-      _contentPainter!.lastTouchPosition(),
-    )) {
-      TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
-          EventAction.dragEnd,
-          _contentPainter!.lastTouchPosition(),
-          detail,
-          position.pixels);
-      _contentPainter?.setCurrentTouchEvent(event);
-      // 检查上一页/下一页是否存在
-      if (await _readerPageViewModel!.canScroll(event)) {
-        _contentPainter?.startCurrentTouchEvent(event);
-        invalidateContent();
-      }
-    }
-  }
+  // Future<void> onEndEvent(DragEndDetails detail) async {
+  //   if (!_contentPainter!.isDuplicateEvent(
+  //     EventAction.dragEnd,
+  //     _contentPainter!.lastTouchPosition(),
+  //   )) {
+  //     TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
+  //         EventAction.dragEnd,
+  //         _contentPainter!.lastTouchPosition(),
+  //         detail,
+  //         position.pixels);
+  //     _contentPainter?.setCurrentTouchEvent(event);
+  //     // 检查上一页/下一页是否存在
+  //     if (await _readerPageViewModel!.canScroll(event)) {
+  //       _contentPainter?.startCurrentTouchEvent(event);
+  //       invalidateContent();
+  //     }
+  //   }
+  // }
 
   /// 根据点击区域实现无动画翻页
   Future<void> jumpToPage(
@@ -323,7 +323,7 @@ class ReaderContentViewState
           page = -1;
         }
 
-        // todo
+        // todo 跨页划选文字不显示
         print(
             '跳页, jumpToPage, event = $direction, touchPosition = $touchPosition');
         if (indicator != null) {
@@ -547,6 +547,7 @@ class ReaderContentViewState
               ),
               backgroundColor: Colors.grey,
               format: (progress) {
+                print('跨页, ${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}');
                 return '${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}';
               }),
         ),
@@ -712,9 +713,10 @@ class ReaderContentViewState
         _drag = position.drag(details, _disposeDrag);
         assert(_drag != null);
         assert(_hold == null);
-      } else {
-        onDragStart(details);
       }
+      // else {
+      //   onDragStart(details);
+      // }
     }
   }
 
@@ -728,9 +730,10 @@ class ReaderContentViewState
       if (newScroll) {
         assert(_hold == null || _drag == null);
         _drag?.update(details);
-      } else {
-        onUpdateEvent(details);
       }
+      // else {
+      //   onUpdateEvent(details);
+      // }
     }
   }
 
@@ -744,9 +747,10 @@ class ReaderContentViewState
         assert(_hold == null || _drag == null);
         _drag?.end(details);
         assert(_drag == null);
-      } else {
-        onEndEvent(details);
       }
+      // else {
+      //   onEndEvent(details);
+      // }
     }
   }
 
@@ -865,7 +869,7 @@ class ReaderContentViewState
         _physics!, this, oldPosition);
     assert(_position != null);
     position.addListener(_onPositionUpdate);
-    _effectiveController.attach(position, _pageRepository!);
+    _effectiveController.attach(position, _pageRepository);
   }
 
   @override
