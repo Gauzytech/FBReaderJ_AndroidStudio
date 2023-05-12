@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lib/interface/book_page_scroll_context.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
+import 'package:flutter_lib/reader/model/page_paint_metadata.dart';
 
 import '../../model/view_model_reader.dart';
 import '../controller/touch_event.dart';

@@ -1,5 +1,7 @@
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
+
+import 'package:flutter_lib/reader/model/paint/line_paint_data.dart';
+
+import 'style/style_models/nr_text_style_collection.dart';
 
 class PagePaintData {
   List<LinePaintData> get data => _linePaintData;

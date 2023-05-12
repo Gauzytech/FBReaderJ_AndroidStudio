@@ -47,7 +47,6 @@ import org.geometerplus.zlibrary.text.view.ZLTextHyperlinkRegionSoul;
 import org.geometerplus.zlibrary.text.view.ZLTextImageRegionSoul;
 import org.geometerplus.zlibrary.text.view.ZLTextPosition;
 import org.geometerplus.zlibrary.text.view.ZLTextRegion;
-import org.geometerplus.zlibrary.text.view.ZLTextVideoRegionSoul;
 import org.geometerplus.zlibrary.text.view.ZLTextView;
 import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
 import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
@@ -1075,7 +1074,7 @@ public final class FBView extends ZLTextView {
                             moveSelectionCursorToFlutter(cursor, x, y, "onFingerLongPress");
                         }
 
-                        return SelectionResult.createHighlight(
+                        return SelectionResult.withHighlight(
                                 findCurrentPageHighlight(),
                                 getSelectionCursorColor(),
                                 getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
@@ -1095,7 +1094,7 @@ public final class FBView extends ZLTextView {
 
             if (doSelectRegion) {
                 super.outlineRegion(region);
-                return SelectionResult.createHighlight(
+                return SelectionResult.withHighlight(
                         new PaintBlock.HighlightBlock(DebugHelper.outlineColor(),
                                 region.getDrawCoordinates(Hull.DrawMode.Outline))
                 );
@@ -1114,7 +1113,7 @@ public final class FBView extends ZLTextView {
         final SelectionCursor.Which cursor = getSelectionCursorInMovement();
         if (cursor != null) {
             if (moveSelectionCursorToFlutter(cursor, x, y, "onFingerMoveAfterLongPress")) {
-                return SelectionResult.createHighlight(
+                return SelectionResult.withHighlight(
                         findCurrentPageHighlight(),
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
@@ -1138,7 +1137,7 @@ public final class FBView extends ZLTextView {
                         if (soul instanceof ZLTextHyperlinkRegionSoul
                                 || soul instanceof ZLTextWordRegionSoul) {
                             outlineRegion(region);
-                            return SelectionResult.createHighlight(
+                            return SelectionResult.withHighlight(
                                     new PaintBlock.HighlightBlock(DebugHelper.outlineColor(),
                                             region.getDrawCoordinates(Hull.DrawMode.Outline)));
                         }
@@ -1205,9 +1204,10 @@ public final class FBView extends ZLTextView {
 
     /**
      * 手指点击回调的方法
+     * todo 返回结果让flutter清空高亮和跨页划选计数
      */
     @Override
-    public void onFingerSingleTapFlutter(int x, int y) {
+    public SelectionResult onFingerSingleTapFlutter(int x, int y) {
         Timber.v("flutter长按事件, 长按坐标: [%s, %s]", x, y);
         // 预览模式的情况下，点击为打开菜单
 //        if (isPreview()) {
@@ -1219,7 +1219,7 @@ public final class FBView extends ZLTextView {
         // 1. 清除选中，
         // 2. 隐藏选中动作弹框(在flutter执行)
         if (cleaAllSelectedSections()) {
-            return;
+            return SelectionResult.SelectionCleared.INSTANCE;
         }
 
         // 只有在超链接上面点击了，才会触发这个逻辑
@@ -1233,7 +1233,7 @@ public final class FBView extends ZLTextView {
 //            repaint("onFingerSingleTap");
             // todo 超链接跳转方法待实现
 //            myReader.runAction(ActionCode.PROCESS_HYPERLINK);
-            return;
+            return SelectionResult.OpenHyperLink.INSTANCE;
         }
 
         // todo 这个是啥?? 图书简介界面?
@@ -1252,7 +1252,7 @@ public final class FBView extends ZLTextView {
 //            repaint("onFingerSingleTap");
             // todo
 //            myReader.runAction(ActionCode.OPEN_VIDEO, (ZLTextVideoRegionSoul) videoRegion.getSoul());
-            return;
+            return SelectionResult.OpenVideo.INSTANCE;
         }
 
         // todo 书签高亮
@@ -1274,7 +1274,7 @@ public final class FBView extends ZLTextView {
 
         // todo 显示顶部和底部menu的
 //        onFingerSingleTapLastResort(x, y);
-
+        return SelectionResult.NoOp.INSTANCE;
     }
 
     /**
@@ -1293,7 +1293,7 @@ public final class FBView extends ZLTextView {
         if (cursor != null) {
             // myReader.runAction(ActionCode.SELECTION_HIDE_PANEL);
             moveSelectionCursorToFlutter(cursor, x, y, "onFingerPress");
-            return SelectionResult.Companion.createHighlight(
+            return SelectionResult.Companion.withHighlight(
                     findCurrentPageHighlight(),
                     getSelectionCursorColor(),
                     getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),
@@ -1326,7 +1326,7 @@ public final class FBView extends ZLTextView {
         if (cursor != null) {
 //            mCanMagnifier = true;
             if (moveSelectionCursorToFlutter(cursor, x, y, "onFingerMove")) {
-                return SelectionResult.Companion.createHighlight(
+                return SelectionResult.Companion.withHighlight(
                         findCurrentPageHighlight(),
                         getSelectionCursorColor(),
                         getCurrentPageSelectionCursorPoint(SelectionCursor.Which.Left),

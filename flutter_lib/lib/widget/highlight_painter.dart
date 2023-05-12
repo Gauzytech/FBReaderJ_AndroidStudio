@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../reader/animation/model/highlight_block.dart';
-import '../reader/animation/model/selection_cursor.dart';
+import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
 
 class HighlightPainter extends CustomPainter {
   static const drawModeOutline = 1;
@@ -24,8 +23,7 @@ class HighlightPainter extends CustomPainter {
 
   final Paint _contentBackgroundPaint = Paint();
 
-  bool get hasSelection =>
-      _selectionHighlights != null && _selectionHighlights!.isNotEmpty;
+  bool get hasSelection => _selectionHighlights?.isNotEmpty == true;
   List<HighlightBlock>? _selectionHighlights;
   List<SelectionCursor>? _selectionCursors;
 
@@ -68,10 +66,10 @@ class HighlightPainter extends CustomPainter {
     List<SelectionCursor>? selectionCursors,
   ) {
     if (blocks != null) {
-      print('时间测试, 更新高亮, $blocks');
+      print('跨页划选, 更新高亮, $blocks');
       _selectionHighlights = List.from(blocks);
     } else {
-      print('时间测试, 清除高亮');
+      print('跨页划选, 清除高亮');
       _selectionHighlights = null;
     }
 

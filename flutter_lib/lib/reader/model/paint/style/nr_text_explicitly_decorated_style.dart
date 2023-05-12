@@ -1,8 +1,9 @@
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_decorated_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_css_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
+
+import 'package:flutter_lib/reader/model/nr_text_metrics.dart';
+import 'package:flutter_lib/reader/model/paint/style/nr_text_decorated_style.dart';
+import 'package:flutter_lib/reader/model/paint/style/nr_text_style.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_css_style_entry.dart';
+import 'package:flutter_lib/reader/model/user_settings/font_entry.dart';
 
 import 'style_models/nr_text_style_entry.dart';
 

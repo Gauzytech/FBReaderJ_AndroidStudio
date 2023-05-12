@@ -1,7 +1,7 @@
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
+import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/reader_content_view.dart';
 
 /// 书页滚动行为控制器

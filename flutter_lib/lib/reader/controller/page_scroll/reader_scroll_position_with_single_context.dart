@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_drag_controller.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_phase_delegate.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_position.dart';
@@ -10,6 +9,7 @@ import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/drag_scrol
 import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/hold_scroll_phase.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/idle_scroll_phase.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/scrollphase/reader_scroll_phase.dart';
+import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 
 class ReaderScrollPositionWithSingleContext extends ReaderScrollPosition
     implements ReaderScrollPhaseDelegate {

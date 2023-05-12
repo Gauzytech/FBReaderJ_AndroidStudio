@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
-
-import '../reader/animation/model/user_settings/page_mode.dart';
+import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 
 abstract class BookPageScrollContext {
 

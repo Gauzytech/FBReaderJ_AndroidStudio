@@ -1,6 +1,6 @@
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_base_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_ng_style_description.dart';
+import 'package:flutter_lib/reader/model/paint/style/nr_text_base_style.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_ng_style_description.dart';
 
 class NRTextStyleCollection with DebugInfoProvider {
   final String screen;

@@ -1,7 +1,7 @@
 import 'dart:core';
 
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/file_info.dart';
+import 'package:flutter_lib/reader/model/user_settings/file_info.dart';
 import 'package:flutter_lib/utils/compare_helper.dart';
 
 const Map<String, FontEntry> _ourSystemEntries = {};

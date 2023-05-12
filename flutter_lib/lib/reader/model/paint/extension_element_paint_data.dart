@@ -1,4 +1,4 @@
-import 'package:flutter_lib/reader/animation/model/paint/video_element_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/video_element_paint_data.dart';
 
 import 'element_paint_data.dart';
 import 'image_element_paint_data.dart';

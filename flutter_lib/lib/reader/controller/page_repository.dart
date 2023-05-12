@@ -3,22 +3,22 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
-import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
-import 'package:flutter_lib/reader/animation/model/selection_menu_position.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
+import 'package:flutter_lib/reader/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/page_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/paint_block.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_collection.dart';
+import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
+import 'package:flutter_lib/reader/model/selection/selection_menu_position.dart';
+import 'package:flutter_lib/reader/model/user_settings/geometry.dart';
 import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
-
-import '../animation/model/selection_cursor.dart';
 import 'native_interface.dart';
 
 extension ImageParsing on Uint8List {
@@ -308,7 +308,7 @@ class PageRepository with PageRepositoryDelegate {
   Future<void> callNativeMethod(NativeScript script, double x, double y) async {
     Size imageSize = getContentSize();
     time = now();
-    print('时间测试, call $script $time');
+    print('时间测试, call ${script.name} $time');
     switch (script) {
       case NativeScript.dragStart:
       case NativeScript.dragMove:
@@ -317,7 +317,7 @@ class PageRepository with PageRepositoryDelegate {
       case NativeScript.longPressMove:
       case NativeScript.longPressEnd:
       case NativeScript.tapUp:
-      case NativeScript.selectionClear:
+        // case NativeScript.selectionClear:
         Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
           script,
           {
@@ -328,43 +328,55 @@ class PageRepository with PageRepositoryDelegate {
             'time_stamp': time,
           },
         );
-        print('时间测试, $script 获得结果, ${now()}');
+        print('时间测试, $script 获得结果, ${now() - time}');
+
+        // 选择结果
+        String? selectionResult = result['selection_result'];
+        if(selectionResult != null) {
+          _handleSelection(selectionResult);
+        }
 
         // 书页内容
-        Uint8List? imageBytes = result['page'];
-        if (imageBytes != null) {
-          print('时间测试, $script handleImage');
-          _handleImage(imageBytes);
-        }
+        // Uint8List? imageBytes = result['page'];
+        // if (imageBytes != null) {
+        //   print('时间测试, $script handleImage');
+        //   _handleImage(imageBytes);
+        // }
 
+        // 选择结果
         // 高亮
-        String? highlightsData = result['highlights_data'];
-        if (highlightsData != null) {
-          print('时间测试, $script _handleHighlight');
-          _handleHighlight(highlightsData);
-        }
-
-        // 选择弹窗
-        String? selectionMenuData = result['selection_menu_data'];
-        if (selectionMenuData != null) {
-          print('flutter触摸事件, 更新menu data');
-          _handleSelectionMenu(selectionMenuData);
-        } else {
-          // if (script == NativeScript.longPressEnd && highlightsData == null) {
-          //   print('flutter触摸事件, 取消长按状态');
-          //   _readerPageViewModelDelegate?.selectionDelegate.updateSelectionState(false);
-          // }
-        }
+        // String? highlightsData = result['highlights_data'];
+        // if(highlightsData != null) {
+        //   print('时间测试, $script _handleHighlight');
+        //   _handleHighlight(highlightsData, script);
+        // }
+        //
+        // // 选择弹窗
+        // String? selectionMenuData = result['selection_menu_data'];
+        // if (selectionMenuData != null) {
+        //   print('flutter触摸事件, 更新menu data');
+        //   _handleSelectionMenu(selectionMenuData);
+        // } else {
+        //   // if (script == NativeScript.longPressEnd && highlightsData == null) {
+        //   //   print('flutter触摸事件, 取消长按状态');
+        //   //   _readerPageViewModelDelegate?.selectionDelegate.updateSelectionState(false);
+        //   // }
+        // }
         break;
       case NativeScript.selectedText:
         Map<dynamic, dynamic> result =
             await nativeInterface.evaluateNativeFunc(script);
         String text = result['text'];
-        print('选中文字, $text');
         _readerPageViewModelDelegate!.selectionDelegate.showText(text);
         break;
       default:
     }
+  }
+
+  void _handleSelection(String selectionResult) {
+    Map<String, dynamic> data = jsonDecode(selectionResult);
+    // todo
+    // SelectionResult
   }
 
   Future<void> _handleImage(Uint8List imgBytes) async {
@@ -375,22 +387,34 @@ class PageRepository with PageRepositoryDelegate {
     refreshContent();
   }
 
-  void _handleHighlight(String highlightDrawData) {
-    Map<String, dynamic> data = jsonDecode(highlightDrawData);
-    List<HighlightBlock> blocks =
-        PaintBlock.fromJsonHighlights(data['paint_blocks']);
+  void _handleHighlight(String highlightDrawData, NativeScript script) {
+      Map<String, dynamic> data = jsonDecode(highlightDrawData);
+      List<HighlightBlock> blocks =
+          PaintBlock.fromJsonHighlights(data['paint_blocks']);
 
-    Map<String, dynamic>? leftCursor = data['left_cursor'];
-    Map<String, dynamic>? rightCursor = data['right_cursor'];
-    List<SelectionCursor> cursors = [];
-    if (leftCursor != null) {
-      cursors.add(SelectionCursor.fromJson(CursorDirection.left, leftCursor));
-    }
-    if (rightCursor != null) {
-      cursors.add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
-    }
-    _readerPageViewModelDelegate?.selectionDelegate
-        .setSelectionHighlight(blocks, cursors.isNotEmpty ? cursors : null);
+      Map<String, dynamic>? leftCursor = data['left_cursor'];
+      Map<String, dynamic>? rightCursor = data['right_cursor'];
+      List<SelectionCursor> cursors = [];
+      if (leftCursor != null) {
+        cursors.add(SelectionCursor.fromJson(CursorDirection.left, leftCursor));
+      }
+      if (rightCursor != null) {
+        cursors
+            .add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
+      }
+      _readerPageViewModelDelegate?.selectionDelegate.setSelectionHighlight(
+        blocks,
+        cursors.isNotEmpty ? cursors : null,
+      );
+    // else {
+    //   _readerPageViewModelDelegate?.selectionDelegate.setSelectionHighlight(
+    //     null,
+    //     null,
+    //     resetCrossPageCount: script == NativeScript.dragEnd ||
+    //         script == NativeScript.longPressEnd ||
+    //         script == NativeScript.tapUp,
+    //   );
+    // }
   }
 
   void _handleSelectionMenu(String selectionMenuData) {

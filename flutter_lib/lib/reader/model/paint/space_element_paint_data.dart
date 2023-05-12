@@ -1,5 +1,6 @@
-import 'package:flutter_lib/reader/animation/model/paint/element_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
+
+import 'package:flutter_lib/reader/model/paint/element_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/paint_block.dart';
 
 class SpaceElementPaintData extends ElementPaintData {
   int spaceWidth;

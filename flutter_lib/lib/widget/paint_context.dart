@@ -3,10 +3,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lib/model/pair.dart';
-
-import '../reader/animation/model/highlight_block.dart';
-import '../reader/animation/model/paint/image_element_paint_data.dart';
-import '../reader/animation/model/user_settings/font_entry.dart';
+import 'package:flutter_lib/reader/model/paint/image_element_paint_data.dart';
+import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/user_settings/font_entry.dart';
 
 enum FillMode {
   tile,

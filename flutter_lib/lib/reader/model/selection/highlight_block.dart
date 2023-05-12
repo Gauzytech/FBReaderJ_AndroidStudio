@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
+import 'package:flutter_lib/reader/model/paint/paint_block.dart';
 
 class HighlightBlock extends PaintBlock with DebugInfoProvider {
   ColorData color;

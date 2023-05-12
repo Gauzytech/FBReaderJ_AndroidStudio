@@ -14,7 +14,7 @@ enum NativeScript {
   longPressMove('long_press_move'),
   longPressEnd('long_press_end'),
   tapUp('on_tap_up'),
-  selectionClear('selection_clear'),
+  // selectionClear('selection_clear'),
   selectedText('selected_text'),
   drawOnBitmap('draw_on_bitmap'),
   buildPagePaintData('build_page_paint_data'),
@@ -102,7 +102,6 @@ class NativeInterface {
       case NativeScript.longPressMove:
       case NativeScript.longPressEnd:
       case NativeScript.tapUp:
-      case NativeScript.selectionClear:
       case NativeScript.selectedText:
         return channel.invokeMethod(script.name, params);
       default:

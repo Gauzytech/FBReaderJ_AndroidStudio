@@ -28,7 +28,9 @@ class SelectionHandler {
 
   // 翻页划选最多5页
   static const int crossPageLimit = 5;
-  int crossPageCount = 1;
+
+  int get crossPageCount => _crossPageCount;
+  int _crossPageCount = 1;
 
   Offset? _selectionTouchOffset;
   PageRepository readerContentHandler;
@@ -41,13 +43,21 @@ class SelectionHandler {
   Offset? _selectionMenuPosition;
 
   SelectionMenuFactory get factory => _menuFactory!;
-  SelectionMenuFactory? _menuFactory;
+  final SelectionMenuFactory? _menuFactory;
 
-  SelectionHandler(
-      {required this.readerContentHandler,
-      required this.topIndicatorKey,
-      required this.bottomIndicatorKey}) {
-    _menuFactory = SelectionMenuFactory();
+  SelectionHandler({
+    required this.readerContentHandler,
+    required this.topIndicatorKey,
+    required this.bottomIndicatorKey,
+  }) : _menuFactory = SelectionMenuFactory();
+
+  void increaseCrossPageCount() {
+    _crossPageCount++;
+  }
+
+  void resetCrossPageCount() {
+    print('跨页划选, reset page count');
+    _crossPageCount = 1;
   }
 
   /// 长按事件处理操作

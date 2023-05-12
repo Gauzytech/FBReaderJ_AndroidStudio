@@ -6,16 +6,17 @@ import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/pair.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
-import 'package:flutter_lib/reader/animation/model/animation_data.dart';
-import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/paint_block.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/nr_text_style.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
-import 'package:flutter_lib/reader/animation/model/paint/word_element_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
+import 'package:flutter_lib/reader/model/animation_data.dart';
+import 'package:flutter_lib/reader/model/nr_text_metrics.dart';
+import 'package:flutter_lib/reader/model/page_paint_metadata.dart';
+import 'package:flutter_lib/reader/model/paint/image_element_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/paint_block.dart';
+import 'package:flutter_lib/reader/model/paint/style/nr_text_style.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_collection.dart';
+import 'package:flutter_lib/reader/model/paint/word_element_paint_data.dart';
+import 'package:flutter_lib/reader/model/spring_animation_range.dart';
 import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:flutter_lib/widget/paint_context.dart';
@@ -23,7 +24,6 @@ import 'package:flutter_lib/widget/paint_context.dart';
 import '../../widget/page_paint_context.dart';
 import '../controller/touch_event.dart';
 import 'base_animation_page.dart';
-import 'model/paint/image_element_paint_data.dart';
 
 /// 滑动动画 ///
 /// ps 正在研究怎么加上惯性 (ScrollPhysics:可滑动组件的滑动控制器,android 对应：ClampingScrollPhysics，ScrollController呢？)

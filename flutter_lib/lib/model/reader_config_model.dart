@@ -1,9 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter_lib/model/view_model_reader.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
-import 'package:flutter_lib/reader/controller/page_physics/page_flip_physics.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
+import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 
 class ReaderConfigModel {
   ReaderViewModel? viewModel;

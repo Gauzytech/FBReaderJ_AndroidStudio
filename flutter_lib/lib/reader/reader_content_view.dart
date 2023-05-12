@@ -8,12 +8,14 @@ import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/interface/content_selection_delegate.dart';
 import 'package:flutter_lib/model/base_view_model.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/controller/book_page_controller.dart';
 import 'package:flutter_lib/reader/controller/page_scroll/book_page_position.dart';
 import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selection_handler.dart';
+import 'package:flutter_lib/reader/model/page_paint_metadata.dart';
+import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
+import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
 import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/widget/base/base_stateful_view.dart';
@@ -22,8 +24,6 @@ import 'package:flutter_lib/widget/highlight_painter.dart';
 import 'package:provider/provider.dart';
 
 import 'animation/controller_animation_with_listener_number.dart';
-import 'animation/model/highlight_block.dart';
-import 'animation/model/selection_cursor.dart';
 import 'controller/native_interface.dart';
 import 'controller/page_physics/book_page_physics.dart';
 import 'controller/page_repository.dart';
@@ -335,7 +335,7 @@ class ReaderContentViewState
               onPageCentered: _disposePageDraw,
             ));
             setState(() {
-              _selectionHandler.crossPageCount++;
+              _selectionHandler.increaseCrossPageCount();
             });
           }
         } else {
@@ -365,7 +365,7 @@ class ReaderContentViewState
           setSelectionHighlight(null, null);
           invalidateContent();
           setState(() {
-            _selectionHandler.crossPageCount++;
+            _selectionHandler.increaseCrossPageCount();
           });
         }
       }
@@ -547,7 +547,8 @@ class ReaderContentViewState
               ),
               backgroundColor: Colors.grey,
               format: (progress) {
-                print('跨页, ${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}');
+                print(
+                    '跨页划选, ${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}');
                 return '${_selectionHandler.crossPageCount}/${handlers.SelectionHandler.crossPageLimit}';
               }),
         ),
@@ -624,10 +625,15 @@ class ReaderContentViewState
   }
 
   @override
-  void setSelectionHighlight(List<HighlightBlock>? blocks, List<SelectionCursor>? selectionCursors) {
+  void setSelectionHighlight(
+    List<HighlightBlock>? blocks,
+    List<SelectionCursor>? selectionCursors, {
+    bool resetCrossPageCount = false,
+  }) {
     _highlightPainter.updateHighlight(blocks, selectionCursors);
-    if(!_highlightPainter.hasSelection) {
-      _selectionHandler.crossPageCount = 1;
+    print('跨页划选, ${_highlightPainter.hasSelection}, $resetCrossPageCount');
+    if (!_highlightPainter.hasSelection && resetCrossPageCount) {
+      _selectionHandler.resetCrossPageCount();
     }
     highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
   }
@@ -830,7 +836,7 @@ class ReaderContentViewState
     if (_highlightPainter.hasSelection) {
       _selectionHandler.onTagUp(details);
       hideSelectionMenu();
-      setSelectionHighlight(null, null);
+      // setSelectionHighlight(null, null);
     } else {
       jumpToPage(details.localPosition, null);
     }

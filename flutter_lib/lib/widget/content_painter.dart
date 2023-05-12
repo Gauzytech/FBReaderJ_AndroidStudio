@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 
 import '../reader/controller/reader_page_view_model.dart';
 import '../reader/controller/touch_event.dart';

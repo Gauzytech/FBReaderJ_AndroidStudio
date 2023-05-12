@@ -1,4 +1,4 @@
-import 'package:flutter_lib/reader/animation/model/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
 
 abstract class PaintBlock {
 

@@ -24,7 +24,6 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_SE
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_TAP_UP
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.PREPARE_PAGE
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTED_TEXT
-import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTION_CLEAR
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
@@ -189,9 +188,9 @@ class FlutterBridge(
                 )
             }
             ON_TAP_UP -> {
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
-                val time = call.argument<Long>("time_stamp")!!
+//                val width = call.argument<Int>("width")!!
+//                val height = call.argument<Int>("height")!!
+//                val time = call.argument<Long>("time_stamp")!!
                 contentProcessor.onFingerSingleTap(
                     call.argument<Int>("touch_x")!!.toInt(),
                     call.argument<Int>("touch_y")!!.toInt(),
@@ -231,15 +230,15 @@ class FlutterBridge(
                     Pair(width, height)
                 )
             }
-            SELECTION_CLEAR -> {
-                val time = call.argument<Long>("time_stamp")!!
-                contentProcessor.cleaAllSelectedSections(
-                    getResultCallback(
-                        call.method,
-                        result,
-                    ), Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
-                )
-            }
+//            SELECTION_CLEAR -> {
+//                val time = call.argument<Long>("time_stamp")!!
+//                contentProcessor.cleaAllSelectedSections(
+//                    getResultCallback(
+//                        call.method,
+//                        result,
+//                    ), Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
+//                )
+//            }
             SELECTED_TEXT -> {
                 val textSnippet = contentProcessor.getSelectedText()
                 Timber.v("flutter长按事件, 获得选中文字: $textSnippet")
@@ -307,19 +306,27 @@ class FlutterBridge(
             override fun onSelection(selectionResult: SelectionResult, img: ByteArray?) {
                 Timber.v("flutter长按事件[$name], 重绘返回: $selectionResult")
                 when (selectionResult) {
-                    is SelectionResult.HighlightPaintData -> {
+                    is SelectionResult.Highlight,
+                    is SelectionResult.ShowMenu,
+                    is SelectionResult.SelectionCleared -> {
                         result.success(
-                            mapOf("highlights_data" to gson.toJson(selectionResult))
+                            mapOf("selection_result" to gson.toJson(selectionResult))
                         )
                     }
-                    is SelectionResult.ShowMenu -> {
-                        result.success(
-                            mapOf("selection_menu_data" to gson.toJson(selectionResult))
-                        )
-                    }
+//                    is SelectionResult.ShowMenu -> {
+//                        result.success(
+//                            mapOf("selection_menu_data" to gson.toJson(selectionResult))
+//                        )
+//                    }
+//                    is SelectionResult.SelectionCleared -> {
+//                        result.success(gson.toJson(selectionResult))
+//                    }
                     SelectionResult.NoMenu,
-                    SelectionResult.NoOp -> result.success(mapOf("page" to img))
+                    SelectionResult.NoOp,
+//                    -> result.success(mapOf("page" to img))
                     SelectionResult.OpenDirectory,
+                    SelectionResult.OpenHyperLink,
+                    SelectionResult.OpenVideo,
                     SelectionResult.OpenImage -> Timber.v("时间测试, outline行为 ${selectionResult.javaClass.simpleName}, 功能待实现")
                 }
             }

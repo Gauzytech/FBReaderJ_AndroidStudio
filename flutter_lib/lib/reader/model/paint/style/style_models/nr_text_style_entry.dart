@@ -1,10 +1,10 @@
 import 'dart:core';
 
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_css_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_other_style_entry.dart';
-import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/font_entry.dart';
+import 'package:flutter_lib/reader/model/nr_text_metrics.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_css_style_entry.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_other_style_entry.dart';
+import 'package:flutter_lib/reader/model/user_settings/font_entry.dart';
 
 abstract class NRTextStyleEntry with DebugInfoProvider {
   int get depth => _depth;

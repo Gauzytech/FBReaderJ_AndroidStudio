@@ -3,10 +3,10 @@ import 'package:flutter_lib/interface/book_page_scroll_context.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/model/view_model_reader.dart';
 import 'package:flutter_lib/reader/animation/cover_animation_page.dart';
-import 'package:flutter_lib/reader/animation/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/animation/page_turn_animation_page.dart';
 import 'package:flutter_lib/reader/controller/page_repository.dart';
 import 'package:flutter_lib/reader/controller/render_state.dart';
+import 'package:flutter_lib/reader/model/page_paint_metadata.dart';
 
 import '../../interface/content_selection_delegate.dart';
 import '../../widget/content_painter.dart';

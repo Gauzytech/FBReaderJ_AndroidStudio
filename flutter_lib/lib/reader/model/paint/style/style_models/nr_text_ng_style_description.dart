@@ -1,6 +1,6 @@
 import 'package:flutter_lib/interface/debug_info_provider.dart';
-import 'package:flutter_lib/reader/animation/model/nr_text_metrics.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_entry.dart';
+import 'package:flutter_lib/reader/model/nr_text_metrics.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_entry.dart';
 
 import 'options/option_string.dart';
 

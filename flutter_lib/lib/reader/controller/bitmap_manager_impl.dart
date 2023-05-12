@@ -3,10 +3,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_lib/interface/bitmap_manager.dart';
 import 'package:flutter_lib/model/page_index.dart';
-import 'package:flutter_lib/reader/animation/model/paint/line_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/page_paint_data.dart';
-import 'package:flutter_lib/reader/animation/model/paint/style/style_models/nr_text_style_collection.dart';
-import 'package:flutter_lib/reader/animation/model/user_settings/geometry.dart';
+import 'package:flutter_lib/reader/model/paint/line_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/page_paint_data.dart';
+import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_collection.dart';
+import 'package:flutter_lib/reader/model/user_settings/geometry.dart';
+
 
 /// Bitmap管理（绘制后的图）的实现
 class BitmapManagerImpl with BitmapManager {

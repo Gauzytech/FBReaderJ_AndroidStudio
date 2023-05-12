@@ -1,4 +1,4 @@
-import 'package:flutter_lib/reader/animation/model/spring_animation_range.dart';
+import 'package:flutter_lib/reader/model/spring_animation_range.dart';
 
 class AnimationData {
   double start;
