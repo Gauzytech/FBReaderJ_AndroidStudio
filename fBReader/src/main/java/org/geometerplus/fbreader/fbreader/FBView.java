@@ -117,15 +117,15 @@ public final class FBView extends ZLTextView {
     private SelectionResult releaseSelectionCursorFlutter() {
         super.releaseSelectionCursor();
         if (getCountOfSelectedWords() > 0) {
-            return new SelectionResult.ShowMenu(getSelectionStartY() , getSelectionEndY());
+            return new SelectionResult.ActionMenu(getSelectionStartY() , getSelectionEndY());
         }
-        return SelectionResult.NoMenu.INSTANCE;
+        return SelectionResult.NoActionMenu.INSTANCE;
     }
 
     private SelectionResult checkExistSelection() {
         // 最后再次检查是否有已经选中的文字, 因为可能之前有选中文字，然后再次在空白的地方拖动
         if (getCountOfSelectedWords() > 0) {
-            return new SelectionResult.ShowMenu(getSelectionStartY(), getSelectionEndY());
+            return new SelectionResult.ActionMenu(getSelectionStartY(), getSelectionEndY());
         }
         return SelectionResult.NoOp.INSTANCE;
     }
@@ -1128,7 +1128,6 @@ public final class FBView extends ZLTextView {
         if (region != null) {
             ZLTextRegion.Soul soul = region.getSoul();
             if (soul instanceof ZLTextHyperlinkRegionSoul || soul instanceof ZLTextWordRegionSoul) {
-                Timber.v("flutter长按事件[onFingerMove], 处理outline数据: %s", soul);
                 if (myReader.MiscOptions.WordTappingAction.getValue() !=
                         MiscOptions.WordTappingActionEnum.doNothing) {
                     region = findRegion(x, y, maxSelectionDistance(), ZLTextRegion.AnyRegionFilter);
@@ -1219,7 +1218,7 @@ public final class FBView extends ZLTextView {
         // 1. 清除选中，
         // 2. 隐藏选中动作弹框(在flutter执行)
         if (cleaAllSelectedSections()) {
-            return SelectionResult.SelectionCleared.INSTANCE;
+            return SelectionResult.ClearAll.INSTANCE;
         }
 
         // 只有在超链接上面点击了，才会触发这个逻辑
@@ -1411,7 +1410,7 @@ public final class FBView extends ZLTextView {
         // 2. 清除图片, 超链接的outline选中效果
         if(getOutlinedRegion() != null) {
             resetOuelineRegion();
-            Timber.v("flutter长按事件 resetOueline");
+            Timber.v("flutter长按事件 reset Outline");
             return true;
         }
 

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lib/model/page_index.dart';
 import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
@@ -13,12 +12,13 @@ import 'package:flutter_lib/reader/model/paint/page_paint_data.dart';
 import 'package:flutter_lib/reader/model/paint/paint_block.dart';
 import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_collection.dart';
 import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/reader_selection_result.dart';
 import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
-import 'package:flutter_lib/reader/model/selection/selection_menu_position.dart';
 import 'package:flutter_lib/reader/model/user_settings/geometry.dart';
 import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
 import 'package:path_provider/path_provider.dart';
+
 import 'native_interface.dart';
 
 extension ImageParsing on Uint8List {
@@ -317,7 +317,6 @@ class PageRepository with PageRepositoryDelegate {
       case NativeScript.longPressMove:
       case NativeScript.longPressEnd:
       case NativeScript.tapUp:
-        // case NativeScript.selectionClear:
         Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
           script,
           {
@@ -333,35 +332,11 @@ class PageRepository with PageRepositoryDelegate {
         // 选择结果
         String? selectionResult = result['selection_result'];
         if(selectionResult != null) {
-          _handleSelection(selectionResult);
+          Map<String, dynamic> data = jsonDecode(selectionResult);
+          _readerPageViewModelDelegate?.selectionDelegate.onSelectionDataUpdate(
+            ReaderSelectionResult.create(data),
+          );
         }
-
-        // 书页内容
-        // Uint8List? imageBytes = result['page'];
-        // if (imageBytes != null) {
-        //   print('时间测试, $script handleImage');
-        //   _handleImage(imageBytes);
-        // }
-
-        // 选择结果
-        // 高亮
-        // String? highlightsData = result['highlights_data'];
-        // if(highlightsData != null) {
-        //   print('时间测试, $script _handleHighlight');
-        //   _handleHighlight(highlightsData, script);
-        // }
-        //
-        // // 选择弹窗
-        // String? selectionMenuData = result['selection_menu_data'];
-        // if (selectionMenuData != null) {
-        //   print('flutter触摸事件, 更新menu data');
-        //   _handleSelectionMenu(selectionMenuData);
-        // } else {
-        //   // if (script == NativeScript.longPressEnd && highlightsData == null) {
-        //   //   print('flutter触摸事件, 取消长按状态');
-        //   //   _readerPageViewModelDelegate?.selectionDelegate.updateSelectionState(false);
-        //   // }
-        // }
         break;
       case NativeScript.selectedText:
         Map<dynamic, dynamic> result =
@@ -371,59 +346,6 @@ class PageRepository with PageRepositoryDelegate {
         break;
       default:
     }
-  }
-
-  void _handleSelection(String selectionResult) {
-    Map<String, dynamic> data = jsonDecode(selectionResult);
-    // todo
-    // SelectionResult
-  }
-
-  Future<void> _handleImage(Uint8List imgBytes) async {
-    var image = await imgBytes.toImage();
-    // _bitmapManager缓存img
-    _bitmapManager.replaceBitmapCache(PageIndex.current, image);
-    // 刷新custom painter
-    refreshContent();
-  }
-
-  void _handleHighlight(String highlightDrawData, NativeScript script) {
-      Map<String, dynamic> data = jsonDecode(highlightDrawData);
-      List<HighlightBlock> blocks =
-          PaintBlock.fromJsonHighlights(data['paint_blocks']);
-
-      Map<String, dynamic>? leftCursor = data['left_cursor'];
-      Map<String, dynamic>? rightCursor = data['right_cursor'];
-      List<SelectionCursor> cursors = [];
-      if (leftCursor != null) {
-        cursors.add(SelectionCursor.fromJson(CursorDirection.left, leftCursor));
-      }
-      if (rightCursor != null) {
-        cursors
-            .add(SelectionCursor.fromJson(CursorDirection.right, rightCursor));
-      }
-      _readerPageViewModelDelegate?.selectionDelegate.setSelectionHighlight(
-        blocks,
-        cursors.isNotEmpty ? cursors : null,
-      );
-    // else {
-    //   _readerPageViewModelDelegate?.selectionDelegate.setSelectionHighlight(
-    //     null,
-    //     null,
-    //     resetCrossPageCount: script == NativeScript.dragEnd ||
-    //         script == NativeScript.longPressEnd ||
-    //         script == NativeScript.tapUp,
-    //   );
-    // }
-  }
-
-  void _handleSelectionMenu(String selectionMenuData) {
-    Map<String, dynamic> data = jsonDecode(selectionMenuData);
-    SelectionMenuPosition position = SelectionMenuPosition.fromJson(data);
-    Offset showPosition = position.toShowPosition(getContentSize());
-    _readerPageViewModelDelegate?.selectionDelegate.showSelectionMenu(
-      showPosition,
-    );
   }
 
   bool isCacheEmpty() {

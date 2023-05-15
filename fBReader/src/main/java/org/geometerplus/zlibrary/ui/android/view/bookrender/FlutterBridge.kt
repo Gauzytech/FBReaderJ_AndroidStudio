@@ -160,7 +160,6 @@ class FlutterBridge(
             LONG_PRESS_START -> {
                 val dx = call.argument<Int>("touch_x")!!
                 val dy = call.argument<Int>("touch_y")!!
-                Timber.v("flutter长按事件, ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerLongPress(
                     dx,
                     dy,
@@ -170,7 +169,6 @@ class FlutterBridge(
             LONG_PRESS_MOVE -> {
                 val dx = call.argument<Int>("touch_x")!!
                 val dy = call.argument<Int>("touch_y")!!
-                Timber.v("flutter长按事件,  ${call.method}: [$dx, $dy]")
                 contentProcessor.onFingerMoveAfterLongPress(
                     dx,
                     dy,
@@ -181,7 +179,6 @@ class FlutterBridge(
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
                 val time = call.argument<Long>("time_stamp")!!
-                Timber.v("flutter长按事件, ${call.method} [$width, $height]")
                 contentProcessor.onFingerReleaseAfterLongPress(
                     0, 0,
                     getSelectionCallback(call.method, result)
@@ -202,7 +199,6 @@ class FlutterBridge(
                 val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
-                Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerPress(
                     dx, dy,
                     getSelectionCallback(call.method, result),
@@ -214,7 +210,6 @@ class FlutterBridge(
                 val dy = call.argument<Int>("touch_y")!!.toInt()
                 val width = call.argument<Int>("width")!!
                 val height = call.argument<Int>("height")!!
-                Timber.v("flutter长按事件, ${call.method}, [$dx, $dy]")
                 contentProcessor.onFingerMove(
                     dx, dy,
                     getSelectionCallback(call.method, result),
@@ -307,12 +302,11 @@ class FlutterBridge(
                 Timber.v("flutter长按事件[$name], 重绘返回: $selectionResult")
                 when (selectionResult) {
                     is SelectionResult.Highlight,
-                    is SelectionResult.ShowMenu,
-                    is SelectionResult.SelectionCleared -> {
+                    is SelectionResult.ActionMenu,
+                    is SelectionResult.ClearAll ->
                         result.success(
                             mapOf("selection_result" to gson.toJson(selectionResult))
                         )
-                    }
 //                    is SelectionResult.ShowMenu -> {
 //                        result.success(
 //                            mapOf("selection_menu_data" to gson.toJson(selectionResult))
@@ -321,7 +315,7 @@ class FlutterBridge(
 //                    is SelectionResult.SelectionCleared -> {
 //                        result.success(gson.toJson(selectionResult))
 //                    }
-                    SelectionResult.NoMenu,
+                    SelectionResult.NoActionMenu,
                     SelectionResult.NoOp,
 //                    -> result.success(mapOf("page" to img))
                     SelectionResult.OpenDirectory,

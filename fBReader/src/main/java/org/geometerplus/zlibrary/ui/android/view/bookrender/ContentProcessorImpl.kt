@@ -179,7 +179,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
-                is SelectionResult.ShowMenu,
+                is SelectionResult.ActionMenu,
                 is SelectionResult.Highlight,
                 is SelectionResult.OpenDirectory,
                 is SelectionResult.OpenImage -> selectionListener?.onSelection(result)
@@ -201,8 +201,8 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
             when (val result = targetContentView.onFingerReleaseFlutter(x, y)) {
-                is SelectionResult.ShowMenu,
-                is SelectionResult.NoMenu -> {
+                is SelectionResult.ActionMenu,
+                is SelectionResult.NoActionMenu -> {
 //                    drawService.execute {
 //                        selectionListener?.onSelection(result, drawCurrentPage(size!!))
 //                    }

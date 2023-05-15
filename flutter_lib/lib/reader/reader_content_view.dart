@@ -14,6 +14,7 @@ import 'package:flutter_lib/reader/controller/touch_event.dart';
 import 'package:flutter_lib/reader/handler/selection_handler.dart';
 import 'package:flutter_lib/reader/model/page_paint_metadata.dart';
 import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/reader_selection_result.dart';
 import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
 import 'package:flutter_lib/reader/model/user_settings/page_mode.dart';
 import 'package:flutter_lib/reader/ui/selection_menu_factory.dart';
@@ -499,13 +500,6 @@ class ReaderContentViewState
     });
   }
 
-  @override
-  void showSelectionMenu(Offset position) {
-    setState(() {
-      _selectionHandler.updateSelectionMenuPosition(position);
-    });
-  }
-
   void hideSelectionMenu() {
     if (_selectionHandler.menuPosition != null) {
       setState(() {
@@ -905,5 +899,31 @@ class ReaderContentViewState
       _readerPageViewModel!.currentAnimationPage,
       _disposePageDraw,
     );
+  }
+
+  @override
+  void onSelectionDataUpdate(ReaderSelectionResult selectionResult) {
+    print('flutter长按事件, 收到了 $selectionResult');
+    switch (selectionResult.runtimeType) {
+      case SelectionHighlight:
+        selectionResult as SelectionHighlight;
+        _highlightPainter.onDataUpdated(selectionResult);
+        highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        break;
+      case SelectionActionMenu:
+        selectionResult as SelectionActionMenu;
+        var contentSize =
+            _readerPageViewModel!.currentAnimationPage.currentSize;
+        Offset showPosition = selectionResult.toShowPosition(contentSize);
+        setState(() {
+          _selectionHandler.updateSelectionMenuPosition(showPosition);
+        });
+        break;
+      case SelectionClearAll:
+        _highlightPainter.reset();
+        _selectionHandler.resetCrossPageCount();
+        highlightLayerKey.currentContext?.findRenderObject()?.markNeedsPaint();
+        break;
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/reader_selection_result.dart';
 import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
 
 
@@ -14,6 +15,5 @@ abstract class ContentSelectionDelegate {
     bool resetCrossPageCount = false,
   });
 
-  /// [position]必须是global position, 因为设置[Positioned]会自动乘以deviceRatio
-  void showSelectionMenu(Offset position);
+  void onSelectionDataUpdate(ReaderSelectionResult selectionResult);
 }

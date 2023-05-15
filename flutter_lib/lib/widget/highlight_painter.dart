@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
+import 'package:flutter_lib/reader/model/selection/reader_selection_result.dart';
 import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
 
 class HighlightPainter extends CustomPainter {
@@ -75,6 +76,17 @@ class HighlightPainter extends CustomPainter {
 
     if (selectionCursors != null) {
       _selectionCursors = List.from(selectionCursors);
+    } else {
+      _selectionCursors = null;
+    }
+  }
+
+  void onDataUpdated(SelectionHighlight result) {
+    print('跨页划选, 更新高亮, ${result.paintBlocks}');
+    _selectionHighlights = List.from(result.paintBlocks);
+
+    if (result.leftCursor != null && result.rightCursor != null) {
+      _selectionCursors = List.from([result.leftCursor!, result.rightCursor!]);
     } else {
       _selectionCursors = null;
     }
@@ -180,5 +192,11 @@ class HighlightPainter extends CustomPainter {
       }
     }
     return false;
+  }
+
+
+  void reset() {
+    _selectionHighlights = null;
+    _selectionCursors = null;
   }
 }
