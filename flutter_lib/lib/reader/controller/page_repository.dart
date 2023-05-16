@@ -270,7 +270,7 @@ class PageRepository with PageRepositoryDelegate {
     }
   }
 
-  Size getContentSize() => _bitmapManager.contentSize;
+  Size get contentSize => _bitmapManager.contentSize;
 
   void shift(bool forward) {
     _bitmapManager.shift(forward);
@@ -306,7 +306,7 @@ class PageRepository with PageRepositoryDelegate {
   int time = 0;
 
   Future<void> callNativeMethod(NativeScript script, double x, double y) async {
-    Size imageSize = getContentSize();
+    Size imageSize = contentSize;
     time = now();
     print('时间测试, call ${script.name} $time');
     switch (script) {

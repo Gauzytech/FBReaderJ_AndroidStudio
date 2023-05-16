@@ -178,7 +178,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         selectionListener: SelectionListener?,
     ) {
         if (DebugHelper.ENABLE_FLUTTER) {
-            when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter(x, y)) {
+            when (val result = targetContentView.onFingerReleaseAfterLongPressFlutter()) {
                 is SelectionResult.ActionMenu,
                 is SelectionResult.Highlight,
                 is SelectionResult.OpenDirectory,

@@ -786,8 +786,8 @@ class ReaderContentViewState
       instance
         ..onLongPressStart = _handleLongPressStart
         ..onLongPressMoveUpdate = _handleLongPressMoveUpdate
-        ..onLongPressEnd = _handleLongPressEnd
-        ..onLongPressCancel = _handleLongPressCancel;
+        ..onLongPressEnd = _handleLongPressEnd;
+        // ..onLongPressCancel = _handleLongPressCancel;
         });
   }
 
@@ -810,12 +810,8 @@ class ReaderContentViewState
 
   void _handleLongPressEnd(LongPressEndDetails details) {
     print('flutter触摸事件, longPressEnd');
-    _selectionHandler.onLongPressUp();
+    _selectionHandler.onLongPressEnd();
     _processIndicator(NativeScript.longPressEnd, null);
-  }
-
-  void _handleLongPressCancel() {
-    print('flutter触摸事件, longPressCancel');
   }
 
   GestureRecognizerFactoryWithHandlers<TapGestureRecognizer> _tapRecognizer() {

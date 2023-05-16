@@ -115,12 +115,12 @@ class FlutterBridge(
                             when (data) {
                                 ContentPageResult.NoOp -> Timber.v("$TAG, no draw")
                                 is ContentPageResult.Paint -> {
-                                    Timber.v("flutter_perf, 发送结果, ${System.currentTimeMillis()}")
-                                    data.linePaintDataList.forEach {
-                                        it.elementPaintData.forEach { element ->
-                                            Timber.v("flutter_bridge, 发送: ${(element as? ElementPaintData.Word)?.paintBlocks}")
-                                        }
-                                    }
+//                                    Timber.v("flutter_perf, 发送结果, ${System.currentTimeMillis()}")
+//                                    data.linePaintDataList.forEach {
+//                                        it.elementPaintData.forEach { element ->
+//                                            Timber.v("flutter_bridge, 发送: ${(element as? ElementPaintData.Word)?.paintBlocks}")
+//                                        }
+//                                    }
                                     result.success(
                                         mapOf("page_data" to gson.toJson(data))
                                     )
@@ -157,43 +157,29 @@ class FlutterBridge(
                 val pageIndex = PageIndex.getPageIndex(index)
                 contentProcessor.onScrollingFinished(pageIndex)
             }
-            LONG_PRESS_START -> {
-                val dx = call.argument<Int>("touch_x")!!
-                val dy = call.argument<Int>("touch_y")!!
+            LONG_PRESS_START ->
                 contentProcessor.onFingerLongPress(
-                    dx,
-                    dy,
+                    call.argument<Int>("touch_x")!!,
+                    call.argument<Int>("touch_y")!!,
                     getSelectionCallback(call.method, result),
                 )
-            }
-            LONG_PRESS_MOVE -> {
-                val dx = call.argument<Int>("touch_x")!!
-                val dy = call.argument<Int>("touch_y")!!
+            LONG_PRESS_MOVE ->
                 contentProcessor.onFingerMoveAfterLongPress(
-                    dx,
-                    dy,
+                    call.argument<Int>("touch_x")!!,
+                    call.argument<Int>("touch_y")!!,
                     getSelectionCallback(call.method, result)
                 )
-            }
-            LONG_PRESS_END -> {
-                val width = call.argument<Int>("width")!!
-                val height = call.argument<Int>("height")!!
-                val time = call.argument<Long>("time_stamp")!!
+            LONG_PRESS_END ->
                 contentProcessor.onFingerReleaseAfterLongPress(
                     0, 0,
                     getSelectionCallback(call.method, result)
                 )
-            }
-            ON_TAP_UP -> {
-//                val width = call.argument<Int>("width")!!
-//                val height = call.argument<Int>("height")!!
-//                val time = call.argument<Long>("time_stamp")!!
+            ON_TAP_UP ->
                 contentProcessor.onFingerSingleTap(
                     call.argument<Int>("touch_x")!!.toInt(),
                     call.argument<Int>("touch_y")!!.toInt(),
                     getSelectionCallback(call.method, result)
                 )
-            }
             ON_SELECTION_DRAG_START -> {
                 val dx = call.argument<Int>("touch_x")!!.toInt()
                 val dy = call.argument<Int>("touch_y")!!.toInt()
@@ -225,15 +211,6 @@ class FlutterBridge(
                     Pair(width, height)
                 )
             }
-//            SELECTION_CLEAR -> {
-//                val time = call.argument<Long>("time_stamp")!!
-//                contentProcessor.cleaAllSelectedSections(
-//                    getResultCallback(
-//                        call.method,
-//                        result,
-//                    ), Pair(call.argument<Int>("width")!!, call.argument<Int>("height")!!)
-//                )
-//            }
             SELECTED_TEXT -> {
                 val textSnippet = contentProcessor.getSelectedText()
                 Timber.v("flutter长按事件, 获得选中文字: $textSnippet")
@@ -307,14 +284,6 @@ class FlutterBridge(
                         result.success(
                             mapOf("selection_result" to gson.toJson(selectionResult))
                         )
-//                    is SelectionResult.ShowMenu -> {
-//                        result.success(
-//                            mapOf("selection_menu_data" to gson.toJson(selectionResult))
-//                        )
-//                    }
-//                    is SelectionResult.SelectionCleared -> {
-//                        result.success(gson.toJson(selectionResult))
-//                    }
                     SelectionResult.NoActionMenu,
                     SelectionResult.NoOp,
 //                    -> result.success(mapOf("page" to img))

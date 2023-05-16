@@ -178,7 +178,7 @@ abstract public class ZLView implements ZLViewEnums {
 
     public abstract SelectionResult onFingerMoveAfterLongPressFlutter(int x, int y);
 
-    public abstract SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y);
+    public abstract SelectionResult onFingerReleaseAfterLongPressFlutter();
 
     public abstract SelectionResult onFingerSingleTapFlutter(int x, int y);
 

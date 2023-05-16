@@ -1154,7 +1154,7 @@ public final class FBView extends ZLTextView {
      * @return SelectionResult
      */
     @Override
-    public SelectionResult onFingerReleaseAfterLongPressFlutter(int x, int y) {
+    public SelectionResult onFingerReleaseAfterLongPressFlutter() {
         Timber.v("长按流程, onFingerReleaseAfterLongPressFlutter");
 //        mCanMagnifier = false;
         // 判断手指触摸区域有没有选中text

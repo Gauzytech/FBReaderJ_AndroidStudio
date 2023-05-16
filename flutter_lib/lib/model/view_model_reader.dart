@@ -20,7 +20,7 @@ class ReaderViewModel extends BaseViewModel {
 
   late ReaderProgressManager _progressManager;
 
-  Size get contentSize => repository.getContentSize();
+  Size get contentSize => repository.contentSize;
 
   ReaderViewModel({required this.bookInfo}) {
     _configModel = ReaderConfigModel(viewModel: this);

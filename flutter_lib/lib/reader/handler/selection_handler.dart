@@ -136,7 +136,7 @@ class SelectionHandler {
     }
   }
 
-  void onLongPressUp() {
+  void onLongPressEnd() {
     print("flutter动画流程:长按事件, ------------end------------>>>>>>>>>");
     _setSelectionTouch(null);
     readerContentHandler.callNativeMethod(NativeScript.longPressEnd, 0, 0);
