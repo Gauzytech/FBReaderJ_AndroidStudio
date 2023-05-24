@@ -471,7 +471,7 @@ class PageTurnAnimation extends BaseAnimationPage {
         _resetData();
         print('flutter翻页行为, onPageCentered 重置坐标');
         metaData.onPageCentered?.call();
-        // readerViewModel.preloadAdjacentPage();
+        readerViewModel.preloadAdjacentPage();
       }
 
       canvas.restore();

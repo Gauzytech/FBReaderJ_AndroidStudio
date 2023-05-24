@@ -7,7 +7,7 @@ import 'package:flutter_lib/reader/controller/page_scroll/reader_scroll_phase_de
 /// 阅读内容滚动状态：保持, 通常发生在手指按下的时候
 ///
 /// 具体功能方法模仿[HoldScrollActivity].
-class HoldScrollPhase extends ReaderScrollPhase with ScrollHoldController {
+class HoldScrollPhase extends ReaderScrollPhase implements ScrollHoldController {
   HoldScrollPhase({
     required ReaderScrollPhaseDelegate delegate,
     this.onHoldCanceled,

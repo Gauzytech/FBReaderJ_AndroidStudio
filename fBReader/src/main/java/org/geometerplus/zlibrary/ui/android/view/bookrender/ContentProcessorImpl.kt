@@ -316,7 +316,8 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
         }
     }
 
-    override fun prepareAdjacentPage(
+    // todo 理解缓存相邻页面逻辑
+    override fun prepareAdjacentPageFlutter(
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int,
@@ -326,7 +327,7 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
     ) {
         prepareService.execute {
             Timber.v("flutter内容绘制流程, 准备相邻页面, %s", Thread.currentThread().name)
-            val map: MutableMap<String, Any> = HashMap()
+            val map = mutableMapOf<PageIndex, ContentPageResult>()
             bookPageProvider.preparePage(
                 targetContentView,
                 PageIndex.PREV,
@@ -336,9 +337,18 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updatePrevPage) {
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                drawOnBitmap(bitmap, PageIndex.PREV, width, height, 0)
-                map["prev"] = bitmap.toByteArray()
+//                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+//                drawOnBitmap(bitmap, PageIndex.PREV, width, height, 0)
+//                map["prev"] = bitmap.toByteArray()
+
+                val contentResult = bookPageProvider.processPageData(
+                    targetContentView, PageIndex.PREV,
+                    width,
+                    height,
+                    getMainAreaHeight(height),
+                    verticalScrollbarWidth
+                )
+                map[PageIndex.PREV] = contentResult
             }
             bookPageProvider.preparePage(
                 targetContentView,
@@ -349,9 +359,18 @@ class ContentProcessorImpl(private val fbReaderApp: FBReaderApp, systemInfo: Sys
                 verticalScrollbarWidth
             )
             if (updateNextPage) {
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                drawOnBitmap(bitmap, PageIndex.NEXT, width, height, 0)
-                map["next"] = bitmap.toByteArray()
+//                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+//                drawOnBitmap(bitmap, PageIndex.NEXT, width, height, 0)
+//                map["next"] = bitmap.toByteArray()
+
+                val contentResult = bookPageProvider.processPageData(
+                    targetContentView, PageIndex.NEXT,
+                    width,
+                    height,
+                    getMainAreaHeight(height),
+                    verticalScrollbarWidth
+                )
+                map[PageIndex.NEXT] = contentResult
             }
             resultCallBack.onComplete(map)
         }

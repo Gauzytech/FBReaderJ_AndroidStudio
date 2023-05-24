@@ -25,7 +25,6 @@ import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.ON_TA
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.PREPARE_PAGE
 import org.geometerplus.zlibrary.ui.android.view.bookrender.FlutterCommand.SELECTED_TEXT
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ContentPageResult
-import org.geometerplus.zlibrary.ui.android.view.bookrender.model.ElementPaintData
 import org.geometerplus.zlibrary.ui.android.view.bookrender.model.SelectionResult
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -137,11 +136,18 @@ class FlutterBridge(
                 val next = call.argument<Boolean>("update_next_page_cache")!!
                 Timber.v("$TAG, 收到了: [$prev, $next]")
 
-                contentProcessor.prepareAdjacentPage(
+                contentProcessor.prepareAdjacentPageFlutter(
                     width, height, 0, prev, next,
                     object : ResultCallBack {
                         override fun onComplete(data: Any) {
-                            result.success(data)
+                            data as Map<PageIndex, ContentPageResult>
+                            val paintData = mutableMapOf<String, String>()
+                            (data[PageIndex.PREV] as? ContentPageResult.Paint).let { paintData["prev"] = gson.toJson(it) }
+                            (data[PageIndex.NEXT] as? ContentPageResult.Paint).let { paintData["next"] = gson.toJson(it) }
+                            if (data.isNotEmpty()) {
+                                Timber.v("flutter内容绘制流程, 发送: ${paintData["prev"]}")
+                                result.success(paintData)
+                            }
                         }
                     }
                 )

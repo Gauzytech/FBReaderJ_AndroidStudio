@@ -41,7 +41,8 @@ interface ContentProcessor {
     )
 
     fun prepareAdjacentPage(width: Int, height: Int, verticalScrollbarWidth: Int)
-    fun prepareAdjacentPage(
+
+    fun prepareAdjacentPageFlutter(
         width: Int,
         height: Int,
         verticalScrollbarWidth: Int,

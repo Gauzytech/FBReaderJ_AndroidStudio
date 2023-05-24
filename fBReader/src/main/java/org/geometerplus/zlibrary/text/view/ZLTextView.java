@@ -460,6 +460,11 @@ public abstract class ZLTextView extends ZLTextViewBase {
         }
     }
 
+    /**
+     * 在准备相邻页面的逻辑使用: prepareAdjacentPage
+     *
+     * @param pageIndex 只可能是prev或者next
+     */
     @Override
     public synchronized void preparePage(ZLPaintContext context, PageIndex pageIndex) {
         setContext(context);

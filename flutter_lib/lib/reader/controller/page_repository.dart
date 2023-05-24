@@ -9,11 +9,8 @@ import 'package:flutter_lib/reader/controller/bitmap_manager_impl.dart';
 import 'package:flutter_lib/reader/controller/reader_page_view_model.dart';
 import 'package:flutter_lib/reader/model/paint/line_paint_data.dart';
 import 'package:flutter_lib/reader/model/paint/page_paint_data.dart';
-import 'package:flutter_lib/reader/model/paint/paint_block.dart';
 import 'package:flutter_lib/reader/model/paint/style/style_models/nr_text_style_collection.dart';
-import 'package:flutter_lib/reader/model/selection/highlight_block.dart';
 import 'package:flutter_lib/reader/model/selection/reader_selection_result.dart';
-import 'package:flutter_lib/reader/model/selection/selection_cursor.dart';
 import 'package:flutter_lib/reader/model/user_settings/geometry.dart';
 import 'package:flutter_lib/utils/screen_util.dart';
 import 'package:flutter_lib/utils/time_util.dart';
@@ -94,21 +91,12 @@ class PageRepository with PageRepositoryDelegate {
         {'page_index': pageIndex.index},
       );
 
-      Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      NRTextStyleCollection styleCollection =
-          NRTextStyleCollection.fromJson(pageData['text_style_collection']);
-      List<LinePaintData> lineData =
-          LinePaintData.fromJsonList(pageData['line_paint_data_list']);
+      final current = jsonDecode(result['page_data']);
+      var record = _handlePaintData(current);
       int width = ScreenUtil().screenWidth.toInt();
       int height = ScreenUtil().screenHeight.toInt();
 
-      print('flutter内容绘制流程, 收到了PaintData: ${lineData.length}');
-      // for (var element in lineData) {
-        // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
-      //   for (var data in element.elementPaintDataList) {
-      //     print('flutter内容绘制流程, data = $data');
-      //   }
-      // }
+      print('flutter内容绘制流程, 收到了PaintData: ${record.pagePaintData.data.length}');
 
       // final image = await imgBytes.toImage();
 
@@ -120,15 +108,30 @@ class PageRepository with PageRepositoryDelegate {
       // _readerPageViewModelDelegate!.initialize(image.width, image.height);
 
       _bitmapManager.setSize(width, height);
-      _bitmapManager.setGeometry(Geometry.fromJson(pageData['geometry']));
+      _bitmapManager.setGeometry(record.geometry);
       _bitmapManager.cachePagePaintData(
         internalIdx,
-        PagePaintData(styleCollection, lineData.toList()),
+        record.pagePaintData,
       );
       _readerPageViewModelDelegate!.initialize(width, height);
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
+  }
+
+  ({Geometry geometry, PagePaintData pagePaintData}) _handlePaintData(Map<dynamic, dynamic> pageData) {
+    final styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
+    final lineData = LinePaintData.fromJsonList(pageData['line_paint_data_list']);
+    // for (var element in lineData) {
+    // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
+    //   for (var data in element.elementPaintDataList) {
+    //     print('flutter内容绘制流程, data = $data');
+    //   }
+    // }
+    return (
+      pagePaintData: PagePaintData(styleCollection, lineData.toList()),
+      geometry: Geometry.fromJson(pageData['geometry'])
+    );
   }
 
   /// 通知native创建新内容image
@@ -201,29 +204,17 @@ class PageRepository with PageRepositoryDelegate {
 
       print('flutter_perf[preparePagePaintData], 收到了PaintData ${now() - time}ms');
 
-      Map<String, dynamic> pageData = jsonDecode(result['page_data']);
-      NRTextStyleCollection styleCollection = NRTextStyleCollection.fromJson(pageData['text_style_collection']);
-      List<LinePaintData> lineData =
-          LinePaintData.fromJsonList(pageData['line_paint_data_list']);
-      print('flutter_perf[preparePagePaintData], JSON转换完毕2 ${now() - time}ms , lines: ${lineData.length}');
+      final current = jsonDecode(result['page_data']);
+      var record = _handlePaintData(current);
+      print('flutter_perf[preparePagePaintData], JSON转换完毕2 ${now() - time}ms , lines: ${record.pagePaintData.data.length}');
       _bitmapManager.cachePagePaintData(
         internalCacheIndex,
-        PagePaintData(styleCollection, lineData.toList()),
+        record.pagePaintData,
       );
 
       print(
-          'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${lineData.length}');
+          'flutter内容绘制流程[preparePagePaintData], 收到了PaintData: ${record.pagePaintData.data.length}');
       refreshContent();
-      // for (var item in lineData) {
-      //   // print('flutter内容绘制流程, ------- ${element.runtimeType} -------');
-      //   for (var lineElement in item.elementPaintDataList) {
-      //     if(lineElement is WordElementPaintData) {
-      //       for (var element in lineElement.textBlock.data) {
-      //         print('flutter内容绘制流程[preparePagePaintData], data = $element');
-      //       }
-      //     }
-      //   }
-      // }
     } on PlatformException catch (e) {
       print("flutter内容绘制流程, $e");
     }
@@ -242,7 +233,7 @@ class PageRepository with PageRepositoryDelegate {
       if (prevIdx != null) print("flutter内容绘制流程, 预加载上一页");
       if (nextIdx != null) print("flutter内容绘制流程, 预加载下一页");
 
-      Map<Object?, Object?> result = await nativeInterface.evaluateNativeFunc(
+      Map<dynamic, dynamic> result = await nativeInterface.evaluateNativeFunc(
         NativeScript.preparePage,
         {
           'update_prev_page_cache': prevIdx != null,
@@ -250,22 +241,25 @@ class PageRepository with PageRepositoryDelegate {
         },
       );
 
+      // todo 如果翻页时预加载未完成会导致下一页不显示
       final prev = result['prev'];
       if (prevIdx != null && prev != null) {
-        prev as Uint8List;
-        var image = await prev.toImage();
-        print(
-            "flutter内容绘制流程, 收到prevPage ${prev.length} ${image.width}, ${image.height}");
-        _bitmapManager.cacheBitmap(prevIdx, image);
+        var record = _handlePaintData(jsonDecode(prev));
+        print('flutter内容绘制流程[prev], 收到了PaintData: ${record.pagePaintData.data.length}');
+        _bitmapManager.cachePagePaintData(
+          prevIdx,
+          record.pagePaintData,
+        );
       }
 
       final next = result['next'];
       if (nextIdx != null && next != null) {
-        next as Uint8List;
-        var image = await next.toImage();
-        print(
-            "flutter内容绘制流程, 收到prevPage ${next.length} ${image.width}, ${image.height}");
-        _bitmapManager.cacheBitmap(nextIdx, image);
+        var record = _handlePaintData(jsonDecode(next));
+        print('flutter内容绘制流程[next], 收到了PaintData: ${record.pagePaintData.data.length}');
+        _bitmapManager.cachePagePaintData(
+          nextIdx,
+          record.pagePaintData,
+        );
       }
     }
   }
