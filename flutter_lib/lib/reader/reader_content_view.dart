@@ -249,59 +249,6 @@ class ReaderContentViewState
     super.dispose();
   }
 
-  // void onDragStart(DragStartDetails detail) {
-  //   // 如果动画正在进行, 直接忽略event
-  //   if (!_contentPainter!.isDuplicateEvent(
-  //     EventAction.dragStart,
-  //     detail.localPosition,
-  //   )) {
-  //     _contentPainter?.setCurrentTouchEvent(
-  //       TouchEvent.fromOnDown(
-  //           EventAction.dragStart, detail.localPosition, position.pixels),
-  //     );
-  //     _contentPainter?.startCurrentTouchEvent(null);
-  //     invalidateContent();
-  //   }
-  // }
-
-  // Future<void> onUpdateEvent(DragUpdateDetails detail) async {
-  //   if (!_contentPainter!.isDuplicateEvent(
-  //     EventAction.move,
-  //     detail.localPosition,
-  //   )) {
-  //     TouchEvent event = TouchEvent.fromOnUpdate(
-  //         EventAction.move, detail.localPosition, position.pixels);
-  //     _contentPainter?.setCurrentTouchEvent(event);
-  //     // 检查上一页/下一页是否存在
-  //     if (await _readerPageViewModel!.canScroll(event)) {
-  //       if (_contentPainter?.startCurrentTouchEvent(event) == true) {
-  //         invalidateContent();
-  //       } else {
-  //         print('flutter动画流程:忽略onUpdate: ${detail.localPosition}');
-  //       }
-  //     }
-  //   }
-  // }
-
-  // Future<void> onEndEvent(DragEndDetails detail) async {
-  //   if (!_contentPainter!.isDuplicateEvent(
-  //     EventAction.dragEnd,
-  //     _contentPainter!.lastTouchPosition(),
-  //   )) {
-  //     TouchEvent event = TouchEvent<DragEndDetails>.fromOnEnd(
-  //         EventAction.dragEnd,
-  //         _contentPainter!.lastTouchPosition(),
-  //         detail,
-  //         position.pixels);
-  //     _contentPainter?.setCurrentTouchEvent(event);
-  //     // 检查上一页/下一页是否存在
-  //     if (await _readerPageViewModel!.canScroll(event)) {
-  //       _contentPainter?.startCurrentTouchEvent(event);
-  //       invalidateContent();
-  //     }
-  //   }
-  // }
-
   /// 根据点击区域实现无动画翻页
   Future<void> jumpToPage(
     Offset touchPosition,
@@ -446,6 +393,7 @@ class ReaderContentViewState
       case NativeScript.dragStart:
       case NativeScript.longPressStart:
         {
+          // todo 绘制扇形指示器, https://juejin.cn/post/7158978916122624013
           var indicator =
           _selectionHandler.enableCrossPageIndicator(localPosition!);
           if (indicator != null) {
@@ -551,6 +499,8 @@ class ReaderContentViewState
   }
 
   // todo 把selectionMenu变成一个stateLessWidget, 避免点击menu导致触发onDragDown的点击冲突
+  // todo 将selectionMenu改成overlay https://juejin.cn/post/7002399430712229925
+  //  TapReigon https://juejin.cn/post/7199413150972772411
   Widget _buildSelectionMenuLayer() {
     Offset position = _selectionHandler.menuPosition!;
     if (position.isInfinite) {
