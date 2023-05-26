@@ -236,7 +236,9 @@ class PagePaintContext extends PaintContext {
   void drawString(
       ui.Canvas canvas, double x, double y, List<TextSpan> content) {
     _textPainter.text = TextSpan(children: content);
-    _textPainter.layout();
+    // _textPainter.layout();
+    // todo 添加了width可以换行
+    _textPainter.layout(minWidth: 0.0, maxWidth: 1000);
     _textPainter.paint(canvas, Offset(x, y - getStringHeightInternal()));
   }
 

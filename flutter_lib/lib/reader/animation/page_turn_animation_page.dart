@@ -244,47 +244,47 @@ class PageTurnAnimation extends BaseAnimationPage {
 
   @override
   void onTouchEvent(TouchEvent event) {
-    switch (event.action) {
-      case EventAction.dragStart:
-      // 手指按下, 保存起点
-        if (!mStartDx.isNaN && !mStartDx.isInfinite) {
-          print('flutter动画流程:onTouchEvent${event.touchPoint}, 保存dragStart的坐标, '
-              'mStartDx = $currentMoveDx');
-          eventStartPoint = event.touchPosition;
-          mStartDx = currentMoveDx;
-        }
-        break;
-    // 手指移动，或者抬起
-      case EventAction.move:
-      case EventAction.flingReleased:
-        print(
-            'flutter动画流程:onTouchEvent${event.touchPoint}, ${event.actionName}, eventStart = $eventStartPoint');
-        handleEvent(event);
-        break;
-      case EventAction.noAnimationForward:
-      case EventAction.noAnimationBackward:
-        if (!mStartDx.isNaN && !mStartDx.isInfinite) {
-          // 无动画翻页执行步骤
-          // 1. 保存起点，就是当前触摸的坐标
-          eventStartPoint = event.touchPosition;
-          mStartDx = currentMoveDx;
-          // 2. 计算终点, 暂时算前进
-          bool goNextPage = isForward(event);
-          TouchEvent end = TouchEvent(
-            action: event.action,
-            touchPosition: Offset(getEndDx(goNextPage), event.touchPosition.dy),
-            pixels: -1,
-          );
-          handleEvent(end);
-        }
-        break;
-      case EventAction.dragEnd:
-      case EventAction.cancel:
-    // 这里不会执行, 见setCurrentTouchEvent
-        break;
-      default:
-        break;
-    }
+    // switch (event.action) {
+    //   case EventAction.dragStart:
+    //   // 手指按下, 保存起点
+    //     if (!mStartDx.isNaN && !mStartDx.isInfinite) {
+    //       print('flutter动画流程:onTouchEvent${event.touchPoint}, 保存dragStart的坐标, '
+    //           'mStartDx = $currentMoveDx');
+    //       eventStartPoint = event.touchPosition;
+    //       mStartDx = currentMoveDx;
+    //     }
+    //     break;
+    // // 手指移动，或者抬起
+    //   case EventAction.move:
+    //   case EventAction.flingReleased:
+    //     print(
+    //         'flutter动画流程:onTouchEvent${event.touchPoint}, ${event.actionName}, eventStart = $eventStartPoint');
+    //     handleEvent(event);
+    //     break;
+    //   case EventAction.noAnimationForward:
+    //   case EventAction.noAnimationBackward:
+    //     if (!mStartDx.isNaN && !mStartDx.isInfinite) {
+    //       // 无动画翻页执行步骤
+    //       // 1. 保存起点，就是当前触摸的坐标
+    //       eventStartPoint = event.touchPosition;
+    //       mStartDx = currentMoveDx;
+    //       // 2. 计算终点, 暂时算前进
+    //       bool goNextPage = isForward(event);
+    //       TouchEvent end = TouchEvent(
+    //         action: event.action,
+    //         touchPosition: Offset(getEndDx(goNextPage), event.touchPosition.dy),
+    //         pixels: -1,
+    //       );
+    //       handleEvent(end);
+    //     }
+    //     break;
+    //   case EventAction.dragEnd:
+    //   case EventAction.cancel:
+    // // 这里不会执行, 见setCurrentTouchEvent
+    //     break;
+    //   default:
+    //     break;
+    // }
   }
 
   /// 清除所有翻页用到的临时数据
@@ -513,6 +513,9 @@ class PageTurnAnimation extends BaseAnimationPage {
       {bool isStable = false}) {
     var time = now();
     print('flutter_perf[$from], 开始绘制第${paintData.data!.length}行, 开始时间: $time');
+    // double lineX = double.infinity;
+    // double lineY = double.infinity;
+    // List<TextSpan> lineText = [];
     for (int i = 0; i < paintData.data!.length; i++) {
       LinePaintData lineInfo = paintData.data![i];
       // 保存一行里所有需要绘制的text元素
@@ -527,12 +530,15 @@ class PageTurnAnimation extends BaseAnimationPage {
             if (lineElement.textStyle != null) {
               _setTextStyle(paintContext, paintData.styleCollection!, lineElement.textStyle!);
             }
-            // todo 一次性绘制测试多行string
+            // todo 测试： 一次性绘制多行的文字
+            // todo 测试结果, 1. 如果把一段中的文字全部放到1个TextSpan的children中，只需要layout一次，渲染速度会大大提升. 49ms vs 103ms.
+            // todo 解决方法: 要将文字测量的逻辑从native全部移到flutter中.
             // 遍历每个block, 一个元素对应多个block
             for (var block in lineElement.blocks) {
               if (block is TextBlock) {
                 lineX = min(lineX, block.x.toDouble());
-                lineY = block.y.toDouble();
+                // lineY = block.y.toDouble();
+                lineY = min(lineY, block.y.toDouble());
               }
               lineText.addAll(_buildTextSpan(canvas, paintContext, block));
             }
@@ -551,9 +557,13 @@ class PageTurnAnimation extends BaseAnimationPage {
       }
       // 一行元素全部遍历后，将所有文字一次性绘制，提高textPainter.layout的速度
       if (lineText.isNotEmpty) {
+        print('text绘制, $lineX, $lineY');
         paintContext.drawString(canvas, lineX, lineY, lineText);
       }
     }
+    // if (lineText.isNotEmpty) {
+    //   paintContext.drawString(canvas, lineX, lineY, lineText);
+    // }
     print('flutter_perf[$from], 内容绘制完毕: ${now() - time}ms');
   }
 
