@@ -71,7 +71,7 @@ public class BookEnterActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE_FOR_SINGLE_FILE);
             } else {
                 // 通过AIDL接口调用数据库，获取之前阅读的图书信息
-                int idx = 4;
+                int idx = 1;
                 Book book = myCollection.getBookByFile(ROOT + name[idx]);
 
                 if (book == null) {

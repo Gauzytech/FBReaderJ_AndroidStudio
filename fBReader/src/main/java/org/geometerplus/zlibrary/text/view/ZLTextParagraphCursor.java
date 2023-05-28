@@ -21,11 +21,7 @@ package org.geometerplus.zlibrary.text.view;
 
 import androidx.annotation.NonNull;
 
-import org.geometerplus.zlibrary.core.image.ZLImage;
-import org.geometerplus.zlibrary.core.image.ZLImageData;
-import org.geometerplus.zlibrary.core.image.ZLImageManager;
 import org.geometerplus.zlibrary.core.resources.ZLResource;
-import org.geometerplus.zlibrary.text.model.ZLImageEntry;
 import org.geometerplus.zlibrary.text.model.ZLTextMark;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
 import org.geometerplus.zlibrary.text.model.ZLTextOtherStyleEntry;
@@ -110,7 +106,7 @@ public final class ZLTextParagraphCursor {
 				List<ZLTextMark> marks = textModel.getMarks();
 				ZLParagraphElementProcessor processor = new ZLParagraphElementProcessor(
 						paragraph,
-						cursorManager.extensionManager,
+						cursorManager.getExtensionManager(),
 						lineBreaker,
 						marks,
 						0,

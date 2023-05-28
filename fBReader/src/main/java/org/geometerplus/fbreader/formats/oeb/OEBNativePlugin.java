@@ -46,7 +46,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 	 */
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
-		Timber.v("图书解析流程, 图书解析Java, 读取图书并创建model: \n%s", model.toString());
+		Timber.v("图书解析流程, 图书解析Java, 读取图书并创建model: \n%s", model);
 		// 创建file对象:
 		// AndroidAssetsFile,
 		// ZLTarEntryFile,

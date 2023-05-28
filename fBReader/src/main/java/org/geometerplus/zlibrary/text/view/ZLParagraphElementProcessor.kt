@@ -20,7 +20,7 @@ private const val NON_BREAKABLE_SPACE = 2
 
 class ZLParagraphElementProcessor(
     private val myParagraph: ZLTextParagraph,
-    private val myExtManager: ExtensionElementManager,
+    private val myExtManager: ExtensionElementManager?,
     private val myLineBreaker: LineBreaker,
     private val myMarks: List<ZLTextMark>,
     private var myOffset: Int,
@@ -148,11 +148,9 @@ class ZLParagraphElementProcessor(
                 ZLTextParagraph.Entry.AUDIO -> Unit
                 ZLTextParagraph.Entry.VIDEO -> elements.add(ZLTextVideoElement(iterator.videoEntry.sources()))
                 ZLTextParagraph.Entry.EXTENSION -> {
-                    elements.addAll(
-                        myExtManager.getElements(
-                            iterator.extensionEntry
-                        )
-                    )
+                    myExtManager?.let {
+                        elements.addAll(it.getElements(iterator.extensionEntry))
+                    }
                 }
                 ZLTextParagraph.Entry.STYLE_CSS, ZLTextParagraph.Entry.STYLE_OTHER -> {
                     elements.add(

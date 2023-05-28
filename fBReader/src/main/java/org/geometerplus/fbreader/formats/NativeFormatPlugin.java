@@ -118,10 +118,11 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 	synchronized public void readModel(BookModel model) throws BookReadingException {
 		final int code;
 		final String tempDirectory = SystemInfo.tempDirectory();
+		long time = System.currentTimeMillis();
 		synchronized (ourNativeLock) {
 			Timber.v("图书解析流程， 通过cpp开始进行解析操作 tempDirectory = %s", tempDirectory);
 			code = readModelNative(model, tempDirectory);
-			Timber.v("图书解析流程， 解析完成, code = %s", code);
+			Timber.v("图书解析流程， 解析完成, code = %s, 解析耗时 = %d", code, System.currentTimeMillis() - time);
 		}
 		switch (code) {
 			case 0:

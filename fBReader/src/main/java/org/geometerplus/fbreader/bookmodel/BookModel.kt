@@ -43,10 +43,10 @@ class BookModel(
     }
 
     /**
-     * 获得footNote/超链接数据
+     * 获得星标数据, 星标数据就是书之后的reference, 有一个跳转功能. eg: <毛泽东选集>
      */
     fun getLabel(id: String): Label? {
-        Timber.v("超链接, id = %s", id)
+        Timber.v("引用超链接跳转, id = %s", id)
         var label = getLabelInternal(id)
         if (label == null && labelResolver != null) {
             for (candidate in labelResolver!!.getCandidates(id)) {
@@ -184,7 +184,7 @@ class BookModel(
         @JvmStatic
         @Throws(BookReadingException::class)
         fun createModel(book: Book, plugin: FormatPlugin): BookModel {
-            Timber.v("图书解析流程, 开始解析图书, 创建图书model, %s", plugin.javaClass.simpleName)
+            Timber.v("图书解析流程, 开始解析图书, 使用${plugin} 创建图书model")
             // 只有FB2NativePlugin和OEBNativePlugin才会执行cpp层解析
             if (plugin !is BuiltinFormatPlugin) {
                 throw BookReadingException("unknownPluginType", null, arrayOf("$plugin"))
@@ -196,5 +196,9 @@ class BookModel(
             plugin.readModel(model)
             return model
         }
+    }
+
+    override fun toString(): String {
+        return "$book, \n$tocTree"
     }
 }
