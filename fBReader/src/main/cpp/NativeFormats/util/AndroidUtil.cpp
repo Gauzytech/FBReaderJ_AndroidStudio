@@ -198,7 +198,7 @@ bool AndroidUtil::init(JavaVM* jvm) {
 
 	StaticMethod_Tag_getTag = new StaticObjectMethod(Class_Tag, "getTag", Class_Tag, "(Lorg/geometerplus/fbreader/book/Tag;Ljava/lang/String;)");
 
-	Field_BookModel_Book = new ObjectField(Class_BookModel, "Book", Class_Book);
+	Field_BookModel_Book = new ObjectField(Class_BookModel, "book", Class_Book);
 	Method_BookModel_initInternalHyperlinks = new VoidMethod(Class_BookModel, "initInternalHyperlinks", "(Ljava/lang/String;Ljava/lang/String;I)");
 	Method_BookModel_addTOCItem = new VoidMethod(Class_BookModel, "addTOCItem", "(Ljava/lang/String;I)");
 	Method_BookModel_leaveTOCItem = new VoidMethod(Class_BookModel, "leaveTOCItem", "()");

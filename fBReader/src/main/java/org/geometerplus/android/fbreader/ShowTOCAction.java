@@ -36,7 +36,7 @@ class ShowTOCAction extends FBAndroidAction {
 			return false;
 		}
 		final BookModel model = reader.bookModel;
-		return model != null && model.TOCTree.hasChildren();
+		return model != null && model.tocTree().hasChildren();
 	}
 
 	@Override

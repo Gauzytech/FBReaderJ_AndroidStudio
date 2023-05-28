@@ -55,11 +55,11 @@ public class BookTOCFragment extends BaseFragment {
      */
     public void initTree() {
         final FBReaderApp fbReader = (FBReaderApp) ZLApplication.Instance();
-        if (fbReader == null || fbReader.bookModel == null || fbReader.bookModel.TOCTree == null) {
+        if (fbReader == null || fbReader.bookModel == null || fbReader.bookModel.tocTree() == null) {
             return;
         }
         // 获取目录索引树
-        final TOCTree root = fbReader.bookModel.TOCTree;
+        final TOCTree root = fbReader.bookModel.tocTree();
         myAdapter = new TOCAdapter(root);
         // 获取当前的目录索引
         mySelectedItem = fbReader.getCurrentTOCElement();

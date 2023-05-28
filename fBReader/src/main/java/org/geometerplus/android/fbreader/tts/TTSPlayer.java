@@ -169,7 +169,7 @@ public class TTSPlayer implements IPlayer {
     }
 
     public Book getBook() {
-        return mFBReaderApp.bookModel.Book;
+        return mFBReaderApp.bookModel.book();
     }
 
     /**

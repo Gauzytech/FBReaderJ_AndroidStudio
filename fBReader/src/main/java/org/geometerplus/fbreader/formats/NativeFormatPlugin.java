@@ -133,8 +133,8 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 			default:
 				throw new BookReadingException(
 					"nativeCodeFailure",
-					BookUtil.fileByBook(model.Book),
-					new String[] { String.valueOf(code), model.Book.getPath() }
+					BookUtil.fileByBook(model.book()),
+					new String[] { String.valueOf(code), model.book().getPath() }
 				);
 		}
 	}

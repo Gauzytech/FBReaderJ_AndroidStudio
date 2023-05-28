@@ -1217,10 +1217,10 @@ public final class FBReader extends FBReaderMainActivity implements ZLReaderWind
             getCollection().bindToService(FBReader.this, () -> {
                 // 监听阅读设置改变
                 final BookModel model = readerController.bookModel;
-                if (model == null || model.Book == null) {
+                if (model == null || model.book() == null) {
                     return;
                 }
-                onPreferencesUpdate(readerController.Collection.getBookById(model.Book.getId()));
+                onPreferencesUpdate(readerController.Collection.getBookById(model.book().getId()));
             });
         });
 

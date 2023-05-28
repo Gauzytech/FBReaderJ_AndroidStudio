@@ -82,7 +82,7 @@ public class BookMarkFragment extends BaseFragment implements IBookCollection.Li
 
         final FBReaderApp fbReader = (FBReaderApp) ZLApplication.Instance();
         // 获取目录索引树
-        root = fbReader.bookModel.TOCTree;
+        root = fbReader.bookModel.tocTree();
     }
 
     @Override

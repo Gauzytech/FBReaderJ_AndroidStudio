@@ -175,7 +175,7 @@ public final class FBView extends ZLTextView {
             ++index;
         }
         TOCTree treeToSelect = null;
-        for (TOCTree tree : myReader.bookModel.TOCTree) {
+        for (TOCTree tree : myReader.bookModel.tocTree()) {
             final TOCTree.Reference reference = tree.getReference();
             if (reference == null) {
                 continue;
@@ -811,7 +811,7 @@ public final class FBView extends ZLTextView {
             myTOCMarks = new ArrayList<>();
             myMaxTOCMarksNumber = maxNumber;
 
-            TOCTree toc = model.TOCTree;
+            TOCTree toc = model.tocTree();
             if (toc == null) {
                 return;
             }

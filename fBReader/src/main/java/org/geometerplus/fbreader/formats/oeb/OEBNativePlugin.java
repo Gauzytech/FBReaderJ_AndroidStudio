@@ -52,7 +52,7 @@ public class OEBNativePlugin extends NativeFormatPlugin {
 		// ZLTarEntryFile,
 		// ZLZipEntryFile,
 		// ZLPhysicalFile
-		final ZLFile file = BookUtil.fileByBook(model.Book);
+		final ZLFile file = BookUtil.fileByBook(model.book());
 		Timber.v("图书解析流程, 图书解析Java, 创建bookFile: %s", file.getClass().getSimpleName());
 		file.setCached(true);
 		try {
