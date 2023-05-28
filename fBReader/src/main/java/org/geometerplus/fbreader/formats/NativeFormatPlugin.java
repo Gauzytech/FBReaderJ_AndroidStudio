@@ -119,9 +119,9 @@ public class NativeFormatPlugin extends BuiltinFormatPlugin {
 		final int code;
 		final String tempDirectory = SystemInfo.tempDirectory();
 		synchronized (ourNativeLock) {
-			Timber.v("ceshi123， 通过cpp开始进行解析操作 tempDirectory = %s", tempDirectory);
+			Timber.v("图书解析流程， 通过cpp开始进行解析操作 tempDirectory = %s", tempDirectory);
 			code = readModelNative(model, tempDirectory);
-			Timber.v("ceshi123， 解析完成, code = %s", code);
+			Timber.v("图书解析流程， 解析完成, code = %s", code);
 		}
 		switch (code) {
 			case 0:

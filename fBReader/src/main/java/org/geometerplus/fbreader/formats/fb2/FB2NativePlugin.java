@@ -42,7 +42,7 @@ public class FB2NativePlugin extends NativeFormatPlugin {
 
 	@Override
 	public void readModel(BookModel model) throws BookReadingException {
-		Timber.v("ceshi123, 读取图书并创建model");
+		Timber.v("图书解析流程, 读取图书并创建model");
 		super.readModel(model);
 		model.setLabelResolver(new BookModel.LabelResolver() {
 			public List<String> getCandidates(String id) {

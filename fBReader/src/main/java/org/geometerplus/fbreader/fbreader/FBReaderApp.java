@@ -59,7 +59,7 @@ public final class FBReaderApp extends ZLApplication {
     public final ViewOptions ViewOptions = new ViewOptions();
     public final PageTurningOptions PageTurningOptions = new PageTurningOptions();
     public final SyncOptions SyncOptions = new SyncOptions();
-    // 管理所有图书显示界面绘制数据的类
+    // 管理所有图书内容绘制数据的类
     public final FBView bookTextView;
     // 管理所有图书显示界面脚注绘制数据的类
     public final FBView footnoteView;
@@ -491,7 +491,7 @@ public final class FBReaderApp extends ZLApplication {
      * @param force    强制
      */
     private synchronized void openBookInternal(final Book book, Bookmark bookmark, boolean force) {
-        Timber.v("打开图书:渲染流程, --------------------------------------------------------openBookInternal 图书渲染入口----------------------------------------------------------");
+        Timber.v("打开图书:渲染流程, ------------------openBookInternal 图书渲染入口------------------");
         if (!force && bookModel != null && Collection.sameBook(book, bookModel.Book)) {
             if (bookmark != null) {
                 gotoBookmark(bookmark, false);
@@ -538,7 +538,9 @@ public final class FBReaderApp extends ZLApplication {
             return;
         }
 
-        // BuiltinFormatPlugin: FB2NativePlugin, OEBNativePlugin
+        // BuiltinFormatPlugin:
+        // 1. FB2NativePlugin,
+        // 2. OEBNativePlugin
         try {
             // 开始解析图书, 将所有图书内容存入bookModel中
             // bookModel.myBookTextModel里保存了所有章节渲染信息

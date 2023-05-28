@@ -43,7 +43,7 @@ public final class BookModel {
 	 * 1. 创建book渲染数据model第一步
 	 */
 	public static BookModel createModel(Book book, FormatPlugin plugin) throws BookReadingException {
-		Timber.v("ceshi123, 开始解析图书, 创建图书model, " + plugin.name());
+		Timber.v("图书解析流程, 开始解析图书, 创建图书model, %s",  plugin.getClass().getSimpleName());
 		// 只有FB2NativePlugin和OEBNativePlugin才会执行cpp层解析
 		if (!(plugin instanceof BuiltinFormatPlugin)) {
 			throw new BookReadingException(
@@ -91,7 +91,11 @@ public final class BookModel {
 		myResolver = resolver;
 	}
 
+	/**
+	 * 获得footNote/超链接数据
+	 */
 	public Label getLabel(String id) {
+		Timber.v("超链接, id = %s", id);
 		Label label = getLabelInternal(id);
 		if (label == null && myResolver != null) {
 			for (String candidate : myResolver.getCandidates(id)) {
@@ -123,7 +127,7 @@ public final class BookModel {
 		for (int i = 0; i < size; ++i) {
 			final char[] block = myInternalHyperlinks.block(i);
 			for (int offset = 0; offset < block.length; ) {
-				final int labelLength = (int)block[offset++];
+				final int labelLength = block[offset++];
 				if (labelLength == 0) {
 					break;
 				}
