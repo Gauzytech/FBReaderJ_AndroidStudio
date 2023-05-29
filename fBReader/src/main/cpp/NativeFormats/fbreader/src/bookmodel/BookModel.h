@@ -68,7 +68,7 @@ public:
 	};
 
 public:
-	BookModel(const shared_ptr<Book> book, jobject javaModel, const std::string &cacheDir);
+	BookModel(const shared_ptr<Book> book, jobject javaModel, std::string cacheDir);
 	~BookModel();
 
 	void setHyperlinkMatcher(shared_ptr<HyperlinkMatcher> matcher);

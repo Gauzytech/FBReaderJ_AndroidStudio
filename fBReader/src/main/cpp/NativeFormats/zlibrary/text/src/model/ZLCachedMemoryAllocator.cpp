@@ -32,7 +32,8 @@
 #include <LogUtil.h>
 
 /**
- * 缓存解析文件结果工具类
+ * 缓存解析文件结果工具类: 将解析的数据保存到本地
+ *
  * @param rowSize
  * @param directoryName /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/cache
  * @param fileExtension 比如: ncache: paragraph解析结果
@@ -150,7 +151,7 @@ char *ZLCachedMemoryAllocator::allocate(CurProcessFile& currentFile, std::size_t
  * 对应新实现reallocateLastBeta()
  */
 char *ZLCachedMemoryAllocator::reallocateLast(CurProcessFile& currentFile, char *ptr, std::size_t newSize, const std::string& from) {
-	LogUtil::print("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
+	LogUtil::LOGI("解析缓存流程", "reallocateLast %s", std::to_string(newSize));
 	myHasChanges = true;
 	const std::size_t oldOffset = ptr - myPool.back();
 	// sizeof(char*) 返回字符型指针所占内存的大小, 值为4
@@ -259,7 +260,7 @@ void ZLCachedMemoryAllocator::writeCacheBeta(std::size_t blockLength, CurProcess
 
     const std::size_t index = myPoolBeta.size() - 1;
     const std::string fileName = makeFileNameBeta(index, currentFile);
-    LogUtil::print("解析缓存流程", "writeCache, name = %s", fileName);
+    LogUtil::LOGI("解析缓存流程", "writeCache, name = %s", fileName);
 
     ZLFile file(fileName);
     shared_ptr<ZLOutputStream> stream = file.outputStream();

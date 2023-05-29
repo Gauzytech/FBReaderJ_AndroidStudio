@@ -292,7 +292,7 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 		return 1;
 	}
 
-	// 2. 获得缓存文件夹目录
+	// 2. 获得图书文件缓存文件夹路径
 	const std::string cacheDir = AndroidUtil::fromJavaString(env, javaCacheDir);
 
 	// 3.
@@ -304,8 +304,7 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
 	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
     shared_ptr<BookModel> model = new BookModel(book, javaBookModel, cacheDir);
-
-    LogUtil::print("readModelNative, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    LogUtil::print("图书解析流程, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
 
     // 4. 使用plugin对cpp bookModel进行解析
     // 读取了opf, container, 所有xhtml文件, 和toc.ncx文件

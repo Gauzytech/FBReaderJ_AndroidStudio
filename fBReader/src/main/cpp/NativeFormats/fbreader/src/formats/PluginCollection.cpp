@@ -41,7 +41,7 @@
 PluginCollection *PluginCollection::ourInstance = 0;
 
 PluginCollection &PluginCollection::Instance() {
-	if (ourInstance == 0) {
+	if (ourInstance == nullptr) {
 		ourInstance = new PluginCollection();
 		ourInstance->myPlugins.push_back(new FB2Plugin());
 		ourInstance->myPlugins.push_back(new HtmlPlugin());
@@ -81,12 +81,12 @@ PluginCollection::~PluginCollection() {
 }
 
 shared_ptr<FormatPlugin> PluginCollection::pluginByType(const std::string &fileType) const {
-	for (std::vector<shared_ptr<FormatPlugin> >::const_iterator it = myPlugins.begin(); it != myPlugins.end(); ++it) {
-		if (fileType == (*it)->supportedFileType()) {
-			return *it;
+	for (const auto & myPlugin : myPlugins) {
+		if (fileType == myPlugin->supportedFileType()) {
+			return myPlugin;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 bool PluginCollection::isLanguageAutoDetectEnabled() {

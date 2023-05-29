@@ -36,16 +36,21 @@
 
 #include <LogUtil.h>
 
-ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, const std::size_t rowSize,
-		const std::string &directoryName, const std::string &fileExtension, FontManager &fontManager) :
-	myId(id),
-	myLanguage(language.empty() ? ZLibrary::Language() : language),
-	// 初始化缓存解析文件工具类
-	myAllocator(new ZLCachedMemoryAllocator(rowSize, directoryName, fileExtension)),
-	myLastEntryStart(nullptr),
-	myFontManager(fontManager) {
-    LogUtil::print("创建ZLTextModel constructor1, rowSize = %s", std::to_string(rowSize));
+ZLTextModel::ZLTextModel(const std::string &id, // 是个空string
+						 const std::string &language,
+						 const std::size_t rowSize, // 131072
+						 const std::string &directoryName,
+						 const std::string &fileExtension,
+						 FontManager &fontManager) :
+		myId(id),
+		myLanguage(language.empty() ? ZLibrary::Language() : language),
+		// 初始化缓存解析文件工具类: 将解析的数据保存到本地
+		myAllocator(new ZLCachedMemoryAllocator(rowSize, directoryName, fileExtension)),
+		myLastEntryStart(nullptr),
+		myFontManager(fontManager) {
 
+	LogUtil::LOGI("cpp解析打印", "图书解析流程, 创建ZLTextModel main constructor, %s",
+				  "id = '" + myId + "' rowSize = " + std::to_string(rowSize));
     // 新实现
     // 清空字符串, empty string, length = 0
 	currentFile.clear();
@@ -57,7 +62,7 @@ ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, sha
 	myAllocator(allocator),
 	myLastEntryStart(nullptr),
 	myFontManager(fontManager) {
-    LogUtil::print("创建ZLTextModel constructor2, ext = %s", allocator->fileExtension());
+	LogUtil::print("创建ZLTextModel footNote constructor, ext = %s", allocator->fileExtension());
 
 	// 新实现
 	// 清空字符串, empty string, length = 0
@@ -161,14 +166,18 @@ void ZLTextModel::addParagraphInternal(ZLTextParagraph *paragraph) {
 	myLastEntryStart = nullptr;
 }
 
-ZLTextPlainModel::ZLTextPlainModel(const std::string &id, const std::string &language, const std::size_t rowSize,
-		const std::string &directoryName, const std::string &fileExtension, FontManager &fontManager) :
-	ZLTextModel(id, language, rowSize, directoryName, fileExtension, fontManager) {
-}
+ZLTextPlainModel::ZLTextPlainModel(const std::string &id,
+								   const std::string &language,
+								   const std::size_t rowSize,
+								   const std::string &directoryName,
+								   const std::string &fileExtension,
+								   FontManager &fontManager) :
+		ZLTextModel(id, language, rowSize, directoryName, fileExtension, fontManager) {}
 
-ZLTextPlainModel::ZLTextPlainModel(const std::string &id, const std::string &language, shared_ptr<ZLCachedMemoryAllocator> allocator, FontManager &fontManager) :
-	ZLTextModel(id, language, allocator, fontManager) {
-}
+ZLTextPlainModel::ZLTextPlainModel(const std::string &id, const std::string &language,
+								   shared_ptr<ZLCachedMemoryAllocator> allocator,
+								   FontManager &fontManager) :
+		ZLTextModel(id, language, allocator, fontManager) {}
 
 void ZLTextPlainModel::createParagraph(ZLTextParagraph::Kind kind) {
 	ZLTextParagraph *paragraph = (kind == ZLTextParagraph::TEXT_PARAGRAPH) ? new ZLTextParagraph() : new ZLTextSpecialParagraph(kind);
@@ -179,7 +188,7 @@ void ZLTextPlainModel::createParagraph(ZLTextParagraph::Kind kind) {
 }
 
 void ZLTextModel::addText(const std::string &text) {
-	LogUtil::print("解析缓存流程", "addText 单个text = %s", text);
+	LogUtil::LOGI("解析缓存流程", "addText 单个text = %s", text);
 	ZLUnicodeUtil::Ucs2String ucs2str;
 	ZLUnicodeUtil::utf8ToUcs2(ucs2str, text);
 	const std::size_t len = ucs2str.size();
@@ -509,7 +518,7 @@ void ZLTextModel::addParagraphInternalBeta(ZLTextParagraph *paragraph) {
 }
 
 void ZLTextModel::finishCurrentFile() {
-	LogUtil::print("解析缓存流程", "finishCurrentFile = %s", currentFile.fileName);
+	LogUtil::LOGI("解析缓存流程", "finishCurrentFile = %s", currentFile.fileName);
 	if (currentFile.valid()) return;
 
     myAllocator->flushCurrentFile(currentFile);

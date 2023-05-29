@@ -262,8 +262,8 @@ jobject AndroidUtil::createJavaImage(JNIEnv *env, const ZLFileImage &image) {
 }
 
 std::string AndroidUtil::fromJavaString(JNIEnv *env, jstring from) {
-	if (from == 0) {
-		return std::string();
+	if (from == nullptr) {
+		return {};
 	}
 	const char *data = env->GetStringUTFChars(from, 0);
 	const std::string result(data);
