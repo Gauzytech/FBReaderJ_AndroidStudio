@@ -30,13 +30,19 @@
 //#include "tar/ZLTar.h"
 //#include "bzip2/ZLBzip2InputStream.h"
 #include "ZLFSManager.h"
+#include "LogUtil.h"
 
 const ZLFile ZLFile::NO_FILE;
 
 ZLFile::ZLFile() : myMimeTypeIsUpToDate(true), myInfoIsFilled(true) {
 }
 
-ZLFile::ZLFile(const std::string &path, const std::string &mimeType) : myPath(path), myMimeType(mimeType), myMimeTypeIsUpToDate(!mimeType.empty()), myInfoIsFilled(false) {
+ZLFile::ZLFile(const std::string &path,
+			   const std::string &mimeType,
+			   const std::string &from) : myPath(path),
+										  myMimeType(mimeType),
+										  myMimeTypeIsUpToDate(!mimeType.empty()),
+										  myInfoIsFilled(false) {
 	ZLFSManager::Instance().normalize(myPath);
 	{
 		std::size_t index = ZLFSManager::Instance().findLastFileNameDelimiter(myPath);
@@ -46,20 +52,22 @@ ZLFile::ZLFile(const std::string &path, const std::string &mimeType) : myPath(pa
 			myNameWithExtension = myPath;
 		}
 	}
-	myNameWithoutExtension = myNameWithExtension;
+	// 将完整文件名暂时赋值给myNameWithoutExtension
+	std::string fullFileName = myNameWithExtension;
 
-	std::map<std::string,ArchiveType> &forcedFiles = ZLFSManager::Instance().myForcedFiles;
-	std::map<std::string,ArchiveType>::iterator it = forcedFiles.find(myPath);
+	std::map<std::string, ArchiveType> &forcedFiles = ZLFSManager::Instance().myForcedFiles;
+	auto it = forcedFiles.find(myPath);
+//	LogUtil::LOGI("cpp解析打印, 图书解析流程", "[" + from +"]" + " mPath = %s", myPath);
 	if (it != forcedFiles.end()) {
 		myArchiveType = it->second;
-	} else {
+	} else { // 没有找到值
 		myArchiveType = NONE;
-		std::string lowerCaseName = ZLUnicodeUtil::toLower(myNameWithoutExtension);
+		std::string lowerCaseName = ZLUnicodeUtil::toLower(fullFileName);
 
 		if (ZLStringUtil::stringEndsWith(lowerCaseName, ".gz")) {
-			myNameWithoutExtension = myNameWithoutExtension.substr(0, myNameWithoutExtension.length() - 3);
+			fullFileName = fullFileName.substr(0, fullFileName.length() - 3);
 			lowerCaseName = lowerCaseName.substr(0, lowerCaseName.length() - 3);
-			myArchiveType = (ArchiveType)(myArchiveType | GZIP);
+			myArchiveType = (ArchiveType) (myArchiveType | GZIP);
 		}
 		/*if (ZLStringUtil::stringEndsWith(lowerCaseName, ".bz2")) {
 			myNameWithoutExtension = myNameWithoutExtension.substr(0, myNameWithoutExtension.length() - 4);
@@ -67,7 +75,7 @@ ZLFile::ZLFile(const std::string &path, const std::string &mimeType) : myPath(pa
 			myArchiveType = (ArchiveType)(myArchiveType | BZIP2);
 		}*/
 		if (ZLStringUtil::stringEndsWith(lowerCaseName, ".zip")) {
-			myArchiveType = (ArchiveType)(myArchiveType | ZIP);
+			myArchiveType = (ArchiveType) (myArchiveType | ZIP);
 		} /*else if (ZLStringUtil::stringEndsWith(lowerCaseName, ".tar")) {
 			myArchiveType = (ArchiveType)(myArchiveType | TAR);
 		} else if (ZLStringUtil::stringEndsWith(lowerCaseName, ".tgz") ||
@@ -77,11 +85,16 @@ ZLFile::ZLFile(const std::string &path, const std::string &mimeType) : myPath(pa
 		}*/
 	}
 
-	int index = myNameWithoutExtension.rfind('.');
+	// 从末尾开始查找'.'
+	int index = fullFileName.rfind('.');
+	// 从完整文件名中获取
 	if (index > 0) {
-		myExtension = ZLUnicodeUtil::toLower(myNameWithoutExtension.substr(index + 1));
-		myNameWithoutExtension = myNameWithoutExtension.substr(0, index);
+		myExtension = ZLUnicodeUtil::toLower(fullFileName.substr(index + 1));
+		myNameWithoutExtension = fullFileName.substr(0, index);
+	} else {
+		myNameWithoutExtension = fullFileName;
 	}
+//	LogUtil::LOGI("cpp解析打印, 图书解析流程", "[" + from +"]" + " fullFileName = %s, myNameWithoutExtension = " + myNameWithoutExtension, fullFileName);
 }
 
 shared_ptr<ZLInputStream> ZLFile::envelopeCompressedStream(shared_ptr<ZLInputStream> &base) const {

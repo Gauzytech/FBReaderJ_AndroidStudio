@@ -303,8 +303,9 @@ JNIEXPORT jint JNICALL Java_org_geometerplus_fbreader_formats_NativeFormatPlugin
 	// 3.2 通过javaBook创建cpp book
 	shared_ptr<Book> book = Book::loadFromJavaBook(env, javaBook);
 	// 3.3 通过javaModel, cpp book, 和cacheDir 创建cpp bookModel
+    //     并且创建ZLTextPlainModel
     shared_ptr<BookModel> model = new BookModel(book, javaBookModel, cacheDir);
-    LogUtil::print("图书解析流程, 开始使用%s进行readModel操作 ", typeid(*plugin).name());
+    LogUtil::LOGI("cpp解析打印, 图书解析流程", "开始使用%s进行readModel操作 ", typeid(*plugin).name());
 
     // 4. 使用plugin对cpp bookModel进行解析
     // 读取了opf, container, 所有xhtml文件, 和toc.ncx文件

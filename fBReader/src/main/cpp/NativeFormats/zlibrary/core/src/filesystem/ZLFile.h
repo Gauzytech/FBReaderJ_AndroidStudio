@@ -54,7 +54,8 @@ private:
 	ZLFile();
 
 public:
-	explicit ZLFile(const std::string &path, const std::string &mimeType = std::string());
+	explicit ZLFile(const std::string &path, const std::string &mimeType = std::string(), const std::string &from = std::string());
+
 	~ZLFile();
 
 	bool exists() const;

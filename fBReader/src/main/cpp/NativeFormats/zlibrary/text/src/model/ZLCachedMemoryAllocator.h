@@ -28,7 +28,7 @@
 class ZLCachedMemoryAllocator {
 
 public:
-	ZLCachedMemoryAllocator(const std::size_t rowSize, const std::string &directoryName, const std::string &fileExtension);
+	ZLCachedMemoryAllocator(const std::size_t rowSize, const std::string &directoryName, std::string fileExtension);
 	~ZLCachedMemoryAllocator();
 
 	char *allocate(CurProcessFile& currentFile, std::size_t size, const std::string& from);

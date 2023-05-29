@@ -31,7 +31,7 @@
 #include "../library/Book.h"
 
 /**
- * BookModel constructor
+ * 初始化BookModel + TextPlainModel
  * @param book  book model
  * @param javaModel javaBookModel
  * @param cacheDir 缓存解析数据的文件夹, /storage/emulated/0/Android/data/org.geometerplus.zlibrary.ui.android/cache

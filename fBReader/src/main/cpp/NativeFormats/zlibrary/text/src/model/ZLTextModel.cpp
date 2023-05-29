@@ -49,23 +49,27 @@ ZLTextModel::ZLTextModel(const std::string &id, // 是个空string
 		myLastEntryStart(nullptr),
 		myFontManager(fontManager) {
 
-	LogUtil::LOGI("cpp解析打印", "图书解析流程, 创建ZLTextModel main constructor, %s",
+	LogUtil::LOGI("cpp解析打印, 图书解析流程", "创建ZLTextModel main constructor, %s",
 				  "id = '" + myId + "' rowSize = " + std::to_string(rowSize));
     // 新实现
     // 清空字符串, empty string, length = 0
 	currentFile.clear();
 }
 
-ZLTextModel::ZLTextModel(const std::string &id, const std::string &language, shared_ptr<ZLCachedMemoryAllocator> allocator, FontManager &fontManager) :
-	myId(id),
-	myLanguage(language.empty() ? ZLibrary::Language() : language),
-	myAllocator(allocator),
-	myLastEntryStart(nullptr),
-	myFontManager(fontManager) {
-	LogUtil::print("创建ZLTextModel footNote constructor, ext = %s", allocator->fileExtension());
+ZLTextModel::ZLTextModel(const std::string &id,
+                         const std::string &language,
+                         shared_ptr<ZLCachedMemoryAllocator> allocator,
+                         FontManager &fontManager) :
+        myId(id),
+        myLanguage(language.empty() ? ZLibrary::Language() : language),
+        myAllocator(allocator),
+        myLastEntryStart(nullptr),
+        myFontManager(fontManager) {
+    LogUtil::LOGI("cpp解析打印, 图书解析流程", "创建ZLTextModel footNote constructor, ext = %s",
+                  allocator->fileExtension());
 
-	// 新实现
-	// 清空字符串, empty string, length = 0
+    // 新实现
+    // 清空字符串, empty string, length = 0
     currentFile.clear();
 }
 

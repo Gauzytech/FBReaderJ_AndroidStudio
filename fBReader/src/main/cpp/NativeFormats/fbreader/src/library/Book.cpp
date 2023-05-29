@@ -37,11 +37,9 @@
 
 const std::string Book::AutoEncoding = "auto";
 
-Book::Book(const ZLFile &file, int id) : myBookId(id), myFile(file) {
-}
+Book::Book(const ZLFile &file, int id) : myBookId(id), myFile(file) {}
 
-Book::~Book() {
-}
+Book::~Book() {}
 
 shared_ptr<Book> Book::createBook(
 	const ZLFile &file,
@@ -91,7 +89,7 @@ shared_ptr<Book> Book::loadFromJavaBook(JNIEnv *env, jobject javaBook) {
 	const std::string language = AndroidUtil::Method_Book_getLanguage->callForCppString(javaBook);
 	const std::string encoding = AndroidUtil::Method_Book_getEncodingNoDetection->callForCppString(javaBook);
 
-	return createBook(ZLFile(path), 0, encoding, language, title);
+	return createBook(ZLFile(path, "", "book"), 0, encoding, language, title);
 }
 
 

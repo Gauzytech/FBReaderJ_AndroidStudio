@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include <utility>
 
 #include <AndroidUtil.h>
 
@@ -41,7 +42,7 @@
  * 							 nlinks: 超链接
  */
 ZLCachedMemoryAllocator::ZLCachedMemoryAllocator(const std::size_t rowSize,
-		const std::string &directoryName, const std::string &fileExtension) :
+		const std::string &directoryName, std::string fileExtension) :
 	myRowSize(rowSize),
 	myCurrentRowSize(0),
 	myOffset(0),
@@ -51,7 +52,7 @@ ZLCachedMemoryAllocator::ZLCachedMemoryAllocator(const std::size_t rowSize,
 	// 新实现
 	myCurrentRowSizeBeta(0),
 	myOffsetBeta(0),
-	myFileExtension(fileExtension) {
+	myFileExtension(std::move(fileExtension)) {
 	// 创建cache文件夹
 	ZLFile(directoryName).directory(true);
 
