@@ -32,6 +32,10 @@
 
 class XHTMLReader;
 
+/**
+ * OEB: open eBook
+ * epub图书内容解析类
+ */
 class OEBBookReader : public OPFReader {
 
 public:

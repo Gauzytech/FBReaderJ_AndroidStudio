@@ -27,7 +27,7 @@ public interface ZLXMLReader {
 	public void startDocumentHandler();
 	public void endDocumentHandler();
 
-	// returns true iff xml processing should be interrupted
+	// returns true if xml processing should be interrupted
 	public boolean startElementHandler(String tag, ZLStringMap attributes);
 	public boolean endElementHandler(String tag);
 	public void characterDataHandler(char[] ch, int start, int length);

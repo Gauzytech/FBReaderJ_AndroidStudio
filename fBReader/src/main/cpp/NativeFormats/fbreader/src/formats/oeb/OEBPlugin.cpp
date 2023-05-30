@@ -53,6 +53,7 @@ private:
 	std::string myRootPath;
 };
 
+// ----------------- start ContainerFileReader.cpp ----------------------
 const std::string &ContainerFileReader::rootPath() const {
 	return myRootPath;
 }
@@ -67,6 +68,7 @@ void ContainerFileReader::startElementHandler(const char *tag, const char **attr
 		}
 	}
 }
+// ----------------- end ContainerFileReader.cpp ----------------------
 
 OEBPlugin::~OEBPlugin() {
 }
@@ -96,8 +98,7 @@ ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
 		return oebFile;
 	}
 
-	ZLLogger::Instance().println("OEBPlugin", "Looking for opf file in " + oebFile.path());
-
+    LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBPlugin]在%s中寻找opf文件", oebFile.path());
 	oebFile.forceArchiveType(ZLFile::ZIP);
 	// 解压epub文件
 	shared_ptr<ZLDir> zipDir = oebFile.directory(false);
@@ -107,17 +108,18 @@ ZLFile OEBPlugin::opfFile(const ZLFile &oebFile) {
 		return ZLFile::NO_FILE;
 	}
 	// 读取container文件
-	// container文件一般都在META-INF文件夹里
+	// container文件一般都在META-INF文件夹里, container文件中会包含opf文件的路径
 	const ZLFile containerInfoFile(zipDir->itemPath("META-INF/container.xml"));
 	if (containerInfoFile.exists()) {
-		ZLLogger::Instance().println("OEBPlugin", "Found container file " + containerInfoFile.path());
-		ContainerFileReader reader;
+        LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBPlugin]找到container file %s", containerInfoFile.path());
+        // 没有constructor类的初始化
+        ContainerFileReader reader;
 		// 使用ContainerFileReader解析container文件
-		LogUtil::print("ContainerFileReader.readDocument 开始读取container文件", "");
+		LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBPlugin]开始读取container文件 -> readDocument", "");
 		reader.readDocument(containerInfoFile);
 		// 从container中读取opf文件path
 		const std::string &opfPath = reader.rootPath();
-		ZLLogger::Instance().println("OEBPlugin", "opf path = " + opfPath);
+		LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBPlugin]opf path = %s", opfPath);
 		// 如果opf文件path不为空, 返回opf文件
 		if (!opfPath.empty()) {
 			return ZLFile(zipDir->itemPath(opfPath));

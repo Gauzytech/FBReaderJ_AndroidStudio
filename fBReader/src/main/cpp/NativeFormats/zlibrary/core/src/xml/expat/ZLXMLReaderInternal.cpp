@@ -167,7 +167,7 @@ void ZLXMLReaderInternal::init(const char *encoding) {
 	// 同理。fEndElementHandler也是一个回调函数，每当遇到结束标签</name>、</red>、</green>时都会执行一次这个函数，
 	// 有几个结束标签就会执行几次这个函数
 	XML_SetElementHandler(myParser, fStartElementHandler, fEndElementHandler);
-	// fCharacterDataHandler也是一个回调函数。每当遇到一对键值对中存在内容时，就会执行一次函数
+	// fCharacterDataHandler也是一个回调函数。每当遇到一对键值对之间的文字时，就会执行一次函数
 	XML_SetCharacterDataHandler(myParser, fCharacterDataHandler);
 	XML_SetUnknownEncodingHandler(myParser, fUnknownEncodingHandler, 0);
 }

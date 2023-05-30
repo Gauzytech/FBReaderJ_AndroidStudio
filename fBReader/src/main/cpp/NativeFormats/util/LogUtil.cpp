@@ -25,3 +25,7 @@ void LogUtil::print(const std::string &tag, const std::string &message, const st
 void LogUtil::LOGI(const char* tag, const std::string &message, const std::string &value) {
     __android_log_print(ANDROID_LOG_INFO, tag, message.c_str(), value.c_str());
 }
+
+void LogUtil::LOGD(const char* tag, const std::string &message, const std::string &value) {
+    __android_log_print(ANDROID_LOG_DEBUG, tag, message.c_str(), value.c_str());
+}

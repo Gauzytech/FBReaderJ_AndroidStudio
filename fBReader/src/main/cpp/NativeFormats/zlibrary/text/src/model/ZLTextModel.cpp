@@ -49,7 +49,7 @@ ZLTextModel::ZLTextModel(const std::string &id, // 是个空string
 		myLastEntryStart(nullptr),
 		myFontManager(fontManager) {
 
-	LogUtil::LOGI("cpp解析打印, 图书解析流程", "创建ZLTextModel main constructor, %s",
+	LogUtil::LOGI("cpp解析打印, 图书解析流程", "[ZLTextModel]main constructor, %s",
 				  "id = '" + myId + "' rowSize = " + std::to_string(rowSize));
     // 新实现
     // 清空字符串, empty string, length = 0
@@ -65,7 +65,7 @@ ZLTextModel::ZLTextModel(const std::string &id,
         myAllocator(allocator),
         myLastEntryStart(nullptr),
         myFontManager(fontManager) {
-    LogUtil::LOGI("cpp解析打印, 图书解析流程", "创建ZLTextModel footNote constructor, ext = %s",
+    LogUtil::LOGI("cpp解析打印, 图书解析流程", "[ZLTextModel]footNote constructor, ext = %s",
                   allocator->fileExtension());
 
     // 新实现

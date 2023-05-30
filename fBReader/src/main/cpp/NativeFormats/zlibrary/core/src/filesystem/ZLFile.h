@@ -62,6 +62,10 @@ public:
 	std::size_t size() const;
 	std::size_t lastModified() const;
 
+	/**
+	 * 设置path相对应的文件类型
+	 * @param type 文件类型
+	 */
 	void forceArchiveType(ArchiveType type) const;
 
 	bool isCompressed() const;

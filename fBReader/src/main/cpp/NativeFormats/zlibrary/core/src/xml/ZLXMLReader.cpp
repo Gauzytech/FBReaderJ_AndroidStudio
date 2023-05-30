@@ -63,14 +63,11 @@ bool ZLXMLReaderHandler::handleBuffer(const char *data, std::size_t len) {
 
 static const std::size_t BUFFER_SIZE = 2048;
 
-void ZLXMLReader::startElementHandler(const char*, const char**) {
-}
+void ZLXMLReader::startElementHandler(const char *, const char **) {}
 
-void ZLXMLReader::endElementHandler(const char*) {
-}
+void ZLXMLReader::endElementHandler(const char *) {}
 
-void ZLXMLReader::characterDataHandler(const char*, std::size_t) {
-}
+void ZLXMLReader::characterDataHandler(const char *, std::size_t) {}
 
 const ZLXMLReader::nsMap &ZLXMLReader::namespaces() const {
 	return *myNamespaces.back();
@@ -87,7 +84,7 @@ ZLXMLReader::~ZLXMLReader() {
 }
 
 bool ZLXMLReader::readDocument(const ZLFile &file) {
-	LogUtil::print("XMLReader.readDocument(file), filePath = %s", file.path());
+	LogUtil::LOGD("cpp解析XML", "XMLReader, start readDocument = %s", file.path());
 
 	return readDocument(file.inputStream());
 }
@@ -96,7 +93,9 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 	if (stream.isNull() || !stream->open()) {
 		return false;
 	}
-	LogUtil::print("XMLReader.readDocument(stream), stream size = %s", std::to_string(stream->sizeOfOpened()));
+	LogUtil::LOGD("cpp解析XML", "XMLReader.readDocument(stream), stream size = %s",
+				  std::to_string(stream->sizeOfOpened()));
+
 	bool useWindows1252 = false;
 	stream->read(myParserBuffer, 256);
 	std::string stringBuffer(myParserBuffer, 256);
@@ -108,8 +107,8 @@ bool ZLXMLReader::readDocument(shared_ptr<ZLInputStream> stream) {
 			return false;
 		}
 		stringBuffer = ZLUnicodeUtil::toLower(stringBuffer);
-		int index = stringBuffer.find("\"iso-8859-1\"");
-		if (index > 0) {
+		int isoIndex = stringBuffer.find("\"iso-8859-1\"");
+		if (isoIndex > 0) {
 			useWindows1252 = true;
 		}
 	}

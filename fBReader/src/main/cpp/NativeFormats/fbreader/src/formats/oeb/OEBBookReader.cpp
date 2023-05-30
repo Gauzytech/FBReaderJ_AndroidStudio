@@ -38,9 +38,7 @@
 #include "../util/MiscUtil.h"
 #include "../../bookmodel/BookModel.h"
 
-OEBBookReader::OEBBookReader(BookModel &model) : myModelReader(model) {
-	LogUtil::print("OEBBookReader constructor", "");
-}
+OEBBookReader::OEBBookReader(BookModel &model) : myModelReader(model) {}
 
 static const std::string MANIFEST = "manifest";
 static const std::string SPINE = "spine";
@@ -187,7 +185,7 @@ void OEBBookReader::endElementHandler(const char *tag) {
 }
 
 bool OEBBookReader::readBook(const ZLFile &opfFile) {
-	LogUtil::print("OEBBookReader.readBook(opfFile) opf文件路径 = %s", opfFile.path());
+	LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBBookReader]开始解析opf = %s", opfFile.path());
 	const ZLFile epubFile = opfFile.getContainerArchive();
 	epubFile.forceArchiveType(ZLFile::ZIP);
 	// 解压缩epub文件，获得整个epub文件夹
@@ -206,7 +204,7 @@ bool OEBBookReader::readBook(const ZLFile &opfFile) {
 	// htmlDirectoryPrefix: epub里面文件的根路径
 	// eg: /data/data/org.geometerplus.zlibrary.ui.android/files/JavaScript高级程序设计（第3版） - [美] Nicholas C. Zakas.epub:
 	myFilePrefix = MiscUtil::htmlDirectoryPrefix(opfFile.path());
-	LogUtil::print("OEBBookReader.readBook(opfFile), 根路径myFilePrefix = %s", myFilePrefix);
+	LogUtil::LOGI("cpp解析打印, 图书解析流程", "[OEBBookReader]根路径myFilePrefix = %s", myFilePrefix);
 
 	// 把所有之前的缓存清空
 	myIdToHref.clear();

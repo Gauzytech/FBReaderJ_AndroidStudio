@@ -23,12 +23,12 @@
 #include "ZLFSManager.h"
 #include "ZLFSDir.h"
 
-ZLFSManager *ZLFSManager::ourInstance = 0;
+ZLFSManager *ZLFSManager::ourInstance = nullptr;
 
 void ZLFSManager::deleteInstance() {
-	if (ourInstance != 0) {
+	if (ourInstance != nullptr) {
 		delete ourInstance;
-		ourInstance = 0;
+		ourInstance = nullptr;
 	}
 }
 
